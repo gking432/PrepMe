@@ -1,0 +1,9 @@
+// Supabase client for client-side components
+'use client'
+
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+export const createClient = () => {
+  return createClientComponentClient()
+}
+

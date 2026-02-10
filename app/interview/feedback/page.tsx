@@ -427,6 +427,8 @@ export default function InterviewDashboard() {
   const [showFeedbackChatTooltip, setShowFeedbackChatTooltip] = useState(true) // Show tooltip on initial load
   const [strengthCarouselIndex, setStrengthCarouselIndex] = useState(0)
   const [improveCarouselIndex, setImproveCarouselIndex] = useState(0)
+  const [hmStrengthCarouselIndex, setHmStrengthCarouselIndex] = useState(0)
+  const [hmImproveCarouselIndex, setHmImproveCarouselIndex] = useState(0)
   const [practicedCriteria, setPracticedCriteria] = useState<string[]>([])
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [showTranscript, setShowTranscript] = useState(true)
@@ -756,7 +758,7 @@ export default function InterviewDashboard() {
             if (feedbackData.full_rubric.hr_screen_six_areas) {
               feedbackData.hr_screen_six_areas = feedbackData.full_rubric.hr_screen_six_areas
             }
-            
+
             // Extract strengths/weaknesses from full_rubric if not already set
             if (!feedbackData.strengths && feedbackData.full_rubric.overall_assessment?.key_strengths) {
               feedbackData.strengths = feedbackData.full_rubric.overall_assessment.key_strengths
@@ -764,12 +766,48 @@ export default function InterviewDashboard() {
             if (!feedbackData.weaknesses && feedbackData.full_rubric.overall_assessment?.key_weaknesses) {
               feedbackData.weaknesses = feedbackData.full_rubric.overall_assessment.key_weaknesses
             }
-            
+
             // Extract suggestions from full_rubric if not already set
             if (!feedbackData.suggestions && feedbackData.full_rubric.next_steps_preparation?.improvement_suggestions) {
               feedbackData.suggestions = feedbackData.full_rubric.next_steps_preparation.improvement_suggestions
             }
-            
+
+            // Extract entire next_steps_preparation object from full_rubric
+            if (feedbackData.full_rubric.next_steps_preparation) {
+              feedbackData.next_steps_preparation = feedbackData.full_rubric.next_steps_preparation
+            }
+          }
+
+          // For Hiring Manager: Use full_rubric data if available (from Claude grader)
+          if (sessionData.stage === 'hiring_manager' && feedbackData.full_rubric) {
+            // Extract hiring_manager_six_areas from full_rubric
+            if (feedbackData.full_rubric.hiring_manager_six_areas) {
+              feedbackData.hiring_manager_six_areas = feedbackData.full_rubric.hiring_manager_six_areas
+            }
+
+            // Extract role_specific_criteria from full_rubric
+            if (feedbackData.full_rubric.role_specific_criteria) {
+              feedbackData.role_specific_criteria = feedbackData.full_rubric.role_specific_criteria
+            }
+
+            // Extract cross_stage_progress from full_rubric
+            if (feedbackData.full_rubric.cross_stage_progress) {
+              feedbackData.cross_stage_progress = feedbackData.full_rubric.cross_stage_progress
+            }
+
+            // Extract strengths/weaknesses from full_rubric if not already set
+            if (!feedbackData.strengths && feedbackData.full_rubric.overall_assessment?.key_strengths) {
+              feedbackData.strengths = feedbackData.full_rubric.overall_assessment.key_strengths
+            }
+            if (!feedbackData.weaknesses && feedbackData.full_rubric.overall_assessment?.key_weaknesses) {
+              feedbackData.weaknesses = feedbackData.full_rubric.overall_assessment.key_weaknesses
+            }
+
+            // Extract suggestions from full_rubric if not already set
+            if (!feedbackData.suggestions && feedbackData.full_rubric.next_steps_preparation?.improvement_suggestions) {
+              feedbackData.suggestions = feedbackData.full_rubric.next_steps_preparation.improvement_suggestions
+            }
+
             // Extract entire next_steps_preparation object from full_rubric
             if (feedbackData.full_rubric.next_steps_preparation) {
               feedbackData.next_steps_preparation = feedbackData.full_rubric.next_steps_preparation
@@ -840,8 +878,8 @@ export default function InterviewDashboard() {
               ]
             }
             
-            // Load structured transcript for HR screen (real data)
-            if (sessionData.stage === 'hr_screen') {
+            // Load structured transcript for HR screen and Hiring Manager (real data)
+            if (sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') {
               console.log('🔍 Loading structured transcript for session:', sessionData.id)
               const { data: sessionWithTranscript, error: transcriptError } = await supabase
                 .from('interview_sessions')
@@ -1005,7 +1043,7 @@ export default function InterviewDashboard() {
             }
           } else {
             // Load structured transcript for HR screen (real data) - when no feedback yet
-            if (sessionData.stage === 'hr_screen') {
+            if (sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') {
               console.log('🔍 Loading structured transcript for session (no feedback yet):', sessionData.id)
               const { data: sessionWithTranscript, error: transcriptError } = await supabase
                 .from('interview_sessions')
@@ -1606,6 +1644,8 @@ export default function InterviewDashboard() {
   const strengths = feedback?.strengths || []
   const improvements = feedback?.weaknesses || []
   const hasFeedback = !!feedback
+  const hasHmFeedback = !!feedback?.hiring_manager_six_areas || !!feedback?.full_rubric?.hiring_manager_six_areas
+  const currentStage = (currentSessionData as any)?.stage || 'hr_screen'
 
   // Map area scores to HR phone screen criteria structure
   const mapToHRCriteria = (areaScores: any[]) => {
@@ -1811,11 +1851,10 @@ export default function InterviewDashboard() {
 
   const hrCriteria = areaScores && areaScores.length > 0 ? mapToHRCriteria(areaScores) : null
 
-  // HR screen 6-area mock data helpers
+  // HR screen 6-area data helpers
   const sixAreas = feedback?.hr_screen_six_areas
   const wentWellAreas = sixAreas?.what_went_well || []
   const needsImproveAreas = sixAreas?.what_needs_improve || []
-  // In mock mode, strengths are fixed; needs-work cards do not move to passed pile
   const strengthsCards = wentWellAreas
   const needsWorkCards = needsImproveAreas
   const totalAreas =
@@ -1828,6 +1867,25 @@ export default function InterviewDashboard() {
   const circleCircumference = 2 * Math.PI * circleRadius
   const circleDashOffset =
     circleCircumference - (areasPassed / (totalAreas || 1)) * circleCircumference
+
+  // Hiring Manager 6-area data helpers
+  const hmSixAreas = feedback?.hiring_manager_six_areas
+  const hmWentWellAreas = hmSixAreas?.what_went_well || []
+  const hmNeedsImproveAreas = hmSixAreas?.what_needs_improve || []
+  const hmStrengthsCards = hmWentWellAreas
+  const hmNeedsWorkCards = hmNeedsImproveAreas
+  const hmTotalAreas =
+    hmWentWellAreas.length + hmNeedsImproveAreas.length > 0
+      ? hmWentWellAreas.length + hmNeedsImproveAreas.length
+      : 6
+  const hmAreasPassed = hmStrengthsCards.length
+  const hmAreasProgress = hmTotalAreas > 0 ? (hmAreasPassed / hmTotalAreas) * 100 : 0
+  const hmCircleDashOffset =
+    circleCircumference - (hmAreasPassed / (hmTotalAreas || 1)) * circleCircumference
+
+  // Hiring Manager role-specific criteria
+  const roleSpecificCriteria = feedback?.role_specific_criteria?.criteria_identified || []
+  const crossStageProgress = feedback?.cross_stage_progress
 
   const getSafeIndex = (len: number, index: number) =>
     len === 0 ? 0 : ((index % len) + len) % len
@@ -2169,7 +2227,7 @@ export default function InterviewDashboard() {
       transcript: 'Sample transcript of the HR screening call...'
     },
     hiringManager1: {
-      completed: false,
+      completed: hasHmFeedback && currentStage === 'hiring_manager',
       locked: !isPremium
     },
     cultureFit: {
@@ -4294,7 +4352,8 @@ export default function InterviewDashboard() {
                 </div>
               </div>
             )}
-            {canStartHiringManager1 && (
+            {/* Start Interview CTA (when eligible but no HM feedback yet) */}
+            {canStartHiringManager1 && !hasHmFeedback && (
               <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
@@ -4305,7 +4364,7 @@ export default function InterviewDashboard() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">Start Interview</h2>
                     <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                      You’re ready for the Hiring Manager round. Practice with our AI to get detailed feedback and improve before the real interview.
+                      You're ready for the Hiring Manager round. Practice with our AI to get detailed feedback and improve before the real interview.
                     </p>
                     <Link
                       href="/dashboard?stage=hiring_manager"
@@ -4320,116 +4379,438 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Areas Passed Tracker - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Your Hiring Manager Interview Progress
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Pass all core areas to master the hiring manager interview fundamentals.
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-400">
-                      --/--
-                    </div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wide">
-                      Areas Passed
+            {/* Completion Banner (when HM feedback exists) */}
+            {hasHmFeedback && (
+              <>
+                <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
+                  feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
+                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
+                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                }`}>
+                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                  <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+                      <div className="flex items-start space-x-6 flex-1">
+                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg bg-white/20 backdrop-blur-md">
+                          {feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely' ? (
+                            <CheckCircle className="w-12 h-12 text-white" />
+                          ) : (
+                            <AlertCircle className="w-12 h-12 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 text-white">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Briefcase className="w-6 h-6" />
+                            <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Hiring Manager Complete</span>
+                          </div>
+                          <h2 className="text-4xl font-bold mb-3">
+                            {feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
+                              ? "Strong Performance!"
+                              : "Room for Improvement"}
+                          </h2>
+                          <p className="text-lg text-white/90 mb-4 max-w-2xl">
+                            {feedback?.full_rubric?.overall_assessment?.summary || feedback?.detailed_feedback || 'Review the detailed feedback below to see how you performed.'}
+                          </p>
+                          <div className="flex items-center space-x-4">
+                            <div className="bg-white/20 backdrop-blur-md rounded-xl px-4 py-2">
+                              <div className="text-3xl font-bold">{feedback?.overall_score ? Math.round(feedback.overall_score * 10) : '--'}%</div>
+                              <div className="text-xs uppercase tracking-wider opacity-90">Score</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <svg className="w-20 h-20">
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="30"
-                      stroke="#e5e7eb"
-                      strokeWidth="8"
-                      fill="none"
-                    />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
+                </div>
+              </>
+            )}
+
+            {/* Areas Passed Tracker */}
+            {hasHmFeedback && hmSixAreas ? (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Your Hiring Manager Interview Progress
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Pass all 6 core areas to master the hiring manager interview.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-indigo-600">
+                        {hmAreasPassed}/{hmTotalAreas}
+                      </div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">
+                        Areas Passed
+                      </div>
+                    </div>
+                    <svg className="w-20 h-20">
+                      <circle cx="40" cy="40" r={circleRadius} stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                      <circle
+                        cx="40" cy="40" r={circleRadius}
+                        stroke="#6366f1" strokeWidth="8" fill="none"
+                        strokeDasharray={circleCircumference}
+                        strokeDashoffset={hmCircleDashOffset}
+                        strokeLinecap="round"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.5s ease-out' }}
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      style={{ width: `${hmAreasProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span className="text-gray-600">Focus on the orange areas below to level up.</span>
+                    <span className="text-indigo-600 font-semibold">Master all 6 to be hiring-manager ready.</span>
+                  </div>
+                </div>
+              </div>
+            ) : !hasHmFeedback ? (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Your Hiring Manager Interview Progress</h3>
+                    <p className="text-sm text-gray-600 mt-1">Pass all core areas to master the hiring manager interview fundamentals.</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-400">--/--</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">Areas Passed</div>
+                    </div>
+                    <svg className="w-20 h-20">
+                      <circle cx="40" cy="40" r="30" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="bg-gray-300 h-3 rounded-full transition-all" style={{ width: '0%' }}></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Master These Areas - Strengths & Needs Work Cards */}
+            {hasHmFeedback && hmSixAreas && (
+              <div className="space-y-6" data-practice-section>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-gray-900">Master These Areas</h3>
+                  <div className="text-sm text-gray-600 flex space-x-4">
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span>Passed / Strengths</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                      <span>Needs Work</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Strengths / Passed Stack */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Passed Areas</h4>
+                      {hmStrengthsCards.length > 1 && (
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <button className="hover:text-gray-900" onClick={() => setHmStrengthCarouselIndex((prev) => prev - 1)}>
+                            <span>←</span>
+                          </button>
+                          <span>Card {getSafeIndex(hmStrengthsCards.length, hmStrengthCarouselIndex) + 1} of {hmStrengthsCards.length}</span>
+                          <button className="hover:text-gray-900" onClick={() => setHmStrengthCarouselIndex((prev) => prev + 1)}>
+                            <span>→</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {renderStackedCarousel(hmStrengthsCards, hmStrengthCarouselIndex, setHmStrengthCarouselIndex, 'strength')}
+                  </div>
+
+                  {/* Needs Work Stack */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Needs Work</h4>
+                      {hmNeedsWorkCards.length > 1 && (
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <button className="hover:text-gray-900" onClick={() => setHmImproveCarouselIndex((prev) => prev - 1)}>
+                            <span>←</span>
+                          </button>
+                          <span>Card {getSafeIndex(hmNeedsWorkCards.length, hmImproveCarouselIndex) + 1} of {hmNeedsWorkCards.length}</span>
+                          <button className="hover:text-gray-900" onClick={() => setHmImproveCarouselIndex((prev) => prev + 1)}>
+                            <span>→</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {renderStackedCarousel(hmNeedsWorkCards, hmImproveCarouselIndex, setHmImproveCarouselIndex, 'improve')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Empty state when no HM feedback yet */}
+            {!hasHmFeedback && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-gray-900">Master These Areas</h3>
+                  <div className="text-sm text-gray-600 flex space-x-4">
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span>Passed / Strengths</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                      <span>Needs Work</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Passed Areas</h4>
+                    <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">No data available yet</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Needs Work</h4>
+                    <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">No data available yet</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Role-Specific Criteria (Tier 2 - JD-adaptive) */}
+            {hasHmFeedback && roleSpecificCriteria.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">Role-Specific Skills</h3>
+                <p className="text-sm text-gray-600 mb-4">Evaluated based on your job description requirements</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {roleSpecificCriteria.map((criterion: any, idx: number) => {
+                    const score = criterion.score || 0
+                    const isStrong = score >= 7
+                    return (
+                      <div key={idx} className={`rounded-xl border-2 p-4 ${isStrong ? 'border-green-200 bg-green-50/30' : 'border-orange-200 bg-orange-50/30'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{criterion.name}</h4>
+                          <div className={`px-3 py-1 rounded-full text-sm font-bold ${isStrong ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                            {score}/10
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-700">{criterion.feedback}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Cross-Stage Progress (if HR Screen feedback was used) */}
+            {hasHmFeedback && crossStageProgress && (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">Progress from HR Screen</h3>
+                <p className="text-sm text-gray-600 mb-4">How you improved (or regressed) compared to your phone screen</p>
+                <div className="space-y-4">
+                  {crossStageProgress.improvement_from_hr_screen && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <TrendingUp className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-blue-700">Overall Progress</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{crossStageProgress.improvement_from_hr_screen}</p>
+                    </div>
+                  )}
+                  {crossStageProgress.consistent_strengths?.length > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-semibold text-green-700">Consistent Strengths</span>
+                      </div>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {crossStageProgress.consistent_strengths.map((s: string, i: number) => (
+                          <li key={i} className="flex items-start space-x-2"><span className="text-green-500 mt-0.5">+</span><span>{s}</span></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {crossStageProgress.persistent_weaknesses?.length > 0 && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                        <span className="text-sm font-semibold text-orange-700">Persistent Weaknesses</span>
+                      </div>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {crossStageProgress.persistent_weaknesses.map((w: string, i: number) => (
+                          <li key={i} className="flex items-start space-x-2"><span className="text-orange-500 mt-0.5">!</span><span>{w}</span></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {crossStageProgress.new_concerns?.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <TrendingDown className="w-4 h-4 text-red-600" />
+                        <span className="text-sm font-semibold text-red-700">New Concerns</span>
+                      </div>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        {crossStageProgress.new_concerns.map((c: string, i: number) => (
+                          <li key={i} className="flex items-start space-x-2"><span className="text-red-500 mt-0.5">-</span><span>{c}</span></li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Transcript Section */}
+            {hasHmFeedback && structuredTranscript && (
+              (structuredTranscript.messages && structuredTranscript.messages.length > 0) ||
+              (structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0)
+            ) && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <button
+                  type="button"
+                  onClick={() => setShowTranscript((prev) => !prev)}
+                  className="flex w-full items-center justify-between mb-4 text-left"
+                >
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Full Interview Transcript</h3>
+                    <div className="mt-1 flex space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center space-x-1">
+                        <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Strong</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span>Weak</span>
+                      </span>
+                    </div>
+                  </div>
+                  <svg className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                  <div
-                    className="bg-gray-300 h-3 rounded-full transition-all"
-                    style={{ width: '0%' }}
-                  ></div>
-                </div>
-              </div>
-            </div>
+                </button>
+                {showTranscript && (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                    {structuredTranscript.messages && structuredTranscript.messages.length > 0 ? (
+                      structuredTranscript.messages.map((msg: any, idx: number) => {
+                        const isCandidate = msg.speaker === 'candidate'
 
-            {/* Master These Questions - Empty */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Master These Questions
-                </h3>
-                <div className="text-sm text-gray-600 flex space-x-4">
-                  <span className="inline-flex items-center space-x-1">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    <span>Passed / Strengths</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1">
-                    <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                    <span>Needs Work</span>
-                  </span>
-                </div>
-              </div>
+                        let tone: 'strong' | 'weak' | 'neutral' = 'neutral'
+                        if (isCandidate && feedback?.hiring_manager_six_areas) {
+                          const wentWell = feedback.hiring_manager_six_areas.what_went_well || []
+                          const needsImprove = feedback.hiring_manager_six_areas.what_needs_improve || []
 
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Strengths / Passed Stack - Empty */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Passed Areas
-                    </h4>
+                          const inNeeds = needsImprove.some((item: any) =>
+                            (item.evidence || []).some((ev: any) => {
+                              const questionMatch = ev.question_id && msg.question_id && ev.question_id === msg.question_id
+                              const excerptMatch = ev.excerpt && msg.text && msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                              return questionMatch || excerptMatch
+                            })
+                          )
+                          const inWell = wentWell.some((item: any) =>
+                            (item.evidence || []).some((ev: any) => {
+                              const questionMatch = ev.question_id && msg.question_id && ev.question_id === msg.question_id
+                              const excerptMatch = ev.excerpt && msg.text && msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                              return questionMatch || excerptMatch
+                            })
+                          )
+
+                          if (inNeeds) tone = 'weak'
+                          else if (inWell) tone = 'strong'
+                        }
+
+                        const baseClasses = 'p-4 rounded-lg border-2 transition-colors cursor-default'
+                        const toneClasses = tone === 'strong' ? 'border-green-300 bg-green-50' : tone === 'weak' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'
+
+                        return (
+                          <div key={idx} className={`${baseClasses} ${toneClasses}`}>
+                            <div className="flex space-x-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-indigo-600" />}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between mb-1">
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                    {isCandidate ? 'You' : 'AI Interviewer'}
+                                  </span>
+                                  {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
+                                </div>
+                                <p className="text-gray-800 text-sm">{msg.text}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <p className="text-gray-500 text-sm">No transcript messages available.</p>
+                    )}
                   </div>
-                  <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">No data available yet</p>
-                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty transcript state */}
+            {!hasHmFeedback && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-2xl font-bold text-gray-900">Full Interview Transcript</h3>
+                <p className="text-sm text-gray-600 mt-1">Interview transcript will appear here after completion</p>
+              </div>
+            )}
+
+            {/* Detailed Performance Breakdown - Universal Criteria */}
+            {hasHmFeedback && feedback?.full_rubric?.hiring_manager_criteria ? (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">Detailed Performance Breakdown</h3>
+                <p className="text-sm text-gray-600 mb-6">Evaluation based on 6 universal hiring manager criteria</p>
+                <div className="space-y-4">
+                  {Object.entries(feedback.full_rubric.hiring_manager_criteria.scores || {}).map(([key, score]: [string, any]) => {
+                    const feedbackText = feedback.full_rubric.hiring_manager_criteria.feedback?.[key] || ''
+                    const displayName = key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+                    const numScore = typeof score === 'number' ? score : 0
+                    const isGood = numScore >= 7
+                    const isBad = numScore <= 4
+
+                    return (
+                      <div key={key} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{displayName}</h4>
+                          <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            isGood ? 'bg-green-100 text-green-700' : isBad ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {numScore}/10
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                          <div
+                            className={`h-2 rounded-full transition-all ${isGood ? 'bg-green-500' : isBad ? 'bg-red-500' : 'bg-yellow-500'}`}
+                            style={{ width: `${numScore * 10}%` }}
+                          ></div>
+                        </div>
+                        {feedbackText && <p className="text-sm text-gray-700">{feedbackText}</p>}
+                      </div>
+                    )
+                  })}
                 </div>
-
-                {/* Needs Work Stack - Empty */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Needs Work
-                    </h4>
-                  </div>
-                  <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">No data available yet</p>
-                  </div>
-                </div>
               </div>
-            </div>
-
-            {/* Transcript Section - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Full Interview Transcript
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Interview transcript will appear here after completion
-                </p>
+            ) : !hasHmFeedback ? (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-xl font-bold text-gray-900">Detailed Performance Breakdown</h3>
+                <p className="text-sm text-gray-600 mt-1">Evaluation based on hiring manager interview criteria</p>
               </div>
-            </div>
-
-            {/* Detailed Performance Breakdown - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Detailed Performance Breakdown
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Evaluation based on hiring manager interview criteria
-                </p>
-              </div>
-            </div>
+            ) : null}
           </div>
         )}
 

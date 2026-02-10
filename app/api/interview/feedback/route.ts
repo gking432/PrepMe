@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import OpenAI from 'openai'
-import { gradeHrScreenWithRetry, GradingMaterials } from '@/lib/claude-client'
-import { validateHrScreenRubric } from '@/lib/rubric-validator'
+import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, GradingMaterials } from '@/lib/claude-client'
+import { validateHrScreenRubric, validateHiringManagerRubric } from '@/lib/rubric-validator'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -108,23 +108,65 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ No user_interview_data_id in session')
     }
     
-    // Fetch structured transcript and observer notes for HR screen
+    // Fetch structured transcript and observer notes for graded stages
     let structuredTranscript = null
     let observerNotes = null
-    if (sessionData.stage === 'hr_screen') {
+    if (sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') {
       const { data: sessionWithData } = await supabaseAdmin
         .from('interview_sessions')
-        .select('transcript_structured, observer_notes')
+        .select('transcript_structured, observer_notes, user_id')
         .eq('id', sessionId)
         .single()
-      
+
       structuredTranscript = sessionWithData?.transcript_structured || null
       observerNotes = sessionWithData?.observer_notes || null
     }
-    
-    // Fetch company website content for HR screen grader
+
+    // Fetch HR screen feedback for cross-stage intelligence (hiring_manager and later stages)
+    let hrScreenFeedback = null
+    if (sessionData.stage === 'hiring_manager') {
+      // Get user_id from session
+      const { data: sessionForUser } = await supabaseAdmin
+        .from('interview_sessions')
+        .select('user_id')
+        .eq('id', sessionId)
+        .single()
+
+      if (sessionForUser?.user_id) {
+        // Find the most recent completed HR screen for this user
+        const { data: hrSession } = await supabaseAdmin
+          .from('interview_sessions')
+          .select('id')
+          .eq('user_id', sessionForUser.user_id)
+          .eq('stage', 'hr_screen')
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (hrSession) {
+          const { data: hrFeedbackData } = await supabaseAdmin
+            .from('interview_feedback')
+            .select('overall_score, strengths, weaknesses, suggestions')
+            .eq('interview_session_id', hrSession.id)
+            .maybeSingle()
+
+          if (hrFeedbackData) {
+            hrScreenFeedback = {
+              overall_score: hrFeedbackData.overall_score,
+              strengths: hrFeedbackData.strengths || [],
+              weaknesses: hrFeedbackData.weaknesses || [],
+              suggestions: hrFeedbackData.suggestions || [],
+            }
+            console.log('✅ Found HR screen feedback for cross-stage grading')
+          }
+        }
+      }
+    }
+
+    // Fetch company website content for grader
     let websiteContent = null
-    if (sessionData.stage === 'hr_screen' && companyWebsite) {
+    if ((sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') && companyWebsite) {
       try {
         const websiteResponse = await fetch(`${request.nextUrl.origin}/api/scrape-website`, {
           method: 'POST',
@@ -609,7 +651,110 @@ Use the question IDs and timestamps from this structured transcript when providi
       }
     }
 
-    // Non-HR stages or Claude fallback: Use OpenAI (existing path)
+    // Hiring Manager: Use Claude Grader with two-tier system
+    if (stage === 'hiring_manager') {
+      try {
+        console.log('🎯 Using Claude Sonnet 4 for Hiring Manager grading (two-tier system)')
+
+        const gradingMaterials: GradingMaterials = {
+          transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
+          transcriptStructured: structuredTranscript,
+          observerNotes: observerNotes || {},
+          resume: resume || '',
+          jobDescription: jobDescription || '',
+          companyWebsite: companyWebsite || '',
+          websiteContent: websiteContent || '',
+          stage: stage,
+          gradingInstructions: systemPrompt,
+          hrScreenFeedback: hrScreenFeedback || undefined,
+        }
+
+        console.log('📤 Calling Claude grader for Hiring Manager:', {
+          transcriptLength: gradingMaterials.transcript?.length || 0,
+          hasStructuredTranscript: !!gradingMaterials.transcriptStructured,
+          hasObserverNotes: !!gradingMaterials.observerNotes && Object.keys(gradingMaterials.observerNotes).length > 0,
+          hasResume: !!gradingMaterials.resume,
+          hasJobDescription: !!gradingMaterials.jobDescription,
+          hasHrScreenFeedback: !!gradingMaterials.hrScreenFeedback,
+        })
+
+        const rubric = await gradeHiringManagerWithRetry(gradingMaterials, 3)
+        console.log('📥 Claude returned Hiring Manager rubric with keys:', Object.keys(rubric))
+
+        // Validate rubric
+        if (!validateHiringManagerRubric(rubric)) {
+          console.error('❌ Hiring Manager rubric validation failed, falling back to OpenAI')
+          throw new Error('Invalid rubric structure from Claude')
+        }
+
+        console.log('✅ Hiring Manager grading successful, rubric validated')
+
+        // Derive fields from rubric for backwards compatibility
+        const feedback = {
+          overall_score: rubric.overall_assessment.overall_score,
+          area_scores: rubric.hiring_manager_criteria?.scores || {},
+          area_feedback: rubric.hiring_manager_criteria?.feedback || {},
+          strengths: rubric.overall_assessment.key_strengths || [],
+          weaknesses: rubric.overall_assessment.key_weaknesses || [],
+          suggestions: rubric.next_steps_preparation?.improvement_suggestions || [],
+          detailed_feedback: rubric.overall_assessment.summary || '',
+          hiring_manager_six_areas: rubric.hiring_manager_six_areas || {
+            what_went_well: [],
+            what_needs_improve: [],
+          },
+        }
+
+        // Save feedback to database
+        const insertData: any = {
+          interview_session_id: sessionId,
+          overall_score: Math.round(feedback.overall_score),
+          strengths: feedback.strengths,
+          weaknesses: feedback.weaknesses,
+          suggestions: feedback.suggestions,
+          detailed_feedback: feedback.detailed_feedback,
+          area_scores: feedback.area_scores,
+          area_feedback: feedback.area_feedback,
+          full_rubric: rubric,
+        }
+
+        const { data: savedFeedback, error: dbError } = await supabaseAdmin
+          .from('interview_feedback')
+          .insert(insertData)
+          .select()
+          .single()
+
+        if (dbError) {
+          console.error('Error saving Hiring Manager feedback to database:', dbError)
+          return NextResponse.json(
+            { error: 'Failed to save feedback', details: dbError.message },
+            { status: 500 }
+          )
+        }
+
+        console.log('✅ Hiring Manager feedback saved with full rubric:', savedFeedback?.id)
+
+        return NextResponse.json({
+          success: true,
+          feedback: {
+            overall_score: Math.round(feedback.overall_score),
+            area_scores: feedback.area_scores,
+            area_feedback: feedback.area_feedback,
+            strengths: feedback.strengths,
+            weaknesses: feedback.weaknesses,
+            suggestions: feedback.suggestions,
+            detailed_feedback: feedback.detailed_feedback,
+            hiring_manager_six_areas: feedback.hiring_manager_six_areas,
+          },
+        })
+      } catch (claudeError: any) {
+        console.error('❌ Claude Hiring Manager grading failed:', claudeError)
+        console.error('❌ Error message:', claudeError?.message)
+        console.log('⚠️ Falling back to OpenAI grader for Hiring Manager')
+        // Fall through to OpenAI path below
+      }
+    }
+
+    // Non-HR/non-HM stages or Claude fallback: Use OpenAI (existing path)
     // Build user message with transcript
     const transcriptText = Array.isArray(transcript) ? transcript.join('\n') : transcript
     const userMessage = `Please analyze this interview transcript and provide honest, job-specific feedback:\n\n${transcriptText}`

@@ -156,3 +156,100 @@ export function validateHrScreenRubric(rubric: any): boolean {
   return true
 }
 
+/**
+ * Validate Hiring Manager rubric response
+ */
+export function validateHiringManagerRubric(rubric: any): boolean {
+  if (!rubric || typeof rubric !== 'object') {
+    console.error('Rubric is not an object')
+    return false
+  }
+
+  // Validate overall_assessment
+  if (!rubric.overall_assessment || typeof rubric.overall_assessment !== 'object') {
+    console.error('Missing overall_assessment')
+    return false
+  }
+  if (!rubric.overall_assessment.overall_score) {
+    console.error('Missing overall_score in overall_assessment')
+    return false
+  }
+
+  // Validate hiring_manager_criteria (Tier 1 - universal)
+  if (!rubric.hiring_manager_criteria || typeof rubric.hiring_manager_criteria !== 'object') {
+    console.error('Missing hiring_manager_criteria')
+    return false
+  }
+
+  const hmCriteria = rubric.hiring_manager_criteria
+  if (!hmCriteria.scores || !hmCriteria.feedback) {
+    console.error('Missing scores or feedback in hiring_manager_criteria')
+    return false
+  }
+
+  const requiredHmCriteria = [
+    'depth_of_knowledge',
+    'problem_solving',
+    'impact_and_results',
+    'role_alignment',
+    'growth_and_self_awareness',
+    'red_flags',
+  ]
+
+  for (const criterion of requiredHmCriteria) {
+    if (!(criterion in hmCriteria.scores)) {
+      console.error(`Missing required criterion in hiring_manager_criteria scores: ${criterion}`)
+      return false
+    }
+    if (!(criterion in hmCriteria.feedback)) {
+      console.error(`Missing required criterion in hiring_manager_criteria feedback: ${criterion}`)
+      return false
+    }
+    if (typeof hmCriteria.scores[criterion] !== 'number') {
+      console.error(`Invalid score type for ${criterion}: expected number, got ${typeof hmCriteria.scores[criterion]}`)
+      return false
+    }
+    if (typeof hmCriteria.feedback[criterion] !== 'string' || hmCriteria.feedback[criterion].trim().length === 0) {
+      console.error(`Invalid or empty feedback for ${criterion}`)
+      return false
+    }
+  }
+
+  // Validate role_specific_criteria (Tier 2 - JD-adaptive)
+  if (!rubric.role_specific_criteria || !rubric.role_specific_criteria.criteria_identified) {
+    console.error('Missing role_specific_criteria or criteria_identified')
+    return false
+  }
+  if (!Array.isArray(rubric.role_specific_criteria.criteria_identified) || rubric.role_specific_criteria.criteria_identified.length === 0) {
+    console.error('role_specific_criteria.criteria_identified must be a non-empty array')
+    return false
+  }
+
+  // Validate hiring_manager_six_areas
+  if (!rubric.hiring_manager_six_areas) {
+    console.error('Missing hiring_manager_six_areas')
+    return false
+  }
+
+  const hmSixAreas = rubric.hiring_manager_six_areas
+  if (!hmSixAreas.what_went_well || !Array.isArray(hmSixAreas.what_went_well)) {
+    console.error('Missing or invalid what_went_well in hiring_manager_six_areas')
+    return false
+  }
+  if (!hmSixAreas.what_needs_improve || !Array.isArray(hmSixAreas.what_needs_improve)) {
+    console.error('Missing or invalid what_needs_improve in hiring_manager_six_areas')
+    return false
+  }
+
+  // Validate other required top-level fields exist
+  const otherRequired = ['time_management_analysis', 'question_analysis', 'next_steps_preparation', 'comparative_analysis']
+  for (const field of otherRequired) {
+    if (!rubric[field]) {
+      console.error(`Missing required field: ${field}`)
+      return false
+    }
+  }
+
+  return true
+}
+

@@ -466,3 +466,283 @@ export async function gradeHiringManagerWithRetry(
   return gradeWithRetry(gradeHiringManager, materials, maxRetries)
 }
 
+/**
+ * Grade Culture Fit interview using Claude Sonnet 4
+ */
+export async function gradeCultureFit(
+  materials: GradingMaterials
+): Promise<RubricResponse> {
+  const systemPrompt = buildCultureFitGradingPrompt(materials)
+  const userMessage = buildStageUserMessage(materials, 'Culture Fit')
+  return callClaudeGrader(systemPrompt, userMessage)
+}
+
+/**
+ * Grade Culture Fit interview with retry
+ */
+export async function gradeCultureFitWithRetry(
+  materials: GradingMaterials,
+  maxRetries: number = 3
+): Promise<RubricResponse> {
+  return gradeWithRetry(gradeCultureFit, materials, maxRetries)
+}
+
+/**
+ * Grade Final Round interview using Claude Sonnet 4
+ */
+export async function gradeFinalRound(
+  materials: GradingMaterials
+): Promise<RubricResponse> {
+  const systemPrompt = buildFinalRoundGradingPrompt(materials)
+  const userMessage = buildStageUserMessage(materials, 'Final Round')
+  return callClaudeGrader(systemPrompt, userMessage)
+}
+
+/**
+ * Grade Final Round interview with retry
+ */
+export async function gradeFinalRoundWithRetry(
+  materials: GradingMaterials,
+  maxRetries: number = 3
+): Promise<RubricResponse> {
+  return gradeWithRetry(gradeFinalRound, materials, maxRetries)
+}
+
+/**
+ * Generic user message builder for non-HR stages
+ */
+function buildStageUserMessage(materials: GradingMaterials, stageName: string): string {
+  let message = `Please evaluate this ${stageName} interview.\n\n`
+
+  if (materials.transcriptStructured) {
+    message += `STRUCTURED TRANSCRIPT:\n${JSON.stringify(materials.transcriptStructured, null, 2)}\n\n`
+  } else {
+    message += `TRANSCRIPT:\n${materials.transcript}\n\n`
+  }
+
+  if (materials.observerNotes && Object.keys(materials.observerNotes).length > 0) {
+    message += `OBSERVER NOTES:\n${JSON.stringify(materials.observerNotes, null, 2)}\n\n`
+  }
+
+  message += `CANDIDATE RESUME:\n${materials.resume}\n\n`
+  message += `JOB DESCRIPTION:\n${materials.jobDescription}\n\n`
+
+  if (materials.websiteContent) {
+    message += `COMPANY WEBSITE CONTENT:\n${materials.websiteContent}\n\n`
+  }
+
+  message += `Please provide a comprehensive evaluation following the grading criteria specified.`
+
+  return message
+}
+
+/**
+ * Build Culture Fit grading prompt
+ * Criteria: teamwork, communication, values alignment, adaptability, feedback receptiveness, conflict resolution
+ */
+function buildCultureFitGradingPrompt(materials: GradingMaterials): string {
+  let prompt = 'You are an expert interview evaluator assessing a Culture Fit round interview.'
+
+  prompt += `\n\nINTERVIEW STAGE: CULTURE FIT`
+
+  prompt += `\n\n=== CULTURE FIT 6-AREA EVALUATION ===
+You are evaluating a Culture Fit interview. This round focuses on how the candidate works with others,
+their values alignment, communication style, and whether they would thrive on the team.
+
+You will receive the full interview transcript, candidate resume, job description, and possibly observer notes
+and prior round feedback.
+
+CULTURE FIT CRITERIA (score each 1-10):
+
+1. Teamwork & Collaboration
+   - Do they prefer collaborative or independent work? Can they do both?
+   - Did they give specific examples of effective teamwork?
+   - Do they elevate others or focus only on personal achievements?
+
+2. Communication Style
+   - How clearly do they express ideas?
+   - Are they good listeners? Do they build on what others say?
+   - Can they adapt their communication to different audiences?
+
+3. Values & Mission Alignment
+   - Do their career motivations align with the company's mission?
+   - Do they show genuine interest beyond just getting a job?
+   - Are their personal values compatible with the company culture?
+
+4. Adaptability & Flexibility
+   - How do they handle ambiguity, changing priorities, or unexpected challenges?
+   - Can they work outside their comfort zone?
+   - Are they open to new ideas and approaches?
+
+5. Feedback & Growth Mindset
+   - How do they give constructive feedback to peers?
+   - How do they handle receiving critical feedback?
+   - Do they show a pattern of learning and improving?
+
+6. Conflict Resolution
+   - How do they handle disagreements with colleagues?
+   - Do they approach conflict constructively or avoid it?
+   - Can they separate personal feelings from professional disagreements?
+
+OUTPUT FORMAT FOR 6 AREAS:
+You MUST include a "culture_fit_six_areas" field with this structure:
+{
+  "culture_fit_six_areas": {
+    "what_went_well": [
+      {
+        "criterion": "Teamwork & Collaboration",
+        "feedback": "[1-2 sentence explanation with specific transcript reference]",
+        "evidence": [{ "question_id": "q2", "timestamp": "5:30", "excerpt": "candidate's response..." }]
+      }
+    ],
+    "what_needs_improve": [
+      {
+        "criterion": "Conflict Resolution",
+        "feedback": "[1-2 sentence explanation]",
+        "evidence": [{ "question_id": "q4", "timestamp": "12:00", "excerpt": "candidate's response..." }]
+      }
+    ]
+  }
+}
+
+Each of the 6 criteria should appear in either "what_went_well" or "what_needs_improve" (not both).`
+
+  // Cross-stage context
+  if (materials.hrScreenFeedback) {
+    prompt += `\n\n=== CROSS-STAGE INTELLIGENCE ===
+The candidate has completed prior rounds. Here is their earlier feedback:
+
+Prior Round Overall Score: ${materials.hrScreenFeedback.overall_score}/10
+
+Prior Strengths:
+${(materials.hrScreenFeedback.strengths || []).map((s: string) => `- ${s}`).join('\n') || '- None noted'}
+
+Prior Weaknesses:
+${(materials.hrScreenFeedback.weaknesses || []).map((w: string) => `- ${w}`).join('\n') || '- None noted'}
+
+Include a "cross_stage_progress" section noting improvements, consistent strengths, persistent weaknesses, and new concerns.`
+  }
+
+  prompt += `\n\nYou MUST respond with valid JSON. Include ALL of these required fields:`
+  prompt += `\n- overall_assessment (with overall_score 1-10, likelihood_to_advance, key_strengths, key_weaknesses, summary)`
+  prompt += `\n- culture_fit_criteria (with scores and feedback objects for ALL 6 criteria)`
+  prompt += `\n- time_management_analysis`
+  prompt += `\n- question_analysis`
+  prompt += `\n- next_steps_preparation (with ready_for_next_round, confidence_level, improvement_suggestions, practice_recommendations, areas_to_study, predicted_next_round_questions)`
+  prompt += `\n- comparative_analysis (with resume_vs_interview, job_requirements_gaps, standout_qualities, common_weaknesses_avoided, percentile_estimate)`
+  prompt += `\n- culture_fit_six_areas (with what_went_well and what_needs_improve arrays)`
+  if (materials.hrScreenFeedback) {
+    prompt += `\n- cross_stage_progress (with improvement_from_hr_screen, consistent_strengths, persistent_weaknesses, new_concerns)`
+  }
+
+  prompt += `\n\nMANDATORY REQUIREMENTS FOR culture_fit_criteria:`
+  prompt += `\nYou MUST include ALL 6 criteria in both "scores" and "feedback" objects with these EXACT names:`
+  prompt += `\n1. teamwork_collaboration`
+  prompt += `\n2. communication_style`
+  prompt += `\n3. values_alignment`
+  prompt += `\n4. adaptability`
+  prompt += `\n5. feedback_growth_mindset`
+  prompt += `\n6. conflict_resolution`
+
+  prompt += `\n\nSCORING SCALE (1-10): Same as other stages. Be honest and constructive.`
+
+  return prompt
+}
+
+/**
+ * Build Final Round grading prompt
+ * Criteria: strategic thinking, leadership, decision-making, cross-functional impact, long-term alignment, executive presence
+ */
+function buildFinalRoundGradingPrompt(materials: GradingMaterials): string {
+  let prompt = 'You are an expert interview evaluator assessing a Final Round interview with a senior leader.'
+
+  prompt += `\n\nINTERVIEW STAGE: FINAL ROUND`
+
+  prompt += `\n\n=== FINAL ROUND 6-AREA EVALUATION ===
+You are evaluating a Final Round interview. This is the last stage — conducted by a VP or senior stakeholder.
+It focuses on strategic thinking, leadership, and long-term fit.
+
+FINAL ROUND CRITERIA (score each 1-10):
+
+1. Strategic Thinking
+   - Can they think beyond their individual role?
+   - Do they understand industry trends and the company's market position?
+   - Can they articulate a vision for their first 90 days / first year?
+
+2. Leadership & Influence
+   - Can they build and scale teams?
+   - Do they lead through influence, not just authority?
+   - How do they handle underperformers and develop talent?
+
+3. Decision-Making Under Ambiguity
+   - How do they make high-stakes decisions with incomplete data?
+   - Do they weigh tradeoffs explicitly?
+   - Can they explain their decision-making framework?
+
+4. Cross-Functional Impact
+   - Have they driven outcomes across multiple teams or functions?
+   - Can they partner effectively with product, sales, design, etc.?
+   - Do they think about organizational impact, not just team impact?
+
+5. Long-Term Alignment
+   - Does their career trajectory make sense for this role?
+   - Are they genuinely excited about this opportunity?
+   - Would this role be a meaningful next step in their career?
+
+6. Executive Presence
+   - Do they communicate with clarity and confidence at a senior level?
+   - Can they simplify complex topics for diverse audiences?
+   - Do they project authority without being arrogant?
+
+OUTPUT FORMAT FOR 6 AREAS:
+You MUST include a "final_round_six_areas" field with this structure:
+{
+  "final_round_six_areas": {
+    "what_went_well": [...],
+    "what_needs_improve": [...]
+  }
+}
+Same format as previous stages: criterion, feedback, evidence array.`
+
+  // Cross-stage context
+  if (materials.hrScreenFeedback) {
+    prompt += `\n\n=== CROSS-STAGE INTELLIGENCE ===
+The candidate has completed prior rounds. Here is their earlier feedback:
+
+Prior Round Overall Score: ${materials.hrScreenFeedback.overall_score}/10
+
+Prior Strengths:
+${(materials.hrScreenFeedback.strengths || []).map((s: string) => `- ${s}`).join('\n') || '- None noted'}
+
+Prior Weaknesses:
+${(materials.hrScreenFeedback.weaknesses || []).map((w: string) => `- ${w}`).join('\n') || '- None noted'}
+
+Include a "cross_stage_progress" section. For the final round, also note whether earlier concerns were resolved.`
+  }
+
+  prompt += `\n\nYou MUST respond with valid JSON. Include ALL of these required fields:`
+  prompt += `\n- overall_assessment (with overall_score 1-10, likelihood_to_advance as "hire"/"no_hire"/"strong_hire", key_strengths, key_weaknesses, summary)`
+  prompt += `\n- final_round_criteria (with scores and feedback objects for ALL 6 criteria)`
+  prompt += `\n- time_management_analysis`
+  prompt += `\n- question_analysis`
+  prompt += `\n- next_steps_preparation (with ready_for_next_round as hire recommendation, confidence_level, improvement_suggestions, practice_recommendations)`
+  prompt += `\n- comparative_analysis (with resume_vs_interview, job_requirements_gaps, standout_qualities, common_weaknesses_avoided, percentile_estimate)`
+  prompt += `\n- final_round_six_areas (with what_went_well and what_needs_improve arrays)`
+  if (materials.hrScreenFeedback) {
+    prompt += `\n- cross_stage_progress (with improvement_from_hr_screen, consistent_strengths, persistent_weaknesses, new_concerns)`
+  }
+
+  prompt += `\n\nMANDATORY REQUIREMENTS FOR final_round_criteria:`
+  prompt += `\nYou MUST include ALL 6 criteria in both "scores" and "feedback" objects with these EXACT names:`
+  prompt += `\n1. strategic_thinking`
+  prompt += `\n2. leadership_influence`
+  prompt += `\n3. decision_making`
+  prompt += `\n4. cross_functional_impact`
+  prompt += `\n5. long_term_alignment`
+  prompt += `\n6. executive_presence`
+
+  prompt += `\n\nSCORING SCALE (1-10): Same as other stages. Be honest and constructive.`
+
+  return prompt
+}
+

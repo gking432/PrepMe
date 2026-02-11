@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import OpenAI from 'openai'
-import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, GradingMaterials } from '@/lib/claude-client'
-import { validateHrScreenRubric, validateHiringManagerRubric } from '@/lib/rubric-validator'
+import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
+import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Fetch structured transcript and observer notes for graded stages
     let structuredTranscript = null
     let observerNotes = null
-    if (sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') {
+    if (['hr_screen', 'hiring_manager', 'culture_fit', 'final'].includes(sessionData.stage)) {
       const { data: sessionWithData } = await supabaseAdmin
         .from('interview_sessions')
         .select('transcript_structured, observer_notes, user_id')
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     // Fetch company website content for grader
     let websiteContent = null
-    if ((sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') && companyWebsite) {
+    if (['hr_screen', 'hiring_manager', 'culture_fit', 'final'].includes(sessionData.stage) && companyWebsite) {
       try {
         const websiteResponse = await fetch(`${request.nextUrl.origin}/api/scrape-website`, {
           method: 'POST',
@@ -751,6 +751,170 @@ Use the question IDs and timestamps from this structured transcript when providi
         console.error('❌ Error message:', claudeError?.message)
         console.log('⚠️ Falling back to OpenAI grader for Hiring Manager')
         // Fall through to OpenAI path below
+      }
+    }
+
+    // Culture Fit grading via Claude
+    if (stage === 'culture_fit') {
+      try {
+        console.log('🎯 Using Claude Sonnet 4 for Culture Fit grading')
+
+        const gradingMaterials: GradingMaterials = {
+          transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
+          transcriptStructured: structuredTranscript,
+          observerNotes: observerNotes || {},
+          resume: resume || '',
+          jobDescription: jobDescription || '',
+          companyWebsite: companyWebsite || '',
+          websiteContent: websiteContent || '',
+          stage: stage,
+          gradingInstructions: systemPrompt,
+          hrScreenFeedback: hrScreenFeedback || undefined,
+        }
+
+        const rubric = await gradeCultureFitWithRetry(gradingMaterials, 3)
+        console.log('📥 Claude returned Culture Fit rubric with keys:', Object.keys(rubric))
+
+        if (!validateCultureFitRubric(rubric)) {
+          console.error('❌ Culture Fit rubric validation failed, falling back to OpenAI')
+          throw new Error('Invalid rubric structure from Claude')
+        }
+
+        console.log('✅ Culture Fit grading successful, rubric validated')
+
+        const feedback = {
+          overall_score: rubric.overall_assessment.overall_score,
+          area_scores: (rubric as any).culture_fit_criteria?.scores || {},
+          area_feedback: (rubric as any).culture_fit_criteria?.feedback || {},
+          strengths: rubric.overall_assessment.key_strengths || [],
+          weaknesses: rubric.overall_assessment.key_weaknesses || [],
+          suggestions: rubric.next_steps_preparation?.improvement_suggestions || [],
+          detailed_feedback: rubric.overall_assessment.summary || '',
+        }
+
+        const insertData: any = {
+          interview_session_id: sessionId,
+          overall_score: Math.round(feedback.overall_score),
+          strengths: feedback.strengths,
+          weaknesses: feedback.weaknesses,
+          suggestions: feedback.suggestions,
+          detailed_feedback: feedback.detailed_feedback,
+          area_scores: feedback.area_scores,
+          area_feedback: feedback.area_feedback,
+          full_rubric: rubric,
+        }
+
+        const { data: savedFeedback, error: dbError } = await supabaseAdmin
+          .from('interview_feedback')
+          .insert(insertData)
+          .select()
+          .single()
+
+        if (dbError) {
+          console.error('Error saving Culture Fit feedback:', dbError)
+          return NextResponse.json({ error: 'Failed to save feedback', details: dbError.message }, { status: 500 })
+        }
+
+        console.log('✅ Culture Fit feedback saved:', savedFeedback?.id)
+
+        return NextResponse.json({
+          success: true,
+          feedback: {
+            overall_score: Math.round(feedback.overall_score),
+            area_scores: feedback.area_scores,
+            area_feedback: feedback.area_feedback,
+            strengths: feedback.strengths,
+            weaknesses: feedback.weaknesses,
+            suggestions: feedback.suggestions,
+            detailed_feedback: feedback.detailed_feedback,
+            culture_fit_six_areas: (rubric as any).culture_fit_six_areas,
+          },
+        })
+      } catch (claudeError: any) {
+        console.error('❌ Claude Culture Fit grading failed:', claudeError?.message)
+        console.log('⚠️ Falling back to OpenAI grader')
+      }
+    }
+
+    // Final Round grading via Claude
+    if (stage === 'final') {
+      try {
+        console.log('🎯 Using Claude Sonnet 4 for Final Round grading')
+
+        const gradingMaterials: GradingMaterials = {
+          transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
+          transcriptStructured: structuredTranscript,
+          observerNotes: observerNotes || {},
+          resume: resume || '',
+          jobDescription: jobDescription || '',
+          companyWebsite: companyWebsite || '',
+          websiteContent: websiteContent || '',
+          stage: stage,
+          gradingInstructions: systemPrompt,
+          hrScreenFeedback: hrScreenFeedback || undefined,
+        }
+
+        const rubric = await gradeFinalRoundWithRetry(gradingMaterials, 3)
+        console.log('📥 Claude returned Final Round rubric with keys:', Object.keys(rubric))
+
+        if (!validateFinalRoundRubric(rubric)) {
+          console.error('❌ Final Round rubric validation failed, falling back to OpenAI')
+          throw new Error('Invalid rubric structure from Claude')
+        }
+
+        console.log('✅ Final Round grading successful, rubric validated')
+
+        const feedback = {
+          overall_score: rubric.overall_assessment.overall_score,
+          area_scores: (rubric as any).final_round_criteria?.scores || {},
+          area_feedback: (rubric as any).final_round_criteria?.feedback || {},
+          strengths: rubric.overall_assessment.key_strengths || [],
+          weaknesses: rubric.overall_assessment.key_weaknesses || [],
+          suggestions: rubric.next_steps_preparation?.improvement_suggestions || [],
+          detailed_feedback: rubric.overall_assessment.summary || '',
+        }
+
+        const insertData: any = {
+          interview_session_id: sessionId,
+          overall_score: Math.round(feedback.overall_score),
+          strengths: feedback.strengths,
+          weaknesses: feedback.weaknesses,
+          suggestions: feedback.suggestions,
+          detailed_feedback: feedback.detailed_feedback,
+          area_scores: feedback.area_scores,
+          area_feedback: feedback.area_feedback,
+          full_rubric: rubric,
+        }
+
+        const { data: savedFeedback, error: dbError } = await supabaseAdmin
+          .from('interview_feedback')
+          .insert(insertData)
+          .select()
+          .single()
+
+        if (dbError) {
+          console.error('Error saving Final Round feedback:', dbError)
+          return NextResponse.json({ error: 'Failed to save feedback', details: dbError.message }, { status: 500 })
+        }
+
+        console.log('✅ Final Round feedback saved:', savedFeedback?.id)
+
+        return NextResponse.json({
+          success: true,
+          feedback: {
+            overall_score: Math.round(feedback.overall_score),
+            area_scores: feedback.area_scores,
+            area_feedback: feedback.area_feedback,
+            strengths: feedback.strengths,
+            weaknesses: feedback.weaknesses,
+            suggestions: feedback.suggestions,
+            detailed_feedback: feedback.detailed_feedback,
+            final_round_six_areas: (rubric as any).final_round_six_areas,
+          },
+        })
+      } catch (claudeError: any) {
+        console.error('❌ Claude Final Round grading failed:', claudeError?.message)
+        console.log('⚠️ Falling back to OpenAI grader')
       }
     }
 

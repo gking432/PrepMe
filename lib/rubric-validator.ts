@@ -253,3 +253,149 @@ export function validateHiringManagerRubric(rubric: any): boolean {
   return true
 }
 
+/**
+ * Validate Culture Fit rubric response
+ */
+export function validateCultureFitRubric(rubric: any): boolean {
+  if (!rubric || typeof rubric !== 'object') {
+    console.error('Rubric is not an object')
+    return false
+  }
+
+  if (!rubric.overall_assessment || !rubric.overall_assessment.overall_score) {
+    console.error('Missing overall_assessment or overall_score')
+    return false
+  }
+
+  // Validate culture_fit_criteria
+  if (!rubric.culture_fit_criteria || typeof rubric.culture_fit_criteria !== 'object') {
+    console.error('Missing culture_fit_criteria')
+    return false
+  }
+
+  const cfCriteria = rubric.culture_fit_criteria
+  if (!cfCriteria.scores || !cfCriteria.feedback) {
+    console.error('Missing scores or feedback in culture_fit_criteria')
+    return false
+  }
+
+  const requiredCfCriteria = [
+    'teamwork_collaboration',
+    'communication_style',
+    'values_alignment',
+    'adaptability',
+    'feedback_growth_mindset',
+    'conflict_resolution',
+  ]
+
+  for (const criterion of requiredCfCriteria) {
+    if (!(criterion in cfCriteria.scores)) {
+      console.error(`Missing required criterion in culture_fit_criteria scores: ${criterion}`)
+      return false
+    }
+    if (!(criterion in cfCriteria.feedback)) {
+      console.error(`Missing required criterion in culture_fit_criteria feedback: ${criterion}`)
+      return false
+    }
+  }
+
+  // Validate culture_fit_six_areas
+  if (!rubric.culture_fit_six_areas) {
+    console.error('Missing culture_fit_six_areas')
+    return false
+  }
+
+  const cfSixAreas = rubric.culture_fit_six_areas
+  if (!cfSixAreas.what_went_well || !Array.isArray(cfSixAreas.what_went_well)) {
+    console.error('Missing or invalid what_went_well in culture_fit_six_areas')
+    return false
+  }
+  if (!cfSixAreas.what_needs_improve || !Array.isArray(cfSixAreas.what_needs_improve)) {
+    console.error('Missing or invalid what_needs_improve in culture_fit_six_areas')
+    return false
+  }
+
+  const otherRequired = ['time_management_analysis', 'question_analysis', 'next_steps_preparation', 'comparative_analysis']
+  for (const field of otherRequired) {
+    if (!rubric[field]) {
+      console.error(`Missing required field: ${field}`)
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Validate Final Round rubric response
+ */
+export function validateFinalRoundRubric(rubric: any): boolean {
+  if (!rubric || typeof rubric !== 'object') {
+    console.error('Rubric is not an object')
+    return false
+  }
+
+  if (!rubric.overall_assessment || !rubric.overall_assessment.overall_score) {
+    console.error('Missing overall_assessment or overall_score')
+    return false
+  }
+
+  // Validate final_round_criteria
+  if (!rubric.final_round_criteria || typeof rubric.final_round_criteria !== 'object') {
+    console.error('Missing final_round_criteria')
+    return false
+  }
+
+  const frCriteria = rubric.final_round_criteria
+  if (!frCriteria.scores || !frCriteria.feedback) {
+    console.error('Missing scores or feedback in final_round_criteria')
+    return false
+  }
+
+  const requiredFrCriteria = [
+    'strategic_thinking',
+    'leadership_influence',
+    'decision_making',
+    'cross_functional_impact',
+    'long_term_alignment',
+    'executive_presence',
+  ]
+
+  for (const criterion of requiredFrCriteria) {
+    if (!(criterion in frCriteria.scores)) {
+      console.error(`Missing required criterion in final_round_criteria scores: ${criterion}`)
+      return false
+    }
+    if (!(criterion in frCriteria.feedback)) {
+      console.error(`Missing required criterion in final_round_criteria feedback: ${criterion}`)
+      return false
+    }
+  }
+
+  // Validate final_round_six_areas
+  if (!rubric.final_round_six_areas) {
+    console.error('Missing final_round_six_areas')
+    return false
+  }
+
+  const frSixAreas = rubric.final_round_six_areas
+  if (!frSixAreas.what_went_well || !Array.isArray(frSixAreas.what_went_well)) {
+    console.error('Missing or invalid what_went_well in final_round_six_areas')
+    return false
+  }
+  if (!frSixAreas.what_needs_improve || !Array.isArray(frSixAreas.what_needs_improve)) {
+    console.error('Missing or invalid what_needs_improve in final_round_six_areas')
+    return false
+  }
+
+  const otherRequired = ['time_management_analysis', 'question_analysis', 'next_steps_preparation', 'comparative_analysis']
+  for (const field of otherRequired) {
+    if (!rubric[field]) {
+      console.error(`Missing required field: ${field}`)
+      return false
+    }
+  }
+
+  return true
+}
+

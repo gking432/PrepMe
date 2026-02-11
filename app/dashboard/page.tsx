@@ -7,12 +7,13 @@ import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import { LogOut, Settings, Play, CheckCircle, Upload, Globe, FileText, Target, User } from 'lucide-react'
 
-type InterviewStage = 'hr_screen' | 'hiring_manager' | 'team_interview'
+type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
 const STAGE_NAMES: Record<InterviewStage, string> = {
   hr_screen: 'HR Phone Screen',
   hiring_manager: 'Hiring Manager',
-  team_interview: 'Team Interview',
+  culture_fit: 'Culture Fit',
+  final: 'Final Round',
 }
 
 export default function DashboardPage() {
@@ -666,7 +667,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex flex-wrap gap-4 items-center">
                 <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-                  {(['hr_screen', 'hiring_manager', 'team_interview'] as const).map((s) => (
+                  {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((s) => (
                     <button
                       key={s}
                       type="button"
@@ -1016,7 +1017,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-700 mb-2">Start an interview</p>
                   <div className="flex flex-wrap gap-2 items-center">
                     <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-                      {(['hr_screen', 'hiring_manager', 'team_interview'] as const).map((s) => (
+                      {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((s) => (
                         <button
                           key={s}
                           type="button"

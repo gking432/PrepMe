@@ -10,19 +10,17 @@ const STAGE_NAMES: Record<string, string> = {
   hr_screen: 'HR Screen',
   hiring_manager: 'Hiring Manager',
   culture_fit: 'Culture Fit',
-  final_interview: 'Final Interview',
-  team_interview: 'Team Interview',
+  final: 'Final Round',
 }
 
 const STAGE_ICONS: Record<string, any> = {
   hr_screen: Phone,
   hiring_manager: Briefcase,
   culture_fit: Users,
-  final_interview: Crown,
-  team_interview: Users,
+  final: Crown,
 }
 
-const ALL_STAGES = ['hr_screen', 'hiring_manager', 'culture_fit', 'final_interview']
+const ALL_STAGES = ['hr_screen', 'hiring_manager', 'culture_fit', 'final']
 
 interface InterviewGroup {
   companyName: string | null
@@ -177,7 +175,7 @@ export default function ProfilePage() {
           }
 
           const group = groupsMap.get(groupKey)!
-          const stageKey = session.stage === 'team_interview' ? 'culture_fit' : session.stage
+          const stageKey = session.stage === 'team_interview' ? 'culture_fit' : session.stage === 'final_interview' ? 'final' : session.stage
           
           // Map final_interview if needed
           const mappedStage = stageKey === 'final_interview' ? 'final_interview' : 

@@ -261,9 +261,11 @@ ${contextSection}`,
     if (stage === 'hr_screen' && messageCount >= 6) {
       nextStage = 'hiring_manager'
     } else if (stage === 'hiring_manager' && messageCount >= 8) {
-      nextStage = 'team_interview'
-    } else if (stage === 'team_interview' && messageCount >= 10) {
-      if (assistantMessage.toLowerCase().includes('questions for us')) {
+      nextStage = 'culture_fit'
+    } else if (stage === 'culture_fit' && messageCount >= 8) {
+      nextStage = 'final'
+    } else if (stage === 'final' && messageCount >= 7) {
+      if (assistantMessage.toLowerCase().includes('questions for') || assistantMessage.toLowerCase().includes('next steps')) {
         complete = true
       }
     }

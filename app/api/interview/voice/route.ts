@@ -8,6 +8,9 @@ import {
   getNextQuestionId,
   calculateDuration,
 } from '@/lib/interview-session'
+import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-prompts/hiring_manager'
+import { buildSystemPrompt as buildCultureFitPrompt } from '@/lib/interview-prompts/culture_fit'
+import { buildSystemPrompt as buildFinalPrompt } from '@/lib/interview-prompts/final'
 import { recordTurn } from '@/lib/observer-agent'
 import OpenAI from 'openai'
 
@@ -26,7 +29,7 @@ export async function POST(request: NextRequest) {
     // HR Screen / Hiring Manager conversation state
     const conversationPhaseRaw = stage === 'hr_screen' ? (formData.get('conversationPhase') as string) : null
     const conversationPhase = conversationPhaseRaw || (stage === 'hr_screen' ? 'opening' : null) // Default to 'opening' for HR screen
-    const askedQuestionsData = (stage === 'hr_screen' || stage === 'hiring_manager') ? formData.get('askedQuestions') as string : null
+    const askedQuestionsData = formData.get('askedQuestions') as string
     const askedQuestions = askedQuestionsData ? JSON.parse(askedQuestionsData) : []
     
     // Log what we received from frontend
@@ -156,19 +159,9 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // If still no data, try to get ANY recent interview data (last resort)
+    // If still no data, fail gracefully instead of leaking another user's data
     if (!interviewData) {
-      console.log('⚠️ No interview data found via session or user_id, trying to get most recent data...')
-      const { data: anyInterviewData, error: anyError } = await supabaseAdmin
-        .from('user_interview_data')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-      
-      if (!anyError && anyInterviewData && anyInterviewData.length > 0) {
-        interviewData = anyInterviewData[0]
-        console.log('⚠️ Got most recent interview data (not user-specific)')
-      }
+      console.error('❌ No interview data found for this session or user. Cannot proceed.')
     }
     
     console.log('Interview data retrieved:', {
@@ -566,75 +559,43 @@ Then close: "Great. I'll follow up about next steps. Thanks for your time today.
 
       systemPrompt = `${dataSection}${NATURAL_HR_INTERVIEWER_PROMPT}`
     } else {
-      // OTHER STAGES - Keep existing logic
-      systemPrompt = `${promptData?.system_prompt || 'You are conducting a job interview.'}
-
-${hrScreenContext}
-
-${hasJobDescription ? `YOU ARE AN HR REPRESENTATIVE FROM ${companyName.toUpperCase()}. You are conducting this interview on behalf of your company.` : 'You are conducting a job interview.'}
-
-${hasResume && hasJobDescription ? `
-CRITICAL: You have full access to the candidate's resume, the job description, and company information. You MUST:
-1. Reference specific experiences, skills, and achievements from their resume
-2. Ask about specific projects, roles, or accomplishments mentioned in their resume
-3. Connect their background to the job requirements
-4. If the candidate asks if you have their resume, confirm that you do and reference specific details
-5. Take on the persona of an HR professional from ${companyName} - embody the company culture, values, and tone based on the company website
-6. Use the company website information to understand the company's mission, values, and culture - reflect this in your questions and responses
+      // OTHER STAGES - Use stage-specific prompt modules
+      // Build data section with candidate materials
+      const stageDataSection = `=== CANDIDATE INFORMATION - READ THIS FIRST ===
 
 CANDIDATE'S RESUME:
-${interviewData.resume_text}
+${interviewData.resume_text || 'Not provided'}
 
 JOB DESCRIPTION:
-${interviewData.job_description_text}
+${interviewData.job_description_text || 'Not provided'}
 
-${websiteContent ? `COMPANY WEBSITE CONTENT (for persona and context):
+${websiteContent ? `COMPANY WEBSITE CONTENT:
 ${websiteContent}
 ` : `COMPANY WEBSITE: ${interviewData.company_website || 'Not provided'}
 `}
 
-When asking questions:
-- Reference specific companies, roles, or projects from their resume
-- Ask about gaps, transitions, or interesting experiences mentioned
-- Connect their past experience to the role requirements
-- Be specific: "I see you worked at [Company] as a [Role] - tell me about that experience"
-- Use company culture and values from the website to inform your tone and questions
-- Do NOT ask generic questions when you have specific resume details available
-` : hasResume ? `
-CRITICAL: You have access to the candidate's resume. You MUST:
-1. Reference specific experiences and achievements from their resume
-2. Ask about specific projects, roles, or accomplishments mentioned
-3. If the candidate asks if you have their resume, confirm that you do
+=== END CANDIDATE INFORMATION ===
 
-CANDIDATE'S RESUME:
-${interviewData.resume_text}
-` : hasJobDescription ? `
-CRITICAL: You have access to the job description${websiteContent ? ' and company website' : ''}. You MUST:
-1. Reference specific requirements from the job description
-2. Ask questions relevant to the role requirements
-3. Take on the persona of an HR professional from ${companyName}
-${websiteContent ? `4. Use the company website information to understand the company's mission, values, and culture - reflect this in your questions and responses` : ''}
+`
 
-JOB DESCRIPTION:
-${interviewData.job_description_text}
+      // Build conversation context from prior rounds
+      const conversationContext = hrScreenContext
+        ? `\nPRIOR ROUND CONTEXT:\n${hrScreenContext}`
+        : ''
 
-${websiteContent ? `COMPANY WEBSITE CONTENT (for persona and context):
-${websiteContent}
-` : `COMPANY WEBSITE: ${interviewData.company_website || 'Not provided'}
-`}
-` : ''}
+      // Build dynamic phase instructions based on asked questions
+      const askedQuestionsList = askedQuestions.length > 0
+        ? askedQuestions.map((q: string) => (q.trim().length > 100 ? q.trim().substring(0, 100) + '...' : q.trim()))
+        : transcript.filter((msg: string) => typeof msg === 'string' && msg.startsWith('Interviewer:')).map((msg: string) => {
+            const q = msg.replace('Interviewer:', '').trim()
+            return q.length > 100 ? q.substring(0, 100) + '...' : q
+          })
+      const askedQuestionsCount = askedQuestionsList.length
+      const askedQuestionsPreview = askedQuestionsList.slice(-8)
 
-Keep responses concise and natural for voice conversation (under 60 words). Ask follow-up questions when appropriate.`
-      // Add phase instructions for hiring_manager (dynamic question mix tracking)
+      let phaseInstructions = ''
+
       if (stage === 'hiring_manager') {
-        const askedQuestionsListHm = askedQuestions.length > 0
-          ? askedQuestions.map((q: string) => (q.trim().length > 100 ? q.trim().substring(0, 100) + '...' : q.trim()))
-          : transcript.filter((msg: string) => typeof msg === 'string' && msg.startsWith('Interviewer:')).map((msg: string) => {
-              const q = msg.replace('Interviewer:', '').trim()
-              return q.length > 100 ? q.substring(0, 100) + '...' : q
-            })
-        const askedQuestionsCount = askedQuestionsListHm.length
-        const askedQuestionsPreview = askedQuestionsListHm.slice(-8)
         const hasAskedTechnicalDeepDive = askedQuestionsPreview.some((q: string) =>
           q.toLowerCase().includes('walk me through') ||
           q.toLowerCase().includes('most complex') ||
@@ -656,43 +617,113 @@ Keep responses concise and natural for voice conversation (under 60 words). Ask 
           q.toLowerCase().includes('mistake') ||
           q.toLowerCase().includes('challenge')
         )
-        const phaseInstructionsHm = `
+        phaseInstructions = `
 HIRING MANAGER INTERVIEW - CURRENT STATE:
 
 Questions asked so far: ${askedQuestionsCount}/8 target
 
 QUESTION MIX (ensure variety):
-${!hasAskedTechnicalDeepDive
-  ? '✓ NEEDED: Technical/Project Deep-Dive - Ask them to walk through a complex project'
-  : '✗ Already asked technical deep-dive'}
+${!hasAskedTechnicalDeepDive ? '- NEEDED: Technical/Project Deep-Dive' : '- Already asked technical deep-dive'}
+${!hasAskedBehavioralSTAR ? '- NEEDED: Behavioral STAR Question' : '- Already asked behavioral question'}
+${!hasAskedProblemSolving ? '- NEEDED: Problem-Solving/Situational' : '- Already asked problem-solving question'}
+${!hasAskedAboutFailures ? '- NEEDED: Failure/Learning Question' : '- Already asked about failures/challenges'}
 
-${!hasAskedBehavioralSTAR
-  ? '✓ NEEDED: Behavioral STAR Question - "Tell me about a time when..."'
-  : '✗ Already asked behavioral question'}
-
-${!hasAskedProblemSolving
-  ? '✓ NEEDED: Problem-Solving/Situational - "How would you approach..."'
-  : '✗ Already asked problem-solving question'}
-
-${!hasAskedAboutFailures
-  ? "✓ NEEDED: Failure/Learning Question - \"Tell me about a time something didn't work\""
-  : '✗ Already asked about failures/challenges'}
-
-NEXT QUESTION GUIDANCE:
-${askedQuestionsCount === 0 ? '- Start with a warm-up: technical deep-dive on their most relevant project' :
-  askedQuestionsCount < 3 ? '- Ask core competency questions (technical OR behavioral)' :
-  askedQuestionsCount < 6 ? '- Go deeper: follow-ups and challenging scenarios' :
-  askedQuestionsCount >= 6 ? '- Wrapping up: ask if they have questions, then close' :
-  '- Continue assessment'}
-
-REMEMBER:
-- Go 2-3 follow-ups deep on EVERY answer
-- Probe for specifics, metrics, and STAR method
-- Challenge vague or weak responses naturally
-- Reference their resume and HR screen feedback
-- After 6-8 questions total, transition to their questions
+${askedQuestionsCount === 0 ? 'Start with a warm-up: technical deep-dive on their most relevant project.' :
+  askedQuestionsCount < 3 ? 'Ask core competency questions (technical OR behavioral).' :
+  askedQuestionsCount < 6 ? 'Go deeper: follow-ups and challenging scenarios.' :
+  'Wrapping up: ask if they have questions, then close.'}
 `
-        systemPrompt += '\n\n' + phaseInstructionsHm
+      } else if (stage === 'culture_fit') {
+        const hasAskedWorkStyle = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('work style') ||
+          q.toLowerCase().includes('prefer to work') ||
+          q.toLowerCase().includes('remote') ||
+          q.toLowerCase().includes('day-to-day')
+        )
+        const hasAskedTeamDynamics = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('team') ||
+          q.toLowerCase().includes('collaborate') ||
+          q.toLowerCase().includes('disagree')
+        )
+        const hasAskedFeedback = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('feedback') ||
+          q.toLowerCase().includes('criticism') ||
+          q.toLowerCase().includes('constructive')
+        )
+        const hasAskedConflict = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('conflict') ||
+          q.toLowerCase().includes('disagreement') ||
+          q.toLowerCase().includes('difficult colleague')
+        )
+        phaseInstructions = `
+CULTURE FIT INTERVIEW - CURRENT STATE:
+
+Questions asked so far: ${askedQuestionsCount}/8 target
+
+TOPIC COVERAGE:
+${!hasAskedWorkStyle ? '- NEEDED: Work Style & Preferences' : '- Already covered work style'}
+${!hasAskedTeamDynamics ? '- NEEDED: Team Dynamics & Collaboration' : '- Already covered team dynamics'}
+${!hasAskedFeedback ? '- NEEDED: Giving/Receiving Feedback' : '- Already covered feedback'}
+${!hasAskedConflict ? '- NEEDED: Conflict Resolution' : '- Already covered conflict'}
+
+${askedQuestionsCount === 0 ? 'Start warm: ask about their ideal work environment or best team experience.' :
+  askedQuestionsCount < 3 ? 'Explore their collaboration and communication style.' :
+  askedQuestionsCount < 6 ? 'Go deeper on dynamics: feedback, conflict, adaptability.' :
+  'Wrapping up: ask what questions they have about the team, then close warmly.'}
+`
+      } else if (stage === 'final') {
+        const hasAskedStrategic = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('strategy') ||
+          q.toLowerCase().includes('vision') ||
+          q.toLowerCase().includes('industry') ||
+          q.toLowerCase().includes('direction')
+        )
+        const hasAskedLeadership = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('lead') ||
+          q.toLowerCase().includes('team') ||
+          q.toLowerCase().includes('scale') ||
+          q.toLowerCase().includes('build')
+        )
+        const hasAskedDecisionMaking = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('decision') ||
+          q.toLowerCase().includes('tradeoff') ||
+          q.toLowerCase().includes('ambiguous') ||
+          q.toLowerCase().includes('stakes')
+        )
+        phaseInstructions = `
+FINAL ROUND INTERVIEW - CURRENT STATE:
+
+Questions asked so far: ${askedQuestionsCount}/7 target
+
+TOPIC COVERAGE:
+${!hasAskedStrategic ? '- NEEDED: Strategic Vision & Industry Thinking' : '- Already covered strategic vision'}
+${!hasAskedLeadership ? '- NEEDED: Leadership Philosophy & Team Building' : '- Already covered leadership'}
+${!hasAskedDecisionMaking ? '- NEEDED: High-Stakes Decision-Making' : '- Already covered decision-making'}
+
+${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think about the industry or what they would focus on first.' :
+  askedQuestionsCount < 3 ? 'Explore leadership and cross-functional impact.' :
+  askedQuestionsCount < 5 ? 'Go deeper: probe decision-making and close any gaps from prior rounds.' :
+  'Wrapping up: sell the opportunity, ask their questions, close strong.'}
+`
+      }
+
+      // Use stage-specific prompt module
+      const stagePromptBuilders: Record<string, typeof buildHiringManagerPrompt> = {
+        hiring_manager: buildHiringManagerPrompt,
+        culture_fit: buildCultureFitPrompt,
+        final: buildFinalPrompt,
+      }
+
+      const buildStagePrompt = stagePromptBuilders[stage]
+      if (buildStagePrompt) {
+        systemPrompt = buildStagePrompt({
+          dataSection: stageDataSection,
+          conversationContext,
+          phaseInstructions,
+        })
+      } else {
+        // Fallback for unknown stages
+        systemPrompt = `You are conducting a job interview.\n\n${stageDataSection}\n\nKeep responses concise and natural for voice conversation.`
       }
     }
     
@@ -840,10 +871,12 @@ REMEMBER:
     if (stage === 'hr_screen' && messageCount >= 6) {
       nextStage = 'hiring_manager'
     } else if (stage === 'hiring_manager' && messageCount >= 8) {
-      nextStage = 'team_interview'
-    } else if (stage === 'team_interview' && messageCount >= 10) {
+      nextStage = 'culture_fit'
+    } else if (stage === 'culture_fit' && messageCount >= 8) {
+      nextStage = 'final'
+    } else if (stage === 'final' && messageCount >= 7) {
       // Check if assistant asked the final question
-      if (assistantMessage.toLowerCase().includes('questions for us')) {
+      if (assistantMessage.toLowerCase().includes('questions for') || assistantMessage.toLowerCase().includes('next steps')) {
         complete = true
       }
     }

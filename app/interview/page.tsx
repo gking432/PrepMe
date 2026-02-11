@@ -6,12 +6,13 @@ import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
 import { Mic, MicOff, X, MessageSquare } from 'lucide-react'
 
-type Stage = 'hr_screen' | 'hiring_manager' | 'team_interview'
+type Stage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
 const STAGE_NAMES: Record<Stage, string> = {
   hr_screen: 'HR Phone Screen',
   hiring_manager: 'Hiring Manager Interview',
-  team_interview: 'Team Interview',
+  culture_fit: 'Culture Fit Interview',
+  final: 'Final Round Interview',
 }
 
 export default function InterviewPage() {
@@ -75,7 +76,7 @@ export default function InterviewPage() {
     
     // Load stage from URL first (this is the source of truth for which interview type)
     const stageParam = (searchParams.get('stage') as Stage) || 'hr_screen'
-    const resolvedStage = ['hr_screen', 'hiring_manager', 'team_interview'].includes(stageParam) ? stageParam : 'hr_screen'
+    const resolvedStage = ['hr_screen', 'hiring_manager', 'culture_fit', 'final'].includes(stageParam) ? stageParam : 'hr_screen'
     setStage(resolvedStage)
     // Initialize conversation phase for HR screen
     if (resolvedStage === 'hr_screen') {

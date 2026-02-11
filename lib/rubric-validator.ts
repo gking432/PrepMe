@@ -372,6 +372,16 @@ export function validateFinalRoundRubric(rubric: any): boolean {
     }
   }
 
+  // Validate role_specific_criteria (Tier 2 - JD-adaptive, same pattern as HM)
+  if (!rubric.role_specific_criteria || !rubric.role_specific_criteria.criteria_identified) {
+    console.error('Missing role_specific_criteria or criteria_identified')
+    return false
+  }
+  if (!Array.isArray(rubric.role_specific_criteria.criteria_identified) || rubric.role_specific_criteria.criteria_identified.length === 0) {
+    console.error('role_specific_criteria.criteria_identified must be a non-empty array')
+    return false
+  }
+
   // Validate final_round_six_areas
   if (!rubric.final_round_six_areas) {
     console.error('Missing final_round_six_areas')

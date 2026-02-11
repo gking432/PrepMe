@@ -651,63 +651,107 @@ Include a "cross_stage_progress" section noting improvements, consistent strengt
 
 /**
  * Build Final Round grading prompt
- * Criteria: strategic thinking, leadership, decision-making, cross-functional impact, long-term alignment, executive presence
+ * TWO-TIER system: 6 universal leadership criteria + 4-5 JD-adaptive role-specific criteria
+ * This is the most demanding grading stage — more specific and harder than the HM round
  */
 function buildFinalRoundGradingPrompt(materials: GradingMaterials): string {
-  let prompt = 'You are an expert interview evaluator assessing a Final Round interview with a senior leader.'
+  let prompt = 'You are the most senior and demanding interview evaluator in the pipeline. You are assessing a Final Round interview — the last gate before a hire/no-hire decision.'
 
-  prompt += `\n\nINTERVIEW STAGE: FINAL ROUND`
+  prompt += `\n\nINTERVIEW STAGE: FINAL ROUND (MOST CRITICAL)`
 
-  prompt += `\n\n=== FINAL ROUND 6-AREA EVALUATION ===
-You are evaluating a Final Round interview. This is the last stage — conducted by a VP or senior stakeholder.
-It focuses on strategic thinking, leadership, and long-term fit.
+  prompt += `\n\n=== GRADING PHILOSOPHY ===
+This is the FINAL evaluation. Your grading should be:
+- MORE specific than the Hiring Manager round — every score must reference exact transcript moments
+- MORE demanding — a 7/10 here means "genuinely impressive," not just "adequate"
+- ZERO tolerance for vague or rehearsed answers — if the candidate gave textbook responses without depth, that's a 4-5, not a 6-7
+- Calibrated to the role level — a VP candidate should be evaluated against VP-level expectations, not generic ones
 
-FINAL ROUND CRITERIA (score each 1-10):
+Read the job description CAREFULLY. Your entire evaluation should be anchored to what THIS specific role requires.`
+
+  prompt += `\n\n=== TIER 1: UNIVERSAL FINAL ROUND CRITERIA (score each 1-10) ===
 
 1. Strategic Thinking
-   - Can they think beyond their individual role?
-   - Do they understand industry trends and the company's market position?
-   - Can they articulate a vision for their first 90 days / first year?
+   - Can they think beyond their individual role at the level THIS job requires?
+   - Do they understand industry trends and the company's competitive position?
+   - Can they articulate a concrete, credible vision for their first 90 days and first year in THIS specific role?
+   - Did they demonstrate original strategic insight, or just repeat common frameworks?
 
 2. Leadership & Influence
-   - Can they build and scale teams?
-   - Do they lead through influence, not just authority?
-   - How do they handle underperformers and develop talent?
+   - Did they give SPECIFIC examples of building, scaling, or transforming teams?
+   - Do they lead through influence, not just authority? How did they demonstrate this?
+   - How do they handle underperformers? Did they give a real example with a real outcome?
+   - Is their leadership style appropriate for the level and scope of THIS role?
 
 3. Decision-Making Under Ambiguity
-   - How do they make high-stakes decisions with incomplete data?
-   - Do they weigh tradeoffs explicitly?
-   - Can they explain their decision-making framework?
+   - Did they walk through a REAL high-stakes decision with incomplete data?
+   - Did they explicitly articulate tradeoffs, not just the outcome?
+   - Can they explain their decision-making framework AND show where it's been tested?
+   - How did they respond when the interviewer challenged their approach?
 
 4. Cross-Functional Impact
-   - Have they driven outcomes across multiple teams or functions?
-   - Can they partner effectively with product, sales, design, etc.?
+   - Have they driven outcomes across multiple teams or functions? With what scope?
+   - Can they partner effectively with the specific functions mentioned in the JD?
    - Do they think about organizational impact, not just team impact?
+   - Did they give specific examples with measurable outcomes?
 
 5. Long-Term Alignment
-   - Does their career trajectory make sense for this role?
-   - Are they genuinely excited about this opportunity?
-   - Would this role be a meaningful next step in their career?
+   - Does their career trajectory genuinely make sense for this role, or does it feel forced?
+   - Are they genuinely excited, or going through the motions?
+   - Would this role be a meaningful next step, or a lateral move they're rationalizing?
+   - Did they demonstrate they've done their homework on the company?
 
-6. Executive Presence
-   - Do they communicate with clarity and confidence at a senior level?
-   - Can they simplify complex topics for diverse audiences?
-   - Do they project authority without being arrogant?
+6. Executive Presence & Communication
+   - Did they communicate with the clarity and confidence expected at the level of THIS role?
+   - Could they simplify complex topics for diverse audiences?
+   - Did they handle pushback and tough questions with composure?
+   - Did they project authority without arrogance?`
 
-OUTPUT FORMAT FOR 6 AREAS:
+  prompt += `\n\n=== TIER 2: ROLE-SPECIFIC CRITERIA (JD-ADAPTIVE — YOU IDENTIFY THESE) ===
+Read the job description with extreme precision. Identify the 4-5 MOST CRITICAL functional/technical competencies for THIS specific role.
+
+These should be MORE specific than the Hiring Manager round's Tier 2 criteria. Go deeper.
+
+Examples by role type:
+- Software Engineering Lead → system design at scale, incident response methodology, technical debt management, code review philosophy, architecture decision records
+- VP of Marketing → brand positioning strategy, channel attribution methodology, team scaling playbook, budget allocation framework, executive stakeholder management
+- Product Manager → prioritization framework with real examples, customer discovery methodology, cross-functional alignment strategy, metrics-driven decision making, competitive differentiation approach
+- Sales Director → enterprise sales methodology, pipeline management discipline, rep coaching approach, forecast accuracy track record, executive relationship building
+- Nursing Director → clinical outcome improvement methodology, staff retention strategy, regulatory compliance leadership, patient safety culture building, interdepartmental care coordination
+- Finance Controller → audit readiness methodology, reporting accuracy standards, process improvement track record, risk assessment framework, team development approach
+
+YOU decide what the 4-5 role-specific criteria are based on the JD. Name them clearly and specifically.
+For EACH criterion: provide a score (1-10), detailed feedback with transcript references, and assessment of whether the candidate's depth matched the role's requirements.
+
+CRITICAL: These role-specific criteria should be the hardest part of the evaluation. If the candidate gave surface-level answers to deep functional questions, score accordingly (4-6). Only give 8+ for answers that demonstrate genuine mastery.`
+
+  prompt += `\n\nOUTPUT FORMAT FOR 6 AREAS:
 You MUST include a "final_round_six_areas" field with this structure:
 {
   "final_round_six_areas": {
-    "what_went_well": [...],
-    "what_needs_improve": [...]
+    "what_went_well": [
+      {
+        "criterion": "Strategic Thinking",
+        "feedback": "[1-2 sentence explanation with SPECIFIC transcript reference]",
+        "evidence": [{ "question_id": "q2", "timestamp": "5:30", "excerpt": "candidate's exact words..." }]
+      }
+    ],
+    "what_needs_improve": [
+      {
+        "criterion": "Decision-Making Under Ambiguity",
+        "feedback": "[1-2 sentence explanation with SPECIFIC transcript reference]",
+        "evidence": [{ "question_id": "q5", "timestamp": "15:00", "excerpt": "candidate's exact words..." }]
+      }
+    ]
   }
 }
-Same format as previous stages: criterion, feedback, evidence array.`
+
+Each of the 6 universal criteria should appear in either "what_went_well" or "what_needs_improve" (not both).
+Evidence MUST include actual quotes from the transcript, not paraphrased summaries.`
 
   // Cross-stage context
   if (materials.hrScreenFeedback) {
     prompt += `\n\n=== CROSS-STAGE INTELLIGENCE ===
-The candidate has completed prior rounds. Here is their earlier feedback:
+The candidate has completed ALL prior rounds. Here is their cumulative feedback:
 
 Prior Round Overall Score: ${materials.hrScreenFeedback.overall_score}/10
 
@@ -717,20 +761,33 @@ ${(materials.hrScreenFeedback.strengths || []).map((s: string) => `- ${s}`).join
 Prior Weaknesses:
 ${(materials.hrScreenFeedback.weaknesses || []).map((w: string) => `- ${w}`).join('\n') || '- None noted'}
 
-Include a "cross_stage_progress" section. For the final round, also note whether earlier concerns were resolved.`
+CRITICAL for cross-stage evaluation:
+1. Were concerns from earlier rounds RESOLVED in this final round, or do they persist?
+2. Did strengths from earlier rounds hold up under deeper pressure?
+3. Did NEW red flags emerge that weren't visible in earlier, easier rounds?
+4. Is the candidate's performance trajectory improving, plateauing, or declining across rounds?
+
+Include a detailed "cross_stage_progress" section addressing all 4 points above.`
+  }
+
+  // Add rubric template if provided
+  if (materials.rubricTemplate) {
+    prompt += `\n\nRUBRIC TEMPLATE:\n${JSON.stringify(materials.rubricTemplate, null, 2)}`
   }
 
   prompt += `\n\nYou MUST respond with valid JSON. Include ALL of these required fields:`
-  prompt += `\n- overall_assessment (with overall_score 1-10, likelihood_to_advance as "hire"/"no_hire"/"strong_hire", key_strengths, key_weaknesses, summary)`
-  prompt += `\n- final_round_criteria (with scores and feedback objects for ALL 6 criteria)`
+  prompt += `\n- overall_assessment (with overall_score 1-10, likelihood_to_advance as "strong_hire"/"hire"/"lean_hire"/"lean_no_hire"/"no_hire", key_strengths, key_weaknesses, summary, hire_recommendation)`
+  prompt += `\n- final_round_criteria (with scores and feedback objects for ALL 6 universal criteria)`
+  prompt += `\n- role_specific_criteria (with criteria_identified array — each has name, score, feedback, jd_requirement_reference)`
   prompt += `\n- time_management_analysis`
   prompt += `\n- question_analysis`
-  prompt += `\n- next_steps_preparation (with ready_for_next_round as hire recommendation, confidence_level, improvement_suggestions, practice_recommendations)`
+  prompt += `\n- next_steps_preparation (with hire_recommendation, confidence_level, improvement_suggestions, practice_recommendations, areas_to_study, predicted_offer_considerations)`
   prompt += `\n- comparative_analysis (with resume_vs_interview, job_requirements_gaps, standout_qualities, common_weaknesses_avoided, percentile_estimate)`
   prompt += `\n- final_round_six_areas (with what_went_well and what_needs_improve arrays)`
   if (materials.hrScreenFeedback) {
-    prompt += `\n- cross_stage_progress (with improvement_from_hr_screen, consistent_strengths, persistent_weaknesses, new_concerns)`
+    prompt += `\n- cross_stage_progress (with concerns_resolved, concerns_persisting, consistent_strengths, new_red_flags, performance_trajectory)`
   }
+  prompt += `\n\nDO NOT omit any of these fields.`
 
   prompt += `\n\nMANDATORY REQUIREMENTS FOR final_round_criteria:`
   prompt += `\nYou MUST include ALL 6 criteria in both "scores" and "feedback" objects with these EXACT names:`
@@ -740,8 +797,25 @@ Include a "cross_stage_progress" section. For the final round, also note whether
   prompt += `\n4. cross_functional_impact`
   prompt += `\n5. long_term_alignment`
   prompt += `\n6. executive_presence`
+  prompt += `\n\nDO NOT use alternative names. Every single one must be present with both a score and feedback text.`
 
-  prompt += `\n\nSCORING SCALE (1-10): Same as other stages. Be honest and constructive.`
+  prompt += `\n\nMANDATORY REQUIREMENTS FOR role_specific_criteria:`
+  prompt += `\nYou MUST include a "criteria_identified" array with 4-5 objects. Each object must have:`
+  prompt += `\n- name: Clear, specific name of the competency (e.g., "System Design at Scale", not "Technical Skills")`
+  prompt += `\n- score: 1-10`
+  prompt += `\n- feedback: Detailed assessment with transcript references`
+  prompt += `\n- jd_requirement_reference: The specific line or requirement from the JD this maps to`
+
+  prompt += `\n\nSCORING SCALE (STRICT — THIS IS THE FINAL ROUND):`
+  prompt += `\nAll scores use a 1-10 scale. Your scores MUST match the quality described in your analysis.`
+  prompt += `\n- 1-2: Poor — Major issues, clearly not ready for this role`
+  prompt += `\n- 3-4: Below Average — Significant gaps vs what this role demands`
+  prompt += `\n- 5-6: Average — Meets basic requirements but nothing stood out; would not survive a competitive slate`
+  prompt += `\n- 7: Good — Solid performance, showed real depth on some topics`
+  prompt += `\n- 8: Very Good — Consistently strong, clearly above the bar for this role`
+  prompt += `\n- 9: Excellent — Outstanding, would be a top hire`
+  prompt += `\n- 10: Exceptional — Rare. Best-in-class performance that exceeded even senior expectations`
+  prompt += `\n\nDO NOT inflate scores. A candidate who "did fine" is a 5-6, not a 7-8. Reserve 8+ for genuinely impressive performances.`
 
   return prompt
 }

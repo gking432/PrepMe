@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
+import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 
 // Temporary flag: when true, always show mock HR Screen feedback data (no sign-in / Supabase required)
 // Turn this off or delete when ready to use real data end-to-end.
@@ -434,6 +435,7 @@ export default function InterviewDashboard() {
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showRubricModal, setShowRubricModal] = useState(false)
+  const [showHmRubricModal, setShowHmRubricModal] = useState(false)
   const [showAreasToStudy, setShowAreasToStudy] = useState(false)
   const [showPredictedQuestions, setShowPredictedQuestions] = useState(false)
   const [showStep4, setShowStep4] = useState(false)
@@ -542,6 +544,25 @@ export default function InterviewDashboard() {
       document.body.style.overflow = 'unset'
     }
   }, [showRubricModal])
+
+  // Prevent body scroll when HM modal is open and handle ESC key
+  useEffect(() => {
+    if (showHmRubricModal) {
+      document.body.style.overflow = 'hidden'
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowHmRubricModal(false)
+        }
+      }
+      document.addEventListener('keydown', handleEsc)
+      return () => {
+        document.body.style.overflow = 'unset'
+        document.removeEventListener('keydown', handleEsc)
+      }
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showHmRubricModal])
 
   const loadFeedback = async () => {
     try {
@@ -4773,37 +4794,22 @@ export default function InterviewDashboard() {
             {/* Detailed Performance Breakdown - Universal Criteria */}
             {hasHmFeedback && feedback?.full_rubric?.hiring_manager_criteria ? (
               <div className="bg-white rounded-2xl shadow-xl p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">Detailed Performance Breakdown</h3>
-                <p className="text-sm text-gray-600 mb-6">Evaluation based on 6 universal hiring manager criteria</p>
-                <div className="space-y-4">
-                  {Object.entries(feedback.full_rubric.hiring_manager_criteria.scores || {}).map(([key, score]: [string, any]) => {
-                    const feedbackText = feedback.full_rubric.hiring_manager_criteria.feedback?.[key] || ''
-                    const displayName = key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
-                    const numScore = typeof score === 'number' ? score : 0
-                    const isGood = numScore >= 7
-                    const isBad = numScore <= 4
-
-                    return (
-                      <div key={key} className="border border-gray-200 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900">{displayName}</h4>
-                          <div className={`px-3 py-1 rounded-full text-sm font-bold ${
-                            isGood ? 'bg-green-100 text-green-700' : isBad ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {numScore}/10
-                          </div>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                          <div
-                            className={`h-2 rounded-full transition-all ${isGood ? 'bg-green-500' : isBad ? 'bg-red-500' : 'bg-yellow-500'}`}
-                            style={{ width: `${numScore * 10}%` }}
-                          ></div>
-                        </div>
-                        {feedbackText && <p className="text-sm text-gray-700">{feedbackText}</p>}
-                      </div>
-                    )
-                  })}
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Detailed Performance Breakdown
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Evaluation based on 6 universal hiring manager criteria + role-specific competencies
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowHmRubricModal(true)}
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <span>View Full Report</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
             ) : !hasHmFeedback ? (
               <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -4811,6 +4817,101 @@ export default function InterviewDashboard() {
                 <p className="text-sm text-gray-600 mt-1">Evaluation based on hiring manager interview criteria</p>
               </div>
             ) : null}
+
+            {/* Full-Screen HM Rubric Report Modal */}
+            {showHmRubricModal && (
+              <>
+                <style dangerouslySetInnerHTML={{__html: `
+                  @media print {
+                    body * { visibility: hidden; }
+                    .hm-print-content, .hm-print-content * { visibility: visible; }
+                    .hm-print-content {
+                      position: absolute; left: 0; top: 0; width: 100%;
+                      max-width: 100% !important; max-height: none !important;
+                      height: auto !important; overflow: visible !important;
+                      box-shadow: none !important; border-radius: 0 !important;
+                      margin: 0 !important; padding: 20px !important;
+                    }
+                    .no-print { display: none !important; }
+                    @page { margin: 1cm; }
+                  }
+                `}} />
+                <div className="fixed inset-0 z-50 overflow-y-auto hm-print-content">
+                  <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity no-print"
+                    onClick={() => setShowHmRubricModal(false)}
+                  ></div>
+
+                  <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
+                      {/* Modal Header */}
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Detailed Performance Report
+                          </h2>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Hiring Manager Interview Analysis
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-3 no-print">
+                          <button
+                            type="button"
+                            onClick={() => window.print()}
+                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            <span>Print / Save PDF</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowHmRubricModal(false)}
+                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                            aria-label="Close"
+                          >
+                            <X className="w-6 h-6" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Scrollable Content */}
+                      <div className="flex-1 overflow-y-auto print:overflow-visible print:h-auto">
+                        {feedback?.full_rubric ? (() => {
+                          const fullRubric = (feedback as any).full_rubric
+                          const enrichedHmRubric = {
+                            ...fullRubric,
+                            rubric_version: fullRubric.rubric_version || '1.0',
+                            interview_type: 'hiring_manager',
+                            session_metadata: fullRubric.session_metadata || {
+                              session_id: currentSessionData?.id || feedback?.interview_session_id || 'unknown',
+                              candidate_name: 'Candidate',
+                              position: 'Position',
+                              company: 'Company',
+                              interview_date: currentSessionData?.created_at || feedback?.created_at || new Date().toISOString(),
+                              interview_duration_seconds: currentSessionData?.duration_seconds || 0,
+                            },
+                            grading_metadata: fullRubric.grading_metadata || {
+                              graded_by_agent: 'Claude Sonnet 4',
+                              grading_timestamp: feedback?.created_at || new Date().toISOString(),
+                              confidence_in_assessment: 'High',
+                            },
+                          }
+                          return <DetailedHmRubricReport data={enrichedHmRubric} />
+                        })() : (
+                          <div className="p-12 text-center">
+                            <p className="text-gray-600">
+                              Detailed rubric report is not available for this interview yet.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

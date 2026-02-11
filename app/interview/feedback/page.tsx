@@ -430,12 +430,18 @@ export default function InterviewDashboard() {
   const [improveCarouselIndex, setImproveCarouselIndex] = useState(0)
   const [hmStrengthCarouselIndex, setHmStrengthCarouselIndex] = useState(0)
   const [hmImproveCarouselIndex, setHmImproveCarouselIndex] = useState(0)
+  const [cfStrengthCarouselIndex, setCfStrengthCarouselIndex] = useState(0)
+  const [cfImproveCarouselIndex, setCfImproveCarouselIndex] = useState(0)
+  const [frStrengthCarouselIndex, setFrStrengthCarouselIndex] = useState(0)
+  const [frImproveCarouselIndex, setFrImproveCarouselIndex] = useState(0)
   const [practicedCriteria, setPracticedCriteria] = useState<string[]>([])
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showRubricModal, setShowRubricModal] = useState(false)
   const [showHmRubricModal, setShowHmRubricModal] = useState(false)
+  const [showCfRubricModal, setShowCfRubricModal] = useState(false)
+  const [showFrRubricModal, setShowFrRubricModal] = useState(false)
   const [showAreasToStudy, setShowAreasToStudy] = useState(false)
   const [showPredictedQuestions, setShowPredictedQuestions] = useState(false)
   const [showStep4, setShowStep4] = useState(false)
@@ -563,6 +569,44 @@ export default function InterviewDashboard() {
       document.body.style.overflow = 'unset'
     }
   }, [showHmRubricModal])
+
+  // Prevent body scroll when CF modal is open and handle ESC key
+  useEffect(() => {
+    if (showCfRubricModal) {
+      document.body.style.overflow = 'hidden'
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowCfRubricModal(false)
+        }
+      }
+      document.addEventListener('keydown', handleEsc)
+      return () => {
+        document.body.style.overflow = 'unset'
+        document.removeEventListener('keydown', handleEsc)
+      }
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showCfRubricModal])
+
+  // Prevent body scroll when FR modal is open and handle ESC key
+  useEffect(() => {
+    if (showFrRubricModal) {
+      document.body.style.overflow = 'hidden'
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowFrRubricModal(false)
+        }
+      }
+      document.addEventListener('keydown', handleEsc)
+      return () => {
+        document.body.style.overflow = 'unset'
+        document.removeEventListener('keydown', handleEsc)
+      }
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showFrRubricModal])
 
   const loadFeedback = async () => {
     try {
@@ -1666,6 +1710,8 @@ export default function InterviewDashboard() {
   const improvements = feedback?.weaknesses || []
   const hasFeedback = !!feedback
   const hasHmFeedback = !!feedback?.hiring_manager_six_areas || !!feedback?.full_rubric?.hiring_manager_six_areas
+  const hasCfFeedback = !!feedback?.culture_fit_six_areas || !!feedback?.full_rubric?.culture_fit_six_areas
+  const hasFrFeedback = !!feedback?.final_round_six_areas || !!feedback?.full_rubric?.final_round_six_areas
   const currentStage = (currentSessionData as any)?.stage || 'hr_screen'
 
   // Map area scores to HR phone screen criteria structure
@@ -1903,6 +1949,52 @@ export default function InterviewDashboard() {
   const hmAreasProgress = hmTotalAreas > 0 ? (hmAreasPassed / hmTotalAreas) * 100 : 0
   const hmCircleDashOffset =
     circleCircumference - (hmAreasPassed / (hmTotalAreas || 1)) * circleCircumference
+
+  // Culture Fit computed values
+  const cfSixAreas = feedback?.culture_fit_six_areas || feedback?.full_rubric?.culture_fit_six_areas
+  const cfWentWellAreas = cfSixAreas?.what_went_well || []
+  const cfNeedsImproveAreas = cfSixAreas?.what_needs_improve || []
+  const cfStrengthsCards = cfWentWellAreas.map((item: any) => ({
+    criterion: item.criterion,
+    feedback: item.feedback,
+    evidence: item.evidence || [],
+    type: 'strength' as const,
+  }))
+  const cfNeedsWorkCards = cfNeedsImproveAreas.map((item: any) => ({
+    criterion: item.criterion,
+    feedback: item.feedback,
+    evidence: item.evidence || [],
+    type: 'improve' as const,
+  }))
+  const cfTotalAreas = cfStrengthsCards.length + cfNeedsWorkCards.length > 0
+    ? cfStrengthsCards.length + cfNeedsWorkCards.length
+    : 6
+  const cfAreasPassed = cfStrengthsCards.length
+  const cfAreasProgress = cfTotalAreas > 0 ? (cfAreasPassed / cfTotalAreas) * 100 : 0
+  const cfCircleDashOffset = circleCircumference - (cfAreasPassed / (cfTotalAreas || 1)) * circleCircumference
+
+  // Final Round computed values
+  const frSixAreas = feedback?.final_round_six_areas || feedback?.full_rubric?.final_round_six_areas
+  const frWentWellAreas = frSixAreas?.what_went_well || []
+  const frNeedsImproveAreas = frSixAreas?.what_needs_improve || []
+  const frStrengthsCards = frWentWellAreas.map((item: any) => ({
+    criterion: item.criterion,
+    feedback: item.feedback,
+    evidence: item.evidence || [],
+    type: 'strength' as const,
+  }))
+  const frNeedsWorkCards = frNeedsImproveAreas.map((item: any) => ({
+    criterion: item.criterion,
+    feedback: item.feedback,
+    evidence: item.evidence || [],
+    type: 'improve' as const,
+  }))
+  const frTotalAreas = frStrengthsCards.length + frNeedsWorkCards.length > 0
+    ? frStrengthsCards.length + frNeedsWorkCards.length
+    : 6
+  const frAreasPassed = frStrengthsCards.length
+  const frAreasProgress = frTotalAreas > 0 ? (frAreasPassed / frTotalAreas) * 100 : 0
+  const frCircleDashOffset = circleCircumference - (frAreasPassed / (frTotalAreas || 1)) * circleCircumference
 
   // Hiring Manager role-specific criteria
   const roleSpecificCriteria = feedback?.role_specific_criteria?.criteria_identified || []
@@ -4944,7 +5036,8 @@ export default function InterviewDashboard() {
                 </div>
               </div>
             )}
-            {interviewData.hiringManager1.completed && (
+            {/* Start Interview CTA (when eligible but no CF feedback yet) */}
+            {interviewData.hiringManager1.completed && !hasCfFeedback && (
               <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
@@ -4955,7 +5048,7 @@ export default function InterviewDashboard() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">Start Interview</h2>
                     <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                      Practice the Culture Fit round with our AI. Get feedback on how you align with the company’s values and team dynamics.
+                      Practice the Culture Fit round with our AI. Get feedback on how you align with the company's values and team dynamics.
                     </p>
                     <Link
                       href="/dashboard?stage=culture_fit"
@@ -4970,116 +5063,436 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Areas Passed Tracker - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Completion Banner (when CF feedback exists) */}
+            {hasCfFeedback && (
+              <>
+                <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
+                  feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
+                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
+                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                }`}>
+                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                  <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+                      <div className="flex items-start space-x-6 flex-1">
+                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg bg-white/20 backdrop-blur-md">
+                          {feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely' ? (
+                            <CheckCircle className="w-12 h-12 text-white" />
+                          ) : (
+                            <AlertCircle className="w-12 h-12 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 text-white">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Users className="w-6 h-6" />
+                            <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Culture Fit Complete</span>
+                          </div>
+                          <h2 className="text-4xl font-bold mb-3">
+                            {feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
+                              ? "Strong Performance!"
+                              : "Room for Improvement"}
+                          </h2>
+                          <p className="text-lg text-white/90 mb-4 max-w-2xl">
+                            {feedback?.full_rubric?.overall_assessment?.summary || feedback?.detailed_feedback || 'Review the detailed feedback below to see how you performed.'}
+                          </p>
+                          <div className="flex items-center space-x-4">
+                            <div className="bg-white/20 backdrop-blur-md rounded-xl px-4 py-2">
+                              <div className="text-3xl font-bold">{feedback?.overall_score ? Math.round(feedback.overall_score * 10) : '--'}%</div>
+                              <div className="text-xs uppercase tracking-wider opacity-90">Score</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
+                </div>
+              </>
+            )}
+
+            {/* Areas Passed Tracker */}
+            {hasCfFeedback && cfSixAreas ? (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Your Culture Fit Interview Progress
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Pass all 6 core areas to master the culture fit interview.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-indigo-600">
+                        {cfAreasPassed}/{cfTotalAreas}
+                      </div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">
+                        Areas Passed
+                      </div>
+                    </div>
+                    <svg className="w-20 h-20">
+                      <circle cx="40" cy="40" r={circleRadius} stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                      <circle
+                        cx="40" cy="40" r={circleRadius}
+                        stroke="#6366f1" strokeWidth="8" fill="none"
+                        strokeDasharray={circleCircumference}
+                        strokeDashoffset={cfCircleDashOffset}
+                        strokeLinecap="round"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.5s ease-out' }}
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      style={{ width: `${cfAreasProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span className="text-gray-600">Focus on the orange areas below to level up.</span>
+                    <span className="text-indigo-600 font-semibold">Master all areas to be culture-fit ready.</span>
+                  </div>
+                </div>
+              </div>
+            ) : !hasCfFeedback ? (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Your Culture Fit Interview Progress</h3>
+                    <p className="text-sm text-gray-600 mt-1">Pass all core areas to master the culture fit interview fundamentals.</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-400">--/--</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">Areas Passed</div>
+                    </div>
+                    <svg className="w-20 h-20">
+                      <circle cx="40" cy="40" r="30" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="bg-gray-300 h-3 rounded-full transition-all" style={{ width: '0%' }}></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Master These Areas - Strengths & Needs Work Cards */}
+            {hasCfFeedback && cfSixAreas && (
+              <div className="space-y-6" data-practice-section>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-gray-900">Master These Areas</h3>
+                  <div className="text-sm text-gray-600 flex space-x-4">
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span>Passed / Strengths</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                      <span>Needs Work</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Strengths / Passed Stack */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Passed Areas</h4>
+                      {cfStrengthsCards.length > 1 && (
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <button className="hover:text-gray-900" onClick={() => setCfStrengthCarouselIndex((prev) => prev - 1)}>
+                            <span>&larr;</span>
+                          </button>
+                          <span>Card {getSafeIndex(cfStrengthsCards.length, cfStrengthCarouselIndex) + 1} of {cfStrengthsCards.length}</span>
+                          <button className="hover:text-gray-900" onClick={() => setCfStrengthCarouselIndex((prev) => prev + 1)}>
+                            <span>&rarr;</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {renderStackedCarousel(cfStrengthsCards, cfStrengthCarouselIndex, setCfStrengthCarouselIndex, 'strength')}
+                  </div>
+
+                  {/* Needs Work Stack */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Needs Work</h4>
+                      {cfNeedsWorkCards.length > 1 && (
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <button className="hover:text-gray-900" onClick={() => setCfImproveCarouselIndex((prev) => prev - 1)}>
+                            <span>&larr;</span>
+                          </button>
+                          <span>Card {getSafeIndex(cfNeedsWorkCards.length, cfImproveCarouselIndex) + 1} of {cfNeedsWorkCards.length}</span>
+                          <button className="hover:text-gray-900" onClick={() => setCfImproveCarouselIndex((prev) => prev + 1)}>
+                            <span>&rarr;</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {renderStackedCarousel(cfNeedsWorkCards, cfImproveCarouselIndex, setCfImproveCarouselIndex, 'improve')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Empty state when no CF feedback yet */}
+            {!hasCfFeedback && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-gray-900">Master These Areas</h3>
+                  <div className="text-sm text-gray-600 flex space-x-4">
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span>Passed / Strengths</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                      <span>Needs Work</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Passed Areas</h4>
+                    <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">No data available yet</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Needs Work</h4>
+                    <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">No data available yet</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Transcript Section */}
+            {hasCfFeedback && structuredTranscript && (
+              (structuredTranscript.messages && structuredTranscript.messages.length > 0) ||
+              (structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0)
+            ) && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <button
+                  type="button"
+                  onClick={() => setShowTranscript((prev) => !prev)}
+                  className="flex w-full items-center justify-between mb-4 text-left"
+                >
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Full Interview Transcript</h3>
+                    <div className="mt-1 flex space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center space-x-1">
+                        <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Strong</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span>Weak</span>
+                      </span>
+                    </div>
+                  </div>
+                  <svg className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showTranscript && (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                    {structuredTranscript.messages && structuredTranscript.messages.length > 0 ? (
+                      structuredTranscript.messages.map((msg: any, idx: number) => {
+                        const isCandidate = msg.speaker === 'candidate'
+
+                        let tone: 'strong' | 'weak' | 'neutral' = 'neutral'
+                        if (isCandidate && feedback?.culture_fit_six_areas) {
+                          const wentWell = feedback.culture_fit_six_areas.what_went_well || []
+                          const needsImprove = feedback.culture_fit_six_areas.what_needs_improve || []
+
+                          const inNeeds = needsImprove.some((item: any) =>
+                            (item.evidence || []).some((ev: any) => {
+                              const questionMatch = ev.question_id && msg.question_id && ev.question_id === msg.question_id
+                              const excerptMatch = ev.excerpt && msg.text && msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                              return questionMatch || excerptMatch
+                            })
+                          )
+                          const inWell = wentWell.some((item: any) =>
+                            (item.evidence || []).some((ev: any) => {
+                              const questionMatch = ev.question_id && msg.question_id && ev.question_id === msg.question_id
+                              const excerptMatch = ev.excerpt && msg.text && msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                              return questionMatch || excerptMatch
+                            })
+                          )
+
+                          if (inNeeds) tone = 'weak'
+                          else if (inWell) tone = 'strong'
+                        }
+
+                        const baseClasses = 'p-4 rounded-lg border-2 transition-colors cursor-default'
+                        const toneClasses = tone === 'strong' ? 'border-green-300 bg-green-50' : tone === 'weak' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'
+
+                        return (
+                          <div key={idx} className={`${baseClasses} ${toneClasses}`}>
+                            <div className="flex space-x-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-indigo-600" />}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between mb-1">
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                    {isCandidate ? 'You' : 'AI Interviewer'}
+                                  </span>
+                                  {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
+                                </div>
+                                <p className="text-gray-800 text-sm">{msg.text}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <p className="text-gray-500 text-sm">No transcript messages available.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty transcript state */}
+            {!hasCfFeedback && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-2xl font-bold text-gray-900">Full Interview Transcript</h3>
+                <p className="text-sm text-gray-600 mt-1">Interview transcript will appear here after completion</p>
+              </div>
+            )}
+
+            {/* Detailed Performance Breakdown - Culture Fit Criteria */}
+            {hasCfFeedback && feedback?.full_rubric?.culture_fit_criteria ? (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Your Culture Fit Interview Progress
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Detailed Performance Breakdown
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Pass all core areas to master the culture fit interview fundamentals.
+                    Evaluation based on culture fit interview criteria
                   </p>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-400">
-                      --/--
-                    </div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wide">
-                      Areas Passed
-                    </div>
-                  </div>
-                  <svg className="w-20 h-20">
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="30"
-                      stroke="#e5e7eb"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCfRubricModal(true)}
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <span>View Full Report</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
-              <div className="mt-4">
-                <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+            ) : !hasCfFeedback ? (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-xl font-bold text-gray-900">Detailed Performance Breakdown</h3>
+                <p className="text-sm text-gray-600 mt-1">Evaluation based on culture fit interview criteria</p>
+              </div>
+            ) : null}
+
+            {/* Full-Screen CF Rubric Report Modal */}
+            {showCfRubricModal && (
+              <>
+                <style dangerouslySetInnerHTML={{__html: `
+                  @media print {
+                    body * { visibility: hidden; }
+                    .cf-print-content, .cf-print-content * { visibility: visible; }
+                    .cf-print-content {
+                      position: absolute; left: 0; top: 0; width: 100%;
+                      max-width: 100% !important; max-height: none !important;
+                      height: auto !important; overflow: visible !important;
+                      box-shadow: none !important; border-radius: 0 !important;
+                      margin: 0 !important; padding: 20px !important;
+                    }
+                    .no-print { display: none !important; }
+                    @page { margin: 1cm; }
+                  }
+                `}} />
+                <div className="fixed inset-0 z-50 overflow-y-auto cf-print-content">
                   <div
-                    className="bg-gray-300 h-3 rounded-full transition-all"
-                    style={{ width: '0%' }}
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity no-print"
+                    onClick={() => setShowCfRubricModal(false)}
                   ></div>
-                </div>
-              </div>
-            </div>
 
-            {/* Master These Questions - Empty */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Master These Questions
-                </h3>
-                <div className="text-sm text-gray-600 flex space-x-4">
-                  <span className="inline-flex items-center space-x-1">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    <span>Passed / Strengths</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1">
-                    <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                    <span>Needs Work</span>
-                  </span>
-                </div>
-              </div>
+                  <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
+                      {/* Modal Header */}
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Detailed Performance Report
+                          </h2>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Culture Fit Interview Analysis
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-3 no-print">
+                          <button
+                            type="button"
+                            onClick={() => window.print()}
+                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            <span>Print / Save PDF</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowCfRubricModal(false)}
+                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                            aria-label="Close"
+                          >
+                            <X className="w-6 h-6" />
+                          </button>
+                        </div>
+                      </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Strengths / Passed Stack - Empty */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Passed Areas
-                    </h4>
+                      {/* Scrollable Content */}
+                      <div className="flex-1 overflow-y-auto print:overflow-visible print:h-auto">
+                        {feedback?.full_rubric ? (() => {
+                          const fullRubric = (feedback as any).full_rubric
+                          const enrichedCfRubric = {
+                            ...fullRubric,
+                            hiring_manager_criteria: fullRubric.culture_fit_criteria,
+                            rubric_version: fullRubric.rubric_version || '1.0',
+                            interview_type: 'culture_fit',
+                            session_metadata: fullRubric.session_metadata || {
+                              session_id: currentSessionData?.id || feedback?.interview_session_id || 'unknown',
+                              candidate_name: 'Candidate',
+                              position: 'Position',
+                              company: 'Company',
+                              interview_date: currentSessionData?.created_at || feedback?.created_at || new Date().toISOString(),
+                              interview_duration_seconds: currentSessionData?.duration_seconds || 0,
+                            },
+                            grading_metadata: fullRubric.grading_metadata || {
+                              graded_by_agent: 'Claude Sonnet 4',
+                              grading_timestamp: feedback?.created_at || new Date().toISOString(),
+                              confidence_in_assessment: 'High',
+                            },
+                          }
+                          return <DetailedHmRubricReport data={enrichedCfRubric} />
+                        })() : (
+                          <div className="p-12 text-center">
+                            <p className="text-gray-600">
+                              Detailed rubric report is not available for this interview yet.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">No data available yet</p>
-                  </div>
                 </div>
-
-                {/* Needs Work Stack - Empty */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Needs Work
-                    </h4>
-                  </div>
-                  <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">No data available yet</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Transcript Section - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Full Interview Transcript
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Interview transcript will appear here after completion
-                </p>
-              </div>
-            </div>
-
-            {/* Detailed Performance Breakdown - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Detailed Performance Breakdown
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Evaluation based on culture fit interview criteria
-                </p>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
 
@@ -5112,7 +5525,8 @@ export default function InterviewDashboard() {
                 </div>
               </div>
             )}
-            {interviewData.cultureFit.completed && (
+            {/* Start Interview CTA (when eligible but no FR feedback yet) */}
+            {interviewData.cultureFit.completed && !hasFrFeedback && (
               <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
@@ -5123,7 +5537,7 @@ export default function InterviewDashboard() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">Start Interview</h2>
                     <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                      You’re ready for the Final round. Practice with our AI to get detailed feedback before your real final interview.
+                      You're ready for the Final round. Practice with our AI to get detailed feedback before your real final interview.
                     </p>
                     <Link
                       href="/dashboard?stage=final"
@@ -5138,116 +5552,436 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Areas Passed Tracker - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Completion Banner (when FR feedback exists) */}
+            {hasFrFeedback && (
+              <>
+                <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
+                  feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
+                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
+                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                }`}>
+                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                  <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+                      <div className="flex items-start space-x-6 flex-1">
+                        <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg bg-white/20 backdrop-blur-md">
+                          {feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely' ? (
+                            <CheckCircle className="w-12 h-12 text-white" />
+                          ) : (
+                            <AlertCircle className="w-12 h-12 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 text-white">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <Crown className="w-6 h-6" />
+                            <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Final Round Complete</span>
+                          </div>
+                          <h2 className="text-4xl font-bold mb-3">
+                            {feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
+                              ? "Strong Performance!"
+                              : "Room for Improvement"}
+                          </h2>
+                          <p className="text-lg text-white/90 mb-4 max-w-2xl">
+                            {feedback?.full_rubric?.overall_assessment?.summary || feedback?.detailed_feedback || 'Review the detailed feedback below to see how you performed.'}
+                          </p>
+                          <div className="flex items-center space-x-4">
+                            <div className="bg-white/20 backdrop-blur-md rounded-xl px-4 py-2">
+                              <div className="text-3xl font-bold">{feedback?.overall_score ? Math.round(feedback.overall_score * 10) : '--'}%</div>
+                              <div className="text-xs uppercase tracking-wider opacity-90">Score</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
+                </div>
+              </>
+            )}
+
+            {/* Areas Passed Tracker */}
+            {hasFrFeedback && frSixAreas ? (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Your Final Interview Progress
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Pass all 6 core areas to master the final interview.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-indigo-600">
+                        {frAreasPassed}/{frTotalAreas}
+                      </div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">
+                        Areas Passed
+                      </div>
+                    </div>
+                    <svg className="w-20 h-20">
+                      <circle cx="40" cy="40" r={circleRadius} stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                      <circle
+                        cx="40" cy="40" r={circleRadius}
+                        stroke="#6366f1" strokeWidth="8" fill="none"
+                        strokeDasharray={circleCircumference}
+                        strokeDashoffset={frCircleDashOffset}
+                        strokeLinecap="round"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.5s ease-out' }}
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      style={{ width: `${frAreasProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span className="text-gray-600">Focus on the orange areas below to level up.</span>
+                    <span className="text-indigo-600 font-semibold">Master all areas to be final-round ready.</span>
+                  </div>
+                </div>
+              </div>
+            ) : !hasFrFeedback ? (
+              <div className="bg-white rounded-2xl shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Your Final Interview Progress</h3>
+                    <p className="text-sm text-gray-600 mt-1">Pass all core areas to master the final interview fundamentals.</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-400">--/--</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-wide">Areas Passed</div>
+                    </div>
+                    <svg className="w-20 h-20">
+                      <circle cx="40" cy="40" r="30" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div className="bg-gray-300 h-3 rounded-full transition-all" style={{ width: '0%' }}></div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Master These Areas - Strengths & Needs Work Cards */}
+            {hasFrFeedback && frSixAreas && (
+              <div className="space-y-6" data-practice-section>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-gray-900">Master These Areas</h3>
+                  <div className="text-sm text-gray-600 flex space-x-4">
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span>Passed / Strengths</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                      <span>Needs Work</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Strengths / Passed Stack */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Passed Areas</h4>
+                      {frStrengthsCards.length > 1 && (
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <button className="hover:text-gray-900" onClick={() => setFrStrengthCarouselIndex((prev) => prev - 1)}>
+                            <span>&larr;</span>
+                          </button>
+                          <span>Card {getSafeIndex(frStrengthsCards.length, frStrengthCarouselIndex) + 1} of {frStrengthsCards.length}</span>
+                          <button className="hover:text-gray-900" onClick={() => setFrStrengthCarouselIndex((prev) => prev + 1)}>
+                            <span>&rarr;</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {renderStackedCarousel(frStrengthsCards, frStrengthCarouselIndex, setFrStrengthCarouselIndex, 'strength')}
+                  </div>
+
+                  {/* Needs Work Stack */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-700">Needs Work</h4>
+                      {frNeedsWorkCards.length > 1 && (
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <button className="hover:text-gray-900" onClick={() => setFrImproveCarouselIndex((prev) => prev - 1)}>
+                            <span>&larr;</span>
+                          </button>
+                          <span>Card {getSafeIndex(frNeedsWorkCards.length, frImproveCarouselIndex) + 1} of {frNeedsWorkCards.length}</span>
+                          <button className="hover:text-gray-900" onClick={() => setFrImproveCarouselIndex((prev) => prev + 1)}>
+                            <span>&rarr;</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {renderStackedCarousel(frNeedsWorkCards, frImproveCarouselIndex, setFrImproveCarouselIndex, 'improve')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Empty state when no FR feedback yet */}
+            {!hasFrFeedback && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-gray-900">Master These Areas</h3>
+                  <div className="text-sm text-gray-600 flex space-x-4">
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      <span>Passed / Strengths</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1">
+                      <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                      <span>Needs Work</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Passed Areas</h4>
+                    <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">No data available yet</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Needs Work</h4>
+                    <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
+                      <p className="text-gray-400 text-sm">No data available yet</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Transcript Section */}
+            {hasFrFeedback && structuredTranscript && (
+              (structuredTranscript.messages && structuredTranscript.messages.length > 0) ||
+              (structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0)
+            ) && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <button
+                  type="button"
+                  onClick={() => setShowTranscript((prev) => !prev)}
+                  className="flex w-full items-center justify-between mb-4 text-left"
+                >
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Full Interview Transcript</h3>
+                    <div className="mt-1 flex space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center space-x-1">
+                        <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Strong</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                        <span>Weak</span>
+                      </span>
+                    </div>
+                  </div>
+                  <svg className={`w-5 h-5 text-gray-500 transition-transform ${showTranscript ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showTranscript && (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                    {structuredTranscript.messages && structuredTranscript.messages.length > 0 ? (
+                      structuredTranscript.messages.map((msg: any, idx: number) => {
+                        const isCandidate = msg.speaker === 'candidate'
+
+                        let tone: 'strong' | 'weak' | 'neutral' = 'neutral'
+                        if (isCandidate && feedback?.final_round_six_areas) {
+                          const wentWell = feedback.final_round_six_areas.what_went_well || []
+                          const needsImprove = feedback.final_round_six_areas.what_needs_improve || []
+
+                          const inNeeds = needsImprove.some((item: any) =>
+                            (item.evidence || []).some((ev: any) => {
+                              const questionMatch = ev.question_id && msg.question_id && ev.question_id === msg.question_id
+                              const excerptMatch = ev.excerpt && msg.text && msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                              return questionMatch || excerptMatch
+                            })
+                          )
+                          const inWell = wentWell.some((item: any) =>
+                            (item.evidence || []).some((ev: any) => {
+                              const questionMatch = ev.question_id && msg.question_id && ev.question_id === msg.question_id
+                              const excerptMatch = ev.excerpt && msg.text && msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                              return questionMatch || excerptMatch
+                            })
+                          )
+
+                          if (inNeeds) tone = 'weak'
+                          else if (inWell) tone = 'strong'
+                        }
+
+                        const baseClasses = 'p-4 rounded-lg border-2 transition-colors cursor-default'
+                        const toneClasses = tone === 'strong' ? 'border-green-300 bg-green-50' : tone === 'weak' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'
+
+                        return (
+                          <div key={idx} className={`${baseClasses} ${toneClasses}`}>
+                            <div className="flex space-x-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Crown className="w-5 h-5 text-indigo-600" />}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between mb-1">
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                    {isCandidate ? 'You' : 'AI Interviewer'}
+                                  </span>
+                                  {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
+                                </div>
+                                <p className="text-gray-800 text-sm">{msg.text}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <p className="text-gray-500 text-sm">No transcript messages available.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty transcript state */}
+            {!hasFrFeedback && (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-2xl font-bold text-gray-900">Full Interview Transcript</h3>
+                <p className="text-sm text-gray-600 mt-1">Interview transcript will appear here after completion</p>
+              </div>
+            )}
+
+            {/* Detailed Performance Breakdown - Final Round Criteria */}
+            {hasFrFeedback && feedback?.full_rubric?.final_round_criteria ? (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Your Final Interview Progress
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Detailed Performance Breakdown
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Pass all core areas to master the final interview fundamentals.
+                    Evaluation based on final round interview criteria
                   </p>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-400">
-                      --/--
-                    </div>
-                    <div className="text-xs text-gray-500 uppercase tracking-wide">
-                      Areas Passed
-                    </div>
-                  </div>
-                  <svg className="w-20 h-20">
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="30"
-                      stroke="#e5e7eb"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFrRubricModal(true)}
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <span>View Full Report</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
-              <div className="mt-4">
-                <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+            ) : !hasFrFeedback ? (
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <h3 className="text-xl font-bold text-gray-900">Detailed Performance Breakdown</h3>
+                <p className="text-sm text-gray-600 mt-1">Evaluation based on final interview criteria</p>
+              </div>
+            ) : null}
+
+            {/* Full-Screen FR Rubric Report Modal */}
+            {showFrRubricModal && (
+              <>
+                <style dangerouslySetInnerHTML={{__html: `
+                  @media print {
+                    body * { visibility: hidden; }
+                    .fr-print-content, .fr-print-content * { visibility: visible; }
+                    .fr-print-content {
+                      position: absolute; left: 0; top: 0; width: 100%;
+                      max-width: 100% !important; max-height: none !important;
+                      height: auto !important; overflow: visible !important;
+                      box-shadow: none !important; border-radius: 0 !important;
+                      margin: 0 !important; padding: 20px !important;
+                    }
+                    .no-print { display: none !important; }
+                    @page { margin: 1cm; }
+                  }
+                `}} />
+                <div className="fixed inset-0 z-50 overflow-y-auto fr-print-content">
                   <div
-                    className="bg-gray-300 h-3 rounded-full transition-all"
-                    style={{ width: '0%' }}
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity no-print"
+                    onClick={() => setShowFrRubricModal(false)}
                   ></div>
-                </div>
-              </div>
-            </div>
 
-            {/* Master These Questions - Empty */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Master These Questions
-                </h3>
-                <div className="text-sm text-gray-600 flex space-x-4">
-                  <span className="inline-flex items-center space-x-1">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    <span>Passed / Strengths</span>
-                  </span>
-                  <span className="inline-flex items-center space-x-1">
-                    <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                    <span>Needs Work</span>
-                  </span>
-                </div>
-              </div>
+                  <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
+                      {/* Modal Header */}
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Detailed Performance Report
+                          </h2>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Final Round Interview Analysis
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-3 no-print">
+                          <button
+                            type="button"
+                            onClick={() => window.print()}
+                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            <span>Print / Save PDF</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowFrRubricModal(false)}
+                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                            aria-label="Close"
+                          >
+                            <X className="w-6 h-6" />
+                          </button>
+                        </div>
+                      </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Strengths / Passed Stack - Empty */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Passed Areas
-                    </h4>
+                      {/* Scrollable Content */}
+                      <div className="flex-1 overflow-y-auto print:overflow-visible print:h-auto">
+                        {feedback?.full_rubric ? (() => {
+                          const fullRubric = (feedback as any).full_rubric
+                          const enrichedFrRubric = {
+                            ...fullRubric,
+                            hiring_manager_criteria: fullRubric.final_round_criteria,
+                            rubric_version: fullRubric.rubric_version || '1.0',
+                            interview_type: 'final_round',
+                            session_metadata: fullRubric.session_metadata || {
+                              session_id: currentSessionData?.id || feedback?.interview_session_id || 'unknown',
+                              candidate_name: 'Candidate',
+                              position: 'Position',
+                              company: 'Company',
+                              interview_date: currentSessionData?.created_at || feedback?.created_at || new Date().toISOString(),
+                              interview_duration_seconds: currentSessionData?.duration_seconds || 0,
+                            },
+                            grading_metadata: fullRubric.grading_metadata || {
+                              graded_by_agent: 'Claude Sonnet 4',
+                              grading_timestamp: feedback?.created_at || new Date().toISOString(),
+                              confidence_in_assessment: 'High',
+                            },
+                          }
+                          return <DetailedHmRubricReport data={enrichedFrRubric} />
+                        })() : (
+                          <div className="p-12 text-center">
+                            <p className="text-gray-600">
+                              Detailed rubric report is not available for this interview yet.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">No data available yet</p>
-                  </div>
                 </div>
-
-                {/* Needs Work Stack - Empty */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Needs Work
-                    </h4>
-                  </div>
-                  <div className="bg-white rounded-xl shadow-lg p-8 text-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-sm">No data available yet</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Transcript Section - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Full Interview Transcript
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Interview transcript will appear here after completion
-                </p>
-              </div>
-            </div>
-
-            {/* Detailed Performance Breakdown - Empty */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Detailed Performance Breakdown
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Evaluation based on final interview criteria
-                </p>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -52,9 +52,16 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // Create Supabase client for middleware
-  const supabase = createMiddlewareClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
+  // Create Supabase client for middleware and get session safely
+  let session = null
+  try {
+    const supabase = createMiddlewareClient({ req, res })
+    const { data } = await supabase.auth.getSession()
+    session = data?.session
+  } catch (e) {
+    // Session parsing failed (e.g. after logout with stale cookies)
+    // Treat as unauthenticated
+  }
 
   // Protected routes — must be authenticated
   if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {

@@ -113,10 +113,10 @@ export default function HomePage() {
                 <Trophy className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                One-Time Payment
+                Affordable Pricing
               </h3>
               <p className="text-gray-600">
-                Pay once, unlock all interview rounds with 3 practice attempts each. Land the job and never pay again. No subscription, no recurring fees.
+                HR Screen is free. Unlock individual stages from $3.99 or get the full bundle for $11.99. Each purchase includes 3 attempts. Monthly subscription available for power users.
               </p>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function HomePage() {
               Practice with an AI that knows the company and role. Get feedback, improve, and practice again until you're confident.
             </p>
             <p className="text-lg text-primary-200 mb-8 max-w-2xl mx-auto">
-              One-time payment • No subscription • Land the job and never pay again
+              HR Screen free • Individual stages from $3.99 • Full bundle $11.99
             </p>
             <Link
               href="/dashboard"

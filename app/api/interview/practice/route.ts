@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
     let action: string | null = null
     let question: string | null = null
 
+    let stage: string | null = null
+
     if (contentType.includes('multipart/form-data')) {
       // Voice mode - FormData
       const formData = await request.formData()
@@ -25,6 +27,7 @@ export async function POST(request: NextRequest) {
       sessionId = formData.get('sessionId') as string
       questionId = formData.get('questionId') as string
       question = formData.get('question') as string
+      stage = formData.get('stage') as string
     } else {
       // Text mode or special actions - JSON
       const body = await request.json()
@@ -33,6 +36,7 @@ export async function POST(request: NextRequest) {
       userResponse = body.userResponse
       action = body.action
       question = body.question
+      stage = body.stage
     }
 
     // Handle getting question audio (TTS)
@@ -104,12 +108,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (sessionData.stage !== 'hr_screen') {
-      return NextResponse.json(
-        { error: 'Practice mode is only available for HR screen interviews' },
-        { status: 400 }
-      )
-    }
+    // Use stage from request body if provided, otherwise fall back to session stage
+    const effectiveStage = stage || sessionData.stage || 'hr_screen'
 
     const structuredTranscript = sessionData.transcript_structured
     if (!structuredTranscript || !structuredTranscript.questions_asked) {
@@ -173,8 +173,54 @@ export async function POST(request: NextRequest) {
     const assessmentAreas = questionObj?.assessment_areas || []
     const primaryArea = assessmentAreas[0] || 'answer_structure'
 
-    // Build focused feedback prompt
-    const systemPrompt = `You are an interview coach providing focused feedback on a specific answer.
+    // Stage-specific criteria context for grading
+    const stageCriteriaContext: Record<string, string> = {
+      hr_screen: `STAGE: HR Screen
+CRITERIA TO EVALUATE AGAINST (traditional HR criteria):
+- Communication Skills: clarity, articulation, professional language
+- Relevant Experience: alignment of background with role requirements
+- Cultural Fit Indicators: enthusiasm, values alignment, team orientation
+- Problem-Solving Approach: analytical thinking, structured responses
+- Motivation & Interest: genuine interest in the role and company
+- Professionalism: demeanor, preparation, self-awareness
+- Overall Impression: confidence, likability, readiness to advance`,
+
+      hiring_manager: `STAGE: Hiring Manager Interview
+CRITERIA TO EVALUATE AGAINST (hiring manager criteria + role-specific):
+Universal criteria:
+- Technical/Functional Competency: depth of domain expertise
+- Problem-Solving & Analytical Ability: structured thinking, creative solutions
+- Communication & Influence: persuasion, stakeholder management
+- Ownership & Accountability: initiative, responsibility, follow-through
+- Adaptability & Learning Agility: flexibility, growth mindset
+- Collaboration & Team Dynamics: cross-functional work, team contribution
+Also evaluate against role-specific criteria based on the job description.`,
+
+      culture_fit: `STAGE: Culture Fit Interview
+CRITERIA TO EVALUATE AGAINST (culture fit criteria):
+- Teamwork & Collaboration: working effectively with others, team dynamics
+- Communication Style: interpersonal skills, active listening, empathy
+- Values Alignment: alignment with company mission and values
+- Adaptability: handling change, ambiguity, new environments
+- Feedback & Growth Mindset: receptiveness to feedback, continuous improvement
+- Conflict Resolution: handling disagreements, navigating difficult situations`,
+
+      final: `STAGE: Final Round Interview
+CRITERIA TO EVALUATE AGAINST (final round criteria):
+- Strategic Thinking: big-picture vision, long-term planning
+- Leadership Potential: inspiring others, decision ownership
+- Decision-Making Under Ambiguity: judgment with incomplete information
+- Cross-Functional Awareness: understanding of broader business context
+- Mission & Vision Alignment: connection to company direction
+- Executive Presence: composure, confidence, gravitas`,
+    }
+
+    const criteriaContext = stageCriteriaContext[effectiveStage] || stageCriteriaContext['hr_screen']
+
+    // Build focused feedback prompt with scoring
+    const systemPrompt = `You are an interview coach providing focused feedback on a specific answer and assigning a score.
+
+${criteriaContext}
 
 CONTEXT:
 - Job Description: ${jobDescription.substring(0, 1000)}${jobDescription.length > 1000 ? '...' : ''}
@@ -192,15 +238,19 @@ PRACTICE ANSWER:
 
 Your task is to provide focused, actionable feedback on this specific answer. Focus on the assessment area: ${primaryArea}.
 
-Provide:
-1. What they did well in this answer
-2. What could be improved
-3. Specific suggestions for improvement
-4. ${originalAnswer ? 'A brief comparison with their original answer' : ''}
+You MUST respond in the following JSON format (no markdown, just raw JSON):
+{
+  "feedback": "Your detailed feedback here (what they did well, what to improve, specific suggestions${originalAnswer ? ', comparison with original answer' : ''}). Keep it concise and actionable.",
+  "score": <number from 1 to 10>
+}
 
-Keep feedback concise (2-3 sentences each) and actionable.`
+Scoring guide:
+- 1-3: Poor answer, misses key criteria, lacks substance
+- 4-6: Adequate but needs significant improvement
+- 7-8: Good answer, meets criteria with minor areas to refine
+- 9-10: Excellent answer, strong demonstration of the criteria`
 
-    // Generate feedback
+    // Generate feedback with scoring
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -210,14 +260,35 @@ Keep feedback concise (2-3 sentences each) and actionable.`
         },
         {
           role: 'user',
-          content: `Please provide focused feedback on this practice answer.`,
+          content: `Please evaluate this practice answer and provide feedback with a score.`,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 300,
+      temperature: 0.5,
+      max_tokens: 500,
     })
 
-    const feedback = completion.choices[0]?.message?.content || 'No feedback available.'
+    const rawContent = completion.choices[0]?.message?.content || ''
+
+    // Parse the JSON response
+    let feedback = 'No feedback available.'
+    let score = 5
+    try {
+      // Try to extract JSON from the response (handle potential markdown wrapping)
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0])
+        feedback = parsed.feedback || feedback
+        score = typeof parsed.score === 'number' ? Math.min(10, Math.max(1, parsed.score)) : 5
+      } else {
+        // Fallback: use raw content as feedback
+        feedback = rawContent
+      }
+    } catch (parseError) {
+      console.error('Error parsing practice feedback JSON:', parseError)
+      feedback = rawContent
+    }
+
+    const passed = score >= 7
 
     // Generate TTS for feedback
     let feedbackAudio = null
@@ -239,10 +310,14 @@ Keep feedback concise (2-3 sentences each) and actionable.`
       success: true,
       question: questionText,
       feedback: feedback,
-      feedbackAudio: feedbackAudio,
+      audioFeedback: feedbackAudio,
+      feedbackAudio: feedbackAudio, // Keep backward compat
       originalAnswer: originalAnswer,
       practiceAnswer: userResponse, // Include the transcribed/typed response
       assessmentArea: primaryArea,
+      passed: passed,
+      score: score,
+      stage: effectiveStage,
     })
   } catch (error) {
     console.error('Error in practice mode:', error)

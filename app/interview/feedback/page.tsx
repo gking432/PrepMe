@@ -7,22 +7,20 @@ import Link from 'next/link'
 import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
-
-// Premium mode: when true, all interviews are treated as unlocked.
-// Will be replaced by real payment/credit checks in Phase 3.
-const PREMIUM_MODE = true
-
-// (Mock data constants removed — real data is loaded from Supabase)
+import PurchaseFlow from '@/components/PurchaseFlow'
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
-  const [isPremium, setIsPremium] = useState(PREMIUM_MODE)
+  const [isPremium, setIsPremium] = useState(false)
+  const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
+  const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
   const [feedback, setFeedback] = useState<any>(null)
   const [areaScores, setAreaScores] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [feedbackGenerating, setFeedbackGenerating] = useState(false)
   const [pollingAttempts, setPollingAttempts] = useState(0)
   const [showAccountPrompt, setShowAccountPrompt] = useState(false)
+  const [accountPromptDismissed, setAccountPromptDismissed] = useState(false)
   const [defaultTabSet, setDefaultTabSet] = useState(false)
   const [structuredTranscript, setStructuredTranscript] = useState<any>(null)
   const [currentSessionData, setCurrentSessionData] = useState<any>(null)
@@ -46,6 +44,7 @@ export default function InterviewDashboard() {
   const [frStrengthCarouselIndex, setFrStrengthCarouselIndex] = useState(0)
   const [frImproveCarouselIndex, setFrImproveCarouselIndex] = useState(0)
   const [practicedCriteria, setPracticedCriteria] = useState<string[]>([])
+  const [passedCriteria, setPassedCriteria] = useState<string[]>([])
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -663,6 +662,33 @@ export default function InterviewDashboard() {
       console.error('Error loading feedback:', error)
     } finally {
       setLoading(false)
+
+      // Show account creation prompt for anonymous HR screen users
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const stageFromUrl = searchParams?.get('stage')
+      const resolvedStage = stageFromUrl || currentSessionData?.stage
+      if (!authSession && (resolvedStage === 'hr_screen' || !resolvedStage)) {
+        // Delay prompt slightly so they can see their results first
+        setTimeout(() => setShowAccountPrompt(true), 3000)
+      }
+
+      // Fetch payment/credit status for authenticated users
+      if (authSession) {
+        try {
+          const paymentRes = await fetch('/api/payments/status')
+          if (paymentRes.ok) {
+            const paymentData = await paymentRes.json()
+            setStageAccess(paymentData.stageAccess || {})
+            // User is "premium" if they have access to any paid stage
+            const hasAnyPaidAccess = ['hiring_manager', 'culture_fit', 'final'].some(
+              s => paymentData.stageAccess?.[s]?.hasAccess
+            )
+            setIsPremium(hasAnyPaidAccess || paymentData.subscription?.active || false)
+          }
+        } catch (err) {
+          console.error('Error loading payment status:', err)
+        }
+      }
     }
   }
 
@@ -763,6 +789,7 @@ export default function InterviewDashboard() {
       formData.append('questionId', practiceInfo.questionId)
       formData.append('question', practiceInfo.question)
       formData.append('originalAnswer', practiceInfo.originalAnswer)
+      formData.append('stage', currentStage)
 
       const response = await fetch('/api/interview/practice', {
         method: 'POST',
@@ -776,7 +803,15 @@ export default function InterviewDashboard() {
           setPracticeResponse({ ...practiceResponse, [practiceKey]: data.practiceAnswer })
         }
         setPracticeFeedback({ ...practiceFeedback, [practiceKey]: data })
-        
+
+        // Track pass/fail for this criterion
+        if (data.passed && practiceInfo.criterion) {
+          const criterionKey = `${currentStage}:${practiceInfo.criterion}`
+          if (!passedCriteria.includes(criterionKey)) {
+            setPassedCriteria(prev => [...prev, criterionKey])
+          }
+        }
+
         // Play feedback audio if available
         if (data.feedbackAudio) {
           await playAudio(data.feedbackAudio, practiceKey, 'feedback')
@@ -1351,16 +1386,18 @@ export default function InterviewDashboard() {
         : null
     const isPracticing =
       practiceKey && practiceData[practiceKey] ? true : false
+    const criterionPassedKey = `${currentStage}:${item.criterion}`
+    const criterionPassed = passedCriteria.includes(criterionPassedKey)
 
     const baseBorder =
-      variant === 'strength' ? 'border-green-200' : 'border-orange-200'
-    const baseBg = 'bg-white'
+      variant === 'strength' ? 'border-green-200' : (criterionPassed ? 'border-green-300' : 'border-orange-200')
+    const baseBg = criterionPassed && variant === 'improve' ? 'bg-green-50/30' : 'bg-white'
     const accentText =
-      variant === 'strength' ? 'text-green-700' : 'text-orange-700'
+      variant === 'strength' ? 'text-green-700' : (criterionPassed ? 'text-green-700' : 'text-orange-700')
     const badgeBg =
-      variant === 'strength' ? 'bg-green-100' : 'bg-orange-100'
+      variant === 'strength' ? 'bg-green-100' : (criterionPassed ? 'bg-green-100' : 'bg-orange-100')
     const badgeIconColor =
-      variant === 'strength' ? 'text-green-600' : 'text-orange-600'
+      variant === 'strength' ? 'text-green-600' : (criterionPassed ? 'text-green-600' : 'text-orange-600')
     const headerPillBg =
       variant === 'strength' ? 'bg-green-50' : 'bg-orange-50'
     const headerPillText =
@@ -1370,8 +1407,31 @@ export default function InterviewDashboard() {
     const leftCount = safeIndex
     const rightCount = len - safeIndex - 1
 
+    // Calculate mastered count for improve cards
+    const masteredInStack = variant === 'improve'
+      ? items.filter((it: any) => passedCriteria.includes(`${currentStage}:${it.criterion}`)).length
+      : 0
+
     return (
       <div className="relative">
+        {/* Practice mastery progress for needs-work cards */}
+        {variant === 'improve' && items.length > 0 && (
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-600">
+              {masteredInStack} of {items.length} area{items.length !== 1 ? 's' : ''} mastered via practice
+            </span>
+            {masteredInStack > 0 && (
+              <div className="flex items-center space-x-1">
+                <div className="w-24 bg-gray-200 rounded-full h-1.5">
+                  <div
+                    className="bg-green-500 h-1.5 rounded-full transition-all"
+                    style={{ width: `${(masteredInStack / items.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {/* Stacked background cards (peek from sides, shorter and centered)
             At most 2 slices per side; when more remain, still only show 2. */}
         {len > 1 && (
@@ -1434,7 +1494,9 @@ export default function InterviewDashboard() {
                   <p className={`text-xs font-semibold ${accentText}`}>
                     {variant === 'strength'
                       ? '✓ STRENGTH'
-                      : '⚠ NEEDS WORK'}
+                      : criterionPassed
+                        ? '✓ MASTERED VIA PRACTICE'
+                        : '⚠ NEEDS WORK'}
                   </p>
                 </div>
               </div>
@@ -1509,6 +1571,7 @@ export default function InterviewDashboard() {
                         questionId: firstEvidence.question_id,
                         question: questionText,
                         originalAnswer: firstEvidence.excerpt,
+                        criterion: item.criterion,
                       },
                     })
                     setActivePracticeCriterion(item.criterion)
@@ -1582,10 +1645,29 @@ export default function InterviewDashboard() {
 
                   {/* Feedback Display */}
                   {practiceFeedback[practiceKey] && !practicePlayingFeedback[practiceKey] && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h5 className="text-sm font-semibold text-gray-900 mb-2">
-                        Practice Feedback
-                      </h5>
+                    <div className={`${practiceFeedback[practiceKey].passed ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'} border rounded-lg p-4`}>
+                      {/* Pass/Fail Badge */}
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="text-sm font-semibold text-gray-900">
+                          Practice Feedback
+                        </h5>
+                        <div className="flex items-center space-x-2">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                            practiceFeedback[practiceKey].passed
+                              ? 'bg-green-200 text-green-800'
+                              : 'bg-amber-200 text-amber-800'
+                          }`}>
+                            {practiceFeedback[practiceKey].score}/10
+                          </span>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                            practiceFeedback[practiceKey].passed
+                              ? 'bg-green-200 text-green-800'
+                              : 'bg-red-200 text-red-800'
+                          }`}>
+                            {practiceFeedback[practiceKey].passed ? 'PASSED' : 'NEEDS WORK'}
+                          </span>
+                        </div>
+                      </div>
                       <div className="prose prose-sm max-w-none">
                         <p className="text-gray-700 whitespace-pre-wrap text-sm">
                           {practiceFeedback[practiceKey].feedback}
@@ -1616,7 +1698,7 @@ export default function InterviewDashboard() {
                         }}
                         className="mt-3 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium"
                       >
-                        Practice Again
+                        {practiceFeedback[practiceKey].passed ? 'Practice Again (Already Passed!)' : 'Try Again'}
                       </button>
                     </div>
                   )}
@@ -1719,7 +1801,7 @@ export default function InterviewDashboard() {
               )}
               {!isPremium && (
                 <button 
-                  onClick={() => setIsPremium(true)}
+                  onClick={() => setShowPurchaseFlow(true)}
                   className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
                 >
                   <Crown className="w-4 h-4" />
@@ -1734,44 +1816,109 @@ export default function InterviewDashboard() {
       {/* Account Creation Prompt for Anonymous Users */}
       {showAccountPrompt && isAnonymous && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Save Your Interview Data</h3>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+            <button
+              onClick={() => {
+                setShowAccountPrompt(false)
+                setAccountPromptDismissed(true)
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Free Account</h3>
             <p className="text-gray-600 mb-6">
-              You're viewing this feedback as a guest. Create a free account to save your interview data and access it anytime.
+              Save your results, track progress, and unlock more interview stages
             </p>
             <div className="space-y-3">
+              {(() => {
+                const tempDataStr = localStorage.getItem('temp_interview_data')
+                const tempData = tempDataStr ? JSON.parse(tempDataStr) : null
+                const extractedName = tempData?.extractedUserInfo?.name || ''
+                const extractedEmail = tempData?.extractedUserInfo?.email || ''
+                return (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                      <input
+                        type="text"
+                        defaultValue={extractedName}
+                        readOnly
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        defaultValue={extractedEmail}
+                        readOnly
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        const params = new URLSearchParams()
+                        if (extractedEmail) params.set('email', extractedEmail)
+                        if (extractedName) params.set('name', extractedName)
+                        const query = params.toString()
+                        router.push(`/auth/signup${query ? `?${query}` : ''}`)
+                      }}
+                      className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-lg"
+                    >
+                      Create Account
+                    </button>
+                  </>
+                )
+              })()}
               <button
-                onClick={async () => {
-                  // Extract email from temp data
-                  const tempDataStr = localStorage.getItem('temp_interview_data')
-                  if (tempDataStr) {
-                    const tempData = JSON.parse(tempDataStr)
-                    const email = tempData.extractedUserInfo?.email
-                    
-                    if (email) {
-                      // Navigate to signup with email pre-filled
-                      router.push(`/auth/signup?email=${encodeURIComponent(email)}`)
-                    } else {
-                      router.push('/auth/signup')
-                    }
-                  } else {
-                    router.push('/auth/signup')
-                  }
+                onClick={() => {
+                  window.location.href = '/auth/signup?provider=google'
                 }}
-                className="w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
+                className="w-full px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
               >
-                Create Free Account
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Continue with Google</span>
               </button>
               <button
-                onClick={() => setShowAccountPrompt(false)}
-                className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                onClick={() => {
+                  setShowAccountPrompt(false)
+                  setAccountPromptDismissed(true)
+                }}
+                className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all"
               >
-                Continue as Guest
+                Maybe Later
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-4 text-center">
-              Your data will be saved to your account automatically after signup
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              Already have an account?{' '}
+              <a href="/auth/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+                Sign in
+              </a>
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Persistent signup banner for anonymous users who dismissed the modal */}
+      {isAnonymous && !showAccountPrompt && accountPromptDismissed && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 flex items-center justify-between">
+            <p className="text-sm text-indigo-800 font-medium">
+              Create an account to save your results and continue to the Hiring Manager round →
+            </p>
+            <button
+              onClick={() => router.push('/auth/signup')}
+              className="ml-4 px-4 py-1.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+            >
+              Sign Up
+            </button>
           </div>
         </div>
       )}
@@ -2033,7 +2180,7 @@ export default function InterviewDashboard() {
                       <div className="flex flex-wrap gap-3">
                         <button
                           type="button"
-                          onClick={() => setIsPremium(true)}
+                          onClick={() => setShowPurchaseFlow(true)}
                           className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                         >
                           <Briefcase className="w-5 h-5" />
@@ -2042,7 +2189,7 @@ export default function InterviewDashboard() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setIsPremium(true)}
+                          onClick={() => setShowPurchaseFlow(true)}
                           className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
                         >
                           <Crown className="w-5 h-5" />
@@ -2093,7 +2240,7 @@ export default function InterviewDashboard() {
                       <p className="text-indigo-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
                     </div>
                     <button 
-                      onClick={() => setIsPremium(true)}
+                      onClick={() => setShowPurchaseFlow(true)}
                       className="flex items-center space-x-2 px-6 py-3 bg-white text-primary-500 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <span>Unlock All Interviews</span>
@@ -2217,7 +2364,7 @@ export default function InterviewDashboard() {
                             <p className="text-white/90 text-sm mb-3 font-medium">Unlock the full process</p>
                             <button
                               type="button"
-                              onClick={() => setIsPremium(true)}
+                              onClick={() => setShowPurchaseFlow(true)}
                               className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                             >
                               <Crown className="w-5 h-5" />
@@ -2817,7 +2964,7 @@ export default function InterviewDashboard() {
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => setIsPremium(true)}
+                                onClick={() => setShowPurchaseFlow(true)}
                                 className="inline-flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg hover:scale-105 transform"
                               >
                                 <Crown className="w-5 h-5" />
@@ -3545,7 +3692,7 @@ export default function InterviewDashboard() {
                       <div className="flex flex-wrap gap-3">
                         <button
                           type="button"
-                          onClick={() => setIsPremium(true)}
+                          onClick={() => setShowPurchaseFlow(true)}
                           className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                         >
                           <Briefcase className="w-5 h-5" />
@@ -3554,7 +3701,7 @@ export default function InterviewDashboard() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setIsPremium(true)}
+                          onClick={() => setShowPurchaseFlow(true)}
                           className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
                         >
                           <Crown className="w-5 h-5" />
@@ -3605,7 +3752,7 @@ export default function InterviewDashboard() {
                       <p className="text-indigo-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
                     </div>
                     <button 
-                      onClick={() => setIsPremium(true)}
+                      onClick={() => setShowPurchaseFlow(true)}
                       className="flex items-center space-x-2 px-6 py-3 bg-white text-primary-500 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <span>Unlock All Interviews</span>
@@ -3688,7 +3835,7 @@ export default function InterviewDashboard() {
                         <div className="flex flex-wrap gap-3">
                           <button
                             type="button"
-                            onClick={() => setIsPremium(true)}
+                            onClick={() => setShowPurchaseFlow(true)}
                             className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                           >
                             <Briefcase className="w-5 h-5" />
@@ -3697,7 +3844,7 @@ export default function InterviewDashboard() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setIsPremium(true)}
+                            onClick={() => setShowPurchaseFlow(true)}
                             className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
                           >
                             <Crown className="w-5 h-5" />
@@ -3774,7 +3921,7 @@ export default function InterviewDashboard() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => setIsPremium(true)}
+                        onClick={() => setShowPurchaseFlow(true)}
                         className="inline-flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all"
                       >
                         <Crown className="w-5 h-5" />
@@ -5332,6 +5479,13 @@ export default function InterviewDashboard() {
           <MessageCircle className="w-6 h-6" />
         </button>
       </div>
+
+      {/* Purchase Flow Modal */}
+      {showPurchaseFlow && (
+        <PurchaseFlow
+          onClose={() => setShowPurchaseFlow(false)}
+        />
+      )}
 
     </div>
   )

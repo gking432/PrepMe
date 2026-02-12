@@ -214,10 +214,10 @@ Also check for red flags: ${observerPrompt.redFlagKeywords.join(', ')}`
       .update({ observer_notes: existingNotes })
       .eq('id', sessionId)
 
-    console.log(`✅ Observer note recorded for question ${questionId}`)
+    // Observer note recorded
   } catch (error: any) {
     // Log error but don't throw - observer failures shouldn't break interviews
-    console.error(`❌ Observer failed for question ${questionId}:`, error.message)
+    console.error(`Observer failed for question ${questionId}:`, error.message)
     // Don't rethrow - this is fire-and-forget
   }
 }

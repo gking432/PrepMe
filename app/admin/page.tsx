@@ -39,9 +39,7 @@ export default function AdminPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [criteria, setCriteria] = useState<EvaluationCriteria[]>([])
   const [settings, setSettings] = useState<EvaluationSettings | null>(null)
-  const [activeTab, setActiveTab] = useState<'prompts' | 'criteria' | 'settings' | 'test'>('prompts')
-  const [testFeedback, setTestFeedback] = useState<any>(null)
-  const [testingFeedback, setTestingFeedback] = useState(false)
+  const [activeTab, setActiveTab] = useState<'prompts' | 'criteria' | 'settings'>('prompts')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
@@ -60,7 +58,7 @@ export default function AdminPage() {
     // Allow test mode access without authentication
     const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     if (isTestMode || isDev) {
-      console.log('🔓 Admin access granted (test/development mode)')
+      // Admin access granted (test/development mode)
       setUser({ email: 'test@prepme.com' }) // Dummy user for test mode
       setLoading(false)
       return
@@ -354,16 +352,6 @@ export default function AdminPage() {
               }`}
             >
               Evaluation Settings
-            </button>
-            <button
-              onClick={() => setActiveTab('test')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'test'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Test Feedback
             </button>
           </nav>
         </div>
@@ -686,8 +674,8 @@ export default function AdminPage() {
           </>
         )}
 
-        {/* Test Tab */}
-        {activeTab === 'test' && (
+        {/* Test Tab removed — test endpoints deleted */}
+        {false && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Test Feedback Generation</h2>
             <p className="text-gray-600 mb-6">
@@ -710,7 +698,7 @@ export default function AdminPage() {
                     // Store sessionId in localStorage so feedback page can find it
                     if (data.sessionId) {
                       localStorage.setItem('last_interview_session_id', data.sessionId)
-                      console.log('✅ Stored sessionId in localStorage:', data.sessionId)
+                      // Stored sessionId in localStorage
                     }
                     
                     // Automatically redirect to feedback page

@@ -409,7 +409,7 @@ export default function InterviewPage() {
       if (error) {
         console.error('Error saving transcript to database:', error)
       } else {
-        console.log('✅ Saved transcript to database, length:', transcriptText.length)
+        // transcript saved to database
       }
     } catch (error) {
       console.error('Error saving transcript:', error)
@@ -714,14 +714,14 @@ export default function InterviewPage() {
       setIsInterviewActive(true)
       
       // Start the interview conversation using traditional API
-      console.log('📞 Calling /api/interview/start with sessionId:', newSession.id)
+      // Call interview start API
       const response = await fetch('/api/interview/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stage, sessionId: newSession.id }),
       })
 
-      console.log('📞 Interview start API response status:', response.status)
+      // Interview start API responded
 
       if (!response.ok) {
         let errorText = 'Unknown error'
@@ -730,16 +730,16 @@ export default function InterviewPage() {
         } catch (e) {
           errorText = `HTTP ${response.status}`
         }
-        console.error('❌ Failed to start interview:', response.status, errorText)
+        console.error('Failed to start interview:', response.status, errorText)
         throw new Error(`Failed to start interview: ${response.status} - ${errorText}`)
       }
 
       let data
       try {
         data = await response.json()
-        console.log('✅ Interview start response parsed successfully')
+        // Interview start response parsed successfully
       } catch (parseError) {
-        console.error('❌ Failed to parse interview start response:', parseError)
+        console.error('Failed to parse interview start response:', parseError)
         throw new Error('Invalid response from interview start API')
       }
       setCurrentMessage(data.message)
@@ -773,7 +773,7 @@ export default function InterviewPage() {
         }
       }
     } catch (error: any) {
-      console.error('❌ Error starting interview:', error)
+      console.error('Error starting interview:', error)
       console.error('Error details:', {
         message: error?.message,
         stack: error?.stack,
@@ -1087,11 +1087,7 @@ export default function InterviewPage() {
       if (stage === 'hr_screen') {
         const currentPhase = conversationPhaseRef.current || 'opening'
         formData.append('conversationPhase', currentPhase)
-        console.log('📤 Sending conversation state:', {
-          phase: currentPhase,
-          questionsCount: currentAskedQuestions.length,
-          questionsPreview: currentAskedQuestions.slice(0, 2).map(q => q.substring(0, 40)),
-        })
+        // Sending conversation state
       }
 
       // Log what we're actually sending (use refs for accurate logging)
@@ -1159,7 +1155,7 @@ export default function InterviewPage() {
             if (!isDuplicate) {
               const updated = [...prev, interviewerMessage]
               askedQuestionsRef.current = updated
-              console.log('✅ Tracked new question:', interviewerMessage.substring(0, 50), `(${stage})`)
+              // Tracked new question
               return updated
             }
             return prev
@@ -1392,11 +1388,11 @@ export default function InterviewPage() {
       // Use transcript from database if local state is empty (voice API saves incrementally)
       if (!finalTranscript && sessionData?.transcript) {
         finalTranscript = sessionData.transcript
-        console.log('📝 Using transcript from database, length:', finalTranscript.length)
+        // Using transcript from database
       } else if (finalTranscript) {
-        console.log('📝 Using transcript from local state, length:', finalTranscript.length)
+        // Using transcript from local state
       } else {
-        console.warn('⚠️ No transcript found in local state or database')
+        console.warn('No transcript found in local state or database')
       }
 
       // Update session status
@@ -1409,9 +1405,9 @@ export default function InterviewPage() {
       // Check both that it exists AND has content (not just whitespace)
       if (finalTranscript && finalTranscript.trim().length > 0) {
         updateData.transcript = finalTranscript
-        console.log('✅ Saving transcript to database, length:', finalTranscript.length)
+        // Saving transcript to database
       } else {
-        console.log('⚠️ Skipping transcript update - no valid transcript content')
+        // Skipping transcript update - no valid transcript content
       }
       
       if (durationSeconds !== null) {
@@ -1431,7 +1427,7 @@ export default function InterviewPage() {
 
       // Generate feedback - API will fetch transcript from database
       try {
-        console.log('🚀 GENERATING FEEDBACK FOR SESSION:', currentSessionId)
+        // Generating feedback for session
         
         // Feedback API will fetch transcript from database, so we don't need to send it
         const feedbackResponse = await fetch('/api/interview/feedback', {
@@ -1443,22 +1439,22 @@ export default function InterviewPage() {
           }),
         })
 
-        console.log('📥 Feedback API response status:', feedbackResponse.status)
+        // Feedback API responded
 
         if (!feedbackResponse.ok) {
           const errorText = await feedbackResponse.text()
-          console.error('❌ Error generating feedback:', errorText)
+          console.error('Error generating feedback:', errorText)
           console.error('Response status:', feedbackResponse.status)
         } else {
           const result = await feedbackResponse.json()
-          console.log('✅ Feedback generated successfully!', result)
+          // Feedback generated successfully
         }
       } catch (error) {
-        console.error('❌ CRITICAL ERROR calling feedback API:', error)
+        console.error('CRITICAL ERROR calling feedback API:', error)
         console.error('Error details:', error)
       }
     } else {
-      console.error('❌ CRITICAL: No sessionId found - cannot generate feedback!')
+      console.error('CRITICAL: No sessionId found - cannot generate feedback!')
       console.error('This means feedback will NOT be generated. Check sessionId state and ref.')
     }
 
@@ -1466,9 +1462,9 @@ export default function InterviewPage() {
     // BUT only if we actually have a sessionId (don't overwrite with null)
     if (currentSessionId) {
       localStorage.setItem('last_interview_session_id', currentSessionId)
-      console.log('✅ Stored sessionId in localStorage:', currentSessionId)
+      // Stored sessionId in localStorage
     } else {
-      console.error('❌ Cannot store sessionId - it is null!')
+      console.error('Cannot store sessionId - it is null!')
     }
 
     // Small delay to ensure feedback API call completes before redirect

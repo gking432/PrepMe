@@ -1,6 +1,8 @@
 // API route to start an interview session
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -10,6 +12,18 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     const { stage, sessionId } = await request.json()
+
+    // Stage gating: non-HR stages require authentication
+    if (stage && stage !== 'hr_screen') {
+      const supabaseAuth = createRouteHandlerClient({ cookies })
+      const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
+      if (!authSession) {
+        return NextResponse.json(
+          { error: 'Authentication required for this interview stage. Please sign in to continue.' },
+          { status: 401 }
+        )
+      }
+    }
 
     // Get the interview prompt for this stage
     const { data: promptData, error: promptError } = await supabaseAdmin
@@ -170,7 +184,7 @@ export async function POST(request: NextRequest) {
         // Jump straight to screening with standard opening question
         initialMessage = `Hi, this is ${randomName} with ${companyName} calling about the ${positionName} position. I have a few quick questions, then you can ask me anything. Tell me a bit about yourself.`
         conversationPhase = 'screening'
-        console.log('✅ HR Screen - Starting with screening phase (skipping small talk)')
+        // HR Screen - starting with screening phase
         
         // Option 2: Keep structure overview but make it tighter (uncomment to use)
         // initialMessage = `Hi, this is ${companyName} about the ${positionName} role. I'll share info about the company and role, ask a few questions, then you can ask me anything. Sound good?`
@@ -179,7 +193,7 @@ export async function POST(request: NextRequest) {
         // Fallback if no resume/job description
         initialMessage = `Hello! I'm conducting your HR screen interview. Is now still a good time?`
         conversationPhase = 'opening'
-        console.warn('⚠️ Using fallback HR screen greeting - no resume/job description data available')
+        console.warn('Using fallback HR screen greeting - no resume/job description data available')
       }
     } else if (stage === 'hiring_manager') {
       // HIRING MANAGER: More formal, domain-aware introduction
@@ -229,7 +243,7 @@ export async function POST(request: NextRequest) {
 
         initialMessage = `Hi, I'm ${managerTitle} at ${companyName}. Thanks for speaking with our HR team. I've reviewed your background and our notes from that conversation. I'd like to spend the next 30 minutes diving deeper into your experience, particularly as it relates to the ${positionName} role. Then we'll leave time for your questions. Sound good?`
         conversationPhase = 'screening'
-        console.log('✅ Hiring Manager greeting created - starting with technical/behavioral deep-dive')
+        // Hiring Manager greeting created
       } else {
         initialMessage = `Hello! I'm the hiring manager. Thanks for taking the time to speak with our HR team. I'd like to dive deeper into your experience. Ready to get started?`
         conversationPhase = 'screening'
@@ -250,16 +264,15 @@ export async function POST(request: NextRequest) {
           }
         }
         initialMessage = `Hello! I'm calling from ${companyName} to conduct your ${stage.replace('_', ' ')} interview. I've reviewed your resume and I'm excited to learn more about your background. Let's begin - tell me about yourself.`
-        console.log('✅ Personalized greeting created with resume/job description data')
+        // Personalized greeting created with resume/job description data
       } else {
         initialMessage += ` Let's begin - tell me about yourself.`
-        console.warn('⚠️ Using generic greeting - no resume/job description data available')
+        console.warn('Using generic greeting - no resume/job description data available')
       }
     }
     
     // Log what we're about to send
-    console.log('📤 INITIAL GREETING:', initialMessage.substring(0, 100) + '...')
-    console.log('📊 Conversation Phase:', conversationPhase)
+    // Initial greeting and conversation phase ready
 
     // Generate speech audio using OpenAI TTS
     let audioBase64 = null

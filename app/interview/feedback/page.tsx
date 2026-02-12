@@ -8,400 +8,11 @@ import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowR
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 
-// Temporary flag: when true, always show mock HR Screen feedback data (no sign-in / Supabase required)
-// Turn this off or delete when ready to use real data end-to-end.
-const USE_MOCK_FEEDBACK = false // DISABLED FOR TESTING - Use real three-agent system data
-
-// Premium mode: when true, all interviews are treated as unlocked. Likely → always Hiring Manager CTA;
-// Unlikely + premium → Step 4 (Retake or move forward) on HR Screen; Unlikely + !premium → unlock/premium CTAs.
+// Premium mode: when true, all interviews are treated as unlocked.
+// Will be replaced by real payment/credit checks in Phase 3.
 const PREMIUM_MODE = true
 
-// Mock HR Screen six-areas feedback structure (already used later in the file)
-const MOCK_HR_SCREEN_SIX_AREAS = {
-  what_went_well: [
-    {
-      criterion: "Answer Structure and Conciseness",
-      feedback: "Your responses were well-organized and appropriately concise. When asked about your experience, you used a clear structure (situation-action-result) and kept answers to 30-90 seconds, which is ideal for phone screens.",
-      evidence: [
-        {
-          question_id: "q1",
-          timestamp: "2:15",
-          excerpt: "I've been working as a software engineer for 5 years. In my current role at Tech Corp, I led a team of 5 developers on a project that increased user engagement by 30%.",
-        },
-      ],
-    },
-    {
-      criterion: "Alignment of Career Goals with Position",
-      feedback: "You clearly articulated why this role aligns with your career goals. You mentioned specific aspects of the company's mission that resonate with you, showing genuine interest beyond just needing a job.",
-      evidence: [
-        {
-          question_id: "q2",
-          timestamp: "4:30",
-          excerpt: "I'm interested in this role because I'm passionate about sustainable packaging solutions, and Placon's commitment to environmental responsibility aligns with my personal values.",
-        },
-      ],
-    },
-    {
-      criterion: "Pace and Conversation Flow",
-      feedback: "You maintained a natural conversational rhythm with appropriate pauses for thought. The back-and-forth felt comfortable and professional, not rushed or awkward.",
-      evidence: [],
-    },
-  ],
-  what_needs_improve: [
-    {
-      criterion: "Specific Examples and Evidence",
-      feedback: "While you mentioned having experience with digital marketing, you didn't provide specific examples with concrete results. Consider preparing stories like 'I increased website traffic by 40% by implementing a new SEO strategy' with actual metrics.",
-      evidence: [
-        {
-          question_id: "q3",
-          timestamp: "6:45",
-          excerpt: "I have experience with digital marketing and social media. I've worked on campaigns before and understand the basics.",
-        },
-      ],
-    },
-    {
-      criterion: "Questions Asked About the Role/Company",
-      feedback: "You didn't ask any questions about the role or company. This is a missed opportunity to show your interest and gather important information. Consider asking about team structure, growth opportunities, or what success looks like in the first 90 days.",
-      evidence: [],
-    },
-    {
-      criterion: "Handling Uncertain/Difficult Questions",
-      feedback: "When asked about marketing automation platforms you haven't used, you tried to deflect rather than acknowledge the gap. A better approach would be: 'I haven't used that specific platform, but I have experience with similar tools and I'm a quick learner.'",
-      evidence: [
-        {
-          question_id: "q4",
-          timestamp: "8:20",
-          excerpt: "I'm familiar with most marketing tools. I can figure out any platform quickly.",
-        },
-      ],
-    },
-  ],
-}
-
-// Mock structured transcript for HR Screen drill-down views
-const MOCK_HR_SCREEN_STRUCTURED_TRANSCRIPT = {
-  messages: [
-    { speaker: "interviewer", text: "Tell me about yourself and what interested you in this role.", timestamp: "0:30", question_id: "q1" },
-    { speaker: "candidate", text: "I've been working as a software engineer for 5 years. In my current role at Tech Corp, I led a team of 5 developers on a project that increased user engagement by 30%.", timestamp: "2:15" },
-    { speaker: "interviewer", text: "Why are you interested in this position specifically?", timestamp: "3:00", question_id: "q2" },
-    { speaker: "candidate", text: "I'm interested in this role because I'm passionate about sustainable packaging solutions, and Placon's commitment to environmental responsibility aligns with my personal values.", timestamp: "4:30" },
-    { speaker: "interviewer", text: "Can you tell me about your experience with digital marketing?", timestamp: "5:15", question_id: "q3" },
-    { speaker: "candidate", text: "I have experience with digital marketing and social media. I've worked on campaigns before and understand the basics.", timestamp: "6:45" },
-    { speaker: "interviewer", text: "Have you worked with marketing automation platforms like HubSpot?", timestamp: "7:30", question_id: "q4" },
-    { speaker: "candidate", text: "I'm familiar with most marketing tools. I can figure out any platform quickly.", timestamp: "8:20" },
-    { speaker: "interviewer", text: "Do you have any questions for me?", timestamp: "9:00", question_id: "q5" },
-    { speaker: "candidate", text: "No, I think I have all the information I need. Thank you!", timestamp: "9:30" },
-  ],
-  questions_asked: [
-    { id: "q1", question: "Tell me about yourself and what interested you in this role.", timestamp: "0:30", assessment_areas: ["answer_structure", "career_alignment"] },
-    { id: "q2", question: "Why are you interested in this position specifically?", timestamp: "3:00", assessment_areas: ["career_alignment"] },
-    { id: "q3", question: "Can you tell me about your experience with digital marketing?", timestamp: "5:15", assessment_areas: ["answer_structure", "specific_examples"] },
-    { id: "q4", question: "Have you worked with marketing automation platforms like HubSpot?", timestamp: "7:30", assessment_areas: ["handling_uncertainty"] },
-    { id: "q5", question: "Do you have any questions for me?", timestamp: "9:00", assessment_areas: ["questions_asked"] },
-  ],
-  start_time: new Date().toISOString(),
-}
-
-// Mock Detailed Rubric Report Data (matches HTML structure)
-const MOCK_DETAILED_RUBRIC = {
-  rubric_version: '1.0',
-  interview_type: 'hr_screen',
-  session_metadata: {
-    session_id: 'mock-session-001',
-    candidate_name: 'John Doe',
-    position: 'Digital Marketing Manager',
-    company: 'Tech Corp',
-    interview_date: new Date().toISOString(),
-    interview_duration_seconds: 872, // 14:32
-  },
-  overall_assessment: {
-    overall_score: 78,
-    likelihood_to_advance: 'likely' as const,
-    key_strengths: [
-      {
-        title: 'Answer Structure & Conciseness',
-        description: 'Responses were well-organized using STAR method and appropriate length',
-      },
-      {
-        title: 'Career Alignment',
-        description: 'Clear articulation of why this role fits career goals and company values',
-      },
-      {
-        title: 'Professional Presence',
-        description: 'Maintained respectful tone and demonstrated strong phone etiquette',
-      },
-    ],
-    key_weaknesses: [
-      {
-        title: 'Specific Examples & Evidence',
-        description: 'Responses lacked concrete metrics and detailed examples',
-      },
-      {
-        title: 'Questions Asked',
-        description: 'Did not ask thoughtful questions about the role or company',
-      },
-      {
-        title: 'Handling Uncertainty',
-        description: 'Became slightly defensive when discussing skill gaps',
-      },
-    ],
-    executive_summary: 'The candidate performed well in the HR screen, scoring 78%. Strong communication skills and clear career alignment stood out. However, responses lacked specific examples and metrics. With targeted practice on providing concrete details, this candidate has strong potential for the next round.',
-  },
-  traditional_hr_criteria: {
-    communication_skills: {
-      score: 4,
-      scale: '1-5',
-      components: {
-        clarity: 4,
-        articulation: 5,
-        pacing: 4,
-        tone_appropriateness: 5,
-        active_listening: 4,
-        professional_language: 5,
-      },
-      feedback: 'The candidate demonstrated strong communication skills throughout the interview. Articulation was clear and professional language was consistently maintained. Pacing was generally appropriate, though there were moments of slight rushing when discussing technical topics. Active listening was evident through relevant responses, though there were 2-3 instances where clarification was needed. Overall, communication style would translate well to professional settings.',
-    },
-    professionalism: {
-      score: 'pass' as const,
-      scale: 'pass/fail',
-      components: {
-        appropriate_greeting: true,
-        appropriate_closing: true,
-        respectful_tone: true,
-        prepared_environment: true,
-        phone_etiquette: true,
-      },
-      feedback: 'No issues detected. The candidate demonstrated excellent professionalism from start to finish. The greeting was warm and appropriate, and the closing expressed gratitude and enthusiasm. No unprofessional language or behavior was observed.',
-    },
-    basic_qualifications_match: {
-      score: 8,
-      scale: '1-10',
-      components: {},
-      feedback: 'Strong overall alignment with the role requirements. The candidate brings 5 years of relevant marketing experience and demonstrates core competencies in digital strategy. While there are some tool-specific gaps (HubSpot) and limited B2B SaaS experience, their background in similar domains shows strong transferability. Years of experience exceed requirements, and the skill set demonstrates ability to succeed in the role with appropriate onboarding.',
-      alignment_details: {
-        job_requirements_met: [
-          '5+ years relevant experience',
-          'Digital marketing expertise',
-          "Bachelor's degree",
-          'Project management skills',
-        ],
-        job_requirements_missing: [
-          'Limited HubSpot experience',
-          'No direct B2B SaaS background',
-        ],
-        transferable_skills_identified: ['Transferable skills present'],
-      },
-    },
-    interest_and_enthusiasm: {
-      score: 4,
-      scale: '1-5',
-      components: {},
-      feedback: 'The candidate demonstrated strong enthusiasm for the role and company. They referenced specific company initiatives (recent sustainability campaign) and articulated clear alignment with the company\'s mission. Tone was consistently positive and engaged. Energy level remained high throughout the conversation. The primary gap was in asking thoughtful questions - while they did ask about team structure, they missed opportunities to ask more strategic questions that would have demonstrated deeper research.',
-      enthusiasm_indicators: {
-        mentioned_specific_company_details: true,
-        tone_was_enthusiastic: true,
-        company_knowledge: 'Strong',
-        energy_level: 'High',
-        tone_enthusiasm: 'Positive',
-        follow_up_questions: 'Limited',
-      },
-    },
-    culture_fit_indicators: {
-      score: 'pass' as const,
-      scale: 'pass/fail',
-      components: {
-        work_style_preferences_align: 'Matches',
-        values_alignment: 'Strong',
-        team_collaboration_mentions: 'Mentioned positive experiences working in cross-functional teams. Values open communication and collaborative problem-solving.',
-      },
-      feedback: 'Strong cultural alignment observed. The candidate\'s values around sustainability and mission-driven work align well with the company\'s emphasis on environmental responsibility. Work style preferences (collaborative, flexible, data-driven) match the team\'s operating model. Comfortable with hybrid work arrangement. No significant cultural mismatches detected.',
-      notes: 'Strong cultural alignment observed.',
-    },
-    response_quality: {
-      score: 3,
-      scale: '1-5',
-      components: {},
-      feedback: 'Response quality was mixed. Most answers were relevant to the questions asked, but lacked the specificity expected at this experience level. The candidate tended toward general statements rather than concrete examples. When specific details were provided (Q1, Q5), responses were strong. Average response length was appropriate at 68 seconds. Honesty about skill gaps was appreciated, though pivoting to related experience could have been stronger. Primary improvement area: consistently backing up claims with specific examples, metrics, and timeframes.',
-      quality_metrics: {
-        questions_answered_directly: '6/8 questions',
-        questions_with_strong_examples: '2/8 questions',
-        questions_with_vague_answers: '3/8 questions',
-        avg_length: '68 seconds',
-      },
-    },
-    red_flags: {
-      present: false,
-      scale: 'binary',
-      detected_flags: [],
-      feedback: 'No red flags identified during the interview. The candidate maintained professionalism throughout, did not badmouth previous employers, showed no defensive behavior, and made no inappropriate comments. All statements were consistent with resume information. Salary expectations (not explicitly discussed but inferred from context) appear reasonable for the role and experience level.',
-    },
-  },
-  time_management_analysis: {
-    total_interview_duration: '14:32',
-    target_duration: '15min',
-    variance: '-28s',
-    questions_asked: 8,
-    time_per_question: [
-      {
-        question_id: 'Q1',
-        question_text: 'Tell me about yourself',
-        candidate_response_time: '2:15',
-        assessment: 'appropriate' as const,
-        target_range: '30-90s',
-      },
-      {
-        question_id: 'Q2',
-        question_text: 'Why this company?',
-        candidate_response_time: '1:48',
-        assessment: 'appropriate' as const,
-        target_range: '30-90s',
-      },
-      {
-        question_id: 'Q3',
-        question_text: 'Digital marketing experience',
-        candidate_response_time: '0:45',
-        assessment: 'too_short' as const,
-        target_range: '60-120s',
-      },
-      {
-        question_id: 'Q4',
-        question_text: 'Marketing automation tools',
-        candidate_response_time: '0:52',
-        assessment: 'appropriate' as const,
-        target_range: '30-90s',
-      },
-      {
-        question_id: 'Q5',
-        question_text: 'Project management example',
-        candidate_response_time: '2:45',
-        assessment: 'too_long' as const,
-        target_range: '60-120s',
-      },
-      {
-        question_id: 'Q6',
-        question_text: 'Career goals',
-        candidate_response_time: '1:22',
-        assessment: 'appropriate' as const,
-        target_range: '60-90s',
-      },
-      {
-        question_id: 'Q7',
-        question_text: 'Biggest challenge',
-        candidate_response_time: '1:15',
-        assessment: 'appropriate' as const,
-        target_range: '60-90s',
-      },
-      {
-        question_id: 'Q8',
-        question_text: 'Questions for us?',
-        candidate_response_time: '0:30',
-        assessment: 'too_short' as const,
-        target_range: '30-60s',
-      },
-    ],
-    pacing_feedback: 'Overall pacing was strong. The interview completed in 14:32, which is ideal for an HR screen (target: 10-15 minutes). Most responses were appropriately concise. Areas to improve: Q3 (digital marketing) was too brief and lacked detail - this was a key technical question that warranted a 90-120 second response with specific examples. Q8 showed limited questions asked, which reduced overall engagement time. Q5 was slightly long at 2:45 but contained valuable content, so the length was acceptable.',
-  },
-  observer_notes: {
-    overall_impression: 'The candidate presented as professional, prepared, and genuinely interested in the role. Energy level remained consistently positive throughout the conversation. Communication style was natural and conversational rather than scripted. The candidate appeared more comfortable discussing high-level concepts than diving into specific examples, which suggests either preparation gaps or tendency toward general communication. No concerning behaviors or red flags observed during the live interview.',
-    confidence_level: 'High',
-    engagement: 'High',
-    authenticity: 'Strong',
-    best_moment: {
-      question_id: 'Q1',
-      timestamp: '2:15',
-      description: 'The opening "tell me about yourself" answer was exceptionally well-structured. Used clear STAR format, included specific metrics (30% engagement increase), and connected experience to the role naturally. This was the strongest response of the interview and set a positive tone.',
-    },
-    weakest_moment: {
-      question_id: 'Q3',
-      timestamp: '6:45',
-      description: 'When asked about digital marketing experience, the response was vague and brief (45 seconds). Said "I have experience with digital marketing and social media" without providing any campaign names, results, or specific tactics. This was a critical question that needed more substance.',
-    },
-    interesting_note: {
-      question_id: 'Q4',
-      timestamp: '7:30',
-      description: 'When discussing HubSpot (a tool they lack experience with), the candidate initially hesitated for about 5 seconds. Instead of acknowledging the gap directly, they pivoted to "I\'m familiar with most marketing tools." A more effective approach would have been: "I haven\'t used HubSpot specifically, but I have extensive experience with similar platforms like Mailchimp and am a quick learner."',
-    },
-    missed_opportunity: {
-      question_id: 'Q8',
-      timestamp: '9:00',
-      description: 'When asked if they had questions, the candidate said "No, I think I have all the information I need." This is a missed opportunity to demonstrate interest and research. Strong questions they could have asked: "What does success look like in the first 90 days?" or "I noticed you recently launched [X initiative] - how does this role contribute to that?"',
-    },
-    additional_observations: [
-      'Used "I" appropriately when discussing personal contributions (good ownership demonstration)',
-      'Paused thoughtfully before answering complex questions (shows reflection, not hesitation)',
-      'No excessive filler words ("um", "like") - communication was clean',
-      'Active listening evident - didn\'t interrupt, acknowledged interviewer comments appropriately',
-      'Tone shifted slightly when discussing tool gaps - became more general/defensive rather than specific',
-    ],
-  },
-  next_steps_preparation: {
-    ready_for_hiring_manager: true,
-    confidence_level: 'Medium-High',
-    areas_to_study: [
-      {
-        topic: 'Specific Project Details from Resume',
-        reason: 'The hiring manager will drill deep into your past projects. They\'ll ask about challenges, trade-offs, your specific role vs. team contributions, and technical decisions.',
-        preparation_tip: 'For your top 3 projects on your resume, write out: (1) The problem/goal, (2) Your specific contributions, (3) Challenges faced, (4) How you overcame them, (5) Measurable results with numbers.',
-      },
-      {
-        topic: 'Marketing Automation Platform Deep Dive',
-        reason: 'You showed limited familiarity with HubSpot (which they use). The hiring manager will likely probe this gap more deeply.',
-        preparation_tip: 'Research HubSpot\'s key features (workflows, lead scoring, email automation). Even if you haven\'t used it, show you understand modern marketing automation concepts and can map your Mailchimp experience to their platform.',
-      },
-      {
-        topic: 'Metrics & Data Analysis Stories',
-        reason: 'You struggled to provide metrics in this interview. The hiring manager will expect data-driven answers.',
-        preparation_tip: 'Prepare 5+ stories with specific numbers: "Increased CTR from 2.3% to 4.1%", "Reduced CAC by $47", "Grew email list by 15K subscribers in 6 months". Have these ready to pull out for any behavioral question.',
-      },
-    ],
-    predicted_hiring_manager_questions: [
-      'Walk me through your most successful digital marketing campaign. What was YOUR specific role, what challenges did you face, and what were the measurable results?',
-      'I see you have 5 years of experience but limited B2B SaaS background. How would you approach marketing a B2B software product differently than your previous B2C experience?',
-      'Tell me about a time you had to make a data-driven decision that went against your initial instinct. What did the data show, and what was the outcome?',
-      'Describe a situation where a marketing campaign underperformed. How did you identify the problem, and what specific actions did you take to turn it around?',
-      'How do you prioritize marketing initiatives when you have limited budget and resources? Walk me through your decision-making framework.',
-      'You mentioned managing a team. Tell me about a time you had to give difficult feedback to a direct report. How did you approach it?',
-    ],
-    skills_to_highlight_more: [
-      {
-        skill: 'Data Analysis & Metrics',
-        current_coverage: 'Barely mentioned',
-        job_requirement_level: 'Critical',
-        action: 'Prepare 5-7 stories with specific metrics, percentages, ROI figures, and data-driven decisions.',
-      },
-      {
-        skill: 'Cross-Functional Collaboration',
-        current_coverage: 'Mentioned briefly',
-        job_requirement_level: 'Preferred',
-        action: 'Prepare examples of working with Sales, Product, and Engineering teams. Show how you navigated different stakeholder priorities.',
-      },
-      {
-        skill: 'A/B Testing & Experimentation',
-        current_coverage: 'Not discussed',
-        job_requirement_level: 'Required',
-        action: 'Prepare examples of experiments you\'ve run, how you designed tests, set success metrics, and implemented learnings at scale.',
-      },
-    ],
-  },
-  comparative_analysis: {
-    percentile_estimate: 78,
-    standout_qualities: [
-      'Strong opening: Your "tell me about yourself" answer set a professional tone that many candidates miss',
-      'Clear career narrative: Articulated why this role makes sense for your trajectory better than most',
-      'Professional presence: No rambling, no red flags, maintained composure throughout',
-    ],
-    common_weaknesses_avoided: [
-      'Didn\'t badmouth previous employers (20% of candidates do this)',
-      'Didn\'t ramble excessively (30% go over 3 minutes per answer)',
-      'Didn\'t appear unprepared (25% seem caught off-guard by basic questions)',
-    ],
-  },
-  grading_metadata: {
-    graded_by_agent: 'Claude Sonnet 4 (AI Grading Agent)',
-    grading_timestamp: new Date().toISOString(),
-    confidence_in_assessment: 'High',
-  },
-}
+// (Mock data constants removed — real data is loaded from Supabase)
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -610,68 +221,6 @@ export default function InterviewDashboard() {
 
   const loadFeedback = async () => {
     try {
-      // In mock mode, skip Supabase entirely and hydrate the dashboard with static HR Screen data.
-      if (USE_MOCK_FEEDBACK) {
-        // Simple mock top-level feedback so all UI sections that rely on these fields render.
-        const mockFeedback: any = {
-          id: 'mock-hr-screen-feedback',
-          overall_score: 7, // 7/10 => 70%
-          strengths: [
-            "Strong storytelling with clear situation-action-result framing.",
-            "Good alignment between your motivations and the company's mission.",
-            "Professional tone and comfortable conversation pace.",
-          ],
-          weaknesses: [
-            "Needs more specific, metric-driven examples in some answers.",
-            "Missed opportunity to ask thoughtful questions about the role/company.",
-            "Could handle unknown tools/questions more transparently and strategically.",
-          ],
-          area_scores: {
-            communication: 7,
-            professionalism: 8,
-            basic_qualifications: 7,
-            interest_enthusiasm: 8,
-            culture_fit: 6,
-            response_quality: 6,
-          },
-          area_feedback: {
-            communication:
-              "Generally clear and structured, with room to add more crisp endings to your answers.",
-            professionalism:
-              "You came across as reliable and prepared. Tone, pacing, and word choice were appropriate throughout.",
-            basic_qualifications:
-              "Your experience maps reasonably well to the role, but highlighting 2–3 flagship projects with outcomes would strengthen this further.",
-            interest_enthusiasm:
-              "You conveyed genuine interest, especially when tying your goals to the company's mission.",
-            culture_fit:
-              "You hinted at collaboration and cross-functional work, but could give more concrete stories about how you work with others.",
-            response_quality:
-              "Some answers stayed at a high level; grounding them with concrete examples and results will make them more compelling.",
-          },
-          hr_screen_six_areas: MOCK_HR_SCREEN_SIX_AREAS,
-          // Add full detailed rubric for DetailedRubricReport component
-          ...MOCK_DETAILED_RUBRIC,
-        }
-
-        // Build areaScores array from the mock area_scores/area_feedback.
-        const mockAreaScores: any[] = Object.keys(mockFeedback.area_scores).map((area) => ({
-          area,
-          score: mockFeedback.area_scores[area],
-          feedback: mockFeedback.area_feedback[area],
-          displayName: area
-            .replace(/_/g, ' ')
-            .replace(/\b\w/g, (l) => l.toUpperCase()),
-        }))
-        mockAreaScores.sort((a, b) => a.score - b.score)
-
-        setFeedback(mockFeedback)
-        setAreaScores(mockAreaScores)
-        setStructuredTranscript(MOCK_HR_SCREEN_STRUCTURED_TRANSCRIPT)
-        setFeedbackGenerating(false)
-        setLoading(false)
-        return
-      }
-
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -879,396 +428,167 @@ export default function InterviewDashboard() {
             }
           }
           
-          // For HR screen: If no hr_screen_six_areas exists (fallback to mock), add mock data for visualization
-          if (sessionData.stage === 'hr_screen' && !feedbackData.hr_screen_six_areas) {
-            // Add mock 6-area data for visual preview
-            feedbackData.hr_screen_six_areas = {
-              what_went_well: [
-                {
-                  criterion: "Answer Structure and Conciseness",
-                  feedback: "Your responses were well-organized and appropriately concise. When asked about your experience, you used a clear structure (situation-action-result) and kept answers to 30-90 seconds, which is ideal for phone screens.",
-                  evidence: [
-                    {
-                      question_id: "q1",
-                      timestamp: "2:15",
-                      excerpt: "I've been working as a software engineer for 5 years. In my current role at Tech Corp, I led a team of 5 developers on a project that increased user engagement by 30%."
-                    }
-                  ]
-                },
-                {
-                  criterion: "Alignment of Career Goals with Position",
-                  feedback: "You clearly articulated why this role aligns with your career goals. You mentioned specific aspects of the company's mission that resonate with you, showing genuine interest beyond just needing a job.",
-                  evidence: [
-                    {
-                      question_id: "q2",
-                      timestamp: "4:30",
-                      excerpt: "I'm interested in this role because I'm passionate about sustainable packaging solutions, and Placon's commitment to environmental responsibility aligns with my personal values."
-                    }
-                  ]
-                },
-                {
-                  criterion: "Pace and Conversation Flow",
-                  feedback: "You maintained a natural conversational rhythm with appropriate pauses for thought. The back-and-forth felt comfortable and professional, not rushed or awkward.",
-                  evidence: []
-                }
-              ],
-              what_needs_improve: [
-                {
-                  criterion: "Specific Examples and Evidence",
-                  feedback: "While you mentioned having experience with digital marketing, you didn't provide specific examples with concrete results. Consider preparing stories like 'I increased website traffic by 40% by implementing a new SEO strategy' with actual metrics.",
-                  evidence: [
-                    {
-                      question_id: "q3",
-                      timestamp: "6:45",
-                      excerpt: "I have experience with digital marketing and social media. I've worked on campaigns before and understand the basics."
-                    }
-                  ]
-                },
-                {
-                  criterion: "Questions Asked About the Role/Company",
-                  feedback: "You didn't ask any questions about the role or company. This is a missed opportunity to show your interest and gather important information. Consider asking about team structure, growth opportunities, or what success looks like in the first 90 days.",
-                  evidence: []
-                },
-                {
-                  criterion: "Handling Uncertain/Difficult Questions",
-                  feedback: "When asked about marketing automation platforms you haven't used, you tried to deflect rather than acknowledge the gap. A better approach would be: 'I haven't used that specific platform, but I have experience with similar tools and I'm a quick learner.'",
-                  evidence: [
-                    {
-                      question_id: "q4",
-                      timestamp: "8:20",
-                      excerpt: "I'm familiar with most marketing tools. I can figure out any platform quickly."
-                    }
-                  ]
-                }
-              ]
+          // Load structured transcript for all stages
+          if (['hr_screen', 'hiring_manager', 'culture_fit', 'final'].includes(sessionData.stage)) {
+            console.log('Loading structured transcript for session:', sessionData.id)
+            const { data: sessionWithTranscript, error: transcriptError } = await supabase
+              .from('interview_sessions')
+              .select('transcript_structured, transcript')
+              .eq('id', sessionData.id)
+              .single()
+
+            if (transcriptError) {
+              console.error('Error loading transcript:', transcriptError)
             }
-            
-            // Load structured transcript for HR screen and Hiring Manager (real data)
-            if (sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') {
-              console.log('🔍 Loading structured transcript for session:', sessionData.id)
-              const { data: sessionWithTranscript, error: transcriptError } = await supabase
-                .from('interview_sessions')
-                .select('transcript_structured, transcript')
-                .eq('id', sessionData.id)
-                .single()
-              
-              if (transcriptError) {
-                console.error('❌ Error loading transcript:', transcriptError)
-              }
-              
-              if (sessionWithTranscript?.transcript_structured) {
-                console.log('✅ Found structured transcript:', {
-                  messageCount: sessionWithTranscript.transcript_structured.messages?.length || 0,
-                  questionCount: sessionWithTranscript.transcript_structured.questions_asked?.length || 0
-                })
-                setStructuredTranscript(sessionWithTranscript.transcript_structured)
-              } else if (sessionWithTranscript?.transcript) {
-                // Fallback: Parse plain text transcript into structured format
-                console.log('⚠️ No structured transcript, but found plain text transcript. Parsing...')
-                console.log('📝 Transcript preview (first 500 chars):', sessionWithTranscript.transcript.substring(0, 500))
-                const plainTranscript = sessionWithTranscript.transcript
-                const messages: any[] = []
-                const questions_asked: any[] = []
-                
-                // Parse "You: ..." and "Interviewer: ..." format
-                // Also handle lines without prefix (alternating pattern)
-                const lines = plainTranscript.split('\n').filter((line: string) => line.trim().length > 0)
-                console.log('📊 Total lines to parse:', lines.length)
-                let questionCounter = 0
-                let timeSeconds = 0
-                let lastSpeaker: 'candidate' | 'interviewer' | null = null
-                
-                lines.forEach((line: string, idx: number) => {
-                  const trimmedLine = line.trim()
-                  
-                  if (trimmedLine.startsWith('You:')) {
-                    const text = trimmedLine.replace(/^You:\s*/, '')
-                    if (text.length > 0) {
+
+            if (sessionWithTranscript?.transcript_structured) {
+              console.log('Found structured transcript:', {
+                messageCount: sessionWithTranscript.transcript_structured.messages?.length || 0,
+                questionCount: sessionWithTranscript.transcript_structured.questions_asked?.length || 0
+              })
+              setStructuredTranscript(sessionWithTranscript.transcript_structured)
+            } else if (sessionWithTranscript?.transcript) {
+              // Fallback: Parse plain text transcript into structured format
+              console.log('No structured transcript, but found plain text transcript. Parsing...')
+              console.log('Transcript preview (first 500 chars):', sessionWithTranscript.transcript.substring(0, 500))
+              const plainTranscript = sessionWithTranscript.transcript
+              const messages: any[] = []
+              const questions_asked: any[] = []
+
+              // Parse "You: ..." and "Interviewer: ..." format
+              // Also handle lines without prefix (alternating pattern)
+              const lines = plainTranscript.split('\n').filter((line: string) => line.trim().length > 0)
+              console.log('Total lines to parse:', lines.length)
+              let questionCounter = 0
+              let timeSeconds = 0
+              let lastSpeaker: 'candidate' | 'interviewer' | null = null
+
+              lines.forEach((line: string, idx: number) => {
+                const trimmedLine = line.trim()
+
+                if (trimmedLine.startsWith('You:')) {
+                  const text = trimmedLine.replace(/^You:\s*/, '')
+                  if (text.length > 0) {
+                    const minutes = Math.floor(timeSeconds / 60)
+                    const seconds = timeSeconds % 60
+                    messages.push({
+                      speaker: 'candidate',
+                      text: text,
+                      timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
+                    })
+                    timeSeconds += 30 // Estimate 30 seconds per response
+                    lastSpeaker = 'candidate'
+                    console.log(`Parsed candidate message ${messages.length}:`, text.substring(0, 50))
+                  }
+                } else if (trimmedLine.startsWith('Interviewer:')) {
+                  const text = trimmedLine.replace(/^Interviewer:\s*/, '')
+                  if (text.length > 0) {
+                    const isQuestion = text.includes('?') ||
+                      text.toLowerCase().startsWith('tell me') ||
+                      text.toLowerCase().startsWith('what') ||
+                      text.toLowerCase().startsWith('why') ||
+                      text.toLowerCase().startsWith('how') ||
+                      text.toLowerCase().startsWith('can you') ||
+                      text.toLowerCase().startsWith('would you')
+
+                    const questionId = isQuestion ? `q${++questionCounter}` : undefined
+
+                    const minutes = Math.floor(timeSeconds / 60)
+                    const seconds = timeSeconds % 60
+                    messages.push({
+                      speaker: 'interviewer',
+                      text: text,
+                      timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`,
+                      question_id: questionId
+                    })
+                    timeSeconds += 15 // Estimate 15 seconds per question
+                    lastSpeaker = 'interviewer'
+
+                    if (isQuestion && questionId) {
+                      questions_asked.push({
+                        id: questionId,
+                        question: text,
+                        timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
+                      })
+                    }
+                    console.log(`Parsed interviewer message ${messages.length}${isQuestion ? ' (question)' : ''}:`, text.substring(0, 50))
+                  }
+                } else {
+                  // Line doesn't start with prefix - infer from context
+                  // Pattern: transcript alternates between candidate and interviewer
+                  // First line without prefix = candidate, then alternate
+                  if (trimmedLine.length > 0) {
+                    const shouldBeCandidate = lastSpeaker === 'interviewer' ||
+                                              (lastSpeaker === null && idx === 0) ||
+                                              (lastSpeaker === null && !trimmedLine.toLowerCase().startsWith('interviewer'))
+
+                    if (shouldBeCandidate) {
+                      // This is a candidate response
                       const minutes = Math.floor(timeSeconds / 60)
                       const seconds = timeSeconds % 60
                       messages.push({
                         speaker: 'candidate',
-                        text: text,
+                        text: trimmedLine,
                         timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
                       })
-                      timeSeconds += 30 // Estimate 30 seconds per response
+                      timeSeconds += 30
                       lastSpeaker = 'candidate'
-                      console.log(`✅ Parsed candidate message ${messages.length}:`, text.substring(0, 50))
-                    }
-                  } else if (trimmedLine.startsWith('Interviewer:')) {
-                    const text = trimmedLine.replace(/^Interviewer:\s*/, '')
-                    if (text.length > 0) {
-                      const isQuestion = text.includes('?') || 
-                        text.toLowerCase().startsWith('tell me') ||
-                        text.toLowerCase().startsWith('what') ||
-                        text.toLowerCase().startsWith('why') ||
-                        text.toLowerCase().startsWith('how') ||
-                        text.toLowerCase().startsWith('can you') ||
-                        text.toLowerCase().startsWith('would you')
-                      
+                      console.log(`Parsed candidate message ${messages.length} (inferred from context):`, trimmedLine.substring(0, 50))
+                    } else {
+                      // This is an interviewer response
+                      const isQuestion = trimmedLine.includes('?') ||
+                        trimmedLine.toLowerCase().startsWith('tell me') ||
+                        trimmedLine.toLowerCase().startsWith('what') ||
+                        trimmedLine.toLowerCase().startsWith('why') ||
+                        trimmedLine.toLowerCase().startsWith('how') ||
+                        trimmedLine.toLowerCase().startsWith('can you') ||
+                        trimmedLine.toLowerCase().startsWith('would you')
+
                       const questionId = isQuestion ? `q${++questionCounter}` : undefined
-                      
                       const minutes = Math.floor(timeSeconds / 60)
                       const seconds = timeSeconds % 60
                       messages.push({
                         speaker: 'interviewer',
-                        text: text,
+                        text: trimmedLine,
                         timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`,
                         question_id: questionId
                       })
-                      timeSeconds += 15 // Estimate 15 seconds per question
+                      timeSeconds += 15
                       lastSpeaker = 'interviewer'
-                      
+
                       if (isQuestion && questionId) {
                         questions_asked.push({
                           id: questionId,
-                          question: text,
+                          question: trimmedLine,
                           timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
                         })
                       }
-                      console.log(`✅ Parsed interviewer message ${messages.length}${isQuestion ? ' (question)' : ''}:`, text.substring(0, 50))
-                    }
-                  } else {
-                    // Line doesn't start with prefix - infer from context
-                    // Pattern: transcript alternates between candidate and interviewer
-                    // First line without prefix = candidate, then alternate
-                    if (trimmedLine.length > 0) {
-                      const shouldBeCandidate = lastSpeaker === 'interviewer' || 
-                                                (lastSpeaker === null && idx === 0) ||
-                                                (lastSpeaker === null && !trimmedLine.toLowerCase().startsWith('interviewer'))
-                      
-                      if (shouldBeCandidate) {
-                        // This is a candidate response
-                        const minutes = Math.floor(timeSeconds / 60)
-                        const seconds = timeSeconds % 60
-                        messages.push({
-                          speaker: 'candidate',
-                          text: trimmedLine,
-                          timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
-                        })
-                        timeSeconds += 30
-                        lastSpeaker = 'candidate'
-                        console.log(`✅ Parsed candidate message ${messages.length} (inferred from context):`, trimmedLine.substring(0, 50))
-                      } else {
-                        // This is an interviewer response
-                        const isQuestion = trimmedLine.includes('?') || 
-                          trimmedLine.toLowerCase().startsWith('tell me') ||
-                          trimmedLine.toLowerCase().startsWith('what') ||
-                          trimmedLine.toLowerCase().startsWith('why') ||
-                          trimmedLine.toLowerCase().startsWith('how') ||
-                          trimmedLine.toLowerCase().startsWith('can you') ||
-                          trimmedLine.toLowerCase().startsWith('would you')
-                        
-                        const questionId = isQuestion ? `q${++questionCounter}` : undefined
-                        const minutes = Math.floor(timeSeconds / 60)
-                        const seconds = timeSeconds % 60
-                        messages.push({
-                          speaker: 'interviewer',
-                          text: trimmedLine,
-                          timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`,
-                          question_id: questionId
-                        })
-                        timeSeconds += 15
-                        lastSpeaker = 'interviewer'
-                        
-                        if (isQuestion && questionId) {
-                          questions_asked.push({
-                            id: questionId,
-                            question: trimmedLine,
-                            timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
-                          })
-                        }
-                        console.log(`✅ Parsed interviewer message ${messages.length} (inferred from context${isQuestion ? ', question' : ''}):`, trimmedLine.substring(0, 50))
-                      }
+                      console.log(`Parsed interviewer message ${messages.length} (inferred from context${isQuestion ? ', question' : ''}):`, trimmedLine.substring(0, 50))
                     }
                   }
-                })
-                
-                console.log('📊 Parsing complete:', {
-                  totalMessages: messages.length,
-                  candidateMessages: messages.filter(m => m.speaker === 'candidate').length,
-                  interviewerMessages: messages.filter(m => m.speaker === 'interviewer').length,
-                  questions: questions_asked.length
-                })
-                
-                if (messages.length > 0) {
-                  console.log('✅ Parsed plain text transcript into', messages.length, 'messages')
-                  setStructuredTranscript({
-                    messages,
-                    questions_asked,
-                    start_time: new Date().toISOString()
-                  })
-                } else {
-                  console.warn('⚠️ Could not parse plain text transcript - no messages found')
-                  console.warn('📝 Full transcript:', plainTranscript)
                 }
+              })
+
+              console.log('Parsing complete:', {
+                totalMessages: messages.length,
+                candidateMessages: messages.filter(m => m.speaker === 'candidate').length,
+                interviewerMessages: messages.filter(m => m.speaker === 'interviewer').length,
+                questions: questions_asked.length
+              })
+
+              if (messages.length > 0) {
+                console.log('Parsed plain text transcript into', messages.length, 'messages')
+                setStructuredTranscript({
+                  messages,
+                  questions_asked,
+                  start_time: new Date().toISOString()
+                })
               } else {
-                console.warn('⚠️ No structured transcript or plain text transcript found for session:', sessionData.id)
+                console.warn('Could not parse plain text transcript - no messages found')
+                console.warn('Full transcript:', plainTranscript)
               }
-            }
-          } else {
-            // Load structured transcript for HR screen (real data) - when no feedback yet
-            if (sessionData.stage === 'hr_screen' || sessionData.stage === 'hiring_manager') {
-              console.log('🔍 Loading structured transcript for session (no feedback yet):', sessionData.id)
-              const { data: sessionWithTranscript, error: transcriptError } = await supabase
-                .from('interview_sessions')
-                .select('transcript_structured, transcript')
-                .eq('id', sessionData.id)
-                .single()
-              
-              if (transcriptError) {
-                console.error('❌ Error loading transcript:', transcriptError)
-              }
-              
-              if (sessionWithTranscript?.transcript_structured) {
-                console.log('✅ Found structured transcript:', {
-                  messageCount: sessionWithTranscript.transcript_structured.messages?.length || 0,
-                  questionCount: sessionWithTranscript.transcript_structured.questions_asked?.length || 0
-                })
-                setStructuredTranscript(sessionWithTranscript.transcript_structured)
-              } else if (sessionWithTranscript?.transcript) {
-                // Fallback: Parse plain text transcript into structured format
-                console.log('⚠️ No structured transcript, but found plain text transcript. Parsing...')
-                console.log('📝 Transcript preview (first 500 chars):', sessionWithTranscript.transcript.substring(0, 500))
-                const plainTranscript = sessionWithTranscript.transcript
-                const messages: any[] = []
-                const questions_asked: any[] = []
-                
-                // Parse "You: ..." and "Interviewer: ..." format
-                // Also handle lines without prefix (alternating pattern)
-                const lines = plainTranscript.split('\n').filter((line: string) => line.trim().length > 0)
-                console.log('📊 Total lines to parse:', lines.length)
-                let questionCounter = 0
-                let timeSeconds = 0
-                let lastSpeaker: 'candidate' | 'interviewer' | null = null
-                
-                lines.forEach((line: string, idx: number) => {
-                  const trimmedLine = line.trim()
-                  
-                  if (trimmedLine.startsWith('You:')) {
-                    const text = trimmedLine.replace(/^You:\s*/, '')
-                    if (text.length > 0) {
-                      const minutes = Math.floor(timeSeconds / 60)
-                      const seconds = timeSeconds % 60
-                      messages.push({
-                        speaker: 'candidate',
-                        text: text,
-                        timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
-                      })
-                      timeSeconds += 30 // Estimate 30 seconds per response
-                      lastSpeaker = 'candidate'
-                      console.log(`✅ Parsed candidate message ${messages.length}:`, text.substring(0, 50))
-                    }
-                  } else if (trimmedLine.startsWith('Interviewer:')) {
-                    const text = trimmedLine.replace(/^Interviewer:\s*/, '')
-                    if (text.length > 0) {
-                      const isQuestion = text.includes('?') || 
-                        text.toLowerCase().startsWith('tell me') ||
-                        text.toLowerCase().startsWith('what') ||
-                        text.toLowerCase().startsWith('why') ||
-                        text.toLowerCase().startsWith('how') ||
-                        text.toLowerCase().startsWith('can you') ||
-                        text.toLowerCase().startsWith('would you')
-                      
-                      const questionId = isQuestion ? `q${++questionCounter}` : undefined
-                      
-                      const minutes = Math.floor(timeSeconds / 60)
-                      const seconds = timeSeconds % 60
-                      messages.push({
-                        speaker: 'interviewer',
-                        text: text,
-                        timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`,
-                        question_id: questionId
-                      })
-                      timeSeconds += 15 // Estimate 15 seconds per question
-                      lastSpeaker = 'interviewer'
-                      
-                      if (isQuestion && questionId) {
-                        questions_asked.push({
-                          id: questionId,
-                          question: text,
-                          timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
-                        })
-                      }
-                      console.log(`✅ Parsed interviewer message ${messages.length}${isQuestion ? ' (question)' : ''}:`, text.substring(0, 50))
-                    }
-                  } else {
-                    // Line doesn't start with prefix - infer from context
-                    // Pattern: transcript alternates between candidate and interviewer
-                    // First line without prefix = candidate, then alternate
-                    if (trimmedLine.length > 0) {
-                      const shouldBeCandidate = lastSpeaker === 'interviewer' || 
-                                                (lastSpeaker === null && idx === 0) ||
-                                                (lastSpeaker === null && !trimmedLine.toLowerCase().startsWith('interviewer'))
-                      
-                      if (shouldBeCandidate) {
-                        // This is a candidate response
-                        const minutes = Math.floor(timeSeconds / 60)
-                        const seconds = timeSeconds % 60
-                        messages.push({
-                          speaker: 'candidate',
-                          text: trimmedLine,
-                          timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
-                        })
-                        timeSeconds += 30
-                        lastSpeaker = 'candidate'
-                        console.log(`✅ Parsed candidate message ${messages.length} (inferred from context):`, trimmedLine.substring(0, 50))
-                      } else {
-                        // This is an interviewer response
-                        const isQuestion = trimmedLine.includes('?') || 
-                          trimmedLine.toLowerCase().startsWith('tell me') ||
-                          trimmedLine.toLowerCase().startsWith('what') ||
-                          trimmedLine.toLowerCase().startsWith('why') ||
-                          trimmedLine.toLowerCase().startsWith('how') ||
-                          trimmedLine.toLowerCase().startsWith('can you') ||
-                          trimmedLine.toLowerCase().startsWith('would you')
-                        
-                        const questionId = isQuestion ? `q${++questionCounter}` : undefined
-                        const minutes = Math.floor(timeSeconds / 60)
-                        const seconds = timeSeconds % 60
-                        messages.push({
-                          speaker: 'interviewer',
-                          text: trimmedLine,
-                          timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`,
-                          question_id: questionId
-                        })
-                        timeSeconds += 15
-                        lastSpeaker = 'interviewer'
-                        
-                        if (isQuestion && questionId) {
-                          questions_asked.push({
-                            id: questionId,
-                            question: trimmedLine,
-                            timestamp: `${minutes}:${String(seconds).padStart(2, '0')}`
-                          })
-                        }
-                        console.log(`✅ Parsed interviewer message ${messages.length} (inferred from context${isQuestion ? ', question' : ''}):`, trimmedLine.substring(0, 50))
-                      }
-                    }
-                  }
-                })
-                
-                console.log('📊 Parsing complete:', {
-                  totalMessages: messages.length,
-                  candidateMessages: messages.filter(m => m.speaker === 'candidate').length,
-                  interviewerMessages: messages.filter(m => m.speaker === 'interviewer').length,
-                  questions: questions_asked.length
-                })
-                
-                if (messages.length > 0) {
-                  console.log('✅ Parsed plain text transcript into', messages.length, 'messages')
-                  setStructuredTranscript({
-                    messages,
-                    questions_asked,
-                    start_time: new Date().toISOString()
-                  })
-                } else {
-                  console.warn('⚠️ Could not parse plain text transcript - no messages found')
-                  console.warn('📝 Full transcript:', plainTranscript)
-                }
-              } else {
-                console.warn('⚠️ No structured transcript or plain text transcript found for session:', sessionData.id)
-              }
+            } else {
+              console.warn('No structured transcript or plain text transcript found for session:', sessionData.id)
             }
           }
           

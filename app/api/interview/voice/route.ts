@@ -12,6 +12,8 @@ import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-p
 import { buildSystemPrompt as buildCultureFitPrompt } from '@/lib/interview-prompts/culture_fit'
 import { buildSystemPrompt as buildFinalPrompt } from '@/lib/interview-prompts/final'
 import { recordTurn } from '@/lib/observer-agent'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -31,15 +33,17 @@ export async function POST(request: NextRequest) {
     const conversationPhase = conversationPhaseRaw || (stage === 'hr_screen' ? 'opening' : null) // Default to 'opening' for HR screen
     const askedQuestionsData = formData.get('askedQuestions') as string
     const askedQuestions = askedQuestionsData ? JSON.parse(askedQuestionsData) : []
-    
-    // Log what we received from frontend
-    if (stage === 'hr_screen') {
-      console.log('📥 Received conversation state from frontend:', {
-        conversationPhase: conversationPhaseRaw || 'not provided (using default)',
-        finalPhase: conversationPhase,
-        askedQuestionsCount: askedQuestions.length,
-        askedQuestionsPreview: askedQuestions.slice(0, 2).map((q: string) => q.substring(0, 40)),
-      })
+
+    // Stage gating: non-HR stages require authentication
+    if (stage && stage !== 'hr_screen') {
+      const supabaseAuth = createRouteHandlerClient({ cookies })
+      const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
+      if (!authSession) {
+        return NextResponse.json(
+          { error: 'Authentication required for this interview stage. Please sign in to continue.' },
+          { status: 401 }
+        )
+      }
     }
 
     if (!audioFile) {
@@ -65,18 +69,12 @@ export async function POST(request: NextRequest) {
         const confirmationWords = ['yes', 'yeah', 'yep', 'sure', 'good', 'fine', 'works', 'okay', 'ok', 'sounds good', 'that works', 'now it works', 'perfect', 'great', 'that sounds great', 'let\'s do it']
         if (confirmationWords.some(word => userResponseLower.includes(word))) {
           nextConversationPhase = 'structure_overview'
-          console.log('✅ Phase transition: opening → structure_overview (user confirmed:', userMessage.substring(0, 50), ')')
-        } else {
-          console.log('⏸️ Staying in opening phase - user response:', userMessage.substring(0, 50))
         }
       } else if (nextConversationPhase === 'structure_overview') {
         // User confirmed the structure sounds good
         const confirmationWords = ['yes', 'yeah', 'yep', 'sure', 'sounds good', 'okay', 'ok', 'perfect', 'great', 'that sounds good', 'that sounds great', 'let\'s do it', 'sounds perfect']
         if (confirmationWords.some(word => userResponseLower.includes(word))) {
           nextConversationPhase = 'company_intro'
-          console.log('✅ Phase transition: structure_overview → company_intro (user confirmed:', userMessage.substring(0, 50), ')')
-        } else {
-          console.log('⏸️ Staying in structure_overview phase - user response:', userMessage.substring(0, 50))
         }
       }
       // Other phase transitions are handled by AI responses, not user input
@@ -102,12 +100,11 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
       
       if (sessionResult.error) {
-        console.error('⚠️ Error fetching session (will try to get data anyway):', sessionResult.error)
+        console.error('Error fetching session (will try to get data anyway):', sessionResult.error)
         console.error('Session ID:', sessionId)
       } else {
         sessionData = sessionResult.data
         if (sessionData) {
-          console.log('✅ Session found:', { sessionId, userId: sessionData.user_id, hasDataId: !!sessionData.user_interview_data_id })
         } else {
           console.log('⚠️ Session not found, will try to get latest interview data')
         }
@@ -129,7 +126,6 @@ export async function POST(request: NextRequest) {
         console.error('Error fetching interview data from session link:', dataError)
       } else if (interviewDataResult) {
         interviewData = interviewDataResult
-        console.log('✅ Got interview data from session link')
       }
     }
     
@@ -147,7 +143,6 @@ export async function POST(request: NextRequest) {
         console.error('Error fetching latest interview data:', latestError)
       } else if (latestInterviewData && latestInterviewData.length > 0) {
         interviewData = latestInterviewData[0]
-        console.log('✅ Got latest interview data for user')
         
         // Update the session to link to this data if session exists
         if (sessionId && sessionData) {
@@ -161,23 +156,13 @@ export async function POST(request: NextRequest) {
     
     // If still no data, fail gracefully instead of leaking another user's data
     if (!interviewData) {
-      console.error('❌ No interview data found for this session or user. Cannot proceed.')
+      console.error('No interview data found for this session or user. Cannot proceed.')
     }
     
-    console.log('Interview data retrieved:', {
-      hasData: !!interviewData,
-      hasResume: !!interviewData?.resume_text && interviewData.resume_text.trim().length > 0,
-      hasJobDescription: !!interviewData?.job_description_text && interviewData.job_description_text.trim().length > 0,
-      companyWebsite: interviewData?.company_website,
-      resumeTextLength: interviewData?.resume_text?.length || 0,
-      jobDescriptionLength: interviewData?.job_description_text?.length || 0,
-      resumeTextPreview: interviewData?.resume_text?.substring(0, 200) || 'N/A',
-      jobDescriptionPreview: interviewData?.job_description_text?.substring(0, 200) || 'N/A',
-    })
     
     // CRITICAL: Validate interview data exists and has content
     if (!interviewData) {
-      console.error('❌ CRITICAL ERROR: No interview data found! The AI will not have access to resume/job description.')
+      console.error('CRITICAL ERROR: No interview data found! The AI will not have access to resume/job description.')
       return NextResponse.json(
         { error: 'Interview data not found. Please ensure resume and job description are uploaded.' },
         { status: 400 }
@@ -185,7 +170,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (!interviewData.resume_text || interviewData.resume_text.trim().length === 0) {
-      console.error('❌ CRITICAL ERROR: Interview data exists but resume_text is empty!')
+      console.error('CRITICAL ERROR: Interview data exists but resume_text is empty!')
       return NextResponse.json(
         { error: 'Resume text is missing. Please upload a resume.' },
         { status: 400 }
@@ -193,21 +178,17 @@ export async function POST(request: NextRequest) {
     }
     
     if (!interviewData.job_description_text || interviewData.job_description_text.trim().length === 0) {
-      console.error('❌ CRITICAL ERROR: Interview data exists but job_description_text is empty!')
+      console.error('CRITICAL ERROR: Interview data exists but job_description_text is empty!')
       return NextResponse.json(
         { error: 'Job description is missing. Please provide a job description.' },
         { status: 400 }
       )
     }
     
-    console.log('✅ VALIDATED: Interview data is present and has content')
-    console.log('  - Resume length:', interviewData.resume_text.length, 'characters')
-    console.log('  - Job description length:', interviewData.job_description_text.length, 'characters')
 
     // Fetch HR screen feedback if this is a hiring_manager interview
     let hrScreenContext = ''
     if (stage === 'hiring_manager' && userId) {
-      console.log('📋 Fetching HR screen feedback for hiring manager interview context...')
       const { data: hrSession } = await supabaseAdmin
         .from('interview_sessions')
         .select('id')
@@ -226,7 +207,6 @@ export async function POST(request: NextRequest) {
           .maybeSingle()
 
         if (hrFeedback) {
-          console.log('✅ Found HR screen feedback to integrate')
           const sixAreasFormatted = hrFeedback.hr_screen_six_areas && typeof hrFeedback.hr_screen_six_areas === 'object'
             ? Object.entries(hrFeedback.hr_screen_six_areas).map(([area, data]: [string, unknown]) => {
                 const d = data as { score?: number; summary?: string }
@@ -312,11 +292,6 @@ Use this context to:
     if (stage === 'hr_screen') {
       // HR SCREEN SPECIFIC PROMPT - Natural Conversation Flow Version
       // Use askedQuestions from frontend if available, otherwise extract from transcript
-      console.log('📋 Asked questions received from frontend:', {
-        count: askedQuestions.length,
-        questions: askedQuestions.slice(0, 3).map((q: string) => q.substring(0, 50)),
-      })
-      
       // Build asked questions list for context tracking
       const askedQuestionsList = askedQuestions.length > 0 
         ? askedQuestions.map((q: string) => {
@@ -331,12 +306,6 @@ Use this context to:
       
       const askedQuestionsCount = askedQuestionsList.length
       const askedQuestionsPreview = askedQuestionsList.slice(-5) // Last 5 questions for context
-      
-      console.log('📋 Asked questions list for prompt:', {
-        hasQuestions: askedQuestionsList.length > 0,
-        count: askedQuestionsCount,
-        preview: askedQuestionsPreview.slice(0, 3).map((q: string) => q.substring(0, 50)),
-      })
       
       // Build conversation context with explicit tracking
       const conversationContext = `
@@ -447,7 +416,7 @@ After 6-8 exchanges total, transition to Q&A phase.
       // This ensures the model sees the data before processing instructions
       // CRITICAL: For HR screen, we MUST have both resume and job description
       if (!hasResume || !hasJobDescription) {
-        console.error('❌ CRITICAL ERROR: HR screen requires both resume and job description!')
+        console.error('CRITICAL ERROR: HR screen requires both resume and job description!')
         console.error('  - Has resume:', hasResume)
         console.error('  - Has job description:', hasJobDescription)
         return NextResponse.json(
@@ -475,7 +444,7 @@ ${websiteContent}
       
       // Validate data section was built correctly
       if (!dataSection.includes(interviewData.resume_text.substring(0, 50))) {
-        console.error('❌ CRITICAL ERROR: Resume text not properly included in data section!')
+        console.error('CRITICAL ERROR: Resume text not properly included in data section!')
         return NextResponse.json(
           { error: 'Failed to include resume in system prompt' },
           { status: 500 }
@@ -483,17 +452,12 @@ ${websiteContent}
       }
       
       if (!dataSection.includes(interviewData.job_description_text.substring(0, 50))) {
-        console.error('❌ CRITICAL ERROR: Job description text not properly included in data section!')
+        console.error('CRITICAL ERROR: Job description text not properly included in data section!')
         return NextResponse.json(
           { error: 'Failed to include job description in system prompt' },
           { status: 500 }
         )
       }
-      
-      console.log('✅ Data section built successfully')
-      console.log('  - Data section length:', dataSection.length, 'characters')
-      console.log('  - Contains resume:', dataSection.includes('CANDIDATE\'S RESUME:'))
-      console.log('  - Contains job description:', dataSection.includes('JOB DESCRIPTION:'))
       
       // Build system prompt with natural conversation flow
       const NATURAL_HR_INTERVIEWER_PROMPT = `
@@ -727,78 +691,6 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
       }
     }
     
-    // Log the system prompt length to verify it includes the data
-    console.log('System prompt length:', systemPrompt.length)
-    console.log('System prompt includes resume:', systemPrompt.includes('CANDIDATE\'S RESUME:'))
-    console.log('System prompt includes job description:', systemPrompt.includes('JOB DESCRIPTION:'))
-    
-    // Log a preview of what's being sent to ChatGPT
-    const resumeSection = systemPrompt.match(/CANDIDATE'S RESUME:[\s\S]*?(?=JOB DESCRIPTION:|COMPANY WEBSITE|When asking|Keep responses|$)/i)
-    const jobDescSection = systemPrompt.match(/JOB DESCRIPTION:[\s\S]*?(?=COMPANY WEBSITE|When asking|Keep responses|$)/i)
-    
-    console.log('📤 SENDING TO CHATGPT:')
-    console.log('  - System prompt total length:', systemPrompt.length, 'characters')
-    console.log('  - Resume section length:', resumeSection ? resumeSection[0].length : 0)
-    if (resumeSection) {
-      const resumePreview = resumeSection[0].substring(0, 500)
-      console.log('  - Resume preview (first 500 chars):', resumePreview)
-      // Check for placeholder text
-      if (resumePreview.toLowerCase().includes('insert') || resumePreview.toLowerCase().includes('placeholder') || resumePreview.toLowerCase().includes('todo')) {
-        console.error('  - ⚠️ WARNING: Resume section contains placeholder text!')
-      }
-    } else {
-      console.log('  - ❌ Resume NOT INCLUDED in system prompt!')
-    }
-    console.log('  - Job description section length:', jobDescSection ? jobDescSection[0].length : 0)
-    if (jobDescSection) {
-      const jobDescPreview = jobDescSection[0].substring(0, 500)
-      console.log('  - Job description preview (first 500 chars):', jobDescPreview)
-      // Check for placeholder text
-      if (jobDescPreview.toLowerCase().includes('insert') || jobDescPreview.toLowerCase().includes('placeholder') || jobDescPreview.toLowerCase().includes('todo')) {
-        console.error('  - ⚠️ WARNING: Job description section contains placeholder text!')
-      }
-    } else {
-      console.log('  - ❌ Job description NOT INCLUDED in system prompt!')
-    }
-    
-    // Check website content for placeholders
-    if (websiteContent) {
-      const websitePreview = websiteContent.substring(0, 500)
-      console.log('  - Website content preview (first 500 chars):', websitePreview)
-      if (websitePreview.toLowerCase().includes('insert') || websitePreview.toLowerCase().includes('placeholder') || websitePreview.toLowerCase().includes('todo')) {
-        console.error('  - ⚠️ WARNING: Website content contains placeholder text!')
-      }
-    }
-    
-    // Verify the actual data is there
-    if (hasResume && hasJobDescription) {
-      console.log('✅ CONFIRMED: Both resume and job description are in the system prompt')
-      // Double-check that actual content is there (not just headers)
-      const hasActualResumeContent = resumeSection && resumeSection[0].length > 100
-      const hasActualJobDescContent = jobDescSection && jobDescSection[0].length > 100
-      if (!hasActualResumeContent) {
-        console.error('  - ❌ ERROR: Resume section exists but appears to be empty or too short!')
-      }
-      if (!hasActualJobDescContent) {
-        console.error('  - ❌ ERROR: Job description section exists but appears to be empty or too short!')
-      }
-    } else if (hasResume) {
-      console.log('⚠️ WARNING: Only resume is included, job description is missing')
-    } else if (hasJobDescription) {
-      console.log('⚠️ WARNING: Only job description is included, resume is missing')
-    } else {
-      console.log('❌ ERROR: Neither resume nor job description is included!')
-    }
-    
-    // Check base prompt for placeholders
-    if (promptData?.system_prompt) {
-      const basePromptLower = promptData.system_prompt.toLowerCase()
-      if (basePromptLower.includes('insert') || basePromptLower.includes('placeholder') || basePromptLower.includes('[company') || basePromptLower.includes('[position')) {
-        console.error('⚠️ WARNING: Base system prompt from database contains placeholder text!')
-        console.error('  - Base prompt preview:', promptData.system_prompt.substring(0, 200))
-      }
-    }
-    
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       {
         role: 'system',
@@ -815,13 +707,9 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     ]
 
     // Generate response using ChatGPT (using gpt-4o for natural conversation)
-    console.log('📨 CALLING OPENAI API with', messages.length, 'messages')
-    console.log('  - System message length:', messages[0]?.content?.length || 0)
-    console.log('  - User message:', messages[messages.length - 1].content)
-    
     // Get current phase for logging
     const currentPhaseForPrompt = nextConversationPhase || conversationPhase || 'screening'
-    
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o', // Upgraded from gpt-4o-mini for better conversation flow
       messages,
@@ -830,18 +718,13 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
       // Removed penalties to allow natural conversation
     })
     
-    console.log('✅ RECEIVED RESPONSE FROM CHATGPT')
-    console.log('  - Response length:', completion.choices[0]?.message?.content?.length || 0)
-    console.log('  - Phase:', currentPhaseForPrompt)
-
     const assistantMessage = completion.choices[0]?.message?.content || 'I see. Can you tell me more?'
     
     // Simple logging only - NO retry/validation loop
     if (stage === 'hr_screen' && currentPhaseForPrompt === 'screening') {
       const wordCount = assistantMessage.split(/\s+/).length
-      console.log(`📊 Response length: ${wordCount} words`)
       if (wordCount > 50) {
-        console.warn(`⚠️ Response longer than ideal (${wordCount} words) - target is 15-35 words`)
+        console.warn(`Response longer than ideal (${wordCount} words) - target is 15-35 words`)
       }
     }
 
@@ -1011,7 +894,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
           .maybeSingle() // Use maybeSingle() to handle missing sessions gracefully
         
         if (fetchError) {
-          console.error('❌ Error fetching existing transcript:', fetchError)
+          console.error('Error fetching existing transcript:', fetchError)
         }
         
         const existingTranscript = existingSession?.transcript || ''
@@ -1027,19 +910,17 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
           .eq('id', sessionId)
         
         if (updateError) {
-          console.error('❌ CRITICAL: Failed to save transcript to database:', updateError)
+          console.error('CRITICAL: Failed to save transcript to database:', updateError)
           console.error('  - SessionId:', sessionId)
           console.error('  - Transcript length:', updatedTranscript.length)
           console.error('  - Update error details:', updateError.message)
-        } else {
-          console.log('✅ Transcript saved successfully, length:', updatedTranscript.length)
         }
       } catch (error) {
-        console.error('❌ CRITICAL: Exception while saving transcript:', error)
+        console.error('CRITICAL: Exception while saving transcript:', error)
         // Don't throw - continue with response even if transcript save fails
       }
     } else {
-      console.warn('⚠️ No sessionId provided - cannot save transcript')
+      console.warn('No sessionId provided - cannot save transcript')
     }
 
     // For HR screen: Determine if we need to advance conversation phase based on AI response

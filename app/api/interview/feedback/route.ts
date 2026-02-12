@@ -1,6 +1,8 @@
 // API route to generate interview feedback
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
@@ -13,10 +15,8 @@ export async function POST(request: NextRequest) {
   try {
     const { sessionId, transcript: providedTranscript } = await request.json()
 
-    console.log('📥 Feedback API called with sessionId:', sessionId)
-
     if (!sessionId) {
-      console.error('❌ Missing sessionId')
+      console.error('Missing sessionId')
       return NextResponse.json(
         { error: 'Missing sessionId' },
         { status: 400 }
@@ -33,16 +33,15 @@ export async function POST(request: NextRequest) {
         .maybeSingle() // Use maybeSingle() to handle missing sessions gracefully
       
       if (transcriptError) {
-        console.error('❌ Error fetching transcript from database:', transcriptError)
+        console.error('Error fetching transcript from database:', transcriptError)
         console.error('  - SessionId:', sessionId)
         console.error('  - Error details:', transcriptError.message)
       }
       
       if (sessionData?.transcript && sessionData.transcript.trim().length > 0) {
         transcript = sessionData.transcript
-        console.log('📥 Fetched transcript from database, length:', transcript?.length || 0)
       } else {
-        console.error('❌ No transcript found in database or request')
+        console.error('No transcript found in database or request')
         console.error('  - SessionId:', sessionId)
         console.error('  - Session exists?', !!sessionData)
         console.error('  - Transcript value:', sessionData?.transcript ? `"${sessionData.transcript.substring(0, 100)}..."` : 'null/undefined')
@@ -54,11 +53,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('📥 Using transcript length:', transcript?.length || 0)
-
     // Fetch interview session to get user_interview_data_id
     // Use supabaseAdmin to bypass RLS and ensure access
-    console.log('🔍 Fetching session data for sessionId:', sessionId)
     const { data: sessionData, error: sessionError } = await supabaseAdmin
       .from('interview_sessions')
       .select('user_interview_data_id, stage')
@@ -66,22 +62,29 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (sessionError || !sessionData) {
-      console.error('❌ Session fetch error:', sessionError)
-      console.error('❌ Session data:', sessionData)
+      console.error('Session fetch error:', sessionError)
+      console.error('Session data:', sessionData)
       return NextResponse.json(
         { error: 'Interview session not found', details: sessionError?.message },
         { status: 404 }
       )
     }
-    
-    console.log('✅ Session data fetched:', { 
-      user_interview_data_id: sessionData.user_interview_data_id, 
-      stage: sessionData.stage 
-    })
+
+    // Stage gating: non-HR stages require authentication
+    const stage = sessionData.stage
+    if (stage && stage !== 'hr_screen') {
+      const supabaseAuth = createRouteHandlerClient({ cookies })
+      const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
+      if (!authSession) {
+        return NextResponse.json(
+          { error: 'Authentication required to grade this interview stage.' },
+          { status: 401 }
+        )
+      }
+    }
 
     // Fetch job description, resume, and company website
     // Use supabaseAdmin to bypass RLS
-    console.log('🔍 Fetching interview data (resume, job description)...')
     let jobDescription = ''
     let resume = ''
     let companyWebsite = ''
@@ -93,19 +96,14 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (dataError) {
-        console.error('❌ Error fetching interview data:', dataError)
+        console.error('Error fetching interview data:', dataError)
       } else if (interviewData) {
         jobDescription = interviewData.job_description_text || ''
         resume = interviewData.resume_text || ''
         companyWebsite = interviewData.company_website || ''
-        console.log('✅ Interview data fetched:', {
-          hasResume: !!resume,
-          hasJobDesc: !!jobDescription,
-          hasWebsite: !!companyWebsite
-        })
       }
     } else {
-      console.warn('⚠️ No user_interview_data_id in session')
+      console.warn('No user_interview_data_id in session')
     }
     
     // Fetch structured transcript and observer notes for graded stages
@@ -158,7 +156,6 @@ export async function POST(request: NextRequest) {
               weaknesses: hrFeedbackData.weaknesses || [],
               suggestions: hrFeedbackData.suggestions || [],
             }
-            console.log('✅ Found HR screen feedback for cross-stage grading')
           }
         }
       }
@@ -504,12 +501,8 @@ Use the question IDs and timestamps from this structured transcript when providi
     systemPrompt += '\n- Remember: You can write encouraging, actionable feedback while still giving honest scores that match your analysis.'
 
     // HR Screen: Use Claude Grader (three-agent architecture)
-    console.log('🔍 Checking if stage is hr_screen. Current stage:', stage)
     if (stage === 'hr_screen') {
       try {
-        console.log('🎯 Using Claude Sonnet 4 for HR screen grading')
-        console.log('🔍 Checking ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? '✅ Set' : '❌ Missing')
-        
         // Build grading materials
         // Pass the full system prompt as gradingInstructions so Claude gets all the requirements
         const gradingMaterials: GradingMaterials = {
@@ -525,25 +518,14 @@ Use the question IDs and timestamps from this structured transcript when providi
         }
 
         // Call Claude grader with retry logic
-        console.log('📤 Calling Claude grader with materials:', {
-          transcriptLength: gradingMaterials.transcript?.length || 0,
-          hasStructuredTranscript: !!gradingMaterials.transcriptStructured,
-          hasObserverNotes: !!gradingMaterials.observerNotes && Object.keys(gradingMaterials.observerNotes).length > 0,
-          hasResume: !!gradingMaterials.resume,
-          hasJobDescription: !!gradingMaterials.jobDescription,
-          hasWebsiteContent: !!gradingMaterials.websiteContent,
-        })
         const rubric = await gradeHrScreenWithRetry(gradingMaterials, 3)
-        console.log('📥 Claude returned rubric with keys:', Object.keys(rubric))
 
         // Validate rubric
         if (!validateHrScreenRubric(rubric)) {
-          console.error('❌ Rubric validation failed, falling back to OpenAI')
-          console.error('❌ Rubric structure:', JSON.stringify(rubric, null, 2).substring(0, 500))
+          console.error('Rubric validation failed, falling back to OpenAI')
+          console.error('Rubric structure:', JSON.stringify(rubric, null, 2).substring(0, 500))
           throw new Error('Invalid rubric structure from Claude')
         }
-
-        console.log('✅ Claude grading successful, rubric validated')
 
         // Derive fields from rubric for backwards compatibility
         const feedback = {
@@ -579,7 +561,7 @@ Use the question IDs and timestamps from this structured transcript when providi
         try {
           insertData.hr_screen_six_areas = feedback.hr_screen_six_areas
         } catch (e) {
-          console.warn('⚠️ Could not add hr_screen_six_areas to insert (column may not exist), storing in full_rubric only')
+          console.warn('Could not add hr_screen_six_areas to insert (column may not exist), storing in full_rubric only')
         }
 
         // Use supabaseAdmin to bypass RLS for insert
@@ -593,7 +575,7 @@ Use the question IDs and timestamps from this structured transcript when providi
         if (dbError) {
           // If error is about hr_screen_six_areas column, retry without it
           if (dbError.message?.includes('hr_screen_six_areas')) {
-            console.warn('⚠️ hr_screen_six_areas column not found, retrying without it (data stored in full_rubric)')
+            console.warn('hr_screen_six_areas column not found, retrying without it (data stored in full_rubric)')
             const insertDataWithoutColumn = { ...insertData }
             delete insertDataWithoutColumn.hr_screen_six_areas
             
@@ -612,7 +594,6 @@ Use the question IDs and timestamps from this structured transcript when providi
             }
             
             savedFeedback = retryResult
-            console.log('✅ Feedback saved successfully (hr_screen_six_areas in full_rubric only):', savedFeedback?.id)
           } else {
             console.error('Error saving feedback to database:', dbError)
             return NextResponse.json(
@@ -623,10 +604,6 @@ Use the question IDs and timestamps from this structured transcript when providi
         } else {
           savedFeedback = insertResult
         }
-
-        console.log('✅ Feedback saved successfully with full rubric:', savedFeedback?.id)
-        console.log('📊 Saved full_rubric exists?', !!savedFeedback?.full_rubric)
-        console.log('📊 Saved full_rubric keys:', savedFeedback?.full_rubric ? Object.keys(savedFeedback.full_rubric) : 'N/A')
 
         return NextResponse.json({
           success: true,
@@ -642,11 +619,11 @@ Use the question IDs and timestamps from this structured transcript when providi
           },
         })
       } catch (claudeError: any) {
-        console.error('❌ Claude grading failed:', claudeError)
-        console.error('❌ Claude error message:', claudeError?.message)
-        console.error('❌ Claude error stack:', claudeError?.stack)
-        console.log('⚠️ Falling back to OpenAI grader')
-        console.log('⚠️ WARNING: OpenAI grader does NOT generate full_rubric - detailed report will not be available')
+        console.error('Claude grading failed:', claudeError)
+        console.error('Claude error message:', claudeError?.message)
+        console.error('Claude error stack:', claudeError?.stack)
+        console.warn('Falling back to OpenAI grader')
+        console.warn('WARNING: OpenAI grader does NOT generate full_rubric - detailed report will not be available')
         // Fall through to OpenAI path below
       }
     }
@@ -654,8 +631,6 @@ Use the question IDs and timestamps from this structured transcript when providi
     // Hiring Manager: Use Claude Grader with two-tier system
     if (stage === 'hiring_manager') {
       try {
-        console.log('🎯 Using Claude Sonnet 4 for Hiring Manager grading (two-tier system)')
-
         const gradingMaterials: GradingMaterials = {
           transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
           transcriptStructured: structuredTranscript,
@@ -669,25 +644,13 @@ Use the question IDs and timestamps from this structured transcript when providi
           hrScreenFeedback: hrScreenFeedback || undefined,
         }
 
-        console.log('📤 Calling Claude grader for Hiring Manager:', {
-          transcriptLength: gradingMaterials.transcript?.length || 0,
-          hasStructuredTranscript: !!gradingMaterials.transcriptStructured,
-          hasObserverNotes: !!gradingMaterials.observerNotes && Object.keys(gradingMaterials.observerNotes).length > 0,
-          hasResume: !!gradingMaterials.resume,
-          hasJobDescription: !!gradingMaterials.jobDescription,
-          hasHrScreenFeedback: !!gradingMaterials.hrScreenFeedback,
-        })
-
         const rubric = await gradeHiringManagerWithRetry(gradingMaterials, 3)
-        console.log('📥 Claude returned Hiring Manager rubric with keys:', Object.keys(rubric))
 
         // Validate rubric
         if (!validateHiringManagerRubric(rubric)) {
-          console.error('❌ Hiring Manager rubric validation failed, falling back to OpenAI')
+          console.error('Hiring Manager rubric validation failed, falling back to OpenAI')
           throw new Error('Invalid rubric structure from Claude')
         }
-
-        console.log('✅ Hiring Manager grading successful, rubric validated')
 
         // Derive fields from rubric for backwards compatibility
         const feedback = {
@@ -731,8 +694,6 @@ Use the question IDs and timestamps from this structured transcript when providi
           )
         }
 
-        console.log('✅ Hiring Manager feedback saved with full rubric:', savedFeedback?.id)
-
         return NextResponse.json({
           success: true,
           feedback: {
@@ -747,9 +708,9 @@ Use the question IDs and timestamps from this structured transcript when providi
           },
         })
       } catch (claudeError: any) {
-        console.error('❌ Claude Hiring Manager grading failed:', claudeError)
-        console.error('❌ Error message:', claudeError?.message)
-        console.log('⚠️ Falling back to OpenAI grader for Hiring Manager')
+        console.error('Claude Hiring Manager grading failed:', claudeError)
+        console.error('Error message:', claudeError?.message)
+        console.warn('Falling back to OpenAI grader for Hiring Manager')
         // Fall through to OpenAI path below
       }
     }
@@ -757,8 +718,6 @@ Use the question IDs and timestamps from this structured transcript when providi
     // Culture Fit grading via Claude
     if (stage === 'culture_fit') {
       try {
-        console.log('🎯 Using Claude Sonnet 4 for Culture Fit grading')
-
         const gradingMaterials: GradingMaterials = {
           transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
           transcriptStructured: structuredTranscript,
@@ -773,14 +732,11 @@ Use the question IDs and timestamps from this structured transcript when providi
         }
 
         const rubric = await gradeCultureFitWithRetry(gradingMaterials, 3)
-        console.log('📥 Claude returned Culture Fit rubric with keys:', Object.keys(rubric))
 
         if (!validateCultureFitRubric(rubric)) {
-          console.error('❌ Culture Fit rubric validation failed, falling back to OpenAI')
+          console.error('Culture Fit rubric validation failed, falling back to OpenAI')
           throw new Error('Invalid rubric structure from Claude')
         }
-
-        console.log('✅ Culture Fit grading successful, rubric validated')
 
         const feedback = {
           overall_score: rubric.overall_assessment.overall_score,
@@ -815,8 +771,6 @@ Use the question IDs and timestamps from this structured transcript when providi
           return NextResponse.json({ error: 'Failed to save feedback', details: dbError.message }, { status: 500 })
         }
 
-        console.log('✅ Culture Fit feedback saved:', savedFeedback?.id)
-
         return NextResponse.json({
           success: true,
           feedback: {
@@ -831,16 +785,14 @@ Use the question IDs and timestamps from this structured transcript when providi
           },
         })
       } catch (claudeError: any) {
-        console.error('❌ Claude Culture Fit grading failed:', claudeError?.message)
-        console.log('⚠️ Falling back to OpenAI grader')
+        console.error('Claude Culture Fit grading failed:', claudeError?.message)
+        console.warn('Falling back to OpenAI grader')
       }
     }
 
     // Final Round grading via Claude
     if (stage === 'final') {
       try {
-        console.log('🎯 Using Claude Sonnet 4 for Final Round grading')
-
         const gradingMaterials: GradingMaterials = {
           transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
           transcriptStructured: structuredTranscript,
@@ -855,14 +807,11 @@ Use the question IDs and timestamps from this structured transcript when providi
         }
 
         const rubric = await gradeFinalRoundWithRetry(gradingMaterials, 3)
-        console.log('📥 Claude returned Final Round rubric with keys:', Object.keys(rubric))
 
         if (!validateFinalRoundRubric(rubric)) {
-          console.error('❌ Final Round rubric validation failed, falling back to OpenAI')
+          console.error('Final Round rubric validation failed, falling back to OpenAI')
           throw new Error('Invalid rubric structure from Claude')
         }
-
-        console.log('✅ Final Round grading successful, rubric validated')
 
         const feedback = {
           overall_score: rubric.overall_assessment.overall_score,
@@ -897,8 +846,6 @@ Use the question IDs and timestamps from this structured transcript when providi
           return NextResponse.json({ error: 'Failed to save feedback', details: dbError.message }, { status: 500 })
         }
 
-        console.log('✅ Final Round feedback saved:', savedFeedback?.id)
-
         return NextResponse.json({
           success: true,
           feedback: {
@@ -913,8 +860,8 @@ Use the question IDs and timestamps from this structured transcript when providi
           },
         })
       } catch (claudeError: any) {
-        console.error('❌ Claude Final Round grading failed:', claudeError?.message)
-        console.log('⚠️ Falling back to OpenAI grader')
+        console.error('Claude Final Round grading failed:', claudeError?.message)
+        console.warn('Falling back to OpenAI grader')
       }
     }
 

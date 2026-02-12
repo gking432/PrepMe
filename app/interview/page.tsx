@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
-import { Mic, MicOff, X, MessageSquare } from 'lucide-react'
+import { Mic, MicOff, X, MessageSquare, Eye, EyeOff, Phone, ArrowLeft, AlertTriangle } from 'lucide-react'
 
 type Stage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -31,6 +31,11 @@ export default function InterviewPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [hasUserPermission, setHasUserPermission] = useState(false)
   const [isInterviewActive, setIsInterviewActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showQuestion, setShowQuestion] = useState(false)
+  const [showQuestionWarning, setShowQuestionWarning] = useState(false)
+  const [elapsedTime, setElapsedTime] = useState(0)
   
   // HR Screen conversation state tracking (only for hr_screen stage)
   // Initialize to 'opening' for hr_screen, null for other stages
@@ -98,6 +103,23 @@ export default function InterviewPage() {
   useEffect(() => {
     isInterviewActiveRef.current = isInterviewActive
   }, [isInterviewActive])
+
+  // Elapsed time timer during active interview
+  useEffect(() => {
+    if (!isListening) return
+    const interval = setInterval(() => {
+      if (interviewStartTimeRef.current) {
+        setElapsedTime(Math.floor((Date.now() - interviewStartTimeRef.current) / 1000))
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [isListening])
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
 
   // Safety: Monitor page navigation and cleanup if user leaves interview page
   useEffect(() => {
@@ -1538,130 +1560,176 @@ export default function InterviewPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center relative"
-      style={{ backgroundColor: backgroundColor }}
-    >
-      {/* Background Color Toggle */}
-      <button
-        onClick={() => setBackgroundColor(backgroundColor === 'white' ? 'black' : 'white')}
-        className="absolute top-4 right-4 px-4 py-2 bg-gray-800 text-white rounded-md text-sm"
-      >
-        {backgroundColor === 'white' ? 'Dark Mode' : 'Light Mode'}
-      </button>
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
+        <button
+          onClick={() => {
+            cleanupAllResources()
+            router.push('/dashboard')
+          }}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Exit</span>
+        </button>
 
-      {/* Exit Button */}
-      <button
-        onClick={() => {
-          cleanupAllResources()
-          router.push('/dashboard')
-        }}
-        className="absolute top-4 left-4 p-2 bg-gray-800 text-white rounded-full"
-      >
-        <X className="w-5 h-5" />
-      </button>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-300">{STAGE_NAMES[stage]}</span>
+          {isListening && (
+            <span className="text-xs text-gray-500 font-mono">{formatTime(elapsedTime)}</span>
+          )}
+        </div>
 
-      {/* Stage Indicator */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
-        <div className="bg-gray-800 text-white px-4 py-2 rounded-md text-sm">
-          {STAGE_NAMES[stage]}
+        <div className="flex items-center gap-2">
+          {isListening && (
+            <button
+              onClick={() => {
+                if (!showQuestion) {
+                  setShowQuestionWarning(true)
+                  setTimeout(() => setShowQuestionWarning(false), 4000)
+                }
+                setShowQuestion(!showQuestion)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-white border border-gray-700 rounded-lg hover:border-gray-600 transition-colors"
+            >
+              {showQuestion ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{showQuestion ? 'Hide' : 'View'} Question</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Audio Visualizer */}
-      {isListening && (
-        <div className="mb-8">
-          <AudioVisualizer isActive={isListening} color={backgroundColor === 'white' ? 'black' : 'white'} />
+      {/* Warning banner for viewing question */}
+      {showQuestionWarning && showQuestion && (
+        <div className="mx-4 mt-3 flex items-center gap-2 px-4 py-2.5 bg-amber-900/30 border border-amber-700/40 rounded-lg">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          <p className="text-xs text-amber-300">
+            In a real interview you won't see the question. Practice without viewing for the best results and feedback.
+          </p>
         </div>
       )}
 
-      {/* Interview Content */}
-      <div className="max-w-2xl w-full px-4 text-center">
-        {!isListening && !currentMessage && (
-          <div>
-            <h2 className="text-3xl font-bold mb-4" style={{ color: backgroundColor === 'white' ? '#000' : '#fff' }}>
-              Ready to Start?
+      {/* Error display */}
+      {error && (
+        <div className="mx-4 mt-3 px-4 py-3 bg-red-900/30 border border-red-700/40 rounded-lg">
+          <p className="text-sm text-red-300">{error}</p>
+          <button
+            onClick={() => { setError(null); router.push('/dashboard') }}
+            className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
+          >
+            Back to dashboard
+          </button>
+        </div>
+      )}
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        {/* Pre-interview: Ready to start */}
+        {!isListening && !currentMessage && !error && (
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 rounded-full bg-primary-500/10 border-2 border-primary-500/30 flex items-center justify-center mx-auto mb-6">
+              <Phone className="w-8 h-8 text-primary-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {STAGE_NAMES[stage]}
             </h2>
+            <p className="text-gray-400 mb-8 text-sm">
+              Your interviewer is ready. Click begin when you are.
+            </p>
             <button
               onClick={startInterview}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              disabled={isLoading}
+              className="px-8 py-3.5 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 disabled:opacity-50 transition-colors text-lg"
             >
-              Begin Interview
+              {isLoading ? 'Connecting...' : 'Begin Interview'}
             </button>
           </div>
         )}
 
-        {currentMessage && (
-          <div className="mb-8">
-            <p className="text-lg" style={{ color: backgroundColor === 'white' ? '#000' : '#fff' }}>
-              {currentMessage}
-            </p>
-            {isPlayingAudio && (
-              <p className="text-sm mt-2" style={{ color: backgroundColor === 'white' ? '#666' : '#999' }}>
-                🔊 Speaking...
-              </p>
+        {/* Active interview */}
+        {(isListening || currentMessage) && (
+          <div className="w-full max-w-lg text-center">
+            {/* Visualizer */}
+            <div className="mb-8">
+              <AudioVisualizer isActive={isPlayingAudio || isRecording} color="white" />
+            </div>
+
+            {/* Status indicator */}
+            <div className="mb-6">
+              {isPlayingAudio ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
+                  <span className="text-sm text-gray-400">Interviewer is speaking...</span>
+                </div>
+              ) : isRecording ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                  <span className="text-sm text-gray-400">Listening...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-600" />
+                  <span className="text-sm text-gray-500">Ready</span>
+                </div>
+              )}
+            </div>
+
+            {/* Question text (hidden by default) */}
+            {showQuestion && currentMessage && (
+              <div className="mb-8 px-6 py-4 bg-gray-900/60 border border-gray-800 rounded-xl">
+                <p className="text-gray-300 text-sm leading-relaxed">{currentMessage}</p>
+              </div>
+            )}
+
+            {/* Text input */}
+            {isListening && (
+              <div className="mt-6">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTextResponse(e.currentTarget.value)
+                        e.currentTarget.value = ''
+                      }
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    placeholder="Type response instead..."
+                  />
+                  <button
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling as HTMLInputElement
+                      if (input.value) {
+                        handleTextResponse(input.value)
+                        input.value = ''
+                      }
+                    }}
+                    className="px-4 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
-
-        {/* Voice Status Indicator */}
-        {isListening && (
-          <div className="mb-4">
-            <p className="text-sm" style={{ color: backgroundColor === 'white' ? '#666' : '#999' }}>
-              {isRecording ? '🎤 Listening... Speak naturally (auto-detects when you finish)' : 
-               isPlayingAudio ? '🔊 AI is speaking... (you can interrupt by speaking)' :
-               '🎤 Ready to listen...'}
-            </p>
-          </div>
-        )}
-
-        {/* Text Input Alternative */}
-        {isListening && (
-          <div className="mt-8">
-            <div className="flex items-center space-x-2 mb-2">
-              <MessageSquare className="w-5 h-5" style={{ color: backgroundColor === 'white' ? '#666' : '#999' }} />
-              <span className="text-sm" style={{ color: backgroundColor === 'white' ? '#666' : '#999' }}>
-                Or type your response:
-              </span>
-            </div>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleTextResponse(e.currentTarget.value)
-                    e.currentTarget.value = ''
-                  }
-                }}
-                className="flex-1 px-4 py-2 border rounded-md"
-                placeholder="Type your answer..."
-              />
-              <button
-                onClick={(e) => {
-                  const input = e.currentTarget.previousElementSibling as HTMLInputElement
-                  if (input.value) {
-                    handleTextResponse(input.value)
-                    input.value = ''
-                  }
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* End Interview Button */}
-        {isListening && (
-          <button
-            onClick={endInterview}
-            className="mt-8 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          >
-            End Interview
-          </button>
-        )}
       </div>
+
+      {/* Bottom bar */}
+      {isListening && (
+        <div className="px-4 py-4 bg-gray-900/80 backdrop-blur-sm border-t border-gray-800">
+          <div className="max-w-lg mx-auto flex items-center justify-center">
+            <button
+              onClick={endInterview}
+              className="flex items-center gap-2 px-6 py-2.5 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 hover:text-red-300 transition-colors text-sm font-medium"
+            >
+              <Phone className="w-4 h-4" />
+              End Interview
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

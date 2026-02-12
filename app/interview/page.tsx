@@ -714,24 +714,36 @@ export default function InterviewPage() {
       setIsInterviewActive(true)
       
       // Start the interview conversation using traditional API
-      // Call interview start API
       const response = await fetch('/api/interview/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage, sessionId: newSession.id }),
+        body: JSON.stringify({
+          stage,
+          sessionId: newSession.id,
+          hrCompleted: stage === 'hr_screen' ? localStorage.getItem('prepme_hr_completed') === 'true' : undefined,
+        }),
       })
 
-      // Interview start API responded
-
       if (!response.ok) {
-        let errorText = 'Unknown error'
+        let errorData: any = {}
         try {
-          errorText = await response.text()
-        } catch (e) {
-          errorText = `HTTP ${response.status}`
+          errorData = await response.json()
+        } catch {
+          errorData = { error: `HTTP ${response.status}` }
         }
-        console.error('Failed to start interview:', response.status, errorText)
-        throw new Error(`Failed to start interview: ${response.status} - ${errorText}`)
+        // Handle HR limit and credit errors with user-friendly messages
+        if (errorData.code === 'HR_LIMIT_REACHED' || errorData.code === 'HR_RETAKE_USED') {
+          setError(errorData.error)
+          setIsLoading(false)
+          return
+        }
+        if (errorData.code === 'NO_CREDITS') {
+          setError(errorData.error)
+          setIsLoading(false)
+          return
+        }
+        console.error('Failed to start interview:', response.status, errorData)
+        throw new Error(`Failed to start interview: ${response.status} - ${errorData.error || 'Unknown error'}`)
       }
 
       let data
@@ -1467,9 +1479,14 @@ export default function InterviewPage() {
       console.error('Cannot store sessionId - it is null!')
     }
 
+    // Mark HR screen as completed in localStorage for returning user gate
+    if (stage === 'hr_screen') {
+      localStorage.setItem('prepme_hr_completed', 'true')
+    }
+
     // Small delay to ensure feedback API call completes before redirect
     await new Promise(resolve => setTimeout(resolve, 500))
-    
+
     router.push('/interview/feedback')
   }
 

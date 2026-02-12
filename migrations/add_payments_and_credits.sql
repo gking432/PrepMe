@@ -60,6 +60,17 @@ CREATE TABLE IF NOT EXISTS public.user_resumes (
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS hr_screen_completions INTEGER DEFAULT 0;
 ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS free_hr_retakes_used INTEGER DEFAULT 0;
 
+-- RPC function to atomically increment HR screen completions
+CREATE OR REPLACE FUNCTION public.increment_hr_completions(user_id_param UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE public.user_profiles
+  SET hr_screen_completions = COALESCE(hr_screen_completions, 0) + 1,
+      free_hr_retakes_used = COALESCE(free_hr_retakes_used, 0) + 1
+  WHERE id = user_id_param;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Enable RLS on new tables
 ALTER TABLE public.user_credits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;

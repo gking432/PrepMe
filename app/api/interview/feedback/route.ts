@@ -997,6 +997,19 @@ Use the question IDs and timestamps from this structured transcript when providi
       responseFeedback.hr_screen_six_areas = feedback.hr_screen_six_areas
     }
     
+    // Track HR screen completions for authenticated users
+    if (stage === 'hr_screen') {
+      try {
+        const supabaseAuth = createRouteHandlerClient({ cookies })
+        const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
+        if (authSession) {
+          await supabaseAdmin.rpc('increment_hr_completions', { user_id_param: authSession.user.id })
+        }
+      } catch (hrTrackError) {
+        console.error('Error tracking HR completion:', hrTrackError)
+      }
+    }
+
     // Deduct credit for completed paid interview
     if (stage && stage !== 'hr_screen') {
       try {

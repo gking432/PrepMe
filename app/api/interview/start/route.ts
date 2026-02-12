@@ -12,7 +12,36 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { stage, sessionId } = await request.json()
+    const { stage, sessionId, hrCompleted } = await request.json()
+
+    // HR screen returning user gate: anonymous users get 1 free HR screen
+    if (stage === 'hr_screen' && hrCompleted) {
+      // Client indicates user already completed a free HR screen
+      // Check if they're authenticated (can use their free retake)
+      const supabaseAuth = createRouteHandlerClient({ cookies })
+      const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
+
+      if (!authSession) {
+        return NextResponse.json(
+          { error: 'You\'ve used your free HR screen. Create an account to get 1 free retake and access more stages.', code: 'HR_LIMIT_REACHED' },
+          { status: 403 }
+        )
+      }
+
+      // Authenticated user: check if they've used their free retake
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('hr_screen_completions, free_hr_retakes_used')
+        .eq('id', authSession.user.id)
+        .single()
+
+      if (profile && profile.free_hr_retakes_used >= 1) {
+        return NextResponse.json(
+          { error: 'You\'ve used your free HR screen retake. Purchase additional access to continue.', code: 'HR_RETAKE_USED' },
+          { status: 403 }
+        )
+      }
+    }
 
     // Stage gating: non-HR stages require authentication
     if (stage && stage !== 'hr_screen') {

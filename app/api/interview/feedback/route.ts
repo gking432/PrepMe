@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { deductCredit } from '@/lib/credit-check'
 import OpenAI from 'openai'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
@@ -996,6 +997,20 @@ Use the question IDs and timestamps from this structured transcript when providi
       responseFeedback.hr_screen_six_areas = feedback.hr_screen_six_areas
     }
     
+    // Deduct credit for completed paid interview
+    if (stage && stage !== 'hr_screen') {
+      try {
+        const supabaseAuth = createRouteHandlerClient({ cookies })
+        const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
+        if (authSession) {
+          await deductCredit(authSession.user.id, stage)
+        }
+      } catch (creditError) {
+        console.error('Error deducting credit:', creditError)
+        // Don't fail the request — feedback was already saved
+      }
+    }
+
     return NextResponse.json({
       success: true,
       feedback: responseFeedback,

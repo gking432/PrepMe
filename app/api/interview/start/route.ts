@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { hasStageAccess, deductCredit } from '@/lib/credit-check'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -21,6 +22,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Authentication required for this interview stage. Please sign in to continue.' },
           { status: 401 }
+        )
+      }
+
+      // Check if user has credits or subscription for this stage
+      const canAccess = await hasStageAccess(authSession.user.id, stage)
+      if (!canAccess) {
+        return NextResponse.json(
+          { error: 'You need to purchase access to this interview stage.', code: 'NO_CREDITS' },
+          { status: 403 }
         )
       }
     }

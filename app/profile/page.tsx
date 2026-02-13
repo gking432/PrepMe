@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { User, Calendar, Clock, Target, ArrowRight, Settings, Briefcase, Phone, Users, Crown, CheckCircle, ChevronDown, ChevronUp, ChevronRight, FileText, CreditCard, Upload, Trash2, Star, Shield } from 'lucide-react'
+import { User, Calendar, Clock, Target, ArrowRight, LogOut, Settings, Briefcase, Phone, Users, Crown, CheckCircle, ChevronDown, ChevronUp, ChevronRight, FileText, CreditCard, Upload, Trash2, Star, Shield } from 'lucide-react'
 
 const STAGE_NAMES: Record<string, string> = {
   hr_screen: 'HR Screen',
@@ -761,7 +761,10 @@ export default function ProfilePage() {
                 </div>
                 <hr />
                 <button
-                  onClick={handleLogout}
+                  onClick={async () => {
+                    await supabase.auth.signOut()
+                    window.location.href = '/'
+                  }}
                   className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"
                 >
                   <LogOut className="w-4 h-4" />

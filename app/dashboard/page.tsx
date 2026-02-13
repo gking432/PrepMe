@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
-import { LogOut, Play, Globe, FileText, User, ChevronRight, CheckCircle2 } from 'lucide-react'
+import Header from '@/components/Header'
+import { Play, ChevronRight, CheckCircle2 } from 'lucide-react'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -86,11 +87,6 @@ export default function DashboardPage() {
     if (data.resume_text && data.job_description_text) {
       setShowSetup(false)
     }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/'
   }
 
   const handleSave = async () => {
@@ -310,32 +306,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center">
-              <img src="/logo.svg" alt="PrepMe" className="h-9 w-auto" />
-            </Link>
-            <div className="flex items-center gap-1">
-              {user && (
-                <Link href="/profile" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Link>
-              )}
-              {user ? (
-                <button onClick={handleLogout} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-              ) : (
-                <Link href="/auth/login" className="text-sm text-primary-600 hover:text-primary-700 font-medium px-3 py-1.5">Sign in</Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Page title */}

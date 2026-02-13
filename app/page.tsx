@@ -1,37 +1,11 @@
 import Link from 'next/link'
+import Header from '@/components/Header'
 import { Sparkles, Target, Zap, Trophy, ArrowRight, CheckCircle } from 'lucide-react'
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center">
-              <img
-                src="/logo.svg"
-                alt="PrepMe"
-                className="h-12 w-auto"
-              />
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/auth/login"
-                className="text-sm text-gray-700 hover:text-primary-500 font-medium transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-medium hover:from-primary-600 hover:to-accent-500 transition-all"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

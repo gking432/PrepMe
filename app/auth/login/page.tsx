@@ -27,7 +27,7 @@ export default function LoginPage() {
       if (error) throw error
 
       if (data.user) {
-        router.push('/dashboard')
+        router.push('/profile')
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')

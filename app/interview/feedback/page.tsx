@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
+import Header from '@/components/Header'
 import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
@@ -1768,50 +1769,34 @@ export default function InterviewDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center">
-              <img
-                src="/logo.svg"
-                alt="PrepMe"
-                className="h-12 w-auto"
-              />
-            </Link>
-            <div className="flex items-center space-x-4">
-              {!hasFeedback && hasTranscript && !loading && (
-                <button
-                  onClick={regenerateFeedback}
-                  disabled={regeneratingFeedback || feedbackGenerating}
-                  className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all shadow-lg disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-4 h-4 ${regeneratingFeedback ? 'animate-spin' : ''}`} />
-                  <span>{regeneratingFeedback ? 'Regenerating...' : 'Regenerate Feedback'}</span>
-                </button>
-              )}
-              {!isAnonymous && (
-                <Link
-                  href="/profile"
-                  className="flex items-center space-x-1 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Link>
-              )}
-              {!isPremium && (
-                <button 
-                  onClick={() => setShowPurchaseFlow(true)}
-                  className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
-                >
-                  <Crown className="w-4 h-4" />
-                  <span>Unlock All Interviews</span>
-                </button>
-              )}
-            </div>
+      <Header />
+
+      {/* Contextual action bar */}
+      {(!loading && ((!hasFeedback && hasTranscript) || !isPremium)) && (
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-2">
+          <div className="max-w-7xl mx-auto flex items-center justify-end gap-3">
+            {!hasFeedback && hasTranscript && (
+              <button
+                onClick={regenerateFeedback}
+                disabled={regeneratingFeedback || feedbackGenerating}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${regeneratingFeedback ? 'animate-spin' : ''}`} />
+                <span>{regeneratingFeedback ? 'Regenerating...' : 'Regenerate Feedback'}</span>
+              </button>
+            )}
+            {!isPremium && (
+              <button
+                onClick={() => setShowPurchaseFlow(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>Unlock All Interviews</span>
+              </button>
+            )}
           </div>
         </div>
-      </header>
+      )}
 
       {/* Account Creation Prompt for Anonymous Users */}
       {showAccountPrompt && isAnonymous && (

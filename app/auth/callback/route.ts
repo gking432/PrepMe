@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirect to feedback page (which will handle data migration if needed)
-  return NextResponse.redirect(new URL('/interview/feedback', request.url))
+  // Redirect to profile page (homebase)
+  return NextResponse.redirect(new URL('/profile', request.url))
 }
 

@@ -194,9 +194,6 @@ export async function POST(request: NextRequest) {
 
     const criteria = criteriaData || []
 
-    // Get the interview stage
-    const stage = sessionData.stage || 'hr_screen'
-
     // Fetch stage-specific instructions (if they exist)
     const { data: stageInstructions, error: stageInstructionsError } = await supabaseAdmin
       .from('feedback_stage_instructions')

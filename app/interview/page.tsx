@@ -672,12 +672,15 @@ export default function InterviewPage() {
   const startInterviewTraditional = async () => {
     try {
       console.log('Starting traditional interview approach')
-      
+
+      // Check if a session was already created (e.g. by failed Realtime attempt)
+      const existingSessionId = sessionIdRef.current
+
       // Create interview session NOW (when user clicks Begin Interview)
       const {
         data: { session: authSession },
       } = await supabase.auth.getSession()
-      
+
       // For HR screen, allow proceeding without account (anonymous mode)
       // Check for temp data in localStorage
       let tempInterviewData = null
@@ -693,41 +696,45 @@ export default function InterviewPage() {
         }
       }
 
-      let interviewDataId = null
-      if (authSession) {
-        // Get latest interview data for logged-in users
-        const { data: interviewData } = await supabase
-          .from('user_interview_data')
-          .select('id')
-          .eq('user_id', authSession.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        interviewDataId = interviewData?.id || null
-      }
+      // Reuse existing session if one was already created, otherwise create new
+      let activeSessionId = existingSessionId
+      if (!activeSessionId) {
+        let interviewDataId = null
+        if (authSession) {
+          const { data: interviewData } = await supabase
+            .from('user_interview_data')
+            .select('id')
+            .eq('user_id', authSession.user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+          interviewDataId = interviewData?.id || null
+        }
 
-      // Create NEW interview session
-      // For anonymous users, we'll use a placeholder user_id or handle it in the API
-      const { data: newSession, error: sessionError } = await supabase
-        .from('interview_sessions')
-        .insert({
-          user_id: authSession?.user.id || null, // Allow null for anonymous users
-          user_interview_data_id: interviewDataId,
-          stage: stage,
-          status: 'in_progress',
-        })
-        .select()
-        .single()
+        const { data: newSession, error: sessionError } = await supabase
+          .from('interview_sessions')
+          .insert({
+            user_id: authSession?.user.id || null,
+            user_interview_data_id: interviewDataId,
+            stage: stage,
+            status: 'in_progress',
+          })
+          .select()
+          .single()
 
-      if (sessionError) {
-        console.error('Error creating session:', sessionError)
-        throw new Error('Failed to create interview session')
-      }
+        if (sessionError) {
+          console.error('Error creating session:', sessionError)
+          throw new Error('Failed to create interview session')
+        }
 
-      if (newSession) {
-        setSessionId(newSession.id)
-        sessionIdRef.current = newSession.id
-        console.log('Created new interview session:', newSession.id)
+        if (newSession) {
+          activeSessionId = newSession.id
+          setSessionId(newSession.id)
+          sessionIdRef.current = newSession.id
+          console.log('Created new interview session:', newSession.id)
+        }
+      } else {
+        console.log('Reusing existing session from Realtime attempt:', activeSessionId)
       }
       
       // Mark interview as active - this enables audio recording/playback
@@ -741,7 +748,7 @@ export default function InterviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stage,
-          sessionId: newSession.id,
+          sessionId: activeSessionId,
           hrCompleted: stage === 'hr_screen' ? localStorage.getItem('prepme_hr_completed') === 'true' : undefined,
         }),
       })

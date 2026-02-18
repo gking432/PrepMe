@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Play, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { Play, ChevronRight, CheckCircle2, ChevronDown } from 'lucide-react'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -42,6 +42,8 @@ export default function DashboardPage() {
     phone: string | null
   }>({ email: null, name: null, phone: null })
   const [showSetup, setShowSetup] = useState(true)
+  const [savedResumes, setSavedResumes] = useState<{ id: string; label: string; resume_text: string }[]>([])
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -49,6 +51,20 @@ export default function DashboardPage() {
     checkUser()
     loadInterviewData()
   }, [])
+
+  useEffect(() => {
+    const loadResumes = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { data } = await supabase
+        .from('user_resumes')
+        .select('id, label, resume_text')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+      if (data) setSavedResumes(data)
+    }
+    loadResumes()
+  }, [user?.id])
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -409,14 +425,75 @@ export default function DashboardPage() {
                 {/* Resume */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Resume <span className="text-red-500">*</span></label>
+                  {user && (
+                    <select
+                      value={selectedResumeId || ''}
+                      onChange={(e) => {
+                        const id = e.target.value || null
+                        setSelectedResumeId(id)
+                        if (id) {
+                          const resume = savedResumes.find(r => r.id === id)
+                          if (resume) {
+                            setInterviewData(prev => ({
+                              ...prev,
+                              resumeFile: { name: `${resume.label}.pdf`, text: resume.resume_text },
+                              resumeText: resume.resume_text,
+                            }))
+                            extractUserInfoFromResume(resume.resume_text)
+                          }
+                        } else {
+                          setInterviewData(prev => ({ ...prev, resumeFile: null, resumeText: '' }))
+                          setExtractedUserInfo({ email: null, name: null, phone: null })
+                        }
+                      }}
+                      className="mb-3 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                    >
+                      <option value="">
+                        {savedResumes.length === 0 ? 'No resumes uploaded' : 'Select a saved resume...'}
+                      </option>
+                      {savedResumes.map(r => (
+                        <option key={r.id} value={r.id}>{r.label}</option>
+                      ))}
+                    </select>
+                  )}
                   <FileUpload
                     label=""
-                    onFileUploaded={(file, text) => {
-                      setInterviewData({ ...interviewData, resumeFile: { name: file.name, text }, resumeText: text })
+                    onFileUploaded={async (file, text, thumbnailUrl, pdfUrl, fullPagePreviewUrl) => {
+                      setSelectedResumeId(null)
+                      setInterviewData(prev => ({ ...prev, resumeFile: { name: file.name, text }, resumeText: text }))
                       extractUserInfoFromResume(text)
+                      if (user) {
+                        const { data: existingResumes } = await supabase
+                          .from('user_resumes')
+                          .select('id')
+                          .eq('user_id', user.id)
+                        const uploadLabel = new Date().toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                        const { data: newResume, error: insertError } = await supabase.from('user_resumes').insert({
+                          user_id: user.id,
+                          label: uploadLabel,
+                          resume_text: text,
+                          file_url: thumbnailUrl ?? null,
+                          pdf_url: pdfUrl ?? null,
+                          full_page_preview_url: fullPagePreviewUrl ?? null,
+                          is_active: !existingResumes || existingResumes.length === 0,
+                        })
+                        .select('id, label, resume_text')
+                        .single()
+                        if (!insertError && newResume) {
+                          setSavedResumes(prev => [newResume, ...prev])
+                          setSelectedResumeId(newResume.id)
+                        }
+                      }
                     }}
                     onFileRemoved={() => {
-                      setInterviewData({ ...interviewData, resumeFile: null, resumeText: '' })
+                      setSelectedResumeId(null)
+                      setInterviewData(prev => ({ ...prev, resumeFile: null, resumeText: '' }))
                       setExtractedUserInfo({ email: null, name: null, phone: null })
                     }}
                     currentFile={interviewData.resumeFile || undefined}
@@ -425,7 +502,8 @@ export default function DashboardPage() {
                     <textarea
                       value={interviewData.resumeText}
                       onChange={(e) => {
-                        setInterviewData({ ...interviewData, resumeText: e.target.value })
+                        setSelectedResumeId(null)
+                        setInterviewData(prev => ({ ...prev, resumeText: e.target.value }))
                         extractUserInfoFromResume(e.target.value)
                       }}
                       rows={3}

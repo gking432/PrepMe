@@ -1,5 +1,7 @@
 // API route to extract text from PDF files
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
+import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,24 +16,67 @@ export async function POST(request: NextRequest) {
       const text = await file.text()
       return NextResponse.json({ text })
     } else if (file.type === 'application/pdf') {
-      // PDF text extraction using pdf-parse
+      // PDF text extraction and thumbnail generation using pdf-parse v2
       try {
-        // Use dynamic import - pdf-parse is a CommonJS module
-        const pdfParseModule = await import('pdf-parse')
-        // pdf-parse doesn't have a default export, it exports the function directly
-        const pdfParse = 'default' in pdfParseModule ? pdfParseModule.default : pdfParseModule
+        const { PDFParse } = await import('pdf-parse')
         
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
-        const data = await pdfParse(buffer)
+        const parser = new PDFParse({ data: buffer })
         
-        if (!data.text || data.text.trim().length === 0) {
-          return NextResponse.json({
-            error: 'PDF appears to be empty or contains only images. Please paste the text manually.',
-          }, { status: 400 })
+        try {
+          const result = await parser.getText()
+          
+          if (!result.text || result.text.trim().length === 0) {
+            return NextResponse.json({
+              error: 'PDF appears to be empty or contains only images. Please paste the text manually.',
+            }, { status: 400 })
+          }
+          
+          // Thumbnail (card) + full-page preview (overlay) - same approach that works for the card
+          let thumbnailUrl: string | undefined
+          let fullPagePreviewUrl: string | undefined
+          try {
+            const [thumbResult, fullResult] = await Promise.all([
+              parser.getScreenshot({ first: 1, desiredWidth: 400 }),
+              parser.getScreenshot({ first: 1, desiredWidth: 1200 }),
+            ])
+            if (thumbResult?.pages?.[0]?.data) {
+              const thumbPath = `thumbnails/${randomUUID()}.png`
+              const { error: e } = await supabaseAdmin.storage.from('resumes').upload(thumbPath, Buffer.from(thumbResult.pages[0].data), { contentType: 'image/png', upsert: false })
+              if (!e) thumbnailUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(thumbPath).data.publicUrl
+            }
+            if (fullResult?.pages?.[0]?.data) {
+              const fullPath = `previews/${randomUUID()}.png`
+              const { error: e } = await supabaseAdmin.storage.from('resumes').upload(fullPath, Buffer.from(fullResult.pages[0].data), { contentType: 'image/png', upsert: false })
+              if (!e) fullPagePreviewUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(fullPath).data.publicUrl
+            }
+          } catch (thumbErr) {
+            console.error('Screenshot generation/upload failed (non-blocking):', thumbErr)
+          }
+          
+          // Store the actual PDF for full-screen viewer
+          let pdfUrl: string | undefined
+          try {
+            const pdfPath = `pdfs/${randomUUID()}.pdf`
+            const { error: pdfUploadError } = await supabaseAdmin.storage
+              .from('resumes')
+              .upload(pdfPath, buffer, {
+                contentType: 'application/pdf',
+                upsert: false,
+              })
+            if (!pdfUploadError) {
+              const { data: pdfUrlData } = supabaseAdmin.storage.from('resumes').getPublicUrl(pdfPath)
+              pdfUrl = pdfUrlData.publicUrl
+            }
+          } catch (pdfStorageErr) {
+            console.error('PDF storage failed (non-blocking):', pdfStorageErr)
+          }
+          
+          return NextResponse.json({ text: result.text, thumbnailUrl: thumbnailUrl ?? undefined, pdfUrl: pdfUrl ?? undefined, fullPagePreviewUrl: fullPagePreviewUrl ?? undefined })
+        } finally {
+          await parser.destroy()
         }
-        
-        return NextResponse.json({ text: data.text })
       } catch (pdfError: any) {
         // Log the full error for debugging
         console.error('PDF parsing error details:', {

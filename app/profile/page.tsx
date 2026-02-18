@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { User, Calendar, Clock, Target, ArrowRight, LogOut, Settings, Briefcase, Phone, Users, Crown, CheckCircle, ChevronDown, ChevronUp, ChevronRight, FileText, CreditCard, Upload, Trash2, Star, Shield } from 'lucide-react'
+import { User, Calendar, Clock, Target, ArrowRight, LogOut, Settings, Briefcase, Phone, Users, Crown, CheckCircle, ChevronDown, ChevronUp, ChevronRight, FileText, CreditCard, Upload, Trash2, Star, Shield, Pencil, X } from 'lucide-react'
 
 const STAGE_NAMES: Record<string, string> = {
   hr_screen: 'HR Screen',
@@ -43,6 +43,9 @@ interface ResumeItem {
   resume_text: string
   is_active: boolean
   created_at: string
+  file_url?: string | null
+  pdf_url?: string | null
+  full_page_preview_url?: string | null
 }
 
 function getGroupKey(group: InterviewGroup): string {
@@ -74,6 +77,21 @@ export default function ProfilePage() {
   const [uploadingResume, setUploadingResume] = useState(false)
   const [editingResumeId, setEditingResumeId] = useState<string | null>(null)
   const [editingResumeLabel, setEditingResumeLabel] = useState('')
+  const [viewingResumeId, setViewingResumeId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setViewingResumeId(null)
+    }
+    if (viewingResumeId) {
+      document.addEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = ''
+    }
+  }, [viewingResumeId])
   const hasSeededExpandedRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -93,6 +111,23 @@ export default function ProfilePage() {
   useEffect(() => {
     checkUser()
   }, [])
+
+  // Refetch resumes when switching to resumes tab (ensures fresh data after dashboard uploads)
+  useEffect(() => {
+    if (activeTab === 'resumes' && user) {
+      const refetchResumes = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const { data, error } = await supabase
+          .from('user_resumes')
+          .select('id, label, resume_text, is_active, created_at, file_url, pdf_url, full_page_preview_url')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+        if (!error && data) setResumes(data)
+      }
+      refetchResumes()
+    }
+  }, [activeTab, user])
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -197,7 +232,7 @@ export default function ProfilePage() {
     try {
       const { data, error } = await supabase
         .from('user_resumes')
-        .select('id, label, resume_text, is_active, created_at')
+        .select('id, label, resume_text, is_active, created_at, file_url, pdf_url, full_page_preview_url')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false })
 
@@ -269,6 +304,9 @@ export default function ProfilePage() {
     try {
       let resumeText = ''
 
+      let thumbnailUrl: string | undefined
+      let pdfUrl: string | undefined
+      let fullPagePreviewUrl: string | undefined
       if (file.type === 'application/pdf') {
         const formData = new FormData()
         formData.append('file', file)
@@ -276,6 +314,9 @@ export default function ProfilePage() {
         if (res.ok) {
           const data = await res.json()
           resumeText = data.text
+          thumbnailUrl = data.thumbnailUrl
+          pdfUrl = data.pdfUrl
+          fullPagePreviewUrl = data.fullPagePreviewUrl
         }
       } else {
         resumeText = await file.text()
@@ -286,18 +327,33 @@ export default function ProfilePage() {
         return
       }
 
+      const uploadLabel = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
       const { data: newResume, error } = await supabase
         .from('user_resumes')
         .insert({
           user_id: user.id,
-          label: file.name.replace(/\.(pdf|txt|docx?)$/i, ''),
+          label: uploadLabel,
           resume_text: resumeText,
+          file_url: thumbnailUrl ?? null,
+          pdf_url: pdfUrl ?? null,
+          full_page_preview_url: fullPagePreviewUrl ?? null,
           is_active: resumes.length === 0, // first resume is active by default
         })
         .select()
         .single()
 
-      if (!error && newResume) {
+      if (error) {
+        console.error('Resume save error:', error)
+        alert(`Could not save resume: ${error.message}. Make sure the user_resumes table exists.`)
+        return
+      }
+      if (newResume) {
         setResumes(prev => [newResume, ...prev])
       }
     } catch (error) {
@@ -319,6 +375,7 @@ export default function ProfilePage() {
     if (!confirm('Delete this resume?')) return
     await supabase.from('user_resumes').delete().eq('id', resumeId)
     setResumes(prev => prev.filter(r => r.id !== resumeId))
+    if (viewingResumeId === resumeId) setViewingResumeId(null)
   }
 
   const updateResumeLabel = async (resumeId: string, newLabel: string) => {
@@ -599,63 +656,120 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-400">Upload a PDF or text file to get started</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {resumes.map(resume => (
-                    <div
-                      key={resume.id}
-                      className={`flex items-center justify-between p-4 rounded-xl border-2 transition-colors ${
-                        resume.is_active ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200 bg-white hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <FileText className={`w-8 h-8 shrink-0 ${resume.is_active ? 'text-indigo-500' : 'text-gray-400'}`} />
-                        <div className="min-w-0 flex-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+                  {resumes.map(resume => {
+                    const previewLines = resume.resume_text
+                      .split(/\n/)
+                      .filter(Boolean)
+                      .slice(0, 8)
+                      .map(line => line.slice(0, 48))
+                    const hasThumbnail = !!resume.file_url
+                    return (
+                      <div
+                        key={resume.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          if ((e.target as HTMLElement).closest('button, input')) return
+                          if (editingResumeId === resume.id) return
+                          setViewingResumeId(resume.id)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            if (editingResumeId === resume.id) return
+                            setViewingResumeId(resume.id)
+                          }
+                        }}
+                        className={`group relative flex flex-col rounded-lg border overflow-hidden bg-white transition-all hover:shadow-lg cursor-pointer ${
+                          resume.is_active ? 'border-indigo-300 shadow-md ring-1 ring-indigo-100' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {/* Top half: PDF preview or text fallback (Google Drive style) */}
+                        <div className="aspect-[4/3] w-full bg-[#f8f9fa] relative overflow-hidden">
+                          {hasThumbnail ? (
+                            <>
+                              <img
+                                src={resume.file_url!}
+                                alt="Resume preview"
+                                className="absolute inset-0 w-full h-full object-cover object-top"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent pointer-events-none" />
+                            </>
+                          ) : (
+                            <>
+                              <div className="absolute inset-0 p-3 font-mono text-[9px] leading-snug text-gray-600 overflow-hidden">
+                                {previewLines.length > 0 ? (
+                                  previewLines.map((line, i) => (
+                                    <div key={i} className="truncate">{line || '\u00A0'}</div>
+                                  ))
+                                ) : (
+                                  <div className="text-gray-400 italic">No preview</div>
+                                )}
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#f8f9fa] via-transparent to-transparent pointer-events-none" />
+                            </>
+                          )}
+                          <div className="absolute bottom-2 right-2 opacity-60">
+                            <FileText className={`w-8 h-8 ${resume.is_active ? 'text-indigo-500' : 'text-gray-500'}`} />
+                          </div>
+                        </div>
+                        {/* Bottom half: title and info */}
+                        <div className="flex-1 p-3 flex flex-col min-h-[90px]">
                           {editingResumeId === resume.id ? (
                             <input
                               type="text"
                               value={editingResumeLabel}
                               onChange={e => setEditingResumeLabel(e.target.value)}
                               onBlur={() => updateResumeLabel(resume.id, editingResumeLabel)}
-                              onKeyDown={e => e.key === 'Enter' && updateResumeLabel(resume.id, editingResumeLabel)}
-                              className="text-sm font-semibold text-gray-900 border border-indigo-300 rounded px-2 py-1 w-full"
+                              onKeyDown={e => { e.key === 'Enter' && updateResumeLabel(resume.id, editingResumeLabel); e.stopPropagation() }}
+                              onClick={e => e.stopPropagation()}
+                              className="text-sm font-semibold text-gray-900 border border-indigo-300 rounded px-2 py-1 w-full mb-1"
                               autoFocus
                             />
                           ) : (
-                            <p
-                              className="text-sm font-semibold text-gray-900 truncate cursor-pointer hover:text-indigo-600"
-                              onClick={() => { setEditingResumeId(resume.id); setEditingResumeLabel(resume.label) }}
-                            >
-                              {resume.label}
-                              {resume.is_active && (
-                                <span className="ml-2 inline-flex items-center px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
-                                  <Star className="w-3 h-3 mr-1" />Active
-                                </span>
-                              )}
-                            </p>
+                            <div className="group/title flex items-center gap-1.5 mb-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1 min-w-0">
+                                {resume.label}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setEditingResumeId(resume.id); setEditingResumeLabel(resume.label) }}
+                                className="opacity-0 group-hover/title:opacity-100 p-1 text-gray-400 hover:text-indigo-600 rounded transition-opacity shrink-0"
+                                aria-label="Edit resume name"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Uploaded {formatDate(resume.created_at)} &middot; {resume.resume_text.length.toLocaleString()} characters
+                          <p className="text-xs text-gray-500 mb-2">
+                            {formatDate(resume.created_at)} &middot; {resume.resume_text.length.toLocaleString()} chars
                           </p>
+                          <div className="mt-auto flex items-center gap-2 flex-wrap">
+                            {resume.is_active && (
+                              <span className="inline-flex items-center px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                                <Star className="w-3 h-3 mr-1" />Active
+                              </span>
+                            )}
+                            {!resume.is_active && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setActiveResume(resume.id) }}
+                                className="text-xs px-2 py-1 text-indigo-600 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors"
+                              >
+                                Set Active
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteResume(resume.id) }}
+                              className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-50 transition-colors ml-auto"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2 ml-4">
-                        {!resume.is_active && (
-                          <button
-                            onClick={() => setActiveResume(resume.id)}
-                            className="text-xs px-3 py-1.5 text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
-                          >
-                            Set Active
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteResume(resume.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -774,6 +888,65 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Full-screen resume viewer overlay */}
+        {viewingResumeId && (() => {
+          const resume = resumes.find(r => r.id === viewingResumeId)
+          if (!resume) return null
+          return (
+            <div
+              className="fixed inset-0 z-50 bg-black/80 flex flex-col"
+              onClick={() => setViewingResumeId(null)}
+            >
+              <div className="flex items-center justify-between p-4 bg-white/95 shadow">
+                <h2 className="text-lg font-semibold text-gray-900">{resume.label}</h2>
+                <button
+                  onClick={() => setViewingResumeId(null)}
+                  className="p-2 text-gray-500 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Close viewer"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div
+                className="flex-1 overflow-hidden p-4 relative"
+                onClick={e => e.stopPropagation()}
+              >
+                {resume.pdf_url ? (
+                  <>
+                    <iframe
+                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(resume.pdf_url)}&embedded=true`}
+                      className="w-full h-full bg-white rounded-lg min-h-[600px]"
+                      title={resume.label}
+                    />
+                    <a
+                      href={resume.pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute bottom-6 right-6 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shadow-lg"
+                    >
+                      Open PDF in new tab
+                    </a>
+                  </>
+                ) : (resume.full_page_preview_url || resume.file_url) ? (
+                  <div className="w-full h-full overflow-auto flex justify-center bg-white rounded-lg p-4">
+                    <img
+                      src={resume.full_page_preview_url || resume.file_url!}
+                      alt={resume.label}
+                      className="max-w-full h-auto object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="max-w-3xl mx-auto h-full overflow-auto bg-white rounded-lg p-8 shadow-lg">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+                      {resume.resume_text}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
       </main>
     </div>
   )

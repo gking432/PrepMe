@@ -6,6 +6,8 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // pdf-parse uses pdfjs-dist which has module resolution issues in serverless
+    serverComponentsExternalPackages: ['pdf-parse', 'pdfjs-dist'],
   },
 }
 

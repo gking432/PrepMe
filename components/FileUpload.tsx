@@ -7,7 +7,7 @@ import { Upload, X, FileText } from 'lucide-react'
 interface FileUploadProps {
   label: string
   accept?: Record<string, string[]>
-  onFileUploaded: (file: File, text: string) => void
+  onFileUploaded: (file: File, text: string, thumbnailUrl?: string, pdfUrl?: string, fullPagePreviewUrl?: string) => void
   onFileRemoved: () => void
   currentFile?: { name: string; text: string }
   maxSize?: number // in bytes
@@ -37,8 +37,7 @@ export default function FileUpload({
           // Read text file
           text = await file.text()
         } else if (file.type === 'application/pdf') {
-          // For PDF, we'll extract text on the server side
-          // For now, store the file and extract text via API
+          // For PDF, extract text and thumbnail on the server
           const formData = new FormData()
           formData.append('file', file)
 
@@ -53,6 +52,8 @@ export default function FileUpload({
 
           const data = await response.json()
           text = data.text
+          onFileUploaded(file, text, data.thumbnailUrl, data.pdfUrl, data.fullPagePreviewUrl)
+          return
         }
 
         onFileUploaded(file, text)

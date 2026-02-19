@@ -333,13 +333,12 @@ export default function InterviewDashboard() {
           .select('*')
           .eq('interview_session_id', sessionData.id)
           .order('created_at', { ascending: false })
-          .limit(1)
 
         if (feedbackError) {
           console.error('Error loading feedback:', feedbackError)
         }
 
-        const feedbackData = feedbackRows?.[0] || null
+        const feedbackData = (feedbackRows && feedbackRows.length > 0) ? feedbackRows[0] : null
 
         if (feedbackData) {
           console.log('Feedback found:', feedbackData.id)
@@ -666,7 +665,6 @@ export default function InterviewDashboard() {
                     .select('*')
                     .eq('interview_session_id', sessionData.id)
                     .order('created_at', { ascending: false })
-                    .limit(1)
                   if (newFeedbackRows?.[0]) {
                     // Re-run full load to process all the feedback data correctly
                     setFeedbackGenerating(false)

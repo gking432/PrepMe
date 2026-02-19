@@ -155,7 +155,6 @@ export async function POST(request: NextRequest) {
             .select('overall_score, strengths, weaknesses, suggestions')
             .eq('interview_session_id', hrSession.id)
             .order('created_at', { ascending: false })
-            .limit(1)
           const hrFeedbackData = hrFeedbackRows?.[0] || null
 
           if (hrFeedbackData) {

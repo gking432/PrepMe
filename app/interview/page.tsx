@@ -1118,7 +1118,7 @@ export default function InterviewPage() {
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.webm')
       formData.append('stage', stage)
-      formData.append('sessionId', sessionId || '')
+      formData.append('sessionId', sessionIdRef.current || sessionId || '')
       formData.append('transcript', JSON.stringify(transcript))
       
       // Add conversation state for HR screen and hiring_manager (askedQuestions for phase instructions)
@@ -1297,7 +1297,8 @@ export default function InterviewPage() {
     setHasUserPermission(false)
     
     // Cancel the interview session if it exists and is in progress
-    if (sessionId) {
+    const cleanupSessionId = sessionIdRef.current || sessionId
+    if (cleanupSessionId) {
       try {
         await supabase
           .from('interview_sessions')
@@ -1305,7 +1306,7 @@ export default function InterviewPage() {
             status: 'cancelled',
             completed_at: new Date().toISOString(),
           })
-          .eq('id', sessionId)
+          .eq('id', cleanupSessionId)
           .eq('status', 'in_progress')
         
         console.log('Marked interview session as cancelled')

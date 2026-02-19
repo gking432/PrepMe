@@ -121,6 +121,12 @@ export async function POST(request: NextRequest) {
       observerNotes = sessionWithData?.observer_notes || null
     }
 
+    // Delete any existing feedback for this session before generating new (prevent duplicates)
+    await supabaseAdmin
+      .from('interview_feedback')
+      .delete()
+      .eq('interview_session_id', sessionId)
+
     // Fetch HR screen feedback for cross-stage intelligence (hiring_manager and later stages)
     let hrScreenFeedback = null
     if (sessionData.stage === 'hiring_manager') {
@@ -144,11 +150,12 @@ export async function POST(request: NextRequest) {
           .maybeSingle()
 
         if (hrSession) {
-          const { data: hrFeedbackData } = await supabaseAdmin
+          const { data: hrFeedbackRows } = await supabaseAdmin
             .from('interview_feedback')
             .select('overall_score, strengths, weaknesses, suggestions')
             .eq('interview_session_id', hrSession.id)
-            .maybeSingle()
+            .order('created_at', { ascending: false })
+          const hrFeedbackData = hrFeedbackRows?.[0] || null
 
           if (hrFeedbackData) {
             hrScreenFeedback = {

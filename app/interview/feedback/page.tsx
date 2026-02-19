@@ -90,7 +90,7 @@ export default function InterviewDashboard() {
     if (feedbackGenerating && pollingAttempts < 12) { // 12 attempts * 5 seconds = 60 seconds max
       const pollInterval = setInterval(async () => {
         setPollingAttempts(prev => prev + 1)
-        await loadFeedback()
+        await loadFeedback(true)
       }, 5000) // Poll every 5 seconds
 
       return () => clearInterval(pollInterval)
@@ -219,7 +219,7 @@ export default function InterviewDashboard() {
     }
   }, [showFrRubricModal])
 
-  const loadFeedback = async () => {
+  const loadFeedback = async (skipAutoGenerate = false) => {
     try {
       const {
         data: { session },
@@ -327,16 +327,18 @@ export default function InterviewDashboard() {
           console.log('Set default tab to:', defaultTabId, 'based on stage:', stageToUse)
         }
         
-        // Load feedback for this session
-        const { data: feedbackData, error: feedbackError } = await supabase
+        // Load feedback for this session (get most recent if duplicates exist)
+        const { data: feedbackRows, error: feedbackError } = await supabase
           .from('interview_feedback')
           .select('*')
           .eq('interview_session_id', sessionData.id)
-          .maybeSingle()
+          .order('created_at', { ascending: false })
 
         if (feedbackError) {
           console.error('Error loading feedback:', feedbackError)
         }
+
+        const feedbackData = (feedbackRows && feedbackRows.length > 0) ? feedbackRows[0] : null
 
         if (feedbackData) {
           console.log('Feedback found:', feedbackData.id)
@@ -633,27 +635,53 @@ export default function InterviewDashboard() {
           }
         } else {
           console.log('No feedback found for session:', sessionData.id)
-          
+
           // Check if transcript exists in database
           const { data: sessionWithTranscript } = await supabase
             .from('interview_sessions')
             .select('transcript, transcript_structured')
             .eq('id', sessionData.id)
             .single()
-          
+
           const hasTranscriptData = !!(sessionWithTranscript?.transcript || sessionWithTranscript?.transcript_structured)
           setHasTranscript(hasTranscriptData)
-          
+
           if (hasTranscriptData) {
-            console.log('✅ Transcript found in database, can regenerate feedback')
+            console.log('Transcript found in database, auto-generating feedback...')
+            // Auto-trigger feedback generation instead of polling and waiting
+            if (!skipAutoGenerate && !feedbackGenerating && pollingAttempts === 0) {
+              setFeedbackGenerating(true)
+              try {
+                const genResponse = await fetch('/api/interview/feedback', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId: sessionData.id }),
+                })
+                if (genResponse.ok) {
+                  console.log('Feedback generated, reloading...')
+                  // Reload feedback now that it's been generated
+                  const { data: newFeedbackRows } = await supabase
+                    .from('interview_feedback')
+                    .select('*')
+                    .eq('interview_session_id', sessionData.id)
+                    .order('created_at', { ascending: false })
+                  if (newFeedbackRows?.[0]) {
+                    // Re-run full load to process all the feedback data correctly
+                    setFeedbackGenerating(false)
+                    setPollingAttempts(0)
+                    await loadFeedback(true)
+                    return
+                  }
+                } else {
+                  console.error('Auto-generate feedback failed:', await genResponse.text())
+                }
+              } catch (genError) {
+                console.error('Error auto-generating feedback:', genError)
+              }
+              setFeedbackGenerating(false)
+            }
           } else {
-            console.warn('⚠️ No transcript found in database')
-          }
-          
-          // Feedback might still be generating
-          if (!feedbackGenerating && pollingAttempts === 0) {
-            console.log('Starting feedback generation polling...')
-            setFeedbackGenerating(true)
+            console.warn('No transcript found in database')
           }
         }
       } else {

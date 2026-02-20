@@ -6,16 +6,19 @@ import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Play, ChevronRight, CheckCircle2, ChevronDown } from 'lucide-react'
+import { Play, ChevronRight, CheckCircle2, Lock, Crown } from 'lucide-react'
+import PurchaseFlow from '@/components/PurchaseFlow'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
-const STAGE_CONFIG: Record<InterviewStage, { name: string; subtitle: string; icon: string }> = {
+const STAGE_CONFIG: Record<InterviewStage, { name: string; subtitle: string; icon: string; price?: string }> = {
   hr_screen: { name: 'HR Screen', subtitle: 'Phone screening with recruiter', icon: '1' },
-  hiring_manager: { name: 'Hiring Manager', subtitle: 'Deep-dive with your future boss', icon: '2' },
-  culture_fit: { name: 'Culture Fit', subtitle: 'Team & values alignment', icon: '3' },
-  final: { name: 'Final Round', subtitle: 'Executive-level evaluation', icon: '4' },
+  hiring_manager: { name: 'Hiring Manager', subtitle: 'Deep-dive with your future boss', icon: '2', price: '$4.99' },
+  culture_fit: { name: 'Culture Fit', subtitle: 'Team & values alignment', icon: '3', price: '$3.99' },
+  final: { name: 'Final Round', subtitle: 'Executive-level evaluation', icon: '4', price: '$5.99' },
 }
+
+const PAID_STAGES: InterviewStage[] = ['hiring_manager', 'culture_fit', 'final']
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
@@ -33,6 +36,9 @@ export default function DashboardPage() {
     notes: '',
   })
   const [saving, setSaving] = useState(false)
+  const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
+  const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
+  const [purchaseHighlightStage, setPurchaseHighlightStage] = useState<string | undefined>(undefined)
   const [fetchingJobDescription, setFetchingJobDescription] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [createAccountChecked, setCreateAccountChecked] = useState(true)
@@ -68,7 +74,19 @@ export default function DashboardPage() {
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    if (session) setUser(session.user)
+    if (session) {
+      setUser(session.user)
+      // Fetch payment/access status
+      try {
+        const paymentRes = await fetch('/api/payments/status')
+        if (paymentRes.ok) {
+          const paymentData = await paymentRes.json()
+          setStageAccess(paymentData.stageAccess || {})
+        }
+      } catch (err) {
+        console.error('Error loading payment status:', err)
+      }
+    }
     setLoading(false)
   }
 
@@ -266,8 +284,20 @@ export default function DashboardPage() {
     return (interviewData.resumeText.length > 0 || interviewData.resumeFile) && interviewData.jobDescriptionText.length > 0
   }
 
+  const isStageLockedFn = (stage: InterviewStage): boolean => {
+    if (stage === 'hr_screen') return false
+    return !stageAccess?.[stage]?.hasAccess
+  }
+
   const handleStartInterview = async (stage: InterviewStage = selectedStage) => {
     if (!canStartInterview()) return
+
+    // Check if the selected stage is locked
+    if (isStageLockedFn(stage)) {
+      setPurchaseHighlightStage(stage)
+      setShowPurchaseFlow(true)
+      return
+    }
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
@@ -351,27 +381,44 @@ export default function DashboardPage() {
                   const config = STAGE_CONFIG[s]
                   const isSelected = selectedStage === s
                   const isReady = canStartInterview()
+                  const isLocked = user && isStageLockedFn(s)
 
                   return (
                     <button
                       key={s}
-                      onClick={() => setSelectedStage(s)}
+                      onClick={() => {
+                        if (isLocked) {
+                          setPurchaseHighlightStage(s)
+                          setShowPurchaseFlow(true)
+                        } else {
+                          setSelectedStage(s)
+                        }
+                      }}
                       className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-colors ${
-                        isSelected ? 'bg-primary-50' : 'hover:bg-gray-50'
+                        isLocked
+                          ? 'bg-gray-50 hover:bg-gray-100'
+                          : isSelected ? 'bg-primary-50' : 'hover:bg-gray-50'
                       }`}
                     >
                       <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
-                        isSelected ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'
+                        isLocked
+                          ? 'bg-gray-100 text-gray-400'
+                          : isSelected ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {config.icon}
+                        {isLocked ? <Lock className="w-4 h-4" /> : config.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-sm ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
+                        <p className={`font-medium text-sm ${
+                          isLocked ? 'text-gray-400' : isSelected ? 'text-primary-700' : 'text-gray-900'
+                        }`}>
                           {config.name}
                         </p>
                         <p className="text-xs text-gray-500">{config.subtitle}</p>
                       </div>
-                      {isSelected && isReady && (
+                      {isLocked && (
+                        <span className="text-xs font-semibold text-indigo-500 shrink-0">{config.price}</span>
+                      )}
+                      {!isLocked && isSelected && isReady && (
                         <ChevronRight className="w-4 h-4 text-primary-400 shrink-0" />
                       )}
                     </button>
@@ -380,15 +427,25 @@ export default function DashboardPage() {
               </div>
 
               <div className="px-5 py-4 bg-gray-50 border-t border-gray-200">
-                <button
-                  onClick={() => handleStartInterview(selectedStage)}
-                  disabled={!canStartInterview() || saving}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-semibold bg-primary-500 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Play className="w-4 h-4" />
-                  <span>Start {STAGE_CONFIG[selectedStage].name}</span>
-                </button>
-                {!canStartInterview() && (
+                {user && isStageLockedFn(selectedStage) ? (
+                  <button
+                    onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-semibold bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>Unlock {STAGE_CONFIG[selectedStage].name} — {STAGE_CONFIG[selectedStage].price}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleStartInterview(selectedStage)}
+                    disabled={!canStartInterview() || saving}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-semibold bg-primary-500 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>Start {STAGE_CONFIG[selectedStage].name}</span>
+                  </button>
+                )}
+                {!canStartInterview() && !isStageLockedFn(selectedStage) && (
                   <p className="text-xs text-gray-400 text-center mt-2">
                     Upload resume & job description first
                   </p>
@@ -570,7 +627,37 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        {/* Unlock callout for logged-in users without paid access */}
+        {user && PAID_STAGES.some(s => isStageLockedFn(s)) && (
+          <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Crown className="w-5 h-5 text-indigo-600" />
+                  <h3 className="font-semibold text-gray-900">Unlock All Interview Stages</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  The HR Screen is free. Unlock Hiring Manager, Culture Fit, and Final Round to complete your full interview prep.
+                </p>
+              </div>
+              <button
+                onClick={() => { setPurchaseHighlightStage(undefined); setShowPurchaseFlow(true) }}
+                className="shrink-0 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm hover:bg-indigo-700 transition-colors"
+              >
+                View Pricing
+              </button>
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* Purchase Flow Modal */}
+      {showPurchaseFlow && (
+        <PurchaseFlow
+          onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}
+          highlightStage={purchaseHighlightStage}
+        />
+      )}
     </div>
   )
 }

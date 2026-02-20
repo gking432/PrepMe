@@ -179,6 +179,24 @@ export default function InterviewPage() {
         return
       }
 
+      // Check access for paid stages before proceeding
+      if (stageToUse !== 'hr_screen') {
+        try {
+          const paymentRes = await fetch('/api/payments/status')
+          if (paymentRes.ok) {
+            const paymentData = await paymentRes.json()
+            const access = paymentData.stageAccess?.[stageToUse]
+            if (!access?.hasAccess) {
+              console.log('User does not have access to stage:', stageToUse)
+              router.push('/dashboard')
+              return
+            }
+          }
+        } catch (err) {
+          console.error('Error checking stage access:', err)
+        }
+      }
+
       // Get user interview data (handle case where none exists or multiple rows)
       // Use limit(1) and take first result to handle multiple rows gracefully
       const { data: interviewDataArray, error: interviewError } = await supabase

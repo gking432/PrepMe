@@ -15,6 +15,7 @@ export default function InterviewDashboard() {
   const [isPremium, setIsPremium] = useState(false)
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
+  const [purchaseHighlightStage, setPurchaseHighlightStage] = useState<string | undefined>(undefined)
   const [feedback, setFeedback] = useState<any>(null)
   const [areaScores, setAreaScores] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -1787,9 +1788,9 @@ export default function InterviewDashboard() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Target },
     { id: 'hr-screen', label: 'HR Screen', icon: Phone, completed: hasFeedback },
-    { id: 'hiring-manager-1', label: 'Hiring Manager (30min)', icon: Briefcase },
-    { id: 'culture-fit', label: 'Culture Fit', icon: Users, optional: true },
-    { id: 'hiring-manager-2', label: 'Final Interview', icon: Crown }
+    { id: 'hiring-manager-1', label: 'Hiring Manager (30min)', icon: Briefcase, locked: !stageAccess?.hiring_manager?.hasAccess && !isPremium, stage: 'hiring_manager' },
+    { id: 'culture-fit', label: 'Culture Fit', icon: Users, optional: true, locked: !stageAccess?.culture_fit?.hasAccess && !isPremium, stage: 'culture_fit' },
+    { id: 'hiring-manager-2', label: 'Final Interview', icon: Crown, locked: !stageAccess?.final?.hasAccess && !isPremium, stage: 'final' }
   ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
@@ -1944,27 +1945,45 @@ export default function InterviewDashboard() {
               const Icon = tab.icon
               const isHRScreenCompleted = tab.id === 'hr-screen' && tab.completed
               const isActive = activeTab === tab.id
-              
+              const isLocked = 'locked' in tab && tab.locked
+
               return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
-                    isActive
-                      ? isHRScreenCompleted
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
-                        : 'bg-gradient-to-r from-primary-500 to-accent-400 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                  {tab.optional && <span className="text-xs opacity-75">(Optional)</span>}
-                  {isHRScreenCompleted && (
-                    <CheckCircle className={`w-5 h-5 ${isActive ? 'text-white' : 'text-green-600'}`} />
+                <div key={tab.id} className="relative group">
+                  <button
+                    onClick={() => {
+                      if (isLocked) {
+                        setShowPurchaseFlow(true)
+                      } else {
+                        setActiveTab(tab.id)
+                      }
+                    }}
+                    className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                      isLocked
+                        ? 'text-gray-400 bg-gray-50 cursor-pointer hover:bg-gray-100'
+                        : isActive
+                          ? isHRScreenCompleted
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
+                            : 'bg-gradient-to-r from-primary-500 to-accent-400 text-white shadow-lg'
+                          : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${isLocked ? 'text-gray-400' : ''}`} />
+                    <span>{tab.label}</span>
+                    {tab.optional && !isLocked && <span className="text-xs opacity-75">(Optional)</span>}
+                    {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
+                    {!isLocked && isHRScreenCompleted && (
+                      <CheckCircle className={`w-5 h-5 ${isActive ? 'text-white' : 'text-green-600'}`} />
+                    )}
+                    {!isLocked && tab.completed && !isHRScreenCompleted && <CheckCircle className="w-4 h-4" />}
+                  </button>
+                  {isLocked && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-900 text-white text-xs rounded-lg p-2.5 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                      <Lock className="w-3 h-3 mx-auto mb-1" />
+                      Click to unlock this stage
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                    </div>
                   )}
-                  {tab.completed && !isHRScreenCompleted && <CheckCircle className="w-4 h-4" />}
-                </button>
+                </div>
               )
             })}
           </div>
@@ -2075,56 +2094,56 @@ export default function InterviewDashboard() {
                 </div>
               )}
 
-              {/* Hiring Manager 1 - Locked */}
-              <div className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70"></div>
+              {/* Hiring Manager - Locked */}
+              <button
+                onClick={() => { setPurchaseHighlightStage('hiring_manager'); setShowPurchaseFlow(true) }}
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
                     <Briefcase className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400" />
+                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
                   </div>
                   <h3 className="font-bold text-gray-500 mb-2">Hiring Manager</h3>
                   <p className="text-sm text-gray-400 mb-3">30-minute technical discussion</p>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2"></div>
-                    <span className="text-xs font-bold text-gray-400">--</span>
-                  </div>
+                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $4.99</p>
                 </div>
-              </div>
+              </button>
 
               {/* Culture Fit - Locked */}
-              <div className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70"></div>
+              <button
+                onClick={() => { setPurchaseHighlightStage('culture_fit'); setShowPurchaseFlow(true) }}
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
                     <Users className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400" />
+                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
                   </div>
                   <h3 className="font-bold text-gray-500 mb-2">Culture Fit</h3>
                   <p className="text-sm text-gray-400 mb-3">Team member interviews</p>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2"></div>
-                    <span className="text-xs font-bold text-gray-400">--</span>
-                  </div>
+                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $3.99</p>
                 </div>
-              </div>
+              </button>
 
               {/* Final Interview - Locked */}
-              <div className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70"></div>
+              <button
+                onClick={() => { setPurchaseHighlightStage('final'); setShowPurchaseFlow(true) }}
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
                 <div className="relative">
                   <div className="flex items-center justify-between mb-4">
                     <Crown className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400" />
+                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
                   </div>
                   <h3 className="font-bold text-gray-500 mb-2">Final Interview</h3>
-                  <p className="text-sm text-gray-400 mb-3">Extended technical deep-dive</p>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2"></div>
-                    <span className="text-xs font-bold text-gray-400">--</span>
-                  </div>
+                  <p className="text-sm text-gray-400 mb-3">Executive-level evaluation</p>
+                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $5.99</p>
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
@@ -5496,7 +5515,8 @@ export default function InterviewDashboard() {
       {/* Purchase Flow Modal */}
       {showPurchaseFlow && (
         <PurchaseFlow
-          onClose={() => setShowPurchaseFlow(false)}
+          onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}
+          highlightStage={purchaseHighlightStage}
         />
       )}
 

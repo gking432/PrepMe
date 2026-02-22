@@ -3098,207 +3098,122 @@ export default function InterviewDashboard() {
                         console.log('🎨 fullRubric.overall_assessment:', fullRubric.overall_assessment)
                         console.log('🎨 fullRubric.traditional_hr_criteria:', fullRubric.traditional_hr_criteria)
                         
-                        // Transform traditional_hr_criteria from {scores: {...}, feedback: {...}} 
+                        // Transform traditional_hr_criteria from {scores: {...}, feedback: {...}, sub_components: {...}}
                         // to the detailed structure expected by DetailedRubricReport
                         let transformedTraditionalCriteria = fullRubric.traditional_hr_criteria
                         if (fullRubric.traditional_hr_criteria?.scores && fullRubric.traditional_hr_criteria?.feedback) {
-                          // Claude returns {scores: {...}, feedback: {...}}, need to transform
                           const scores = fullRubric.traditional_hr_criteria.scores
                           const feedbackObj = fullRubric.traditional_hr_criteria.feedback
-                          console.log('🔍 traditional_hr_criteria.scores:', scores)
-                          console.log('🔍 traditional_hr_criteria.feedback:', feedbackObj)
-                          
+                          const subComponents = fullRubric.traditional_hr_criteria.sub_components || {}
+
                           transformedTraditionalCriteria = {}
-                          
-                          // Helper to normalize score to 1-5 scale if it's 1-10
-                          const normalizeScore = (score: number, maxScale: number = 10): number => {
-                            if (maxScale === 10 && score > 5) {
-                              // Convert 1-10 to 1-5
-                              return Math.round((score / 10) * 5)
-                            }
-                            return score
+
+                          // --- Communication Skills ---
+                          const commSubs = subComponents.communication_skills || {}
+                          transformedTraditionalCriteria.communication_skills = {
+                            score: scores.communication_skills || 1,
+                            scale: '1-10',
+                            feedback: feedbackObj.communication_skills || 'Communication assessment not available.',
+                            components: {
+                              clarity: commSubs.clarity || scores.communication_skills || 1,
+                              articulation: commSubs.articulation || scores.communication_skills || 1,
+                              pacing: commSubs.pacing || scores.communication_skills || 1,
+                              tone_appropriateness: commSubs.tone_appropriateness || scores.communication_skills || 1,
+                              active_listening: commSubs.active_listening || scores.communication_skills || 1,
+                              professional_language: commSubs.professional_language || scores.communication_skills || 1,
+                            },
                           }
-                          
-                          // Create a mapping from Claude's keys to expected component keys
-                          const criterionMapping: Record<string, string> = {
-                            'communication': 'communication_skills',
-                            'cultural_fit': 'culture_fit_indicators',
-                            'job_alignment': 'basic_qualifications_match',
-                            'experience_relevance': 'basic_qualifications_match',
-                            'problem_solving': 'response_quality',
-                            'technical_skills': 'response_quality',
+
+                          // --- Professionalism (pass/fail from sub-component booleans) ---
+                          const profSubs = subComponents.professionalism || {}
+                          const profScore = scores.professionalism || 1
+                          // Use actual sub-component booleans from Claude, fall back to score threshold only if missing
+                          const profComponents = {
+                            appropriate_greeting: profSubs.appropriate_greeting ?? profScore >= 5,
+                            appropriate_closing: profSubs.appropriate_closing ?? profScore >= 5,
+                            respectful_tone: profSubs.respectful_tone ?? profScore >= 5,
+                            prepared_environment: profSubs.prepared_environment ?? profScore >= 5,
+                            phone_etiquette: profSubs.phone_etiquette ?? profScore >= 5,
                           }
-                          
-                          // Transform each criterion with expected structure
-                          Object.keys(scores).forEach((key) => {
-                            const score = scores[key]
-                            // Try multiple possible keys for feedback (Claude might use different naming)
-                            const feedbackText = feedbackObj[key] || 
-                                                 feedbackObj[key.toLowerCase()] || 
-                                                 feedbackObj[key.replace(/_/g, ' ')] ||
-                                                 feedbackObj[key.replace(/_/g, '_')] ||
-                                                 ''
-                            console.log(`🔍 Criterion: ${key}, Score: ${score}, Feedback: "${feedbackText.substring(0, 50)}..."`)
-                            
-                            // Map criterion names to expected structure
-                            // First check if this key maps to a standard criterion
-                            const mappedKey = criterionMapping[key] || key
-                            
-                            if (mappedKey === 'communication_skills' || key === 'communication' || key.toLowerCase().includes('communication')) {
-                              // If communication_skills already exists, merge feedback if better
-                              if (!transformedTraditionalCriteria.communication_skills || !transformedTraditionalCriteria.communication_skills.feedback) {
-                                transformedTraditionalCriteria.communication_skills = {
-                                  score: normalizeScore(score),
-                                  scale: '1-5',
-                                  feedback: feedbackText || transformedTraditionalCriteria.communication_skills?.feedback || 'Communication assessment not available.',
-                                  components: {
-                                    clarity: normalizeScore(score),
-                                    articulation: normalizeScore(score),
-                                    pacing: normalizeScore(score),
-                                    tone_appropriateness: normalizeScore(score),
-                                    active_listening: normalizeScore(score),
-                                    professional_language: normalizeScore(score),
-                                  },
-                                }
-                              } else if (feedbackText && feedbackText.length > transformedTraditionalCriteria.communication_skills.feedback.length) {
-                                // Use longer/more detailed feedback if available
-                                transformedTraditionalCriteria.communication_skills.feedback = feedbackText
-                              }
-                            } else if (key === 'professionalism' || key.toLowerCase().includes('professional')) {
-                              // Professionalism uses pass/fail
-                              const isPass = score >= 4 || (typeof score === 'number' && score >= 7)
-                              transformedTraditionalCriteria.professionalism = {
-                                score: isPass ? 'pass' : 'fail',
-                                scale: 'pass/fail',
-                                feedback: feedbackText || 'Professionalism assessment not available.',
-                                components: {
-                                  appropriate_greeting: isPass,
-                                  appropriate_closing: isPass,
-                                  respectful_tone: isPass,
-                                  prepared_environment: isPass,
-                                  phone_etiquette: isPass,
-                                },
-                              }
-                            } else if (mappedKey === 'basic_qualifications_match' || key === 'job_alignment' || key === 'experience_relevance' || key.toLowerCase().includes('qualification') || key.toLowerCase().includes('alignment')) {
-                              // Try to extract alignment details from comparative_analysis if available
-                              const alignmentDetails = fullRubric.comparative_analysis?.job_requirements_gaps || []
-                              const metRequirements = fullRubric.comparative_analysis?.standout_qualities || []
-                              
-                              // Merge if basic_qualifications_match already exists (from job_alignment or experience_relevance)
-                              if (!transformedTraditionalCriteria.basic_qualifications_match) {
-                                transformedTraditionalCriteria.basic_qualifications_match = {
-                                  score: score, // Keep 1-10 scale
-                                  scale: '1-10',
-                                  feedback: feedbackText || 'Basic qualifications assessment not available.',
-                                  components: {},
-                                  alignment_details: {
-                                    job_requirements_met: Array.isArray(metRequirements) ? metRequirements : [],
-                                    job_requirements_missing: Array.isArray(alignmentDetails) ? alignmentDetails : [],
-                                    transferable_skills_identified: [],
-                                  },
-                                }
-                              } else {
-                                // Merge feedback from multiple sources
-                                const existingFeedback = transformedTraditionalCriteria.basic_qualifications_match.feedback
-                                if (feedbackText && (!existingFeedback || feedbackText.length > existingFeedback.length)) {
-                                  transformedTraditionalCriteria.basic_qualifications_match.feedback = feedbackText
-                                }
-                                // Use higher score if available
-                                if (score > transformedTraditionalCriteria.basic_qualifications_match.score) {
-                                  transformedTraditionalCriteria.basic_qualifications_match.score = score
-                                }
-                              }
-                            } else if (key === 'interest_and_enthusiasm' || key.toLowerCase().includes('enthusiasm') || key.toLowerCase().includes('interest')) {
-                              transformedTraditionalCriteria.interest_and_enthusiasm = {
-                                score: normalizeScore(score),
-                                scale: '1-5',
-                                feedback: feedbackText || 'Interest and enthusiasm assessment not available.',
-                                components: {},
-                                enthusiasm_indicators: {
-                                  mentioned_specific_company_details: score >= 4,
-                                  tone_was_enthusiastic: score >= 4,
-                                  company_knowledge: score >= 4 ? 'Strong' : score >= 3 ? 'Moderate' : 'Limited',
-                                  energy_level: score >= 4 ? 'High' : score >= 3 ? 'Moderate' : 'Low',
-                                  tone_enthusiasm: score >= 4 ? 'Very Enthusiastic' : score >= 3 ? 'Enthusiastic' : 'Neutral',
-                                  follow_up_questions: score >= 4 ? 'Multiple thoughtful questions' : score >= 3 ? 'Some questions' : 'Few or no questions',
-                                },
-                              }
-                            } else if (mappedKey === 'culture_fit_indicators' || key === 'cultural_fit' || key.toLowerCase().includes('culture')) {
-                              const isPass = score >= 4 || (typeof score === 'number' && score >= 7)
-                              transformedTraditionalCriteria.culture_fit_indicators = {
-                                score: isPass ? 'pass' : 'fail',
-                                scale: 'pass/fail',
-                                feedback: feedbackText || 'Culture fit assessment not available.',
-                                components: {
-                                  work_style_preferences_align: isPass ? 'Aligned' : 'Needs Review',
-                                  values_alignment: isPass ? 'Aligned' : 'Needs Review',
-                                  team_collaboration_mentions: isPass ? 'Strong collaboration focus' : 'Limited mention',
-                                },
-                                notes: feedbackText || 'Culture fit assessment not available.',
-                              }
-                            } else if (mappedKey === 'response_quality' || key === 'problem_solving' || key === 'technical_skills' || key.toLowerCase().includes('response') || key.toLowerCase().includes('quality')) {
-                              // Try to extract quality metrics from question_analysis if available
-                              const questionAnalysis = fullRubric.question_analysis?.questions || []
-                              const answeredDirectly = questionAnalysis.filter((q: any) => q.answered_directly !== false).length
-                              const withExamples = questionAnalysis.filter((q: any) => q.has_examples).length
-                              const vagueAnswers = questionAnalysis.filter((q: any) => q.is_vague).length
-                              
-                              // Merge if response_quality already exists
-                              if (!transformedTraditionalCriteria.response_quality) {
-                                transformedTraditionalCriteria.response_quality = {
-                                  score: normalizeScore(score),
-                                  scale: '1-5',
-                                  feedback: feedbackText || 'Response quality assessment not available.',
-                                  components: {},
-                                  quality_metrics: {
-                                    questions_answered_directly: questionAnalysis.length > 0 ? `${answeredDirectly}/${questionAnalysis.length}` : 'N/A',
-                                    questions_with_strong_examples: questionAnalysis.length > 0 ? `${withExamples}/${questionAnalysis.length}` : 'N/A',
-                                    questions_with_vague_answers: questionAnalysis.length > 0 ? `${vagueAnswers}/${questionAnalysis.length}` : 'N/A',
-                                    avg_length: questionAnalysis.length > 0 ? 
-                                      `${Math.round(questionAnalysis.reduce((sum: number, q: any) => sum + (q.word_count || 0), 0) / questionAnalysis.length)} words` : 'N/A',
-                                  },
-                                }
-                              } else {
-                                // Merge feedback from multiple sources
-                                const existingFeedback = transformedTraditionalCriteria.response_quality.feedback
-                                if (feedbackText && (!existingFeedback || feedbackText.length > existingFeedback.length)) {
-                                  transformedTraditionalCriteria.response_quality.feedback = feedbackText
-                                }
-                              }
-                            } else if (key === 'red_flags' || key.toLowerCase().includes('red_flag')) {
-                              transformedTraditionalCriteria.red_flags = {
-                                present: score < 3 || (typeof score === 'number' && score < 5),
-                                scale: 'present/absent',
-                                detected_flags: [],
-                                feedback: feedbackText || 'Red flags assessment not available.',
-                              }
-                            } else {
-                              // Generic transformation for unknown criteria
-                              transformedTraditionalCriteria[key] = {
-                                score: normalizeScore(score),
-                                scale: '1-5',
-                                feedback: feedbackText,
-                                components: {},
-                              }
-                            }
-                          })
-                          
-                          // Validate that all required criteria are present (no defaults - validation should catch missing data)
+                          // Pass if majority of components pass
+                          const profPassCount = Object.values(profComponents).filter(Boolean).length
+                          transformedTraditionalCriteria.professionalism = {
+                            score: profPassCount >= 3 ? 'pass' : 'fail',
+                            scale: 'pass/fail',
+                            feedback: feedbackObj.professionalism || 'Professionalism assessment not available.',
+                            components: profComponents,
+                          }
+
+                          // --- Basic Qualifications Match ---
+                          const alignmentDetails = fullRubric.comparative_analysis?.job_requirements_gaps || []
+                          const metRequirements = fullRubric.comparative_analysis?.standout_qualities || []
+                          transformedTraditionalCriteria.basic_qualifications_match = {
+                            score: scores.basic_qualifications_match || 1,
+                            scale: '1-10',
+                            feedback: feedbackObj.basic_qualifications_match || 'Basic qualifications assessment not available.',
+                            components: {},
+                            alignment_details: {
+                              job_requirements_met: Array.isArray(metRequirements) ? metRequirements : [],
+                              job_requirements_missing: Array.isArray(alignmentDetails) ? alignmentDetails : [],
+                              transferable_skills_identified: [],
+                            },
+                          }
+
+                          // --- Interest and Enthusiasm (use real sub-component data from Claude) ---
+                          const enthSubs = subComponents.interest_and_enthusiasm || {}
+                          transformedTraditionalCriteria.interest_and_enthusiasm = {
+                            score: scores.interest_and_enthusiasm || 1,
+                            scale: '1-10',
+                            feedback: feedbackObj.interest_and_enthusiasm || 'Interest and enthusiasm assessment not available.',
+                            components: {},
+                            enthusiasm_indicators: {
+                              mentioned_specific_company_details: enthSubs.company_knowledge === 'strong' || enthSubs.company_knowledge === 'moderate',
+                              tone_was_enthusiastic: enthSubs.tone_enthusiasm === 'enthusiastic' || enthSubs.tone_enthusiasm === 'engaged',
+                              company_knowledge: enthSubs.company_knowledge || 'Not assessed',
+                              energy_level: enthSubs.energy_level || 'Not assessed',
+                              tone_enthusiasm: enthSubs.tone_enthusiasm || 'Not assessed',
+                              follow_up_questions: enthSubs.follow_up_questions || 'Not assessed',
+                            },
+                          }
+
+                          // --- Response Quality (use real sub-component data from Claude) ---
+                          const rqSubs = subComponents.response_quality || {}
+                          transformedTraditionalCriteria.response_quality = {
+                            score: scores.response_quality || 1,
+                            scale: '1-10',
+                            feedback: feedbackObj.response_quality || 'Response quality assessment not available.',
+                            components: {},
+                            quality_metrics: {
+                              questions_answered_directly: rqSubs.questions_answered_directly || 'N/A',
+                              questions_with_strong_examples: rqSubs.questions_with_strong_examples || 'N/A',
+                              questions_with_vague_answers: rqSubs.questions_with_vague_answers || 'N/A',
+                              avg_length: rqSubs.avg_response_length || 'N/A',
+                            },
+                          }
+
+                          // --- Red Flags (use real detected flags from Claude) ---
+                          const rfSubs = subComponents.red_flags || {}
+                          const detectedFlags = rfSubs.flags_detected || []
+                          transformedTraditionalCriteria.red_flags = {
+                            present: detectedFlags.length > 0,
+                            scale: 'present/absent',
+                            detected_flags: detectedFlags,
+                            feedback: feedbackObj.red_flags || 'Red flags assessment not available.',
+                          }
+
+                          // Validate required criteria are present
                           const requiredCriteria = [
                             'communication_skills',
                             'professionalism',
                             'basic_qualifications_match',
                             'interest_and_enthusiasm',
-                            'culture_fit_indicators',
                             'response_quality',
                             'red_flags',
                           ]
-                          
+
                           const missingCriteria = requiredCriteria.filter(key => !transformedTraditionalCriteria[key])
                           if (missingCriteria.length > 0) {
-                            console.error('❌ Missing required criteria in rubric:', missingCriteria)
-                            console.error('❌ This should have been caught by validation. Rubric may be incomplete.')
-                            // Don't create defaults - let the component handle missing data gracefully
+                            console.error('Missing required criteria in rubric:', missingCriteria)
                           }
                         }
                         
@@ -3368,8 +3283,11 @@ export default function InterviewDashboard() {
                             time_per_question: transformedTiming,
                             total_interview_duration: tma.total_interview_duration || calculatedDuration || null,
                             target_duration: tma.target_duration || null,
+                            duration_assessment: tma.duration_assessment || null,
                             variance: tma.variance || null,
                             questions_asked: tma.questions_asked ?? transformedTiming.length ?? null,
+                            questions_target: tma.questions_target || '6-8',
+                            questions_assessment: tma.questions_assessment || null,
                             pacing_feedback: tma.overall_pace || tma.pacing_feedback || null,
                           }
                         } else {

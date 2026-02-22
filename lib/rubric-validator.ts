@@ -52,13 +52,12 @@ export function validateRubric(rubric: any): boolean {
     return false
   }
 
-  // Validate that ALL 7 required criteria are present
+  // Validate that ALL 6 required criteria are present (culture_fit_indicators removed - separate interview)
   const requiredCriteria = [
     'communication_skills',
     'professionalism',
     'basic_qualifications_match',
     'interest_and_enthusiasm',
-    'culture_fit_indicators',
     'response_quality',
     'red_flags',
   ]

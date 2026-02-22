@@ -79,7 +79,7 @@ interface RubricData {
         follow_up_questions: string;
       };
     };
-    culture_fit_indicators: {
+    culture_fit_indicators?: {
       score: 'pass' | 'fail';
       scale: string;
       components: {
@@ -251,7 +251,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
             <div>
               <div className="text-sm font-semibold text-indigo-900 mb-1">OVERALL ASSESSMENT</div>
               <div className="text-3xl font-bold text-indigo-600">
-                {data.overall_assessment.overall_score}/100
+                {Math.round(data.overall_assessment.overall_score * 10)}/100
               </div>
               <div className="text-sm text-gray-700 mt-1 capitalize">
                 {data.overall_assessment.likelihood_to_advance === 'likely' && 'Likely to Advance'}
@@ -341,25 +341,30 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-indigo-600">
-                  {data.traditional_hr_criteria.communication_skills.score}/5
+                  {data.traditional_hr_criteria.communication_skills.score}/10
                 </div>
                 <div className="text-xs text-gray-500 uppercase tracking-wide">
-                  {data.traditional_hr_criteria.communication_skills.score >= 4 ? 'Strong' : 
-                   data.traditional_hr_criteria.communication_skills.score >= 3 ? 'Acceptable' : 'Needs Work'}
+                  {data.traditional_hr_criteria.communication_skills.score >= 8 ? 'Strong' :
+                   data.traditional_hr_criteria.communication_skills.score >= 5 ? 'Adequate' : 'Needs Work'}
                 </div>
               </div>
             </div>
             <div className="bg-gray-200 rounded-full h-2 mb-3">
-              <div 
+              <div
                 className="score-meter bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-1000"
-                style={{ width: `${(data.traditional_hr_criteria.communication_skills.score / 5) * 100}%` }}
+                style={{ width: `${(data.traditional_hr_criteria.communication_skills.score / 10) * 100}%` }}
               ></div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
               {Object.entries(data.traditional_hr_criteria.communication_skills.components).map(([key, value]) => (
                 <div key={key} className="bg-indigo-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-600 mb-1 capitalize">{key.replace(/_/g, ' ')}</div>
-                  {renderStars(value as number)}
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600 capitalize">{key.replace(/_/g, ' ')}</span>
+                    <span className="text-xs font-bold text-indigo-600">{value as number}/10</span>
+                  </div>
+                  <div className="bg-gray-200 rounded-full h-1.5">
+                    <div className="bg-indigo-400 h-1.5 rounded-full" style={{ width: `${((value as number) / 10) * 100}%` }}></div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -482,15 +487,18 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-purple-600">
-                    {data.traditional_hr_criteria.interest_and_enthusiasm.score}/5
+                    {data.traditional_hr_criteria.interest_and_enthusiasm.score}/10
                   </div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">High</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">
+                    {data.traditional_hr_criteria.interest_and_enthusiasm.score >= 8 ? 'Strong' :
+                     data.traditional_hr_criteria.interest_and_enthusiasm.score >= 5 ? 'Moderate' : 'Low'}
+                  </div>
                 </div>
               </div>
               <div className="bg-gray-200 rounded-full h-2 mb-3">
-                <div 
+                <div
                   className="score-meter bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000"
-                  style={{ width: `${(data.traditional_hr_criteria.interest_and_enthusiasm.score / 5) * 100}%` }}
+                  style={{ width: `${(data.traditional_hr_criteria.interest_and_enthusiasm.score / 10) * 100}%` }}
                 ></div>
               </div>
               {data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators && (
@@ -522,52 +530,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
             </div>
           )}
 
-          {/* Culture Fit */}
-          {data.traditional_hr_criteria.culture_fit_indicators && (
-            <div className="border-l-4 border-teal-500 pl-6 py-4">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Culture Fit Indicators</h3>
-                  <p className="text-sm text-gray-600">Work style, values alignment, collaboration, work environment preferences</p>
-                </div>
-                <div className="text-right">
-                  <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold border-2 ${
-                    data.traditional_hr_criteria.culture_fit_indicators.score === 'pass'
-                      ? 'bg-teal-100 text-teal-700 border-teal-300'
-                      : 'bg-red-100 text-red-700 border-red-300'
-                  }`}>
-                    {data.traditional_hr_criteria.culture_fit_indicators.score === 'pass' ? '✓ PASS' : '✗ FAIL'}
-                  </span>
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4 mb-3">
-                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-sm text-gray-900 mb-2">Alignment</h4>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center justify-between">
-                      <span className="text-gray-700">Work Style</span>
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">{data.traditional_hr_criteria.culture_fit_indicators.components?.work_style_preferences_align || 'Not Assessed'}</span>
-                    </li>
-                    <li className="flex items-center justify-between">
-                      <span className="text-gray-700">Values</span>
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">{data.traditional_hr_criteria.culture_fit_indicators.components?.values_alignment || 'Not Assessed'}</span>
-                    </li>
-                    <li className="flex items-center justify-between">
-                      <span className="text-gray-700">Remote/Hybrid</span>
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Flexible</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-sm text-gray-900 mb-2">Collaboration Style</h4>
-                  <p className="text-sm text-gray-700">{data.traditional_hr_criteria.culture_fit_indicators.components?.team_collaboration_mentions || 'Not Assessed'}</p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                <strong>Analysis:</strong> {data.traditional_hr_criteria.culture_fit_indicators.feedback || 'Culture fit assessment not available.'}
-              </p>
-            </div>
-          )}
+          {/* Culture Fit Indicators removed - assessed in dedicated Culture Fit interview stage */}
 
           {/* Response Quality */}
           {data.traditional_hr_criteria.response_quality && (
@@ -579,15 +542,18 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-amber-600">
-                    {data.traditional_hr_criteria.response_quality.score}/5
+                    {data.traditional_hr_criteria.response_quality.score}/10
                   </div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">Acceptable</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wide">
+                    {data.traditional_hr_criteria.response_quality.score >= 8 ? 'Strong' :
+                     data.traditional_hr_criteria.response_quality.score >= 5 ? 'Adequate' : 'Needs Work'}
+                  </div>
                 </div>
               </div>
               <div className="bg-gray-200 rounded-full h-2 mb-3">
-                <div 
+                <div
                   className="score-meter bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-1000"
-                  style={{ width: `${(data.traditional_hr_criteria.response_quality.score / 5) * 100}%` }}
+                  style={{ width: `${(data.traditional_hr_criteria.response_quality.score / 10) * 100}%` }}
                 ></div>
               </div>
               {data.traditional_hr_criteria.response_quality.quality_metrics && (
@@ -642,6 +608,25 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                   ? 'bg-green-50 border-green-200'
                   : 'bg-red-50 border-red-200'
               }`}>
+                {data.traditional_hr_criteria.red_flags.detected_flags && data.traditional_hr_criteria.red_flags.detected_flags.length > 0 && (
+                  <ul className="space-y-2 mb-3">
+                    {data.traditional_hr_criteria.red_flags.detected_flags.map((flag: any, idx: number) => (
+                      <li key={idx} className="flex items-start space-x-2 text-sm">
+                        <span className={`font-semibold shrink-0 ${
+                          flag.severity === 'high' ? 'text-red-600' :
+                          flag.severity === 'medium' ? 'text-orange-600' : 'text-yellow-600'
+                        }`}>
+                          {flag.severity === 'high' ? '!!!' : flag.severity === 'medium' ? '!!' : '!'}
+                        </span>
+                        <div>
+                          <span className="font-medium text-gray-900">{flag.flag_type}: </span>
+                          <span className="text-gray-700">{flag.description}</span>
+                          {flag.evidence && <p className="text-xs text-gray-500 mt-0.5 italic">{flag.evidence}</p>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <p className="text-sm text-gray-700 leading-relaxed">
                   <strong>Assessment:</strong> {data.traditional_hr_criteria.red_flags.feedback || 'Red flags assessment not available.'}
                 </p>
@@ -669,8 +654,12 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                   {data.time_management_analysis.total_interview_duration}
                 </div>
                 {data.time_management_analysis.target_duration && (
-                  <div className="text-xs text-green-600 mt-1">
-                    ✓ Within target ({data.time_management_analysis.target_duration})
+                  <div className={`text-xs mt-1 ${
+                    (data.time_management_analysis as any).duration_assessment === 'within_target'
+                      ? 'text-green-600' : 'text-orange-600'
+                  }`}>
+                    {(data.time_management_analysis as any).duration_assessment === 'within_target' ? '✓' : '⚠'} Target: {data.time_management_analysis.target_duration}
+                    {data.time_management_analysis.variance && ` (${data.time_management_analysis.variance})`}
                   </div>
                 )}
               </div>
@@ -680,7 +669,13 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                   <div className="text-3xl font-bold text-blue-600">
                     {data.time_management_analysis.questions_asked}
                   </div>
-                  <div className="text-xs text-green-600 mt-1">✓ Optimal range (6-8)</div>
+                  <div className={`text-xs mt-1 ${
+                    (data.time_management_analysis as any).questions_assessment === 'within_target'
+                      ? 'text-green-600'
+                      : 'text-orange-600'
+                  }`}>
+                    {(data.time_management_analysis as any).questions_assessment === 'within_target' ? '✓' : '⚠'} Target: {(data.time_management_analysis as any).questions_target || '6-8'}
+                  </div>
                 </div>
               )}
               {data.time_management_analysis.time_per_question && data.time_management_analysis.time_per_question.length > 0 && (
@@ -692,11 +687,10 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                         .map((q: any) => q.candidate_response_time)
                         .filter((t: string) => t && t !== 'N/A')
                       if (times.length === 0) return 'N/A'
-                      // Calculate average if we have durations
                       return 'See breakdown below'
                     })()}
                   </div>
-                  <div className="text-xs text-green-600 mt-1">✓ Appropriate length</div>
+                  <div className="text-xs text-gray-500 mt-1">Target: 60-90 seconds</div>
                 </div>
               )}
             </div>
@@ -870,7 +864,12 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                 <div className="text-sm text-gray-600">percentile</div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 mb-4">You performed better than {data.comparative_analysis.percentile_estimate}% of candidates at the HR phone screen stage. This is a strong showing and indicates good fit for moving forward.</p>
+            <p className="text-sm text-gray-700 mb-4">You performed better than {data.comparative_analysis.percentile_estimate}% of candidates at the HR phone screen stage.{' '}
+              {data.comparative_analysis.percentile_estimate >= 75 ? 'This is a strong showing and indicates good fit for moving forward.' :
+               data.comparative_analysis.percentile_estimate >= 50 ? 'This is an average performance with room for improvement.' :
+               data.comparative_analysis.percentile_estimate >= 25 ? 'This is below average — review the feedback below to improve.' :
+               'This indicates significant areas for improvement before your next interview.'}
+            </p>
           <div className="bg-white rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-600">All Candidates</span>

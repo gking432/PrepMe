@@ -1976,13 +1976,6 @@ export default function InterviewDashboard() {
                     )}
                     {!isLocked && tab.completed && !isHRScreenCompleted && <CheckCircle className="w-4 h-4" />}
                   </button>
-                  {isLocked && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-gray-900 text-white text-xs rounded-lg p-2.5 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
-                      <Lock className="w-3 h-3 mx-auto mb-1" />
-                      Click to unlock this stage
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                    </div>
-                  )}
                 </div>
               )
             })}

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { Sparkles, Target, Zap, Trophy, ArrowRight, CheckCircle } from 'lucide-react'

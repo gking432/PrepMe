@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         .from('interview_sessions')
         .select('transcript')
         .eq('id', sessionId)
-        .maybeSingle() // Use maybeSingle() to handle missing sessions gracefully
+        .maybeSingle()
       
       if (transcriptError) {
         console.error('Error fetching transcript from database:', transcriptError)

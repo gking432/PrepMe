@@ -354,7 +354,7 @@ export default function InterviewPage() {
       
       // Connect to OpenAI Realtime API WebSocket
       // The client_secret should be in the URL for authentication
-      const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-realtime-mini&client_secret=${encodeURIComponent(clientSecret)}`
+      const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview&client_secret=${encodeURIComponent(clientSecret)}`
       
       console.log('Connecting to WebSocket with client_secret in URL')
       const ws = new WebSocket(wsUrl)

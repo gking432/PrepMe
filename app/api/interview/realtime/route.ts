@@ -234,26 +234,6 @@ Company: Not provided`
       }
     })()}`
 
-    // Try creating a client_secret first (for browser use)
-    // Then create the session
-    const clientSecretResponse = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'realtime=v1',
-      },
-    })
-
-    let ephemeralClientSecret = null
-    if (clientSecretResponse.ok) {
-      const clientSecretData = await clientSecretResponse.json()
-      ephemeralClientSecret = clientSecretData.client_secret?.value || clientSecretData.client_secret
-      console.log('Created ephemeral client secret')
-    } else {
-      console.warn('Could not create ephemeral client secret, will try session method')
-    }
-
     // Create Realtime API session
     const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
@@ -263,7 +243,7 @@ Company: Not provided`
         'OpenAI-Beta': 'realtime=v1',
       },
       body: JSON.stringify({
-        model: 'gpt-realtime-mini',
+        model: 'gpt-4o-mini-realtime-preview',
         voice: 'alloy',
         instructions: optimizedSystemPrompt,
         input_audio_format: 'pcm16',
@@ -295,8 +275,7 @@ Company: Not provided`
                         session.client_secret_value ||
                         session.data?.client_secret
 
-    // Prefer ephemeral client secret, fallback to session client_secret
-    const finalClientSecret = ephemeralClientSecret || clientSecret
+    const finalClientSecret = clientSecret
 
     if (!finalClientSecret) {
       console.error('No client_secret available. Session response:', JSON.stringify(session, null, 2))

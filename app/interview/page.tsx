@@ -589,7 +589,7 @@ export default function InterviewPage() {
 
         // Convert to base64 for transmission
         const buffer = new Uint8Array(pcm16.buffer)
-        const base64 = btoa(String.fromCharCode(...buffer))
+        const base64 = Buffer.from(buffer).toString('base64')
 
         // Send audio to Realtime API
         wsRef.current.send(JSON.stringify({

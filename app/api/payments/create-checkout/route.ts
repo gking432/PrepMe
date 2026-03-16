@@ -4,9 +4,11 @@ import { cookies } from 'next/headers'
 import Stripe from 'stripe'
 import { PRICING, ProductType } from '@/lib/pricing'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
+let _stripe: Stripe | null = null
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' })
+  return _stripe
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
       }]
     }
 
-    const checkoutSession = await stripe.checkout.sessions.create(checkoutParams)
+    const checkoutSession = await getStripe().checkout.sessions.create(checkoutParams)
 
     // Record pending transaction
     const { error: txError } = await supabase

@@ -312,7 +312,7 @@ export default function InterviewPage() {
       const response = await fetch('/api/interview/realtime', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage, sessionId: newSession.id }),
+        body: JSON.stringify({ stage, sessionId: newSessionId }),
       })
 
       if (!response.ok) {

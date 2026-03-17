@@ -177,7 +177,11 @@ export default function InterviewPage() {
         data: { session },
       } = await supabase.auth.getSession()
       if (!session) {
-        router.push('/auth/login')
+        // HR screen is free and anonymous — let them through.
+        // connectRealtime / startInterviewTraditional already handle localStorage-based anonymous flow.
+        if (stageToUse !== 'hr_screen') {
+          router.push('/auth/login')
+        }
         return
       }
 

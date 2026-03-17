@@ -23,6 +23,7 @@ const ANONYMOUS_ALLOWED_API = [
   '/api/extract-text',
   '/api/scrape-website',
   '/api/interview/create-session',
+  '/api/interview/realtime',
   '/api/interview/voice',
   '/api/interview/start',
   '/api/interview/feedback',

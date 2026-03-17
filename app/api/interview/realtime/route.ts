@@ -250,13 +250,13 @@ Company: Not provided`
         output_audio_format: 'pcm16',
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.5,
+          threshold: 0.8,
           prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          silence_duration_ms: 800,
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,
-        max_response_output_tokens: 150,
+        max_response_output_tokens: 400,
       }),
     })
 

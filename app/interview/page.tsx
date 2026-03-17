@@ -373,12 +373,12 @@ export default function InterviewPage() {
             input_audio_transcription: { model: 'whisper-1' },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.5,
+              threshold: 0.8,
               prefix_padding_ms: 300,
-              silence_duration_ms: 500,
+              silence_duration_ms: 800,
             },
             temperature: 0.7,
-            max_response_output_tokens: 150,
+            max_response_output_tokens: 400,
           },
         }))
         setIsConnected(true)
@@ -400,8 +400,10 @@ export default function InterviewPage() {
         console.log('Data channel closed')
         setIsConnected(false)
         setIsListening(false)
-        if (!interviewComplete) {
-          setIsInterviewActive(true)
+        // Only fall back if the interview is still supposed to be active.
+        // isInterviewActiveRef is set to false BEFORE disconnectRealtime() is called
+        // during normal cleanup, so this only fires on unexpected disconnects.
+        if (isInterviewActiveRef.current) {
           startInterviewTraditional()
         }
       }
@@ -1383,17 +1385,14 @@ export default function InterviewPage() {
         console.log('Session updated to completed:', currentSessionId)
       }
 
-      // Generate feedback - API will fetch transcript from database
+      // Generate feedback - pass transcript directly since anon users can't write to DB via RLS
       try {
-        // Generating feedback for session
-        
-        // Feedback API will fetch transcript from database, so we don't need to send it
         const feedbackResponse = await fetch('/api/interview/feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            sessionId: currentSessionId
-            // Transcript will be fetched from database by API
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            transcript: finalTranscript || undefined,
           }),
         })
 

@@ -64,6 +64,9 @@ export default function InterviewPage() {
   }, [askedQuestions])
   
   const wsRef = useRef<WebSocket | null>(null)
+  const pcRef = useRef<RTCPeerConnection | null>(null)
+  const dcRef = useRef<RTCDataChannel | null>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null)
@@ -335,27 +338,39 @@ export default function InterviewPage() {
         throw new Error('No client secret received from server')
       }
       
-      // Connect to OpenAI Realtime API WebSocket
-      // The client_secret should be in the URL for authentication
-      const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview&client_secret=${encodeURIComponent(clientSecret)}`
-      
-      console.log('Connecting to WebSocket with client_secret in URL')
-      const ws = new WebSocket(wsUrl)
+      // Connect to OpenAI Realtime API via WebRTC (browser-native audio pipeline)
+      const pc = new RTCPeerConnection()
+      pcRef.current = pc
 
-      wsRef.current = ws
+      // Remote audio plays through a hidden <audio> element
+      const audioEl = document.createElement('audio')
+      audioEl.autoplay = true
+      remoteAudioRef.current = audioEl
+      pc.ontrack = (e) => {
+        audioEl.srcObject = e.streams[0]
+        setIsPlayingAudio(true)
+        e.streams[0].getTracks().forEach((t) => {
+          t.onended = () => setIsPlayingAudio(false)
+        })
+      }
 
-      ws.onopen = () => {
-        console.log('WebSocket connected - sending session configuration')
-        
-        // Configure the session
-        ws.send(JSON.stringify({
+      // Add local mic track — WebRTC handles encoding natively
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStreamRef.current = stream
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+
+      // Data channel for control events
+      const dc = pc.createDataChannel('oai-events')
+      dcRef.current = dc
+
+      dc.onopen = () => {
+        console.log('WebRTC data channel open - configuring session')
+        dc.send(JSON.stringify({
           type: 'session.update',
           session: {
             modalities: ['text', 'audio'],
             instructions: instructions || '',
-            voice: 'alloy',
-            input_audio_format: 'pcm16',
-            output_audio_format: 'pcm16',
+            input_audio_transcription: { model: 'whisper-1' },
             turn_detection: {
               type: 'server_vad',
               threshold: 0.5,
@@ -366,51 +381,63 @@ export default function InterviewPage() {
             max_response_output_tokens: 150,
           },
         }))
-        
-        console.log('Sent session configuration')
-
-        // Wait for session to be configured before starting audio
-        setTimeout(() => {
-          startAudioInput()
-          setIsConnected(true)
-          setIsListening(true)
-        }, 1000)
+        setIsConnected(true)
+        setIsListening(true)
       }
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        handleRealtimeMessage(data)
+      dc.onmessage = (e) => {
+        const msg = JSON.parse(e.data)
+        handleRealtimeMessage(msg)
       }
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+      dc.onerror = (err) => {
+        console.error('Data channel error:', err)
         setIsConnected(false)
         setIsListening(false)
-        alert('WebSocket connection error. Check console for details.')
       }
 
-      ws.onclose = (event) => {
-        console.log('WebSocket closed', { code: event.code, reason: event.reason, wasClean: event.wasClean })
+      dc.onclose = () => {
+        console.log('Data channel closed')
         setIsConnected(false)
         setIsListening(false)
-        
-        // If closed due to authentication error, fallback to traditional approach
-        if (event.reason?.includes('authentication') || event.reason?.includes('Missing bearer')) {
-          console.log('WebSocket closed due to authentication error, falling back to traditional approach')
-          // Ensure interview is active before starting traditional approach
-          setIsInterviewActive(true)
-          startInterviewTraditional()
-          return
-        }
-        
-        // If closed unexpectedly, show error
-        if (!event.wasClean && event.code !== 1000 && !interviewComplete) {
-          console.log('WebSocket closed unexpectedly, falling back to traditional approach')
-          // Ensure interview is active before starting traditional approach
+        if (!interviewComplete) {
           setIsInterviewActive(true)
           startInterviewTraditional()
         }
       }
+
+      pc.oniceconnectionstatechange = () => {
+        console.log('ICE state:', pc.iceConnectionState)
+        if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+          setIsConnected(false)
+          setIsListening(false)
+        }
+      }
+
+      // SDP offer/answer exchange
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+
+      const sdpRes = await fetch(
+        'https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview',
+        {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${clientSecret}`,
+            'Content-Type': 'application/sdp',
+          },
+        }
+      )
+
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text()
+        throw new Error(`WebRTC SDP exchange failed: ${sdpRes.status} - ${errText}`)
+      }
+
+      const answerSdp = await sdpRes.text()
+      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
+      console.log('WebRTC connection established')
     } catch (error) {
       console.error('Error connecting to Realtime API:', error)
       alert('Failed to start interview. Please try again.')
@@ -508,13 +535,6 @@ export default function InterviewPage() {
         })
         break
 
-      case 'response.audio.delta':
-        // Stream audio chunks
-        if (data.delta) {
-          playAudioChunk(data.delta)
-        }
-        break
-
       case 'error':
         console.error('Realtime API error:', data.error)
         setIsConnected(false)
@@ -540,108 +560,19 @@ export default function InterviewPage() {
     }
   }
 
-  const startAudioInput = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          sampleRate: 24000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        }
-      })
-      mediaStreamRef.current = stream
-
-      // Create AudioContext with 24kHz sample rate (Realtime API requirement)
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 24000,
-      })
-      audioContextRef.current = audioContext
-
-      const source = audioContext.createMediaStreamSource(stream)
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
-
-      processor.onaudioprocess = (e) => {
-        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
-
-        const inputData = e.inputBuffer.getChannelData(0)
-        // Convert Float32Array to Int16Array (PCM16)
-        const pcm16 = new Int16Array(inputData.length)
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]))
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
-        }
-
-        // Convert to base64 for transmission
-        const buffer = new Uint8Array(pcm16.buffer)
-        const base64 = Buffer.from(buffer).toString('base64')
-
-        // Send audio to Realtime API
-        wsRef.current.send(JSON.stringify({
-          type: 'input_audio_buffer.append',
-          audio: base64,
-        }))
-      }
-
-      source.connect(processor)
-      processor.connect(audioContext.destination)
-    } catch (error: any) {
-      console.error('Error starting audio input:', error)
-      
-      let errorMessage = 'Microphone access denied. '
-      
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        errorMessage += 'Please allow microphone access in your browser settings.\n\n'
-        errorMessage += 'Steps:\n'
-        errorMessage += '1. Check the browser address bar for a microphone icon\n'
-        errorMessage += '2. Click it and select "Allow"\n'
-        errorMessage += '3. Or go to browser Settings > Privacy > Site Settings > Microphone\n'
-        errorMessage += '4. Make sure this site (localhost or your domain) is allowed'
-      } else if (error.name === 'NotFoundError') {
-        errorMessage += 'No microphone found. Please connect a microphone.'
-      } else if (error.name === 'NotReadableError') {
-        errorMessage += 'Microphone is being used by another application. Please close other apps using the mic.'
-      } else {
-        errorMessage += `Error: ${error.message || error.name}`
-      }
-      
-      alert(errorMessage)
-    }
-  }
-
-  const playAudioChunk = (base64Audio: string) => {
-    // Decode base64 audio and play
-    try {
-      if (!audioContextRef.current) return
-
-      const audioData = atob(base64Audio)
-      const audioBytes = new Uint8Array(audioData.length)
-      for (let i = 0; i < audioData.length; i++) {
-        audioBytes[i] = audioData.charCodeAt(i)
-      }
-
-      // Convert to Int16Array (PCM16)
-      const pcm16 = new Int16Array(audioBytes.buffer, audioBytes.byteOffset, audioBytes.length / 2)
-      
-      // Create audio buffer (24kHz sample rate)
-      const audioBuffer = audioContextRef.current.createBuffer(1, pcm16.length, 24000)
-      const channelData = audioBuffer.getChannelData(0)
-      
-      // Convert PCM16 to Float32
-      for (let i = 0; i < pcm16.length; i++) {
-        channelData[i] = pcm16[i] / 32768.0
-      }
-
-      const source = audioContextRef.current.createBufferSource()
-      source.buffer = audioBuffer
-      source.connect(audioContextRef.current.destination)
-      source.start()
-    } catch (error) {
-      console.error('Error playing audio chunk:', error)
-    }
-  }
-
   const disconnectRealtime = () => {
+    if (dcRef.current) {
+      dcRef.current.close()
+      dcRef.current = null
+    }
+    if (pcRef.current) {
+      pcRef.current.close()
+      pcRef.current = null
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null
+      remoteAudioRef.current = null
+    }
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
@@ -1506,12 +1437,12 @@ export default function InterviewPage() {
   }
 
   const handleTextResponse = async (text: string) => {
-    if (!text.trim() || !wsRef.current) return
+    if (!text.trim() || !dcRef.current) return
 
     setTranscript((prev) => [...prev, `You: ${text}`])
 
-    // Send text input to Realtime API
-    wsRef.current.send(JSON.stringify({
+    // Send text input to Realtime API via data channel
+    dcRef.current.send(JSON.stringify({
       type: 'conversation.item.create',
       item: {
         type: 'message',
@@ -1526,7 +1457,7 @@ export default function InterviewPage() {
     }))
 
     // Trigger response
-    wsRef.current.send(JSON.stringify({
+    dcRef.current.send(JSON.stringify({
       type: 'response.create',
     }))
   }

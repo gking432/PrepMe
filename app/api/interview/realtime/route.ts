@@ -244,7 +244,7 @@ Company: Not provided`
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini-realtime-preview',
-        voice: 'alloy',
+        voice: 'verse',
         instructions: optimizedSystemPrompt,
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',

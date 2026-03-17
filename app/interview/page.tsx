@@ -288,42 +288,21 @@ export default function InterviewPage() {
         }
       }
 
-      let interviewDataId = null
-      if (authSession) {
-        // Get latest interview data for logged-in users
-        const { data: interviewData } = await supabase
-          .from('user_interview_data')
-          .select('id')
-          .eq('user_id', authSession.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        interviewDataId = interviewData?.id || null
-      }
-
-      // Create NEW interview session
-      // For anonymous users, we'll use a placeholder user_id or handle it in the API
-      const { data: newSession, error: sessionError } = await supabase
-        .from('interview_sessions')
-        .insert({
-          user_id: authSession?.user.id || null, // Allow null for anonymous users
-          user_interview_data_id: interviewDataId,
-          stage: stage,
-          status: 'in_progress',
-        })
-        .select()
-        .single()
-
-      if (sessionError) {
-        console.error('Error creating session:', sessionError)
+      // Create session via API (uses supabaseAdmin to bypass RLS for anonymous users)
+      const sessionRes = await fetch('/api/interview/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage, tempInterviewData }),
+      })
+      if (!sessionRes.ok) {
+        const err = await sessionRes.json()
+        console.error('Error creating session:', err)
         throw new Error('Failed to create interview session')
       }
-
-      if (newSession) {
-        setSessionId(newSession.id)
-        sessionIdRef.current = newSession.id
-        console.log('Created new interview session:', newSession.id)
-      }
+      const { sessionId: newSessionId } = await sessionRes.json()
+      setSessionId(newSessionId)
+      sessionIdRef.current = newSessionId
+      console.log('Created new interview session:', newSessionId)
       
       // Mark interview as active before connecting
       isInterviewActiveRef.current = true
@@ -723,40 +702,22 @@ export default function InterviewPage() {
       // Reuse existing session if one was already created, otherwise create new
       let activeSessionId = existingSessionId
       if (!activeSessionId) {
-        let interviewDataId = null
-        if (authSession) {
-          const { data: interviewData } = await supabase
-            .from('user_interview_data')
-            .select('id')
-            .eq('user_id', authSession.user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-          interviewDataId = interviewData?.id || null
-        }
-
-        const { data: newSession, error: sessionError } = await supabase
-          .from('interview_sessions')
-          .insert({
-            user_id: authSession?.user.id || null,
-            user_interview_data_id: interviewDataId,
-            stage: stage,
-            status: 'in_progress',
-          })
-          .select()
-          .single()
-
-        if (sessionError) {
-          console.error('Error creating session:', sessionError)
+        // Create session via API (uses supabaseAdmin to bypass RLS for anonymous users)
+        const sessionRes = await fetch('/api/interview/create-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage, tempInterviewData }),
+        })
+        if (!sessionRes.ok) {
+          const err = await sessionRes.json()
+          console.error('Error creating session:', err)
           throw new Error('Failed to create interview session')
         }
-
-        if (newSession) {
-          activeSessionId = newSession.id
-          setSessionId(newSession.id)
-          sessionIdRef.current = newSession.id
-          console.log('Created new interview session:', newSession.id)
-        }
+        const { sessionId: newSessionId } = await sessionRes.json()
+        activeSessionId = newSessionId
+        setSessionId(newSessionId)
+        sessionIdRef.current = newSessionId
+        console.log('Created new interview session:', newSessionId)
       } else {
         console.log('Reusing existing session from Realtime attempt:', activeSessionId)
       }

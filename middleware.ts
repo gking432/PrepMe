@@ -21,6 +21,8 @@ const ANONYMOUS_ALLOWED_ROUTES = [
 // API routes that allow anonymous access
 const ANONYMOUS_ALLOWED_API = [
   '/api/extract-text',
+  '/api/scrape-website',
+  '/api/interview/create-session',
   '/api/interview/voice',
   '/api/interview/start',
   '/api/interview/feedback',

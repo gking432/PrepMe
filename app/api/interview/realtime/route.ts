@@ -246,7 +246,7 @@ Company: Not provided`
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini-realtime-preview',
-        voice: 'verse',
+        voice: (['coral', 'shimmer', 'ash'] as const)[Math.floor(Math.random() * 3)],
         instructions: optimizedSystemPrompt,
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',

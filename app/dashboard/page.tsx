@@ -8,8 +8,9 @@ import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Play, ChevronRight, CheckCircle2, Lock, Crown } from 'lucide-react'
+import { Play, ChevronRight, CheckCircle2, Lock, Crown, ChevronDown } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
+import Preppi from '@/components/Preppi'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -344,6 +345,20 @@ export default function DashboardPage() {
   const hasResume = interviewData.resumeText.length > 0 || !!interviewData.resumeFile
   const hasJobDesc = interviewData.jobDescriptionText.length > 0
 
+  // Wizard step: 0=resume, 1=job details, 2=stage select
+  const wizardStep = !hasResume ? 0 : !hasJobDesc ? 1 : 2
+
+  const getPreppiMessage = () => {
+    if (hasResume && hasJobDesc) {
+      const name = extractedUserInfo.name?.split(' ')[0]
+      return name
+        ? `${name}, you're set. Pick your stage and let's get to work.`
+        : "You're set. Pick your stage and let's get to work."
+    }
+    if (hasResume) return "Resume's in. Now add the job you're going after."
+    return "Let's get you ready. Start with your resume."
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -356,300 +371,378 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {/* Page title */}
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+
+        {/* Preppi intro */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {interviewData.positionTitle && interviewData.companyName
-              ? `${interviewData.positionTitle} at ${interviewData.companyName}`
-              : user ? 'Interview Prep' : 'Get Started'}
-          </h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            {canStartInterview()
-              ? 'Your materials are ready. Choose a stage to begin practicing.'
-              : 'Upload your resume and job description to get started.'}
-          </p>
+          <Preppi message={getPreppiMessage()} size="md" animate />
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left: Interview stages */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h2 className="font-semibold text-gray-900">Interview Stages</h2>
+        {/* Progress steps */}
+        <div className="flex items-center gap-0 mb-8">
+          {[
+            { label: 'Resume', done: hasResume },
+            { label: 'Job Details', done: hasJobDesc },
+            { label: 'Choose Stage', done: false },
+          ].map((step, i) => (
+            <div key={i} className="flex items-center flex-1">
+              <div className="flex flex-col items-center flex-1">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                  step.done
+                    ? 'bg-emerald-500 text-white'
+                    : wizardStep === i
+                    ? 'bg-primary-500 text-white ring-4 ring-primary-100'
+                    : 'bg-gray-200 text-gray-400'
+                }`}>
+                  {step.done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                </div>
+                <span className={`text-xs mt-1.5 font-medium ${
+                  step.done ? 'text-emerald-600' : wizardStep === i ? 'text-primary-600' : 'text-gray-400'
+                }`}>{step.label}</span>
               </div>
-              <div className="divide-y divide-gray-100">
-                {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((s) => {
-                  const config = STAGE_CONFIG[s]
-                  const isSelected = selectedStage === s
-                  const isReady = canStartInterview()
-                  const isLocked = user && isStageLockedFn(s)
+              {i < 2 && (
+                <div className={`h-0.5 flex-1 -mt-4 mx-1 transition-colors ${
+                  (i === 0 && hasResume) || (i === 1 && hasJobDesc) ? 'bg-emerald-300' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
 
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => {
-                        if (isLocked) {
-                          setPurchaseHighlightStage(s)
-                          setShowPurchaseFlow(true)
-                        } else {
-                          setSelectedStage(s)
-                        }
-                      }}
-                      className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-colors ${
-                        isLocked
-                          ? 'bg-gray-50 hover:bg-gray-100'
-                          : isSelected ? 'bg-primary-50' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
-                        isLocked
-                          ? 'bg-gray-100 text-gray-400'
-                          : isSelected ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {isLocked ? <Lock className="w-4 h-4" /> : config.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-sm ${
-                          isLocked ? 'text-gray-400' : isSelected ? 'text-primary-700' : 'text-gray-900'
-                        }`}>
-                          {config.name}
-                        </p>
-                        <p className="text-xs text-gray-500">{config.subtitle}</p>
-                      </div>
-                      {isLocked && (
-                        <span className="text-xs font-semibold text-indigo-500 shrink-0">{config.price}</span>
-                      )}
-                      {!isLocked && isSelected && isReady && (
-                        <ChevronRight className="w-4 h-4 text-primary-400 shrink-0" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="px-5 py-4 bg-gray-50 border-t border-gray-200">
-                {user && isStageLockedFn(selectedStage) ? (
-                  <button
-                    onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-semibold bg-indigo-600 hover:bg-indigo-700 transition-colors"
-                  >
-                    <Lock className="w-4 h-4" />
-                    <span>Unlock {STAGE_CONFIG[selectedStage].name} — {STAGE_CONFIG[selectedStage].price}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleStartInterview(selectedStage)}
-                    disabled={!canStartInterview() || saving}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-semibold bg-primary-500 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Play className="w-4 h-4" />
-                    <span>Start {STAGE_CONFIG[selectedStage].name}</span>
-                  </button>
-                )}
-                {!canStartInterview() && !isStageLockedFn(selectedStage) && (
-                  <p className="text-xs text-gray-400 text-center mt-2">
-                    Upload resume & job description first
+        {/* Step 1: Resume */}
+        <div className={`bg-white rounded-2xl border transition-all duration-200 mb-4 overflow-hidden ${
+          wizardStep === 0 ? 'border-primary-300 shadow-md' : hasResume ? 'border-emerald-200' : 'border-gray-200 opacity-60'
+        }`}>
+          <button
+            className="w-full flex items-center gap-4 px-5 py-4 text-left"
+            onClick={() => setShowSetup(wizardStep !== 0 ? true : showSetup)}
+          >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              hasResume ? 'bg-emerald-100' : 'bg-primary-100'
+            }`}>
+              {hasResume
+                ? <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                : <span className="text-sm font-bold text-primary-600">1</span>
+              }
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 text-sm">Resume</p>
+              {hasResume
+                ? <p className="text-xs text-emerald-600">
+                    {interviewData.resumeFile ? interviewData.resumeFile.name : 'Text resume added'}
                   </p>
-                )}
+                : <p className="text-xs text-gray-400">Upload a PDF or paste your resume text</p>
+              }
+            </div>
+            {hasResume && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowSetup(!showSetup) }}
+                className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2"
+              >
+                Edit
+              </button>
+            )}
+          </button>
+
+          {(wizardStep === 0 || (hasResume && showSetup)) && (
+            <div className="px-5 pb-5 border-t border-gray-100 pt-4 space-y-3">
+              {user && savedResumes.length > 0 && (
+                <select
+                  value={selectedResumeId || ''}
+                  onChange={(e) => {
+                    const id = e.target.value || null
+                    setSelectedResumeId(id)
+                    if (id) {
+                      const resume = savedResumes.find(r => r.id === id)
+                      if (resume) {
+                        setInterviewData(prev => ({
+                          ...prev,
+                          resumeFile: { name: `${resume.label}.pdf`, text: resume.resume_text },
+                          resumeText: resume.resume_text,
+                        }))
+                        extractUserInfoFromResume(resume.resume_text)
+                      }
+                    } else {
+                      setInterviewData(prev => ({ ...prev, resumeFile: null, resumeText: '' }))
+                      setExtractedUserInfo({ email: null, name: null, phone: null })
+                    }
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                >
+                  <option value="">Select a saved resume...</option>
+                  {savedResumes.map(r => (
+                    <option key={r.id} value={r.id}>{r.label}</option>
+                  ))}
+                </select>
+              )}
+              <FileUpload
+                label=""
+                onFileUploaded={async (file, text, thumbnailUrl, pdfUrl, fullPagePreviewUrl) => {
+                  setSelectedResumeId(null)
+                  setInterviewData(prev => ({ ...prev, resumeFile: { name: file.name, text }, resumeText: text }))
+                  extractUserInfoFromResume(text)
+                  if (user) {
+                    const { data: existingResumes } = await supabase
+                      .from('user_resumes')
+                      .select('id')
+                      .eq('user_id', user.id)
+                    const uploadLabel = new Date().toLocaleDateString('en-US', {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })
+                    const { data: newResume, error: insertError } = await supabase.from('user_resumes').insert({
+                      user_id: user.id,
+                      label: uploadLabel,
+                      resume_text: text,
+                      file_url: thumbnailUrl ?? null,
+                      pdf_url: pdfUrl ?? null,
+                      full_page_preview_url: fullPagePreviewUrl ?? null,
+                      is_active: !existingResumes || existingResumes.length === 0,
+                    }).select('id, label, resume_text').single()
+                    if (!insertError && newResume) {
+                      setSavedResumes(prev => [newResume, ...prev])
+                      setSelectedResumeId(newResume.id)
+                    }
+                  }
+                }}
+                onFileRemoved={() => {
+                  setSelectedResumeId(null)
+                  setInterviewData(prev => ({ ...prev, resumeFile: null, resumeText: '' }))
+                  setExtractedUserInfo({ email: null, name: null, phone: null })
+                }}
+                currentFile={interviewData.resumeFile || undefined}
+              />
+              {!interviewData.resumeFile && (
+                <textarea
+                  value={interviewData.resumeText}
+                  onChange={(e) => {
+                    setSelectedResumeId(null)
+                    setInterviewData(prev => ({ ...prev, resumeText: e.target.value }))
+                    extractUserInfoFromResume(e.target.value)
+                  }}
+                  rows={4}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  placeholder="Or paste resume text..."
+                />
+              )}
+              {!user && (interviewData.resumeFile || interviewData.resumeText) && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={createAccountChecked} onChange={(e) => setCreateAccountChecked(e.target.checked)} className="w-3.5 h-3.5 text-primary-500 border-gray-300 rounded" />
+                  <span className="text-xs text-gray-600">
+                    {extractedUserInfo.email ? `Save progress to ${extractedUserInfo.email}` : 'Create free account to save progress'}
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Step 2: Job Details */}
+        <div className={`bg-white rounded-2xl border transition-all duration-200 mb-4 overflow-hidden ${
+          wizardStep === 1 ? 'border-primary-300 shadow-md'
+          : hasJobDesc ? 'border-emerald-200'
+          : hasResume ? 'border-gray-200' : 'border-gray-100 opacity-40 pointer-events-none'
+        }`}>
+          <button
+            className="w-full flex items-center gap-4 px-5 py-4 text-left"
+            onClick={() => { if (hasResume) setShowSetup(true) }}
+          >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+              hasJobDesc ? 'bg-emerald-100' : hasResume ? 'bg-primary-100' : 'bg-gray-100'
+            }`}>
+              {hasJobDesc
+                ? <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                : <span className={`text-sm font-bold ${hasResume ? 'text-primary-600' : 'text-gray-400'}`}>2</span>
+              }
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 text-sm">Job Details</p>
+              {hasJobDesc && interviewData.companyName
+                ? <p className="text-xs text-emerald-600">{interviewData.positionTitle} at {interviewData.companyName}</p>
+                : hasJobDesc
+                ? <p className="text-xs text-emerald-600">Job description added</p>
+                : <p className="text-xs text-gray-400">Paste the job posting URL or description</p>
+              }
+            </div>
+            {hasJobDesc && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowSetup(!showSetup) }}
+                className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2"
+              >
+                Edit
+              </button>
+            )}
+          </button>
+
+          {hasResume && (wizardStep === 1 || (hasJobDesc && showSetup)) && (
+            <div className="px-5 pb-5 border-t border-gray-100 pt-4 space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={interviewData.jobDescriptionUrl || ''}
+                  onChange={(e) => { setInterviewData({ ...interviewData, jobDescriptionUrl: e.target.value }); if (fetchError) setFetchError(null) }}
+                  onKeyPress={(e) => { if (e.key === 'Enter') handleFetchJobDescription() }}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Paste job posting URL..."
+                />
+                <button
+                  onClick={handleFetchJobDescription}
+                  disabled={!interviewData.jobDescriptionUrl || fetchingJobDescription}
+                  className="px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 font-medium shrink-0"
+                >
+                  {fetchingJobDescription ? '...' : 'Fetch'}
+                </button>
+              </div>
+              {fetchError && <p className="text-xs text-red-600">{fetchError}</p>}
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={interviewData.companyName || ''}
+                  onChange={(e) => setInterviewData({ ...interviewData, companyName: e.target.value })}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Company name"
+                />
+                <input
+                  type="text"
+                  value={interviewData.positionTitle || ''}
+                  onChange={(e) => setInterviewData({ ...interviewData, positionTitle: e.target.value })}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Position title"
+                />
+              </div>
+              <textarea
+                value={interviewData.jobDescriptionText}
+                onChange={(e) => { setInterviewData({ ...interviewData, jobDescriptionText: e.target.value }); if (fetchError) setFetchError(null) }}
+                rows={4}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                placeholder="Or paste job description..."
+              />
+              {/* Optional fields collapsible */}
+              <details className="group">
+                <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 font-medium list-none flex items-center gap-1">
+                  <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
+                  Optional: company website & notes
+                </summary>
+                <div className="mt-3 space-y-3">
+                  <input
+                    type="url"
+                    value={interviewData.companyWebsite}
+                    onChange={(e) => setInterviewData({ ...interviewData, companyWebsite: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Company website (optional)"
+                  />
+                  <textarea
+                    value={interviewData.notes}
+                    onChange={(e) => setInterviewData({ ...interviewData, notes: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                    placeholder="Any additional context... (optional)"
+                  />
+                </div>
+              </details>
+              {user && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="text-xs text-gray-400 hover:text-gray-600 font-medium disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save draft'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Step 3: Choose Stage + Start */}
+        <div className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${
+          canStartInterview() ? 'border-primary-300 shadow-md' : 'border-gray-100 opacity-40 pointer-events-none'
+        }`}>
+          <div className="px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                canStartInterview() ? 'bg-primary-100' : 'bg-gray-100'
+              }`}>
+                <span className={`text-sm font-bold ${canStartInterview() ? 'text-primary-600' : 'text-gray-400'}`}>3</span>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Choose your stage</p>
+                <p className="text-xs text-gray-400">HR Screen is always free</p>
               </div>
             </div>
           </div>
 
-          {/* Right: Materials */}
-          <div className="space-y-4">
-            {/* Status */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-gray-900 text-sm">Materials</h2>
-                <button onClick={() => setShowSetup(!showSetup)} className="text-xs text-primary-600 hover:text-primary-700 font-medium">
-                  {showSetup ? 'Collapse' : 'Edit'}
+          <div className="divide-y divide-gray-100">
+            {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((s) => {
+              const config = STAGE_CONFIG[s]
+              const isSelected = selectedStage === s
+              const isLocked = user && isStageLockedFn(s)
+
+              return (
+                <button
+                  key={s}
+                  onClick={() => {
+                    if (isLocked) {
+                      setPurchaseHighlightStage(s)
+                      setShowPurchaseFlow(true)
+                    } else {
+                      setSelectedStage(s)
+                    }
+                  }}
+                  className={`w-full flex items-center gap-4 px-5 py-3.5 text-left transition-colors ${
+                    isLocked ? 'bg-gray-50 hover:bg-gray-100'
+                    : isSelected ? 'bg-primary-50' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
+                    isLocked ? 'bg-gray-200 text-gray-400'
+                    : isSelected ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {isLocked ? <Lock className="w-3.5 h-3.5" /> : config.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`font-medium text-sm ${
+                      isLocked ? 'text-gray-400' : isSelected ? 'text-primary-700' : 'text-gray-900'
+                    }`}>{config.name}</p>
+                    <p className="text-xs text-gray-400">{config.subtitle}</p>
+                  </div>
+                  {isLocked && <span className="text-xs font-semibold text-indigo-500 shrink-0">{config.price}</span>}
+                  {!isLocked && isSelected && <ChevronRight className="w-4 h-4 text-primary-400 shrink-0" />}
                 </button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  {hasResume ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
-                  <span className={`text-sm ${hasResume ? 'text-gray-900' : 'text-gray-400'}`}>Resume {hasResume ? 'uploaded' : 'needed'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {hasJobDesc ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <div className="w-4 h-4 rounded-full border-2 border-gray-300" />}
-                  <span className={`text-sm ${hasJobDesc ? 'text-gray-900' : 'text-gray-400'}`}>Job description {hasJobDesc ? 'added' : 'needed'}</span>
-                </div>
-              </div>
-            </div>
+              )
+            })}
+          </div>
 
-            {/* Setup form */}
-            {showSetup && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-                {/* Resume */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Resume <span className="text-red-500">*</span></label>
-                  {user && (
-                    <select
-                      value={selectedResumeId || ''}
-                      onChange={(e) => {
-                        const id = e.target.value || null
-                        setSelectedResumeId(id)
-                        if (id) {
-                          const resume = savedResumes.find(r => r.id === id)
-                          if (resume) {
-                            setInterviewData(prev => ({
-                              ...prev,
-                              resumeFile: { name: `${resume.label}.pdf`, text: resume.resume_text },
-                              resumeText: resume.resume_text,
-                            }))
-                            extractUserInfoFromResume(resume.resume_text)
-                          }
-                        } else {
-                          setInterviewData(prev => ({ ...prev, resumeFile: null, resumeText: '' }))
-                          setExtractedUserInfo({ email: null, name: null, phone: null })
-                        }
-                      }}
-                      className="mb-3 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
-                    >
-                      <option value="">
-                        {savedResumes.length === 0 ? 'No resumes uploaded' : 'Select a saved resume...'}
-                      </option>
-                      {savedResumes.map(r => (
-                        <option key={r.id} value={r.id}>{r.label}</option>
-                      ))}
-                    </select>
-                  )}
-                  <FileUpload
-                    label=""
-                    onFileUploaded={async (file, text, thumbnailUrl, pdfUrl, fullPagePreviewUrl) => {
-                      setSelectedResumeId(null)
-                      setInterviewData(prev => ({ ...prev, resumeFile: { name: file.name, text }, resumeText: text }))
-                      extractUserInfoFromResume(text)
-                      if (user) {
-                        const { data: existingResumes } = await supabase
-                          .from('user_resumes')
-                          .select('id')
-                          .eq('user_id', user.id)
-                        const uploadLabel = new Date().toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                        const { data: newResume, error: insertError } = await supabase.from('user_resumes').insert({
-                          user_id: user.id,
-                          label: uploadLabel,
-                          resume_text: text,
-                          file_url: thumbnailUrl ?? null,
-                          pdf_url: pdfUrl ?? null,
-                          full_page_preview_url: fullPagePreviewUrl ?? null,
-                          is_active: !existingResumes || existingResumes.length === 0,
-                        })
-                        .select('id, label, resume_text')
-                        .single()
-                        if (!insertError && newResume) {
-                          setSavedResumes(prev => [newResume, ...prev])
-                          setSelectedResumeId(newResume.id)
-                        }
-                      }
-                    }}
-                    onFileRemoved={() => {
-                      setSelectedResumeId(null)
-                      setInterviewData(prev => ({ ...prev, resumeFile: null, resumeText: '' }))
-                      setExtractedUserInfo({ email: null, name: null, phone: null })
-                    }}
-                    currentFile={interviewData.resumeFile || undefined}
-                  />
-                  {!interviewData.resumeFile && (
-                    <textarea
-                      value={interviewData.resumeText}
-                      onChange={(e) => {
-                        setSelectedResumeId(null)
-                        setInterviewData(prev => ({ ...prev, resumeText: e.target.value }))
-                        extractUserInfoFromResume(e.target.value)
-                      }}
-                      rows={3}
-                      className="mt-2 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                      placeholder="Or paste resume text..."
-                    />
-                  )}
-                  {!user && (interviewData.resumeFile || interviewData.resumeText) && (
-                    <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                      <input type="checkbox" checked={createAccountChecked} onChange={(e) => setCreateAccountChecked(e.target.checked)} className="w-3.5 h-3.5 text-primary-500 border-gray-300 rounded" />
-                      <span className="text-xs text-gray-600">{extractedUserInfo.email ? `Use ${extractedUserInfo.email} to create account` : 'Create free account'}</span>
-                    </label>
-                  )}
-                </div>
-
-                {/* Job Description */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Job Description <span className="text-red-500">*</span></label>
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      type="url"
-                      value={interviewData.jobDescriptionUrl || ''}
-                      onChange={(e) => { setInterviewData({ ...interviewData, jobDescriptionUrl: e.target.value }); if (fetchError) setFetchError(null) }}
-                      onKeyPress={(e) => { if (e.key === 'Enter') handleFetchJobDescription() }}
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Job posting URL..."
-                    />
-                    <button onClick={handleFetchJobDescription} disabled={!interviewData.jobDescriptionUrl || fetchingJobDescription} className="px-3 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 font-medium shrink-0">
-                      {fetchingJobDescription ? '...' : 'Fetch'}
-                    </button>
-                  </div>
-                  {fetchError && <p className="text-xs text-red-600 mb-2">{fetchError}</p>}
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <input type="text" value={interviewData.companyName || ''} onChange={(e) => setInterviewData({ ...interviewData, companyName: e.target.value })} className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="Company" />
-                    <input type="text" value={interviewData.positionTitle || ''} onChange={(e) => setInterviewData({ ...interviewData, positionTitle: e.target.value })} className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="Position" />
-                  </div>
-                  <textarea
-                    value={interviewData.jobDescriptionText}
-                    onChange={(e) => { setInterviewData({ ...interviewData, jobDescriptionText: e.target.value }); if (fetchError) setFetchError(null) }}
-                    rows={4}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                    placeholder="Or paste job description..."
-                  />
-                </div>
-
-                {/* Company Website */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Company Website <span className="text-gray-400">(optional)</span></label>
-                  <input type="url" value={interviewData.companyWebsite} onChange={(e) => setInterviewData({ ...interviewData, companyWebsite: e.target.value })} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder="https://company.com" />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Notes <span className="text-gray-400">(optional)</span></label>
-                  <textarea value={interviewData.notes} onChange={(e) => setInterviewData({ ...interviewData, notes: e.target.value })} rows={2} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none" placeholder="Any context..." />
-                </div>
-
-                {user && (
-                  <button onClick={handleSave} disabled={saving} className="w-full px-4 py-2 text-sm bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium transition-colors">
-                    {saving ? 'Saving...' : 'Save Draft'}
-                  </button>
-                )}
-              </div>
+          <div className="px-5 py-4 bg-gray-50 border-t border-gray-100">
+            {user && isStageLockedFn(selectedStage) ? (
+              <button
+                onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-bold bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              >
+                <Lock className="w-4 h-4" />
+                Unlock {STAGE_CONFIG[selectedStage].name} — {STAGE_CONFIG[selectedStage].price}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleStartInterview(selectedStage)}
+                disabled={!canStartInterview() || saving}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-bold bg-primary-500 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-primary-100"
+              >
+                <Play className="w-4 h-4" />
+                Start {STAGE_CONFIG[selectedStage].name}
+              </button>
             )}
           </div>
         </div>
-        {/* Unlock callout for logged-in users without paid access */}
-        {user && PAID_STAGES.some(s => isStageLockedFn(s)) && (
-          <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Crown className="w-5 h-5 text-indigo-600" />
-                  <h3 className="font-semibold text-gray-900">Unlock All Interview Stages</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  The HR Screen is free. Unlock Hiring Manager, Culture Fit, and Final Round to complete your full interview prep.
-                </p>
-              </div>
-              <button
-                onClick={() => { setPurchaseHighlightStage(undefined); setShowPurchaseFlow(true) }}
-                className="shrink-0 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm hover:bg-indigo-700 transition-colors"
-              >
-                View Pricing
-              </button>
-            </div>
-          </div>
+
+        {/* Subtle unlock prompt for logged-in users */}
+        {user && PAID_STAGES.some(s => isStageLockedFn(s)) && canStartInterview() && (
+          <button
+            onClick={() => { setPurchaseHighlightStage(undefined); setShowPurchaseFlow(true) }}
+            className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors"
+          >
+            <Crown className="w-4 h-4" />
+            Unlock all 4 stages — bundle from $9.99
+          </button>
         )}
       </main>
 

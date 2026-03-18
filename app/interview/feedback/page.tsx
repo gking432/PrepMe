@@ -11,6 +11,8 @@ import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowR
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
+import ScoreRevealCard from '@/components/ScoreRevealCard'
+import LockedStageTeasers from '@/components/LockedStageTeasers'
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -2111,57 +2113,56 @@ export default function InterviewDashboard() {
                 </div>
               )}
 
-              {/* Hiring Manager - Locked */}
+              {/* Hiring Manager - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('hiring_manager'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-indigo-200 hover:border-indigo-400"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Briefcase className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">Hiring Manager</h3>
-                  <p className="text-sm text-gray-400 mb-3">30-minute technical discussion</p>
-                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $4.99</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Briefcase className="w-6 h-6 text-indigo-400" />
+                  <Lock className="w-4 h-4 text-indigo-400" />
                 </div>
+                <h3 className="font-bold text-gray-700 mb-1 text-sm">Hiring Manager</h3>
+                <p className="text-xs text-gray-400 mb-2">Your biggest unlock.</p>
+                <p className="text-xs font-bold text-indigo-600">$4.99 — Unlock</p>
               </button>
 
-              {/* Culture Fit - Locked */}
+              {/* Culture Fit - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('culture_fit'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-emerald-200 hover:border-emerald-400"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Users className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">Culture Fit</h3>
-                  <p className="text-sm text-gray-400 mb-3">Team member interviews</p>
-                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $3.99</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Users className="w-6 h-6 text-emerald-400" />
+                  <Lock className="w-4 h-4 text-emerald-400" />
                 </div>
+                <h3 className="font-bold text-gray-700 mb-1 text-sm">Culture Fit</h3>
+                <p className="text-xs text-gray-400 mb-2">The one that surprises people.</p>
+                <p className="text-xs font-bold text-emerald-600">$3.99 — Unlock</p>
               </button>
 
-              {/* Final Interview - Locked */}
+              {/* Final Round - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('final'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-amber-200 hover:border-amber-400"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Crown className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">Final Interview</h3>
-                  <p className="text-sm text-gray-400 mb-3">Executive-level evaluation</p>
-                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $5.99</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Crown className="w-6 h-6 text-amber-400" />
+                  <Lock className="w-4 h-4 text-amber-400" />
                 </div>
+                <h3 className="font-bold text-gray-700 mb-1 text-sm">Final Round</h3>
+                <p className="text-xs text-gray-400 mb-2">The offer is on the table.</p>
+                <p className="text-xs font-bold text-amber-600">$5.99 — Unlock</p>
               </button>
             </div>
+
+            {/* Teaser section for non-premium users who completed HR screen */}
+            {hasFeedback && !isPremium && (
+              <LockedStageTeasers
+                onUnlock={(stage) => { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }}
+                score={overallScore}
+              />
+            )}
 
             {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
             {hasFeedback && likelihood === 'likely' && isPremium && (
@@ -2350,86 +2351,30 @@ export default function InterviewDashboard() {
           <div className="space-y-6">
             {hasFeedback ? (
               <>
-                {/* HR Screen Completion Banner - Prominent */}
-                <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
-                  likelihood === 'likely' 
-                    ? 'bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500' 
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
-                }`}>
-                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                  <div className="relative z-10">
-                    <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
-                      <div className="flex items-start space-x-6 flex-1">
-                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg ${
-                          likelihood === 'likely' 
-                            ? 'bg-white/20 backdrop-blur-md' 
-                            : 'bg-white/20 backdrop-blur-md'
-                        }`}>
-                          {likelihood === 'likely' ? (
-                            <CheckCircle className="w-12 h-12 text-white" />
-                          ) : (
-                            <AlertCircle className="w-12 h-12 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 text-white">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <Phone className="w-6 h-6" />
-                            <span className="text-sm font-semibold uppercase tracking-wider opacity-90">HR Screen Complete</span>
-                          </div>
-                          <h2 className="text-4xl font-bold mb-3">
-                            {likelihood === 'likely' 
-                              ? "You're Likely to Move Forward!" 
-                              : "Keep Improving to Move Forward"}
-                          </h2>
-                          <p className="text-lg text-white/90 mb-4 max-w-2xl">
-                            {likelihood === 'likely'
-                              ? "Based on your qualifications and conversation, we think you're likely to move onto the formal interview process. Your experience aligns well with the role, and here are some tips to strengthen your performance even further."
-                              : "Based on your qualifications and conversation, there are some areas to strengthen before the formal interview process. Review the feedback below to improve your chances and better align your responses with the job requirements."}
-                          </p>
-                          <div className="flex items-center space-x-4">
-                            <div className="bg-white/20 backdrop-blur-md rounded-xl px-4 py-2">
-                              <div className="text-3xl font-bold">{scorePercentage}%</div>
-                              <div className="text-xs uppercase tracking-wider opacity-90">Score</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-center md:items-end space-y-4">
-                        {likelihood === 'likely' && (
-                          <div className="text-center md:text-right">
-                            <p className="text-white/90 text-sm mb-3 font-medium">Ready for the next step?</p>
-                            <Link
-                              href="/dashboard"
-                              className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                            >
-                              <Briefcase className="w-5 h-5" />
-                              <span>Start Hiring Manager Interview</span>
-                              <ArrowRight className="w-5 h-5" />
-                            </Link>
-                          </div>
-                        )}
-                        {likelihood === 'unlikely' && !isPremium && (
-                          <div className="text-center md:text-right">
-                            <p className="text-white/90 text-sm mb-3 font-medium">Unlock the full process</p>
-                            <button
-                              type="button"
-                              onClick={() => setShowPurchaseFlow(true)}
-                              className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                            >
-                              <Crown className="w-5 h-5" />
-                              <span>Unlock Hiring Manager Interview</span>
-                              <ArrowRight className="w-5 h-5" />
-                            </button>
-                            <p className="text-white/70 text-xs mt-2">Get premium to access all interview stages</p>
-                          </div>
-                        )}
-                      </div>
+                {/* Score Reveal Card with Preppi */}
+                <ScoreRevealCard
+                  score={overallScore}
+                  likelihood={likelihood}
+                  strengths={feedback?.strengths || []}
+                  weaknesses={feedback?.weaknesses || []}
+                />
+
+                {/* Practice Drill CTA */}
+                {currentSessionData?.id && (
+                  <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">Practice the weak areas</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Duolingo-style drill — one question at a time</p>
                     </div>
+                    <Link
+                      href={`/practice?sessionId=${currentSessionData.id}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold text-sm hover:bg-primary-600 transition-colors shrink-0"
+                    >
+                      Start Drill
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-                </div>
+                )}
               </>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl p-12 text-center">

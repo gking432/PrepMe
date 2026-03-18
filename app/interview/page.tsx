@@ -383,6 +383,8 @@ export default function InterviewPage() {
         }))
         setIsConnected(true)
         setIsListening(true)
+        // Trigger the interviewer to speak first — without this the AI waits for VAD
+        dc.send(JSON.stringify({ type: 'response.create' }))
       }
 
       dc.onmessage = (e) => {

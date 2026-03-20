@@ -100,8 +100,6 @@ export async function POST(request: NextRequest) {
           text: `[PDF file: ${file.name}]\n\nError extracting text from PDF. Please paste the text manually.`,
         }, { status: 500 })
       }
-    }
-
     } else if (file.type.startsWith('image/')) {
       // Use Claude vision to OCR a resume screenshot
       try {

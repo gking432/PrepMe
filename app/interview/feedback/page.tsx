@@ -7,15 +7,16 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User } from 'lucide-react'
+import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import ScoreRevealCard from '@/components/ScoreRevealCard'
 import LockedStageTeasers from '@/components/LockedStageTeasers'
+import SkillTrainer from '@/components/SkillTrainer'
 
 export default function InterviewDashboard() {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('results')
   const [isPremium, setIsPremium] = useState(false)
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
@@ -313,22 +314,15 @@ export default function InterviewDashboard() {
         // Set default tab to the most recent completed interview
         // Map stage to tab ID (do this as soon as we find a session)
         if (!defaultTabSet) {
-          let defaultTabId = 'overview'
-          
+          let defaultTabId = 'results'
+
           // Check if stage is provided in URL params (from profile page)
           const stageFromUrl = searchParams?.get('stage')
           const stageToUse = stageFromUrl || sessionData.stage
           
           // Map session stage to tab ID
-          if (stageToUse === 'hr_screen') {
-            defaultTabId = 'hr-screen'
-          } else if (stageToUse === 'hiring_manager') {
-            defaultTabId = 'hiring-manager-1'
-          } else if (stageToUse === 'culture_fit') {
-            defaultTabId = 'culture-fit'
-          } else if (stageToUse === 'final_interview') {
-            defaultTabId = 'hiring-manager-2'
-          }
+          // Always start on results tab
+          defaultTabId = 'results'
           
           setActiveTab(defaultTabId)
           setDefaultTabSet(true)
@@ -1811,12 +1805,9 @@ export default function InterviewDashboard() {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Target },
-    { id: 'hr-screen', label: 'HR Screen', icon: Phone, completed: hasFeedback },
-    { id: 'hiring-manager-1', label: 'Hiring Manager (30min)', icon: Briefcase, locked: !stageAccess?.hiring_manager?.hasAccess && !isPremium, stage: 'hiring_manager' },
-    { id: 'culture-fit', label: 'Culture Fit', icon: Users, optional: true, locked: !stageAccess?.culture_fit?.hasAccess && !isPremium, stage: 'culture_fit' },
-    { id: 'hiring-manager-2', label: 'Final Interview', icon: Crown, locked: !stageAccess?.final?.hasAccess && !isPremium, stage: 'final' },
-    { id: 'combined-report', label: 'Full Report', icon: TrendingUp, locked: !hasFeedback }
+    { id: 'results', label: 'Results', icon: Target },
+    { id: 'report', label: 'Report', icon: TrendingUp, completed: hasFeedback },
+    { id: 'train', label: 'Train', icon: Zap },
   ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
@@ -1969,7 +1960,7 @@ export default function InterviewDashboard() {
           <div className="flex space-x-2 min-w-max">
             {tabs.map((tab) => {
               const Icon = tab.icon
-              const isHRScreenCompleted = tab.id === 'hr-screen' && tab.completed
+              const isHRScreenCompleted = tab.id === 'report' && tab.completed
               const isActive = activeTab === tab.id
               const isLocked = 'locked' in tab && tab.locked
 
@@ -1995,7 +1986,7 @@ export default function InterviewDashboard() {
                   >
                     <Icon className={`w-4 h-4 ${isLocked ? 'text-gray-400' : ''}`} />
                     <span>{tab.label}</span>
-                    {tab.optional && !isLocked && <span className="text-xs opacity-75">(Optional)</span>}
+                    {'optional' in tab && tab.optional && !isLocked && <span className="text-xs opacity-75">(Optional)</span>}
                     {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
                     {!isLocked && isHRScreenCompleted && (
                       <CheckCircle className={`w-5 h-5 ${isActive ? 'text-white' : 'text-green-600'}`} />
@@ -2008,43 +1999,92 @@ export default function InterviewDashboard() {
           </div>
         </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
+        {/* Results Tab */}
+        {activeTab === 'results' && (
           <div className="space-y-6">
-            {/* Overall Score Card - Locked for now */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-50 opacity-50"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-400">Overall Performance</h2>
-                  <div className="flex items-center space-x-2 text-gray-400">
-                    <Lock className="w-5 h-5" />
-                    <span className="text-sm font-medium">Available after all interviews</span>
-                  </div>
+            {/* Score Reveal Card */}
+            {hasFeedback ? (
+              <ScoreRevealCard
+                score={overallScore}
+                likelihood={likelihood}
+                strengths={feedback?.strengths || []}
+                weaknesses={feedback?.weaknesses || []}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                <Phone className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">No Interview Completed Yet</h2>
+                <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                  Complete an HR screen interview to see your performance feedback and detailed insights here.
+                </p>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
+                >
+                  <span>Start an Interview</span>
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+            )}
+
+            {/* Smart CTA based on score */}
+            {hasFeedback && overallScore >= 7.5 && (
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Strong Showing</p>
+                  <h3 className="text-xl font-bold">Ready to level up?</h3>
+                  <p className="text-white/80 text-sm mt-1">Unlock your next interview stage to keep the momentum going.</p>
                 </div>
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gray-200 mb-4">
-                      <span className="text-5xl font-bold text-gray-400">--</span>
-                    </div>
-                    <p className="text-gray-400 font-medium">Out of 100</p>
-                  </div>
-                  <div className="space-y-4">
-                    {['Communication', 'Technical Skills', 'Cultural Fit', 'Problem Solving'].map((skill) => (
-                      <div key={skill}>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-400">{skill}</span>
-                          <span className="text-sm text-gray-400">--/100</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-gray-300 h-2 rounded-full" style={{ width: '0%' }}></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <button
+                  onClick={() => setShowPurchaseFlow(true)}
+                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-emerald-700 rounded-xl font-bold border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                >
+                  <Crown className="w-4 h-4" />
+                  Unlock Next Stage
+                </button>
+              </div>
+            )}
+            {hasFeedback && overallScore >= 5 && overallScore < 7.5 && (
+              <div className="bg-gradient-to-br from-primary-500 to-accent-400 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Almost There</p>
+                  <h3 className="text-xl font-bold">A few areas to sharpen</h3>
+                  <p className="text-white/80 text-sm mt-1">Practice the weak spots and you&apos;ll be interview-ready.</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('train')}
+                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-primary-700 rounded-xl font-bold border-b-4 border-primary-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                >
+                  <Zap className="w-4 h-4" />
+                  Go to Train
+                </button>
+              </div>
+            )}
+            {hasFeedback && overallScore > 0 && overallScore < 5 && (
+              <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Needs Work</p>
+                  <h3 className="text-xl font-bold">Let&apos;s rebuild the fundamentals</h3>
+                  <p className="text-white/80 text-sm mt-1">Train on each area, then retake when you&apos;re ready.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <button
+                    onClick={() => setActiveTab('train')}
+                    className="flex items-center gap-2 px-5 py-3 bg-white text-orange-700 rounded-xl font-bold border-b-4 border-orange-900 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Train Now
+                  </button>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 px-5 py-3 bg-white/20 border-2 border-white/40 text-white rounded-xl font-bold hover:bg-white/30 transition-all"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Retake
+                  </Link>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Interview Progress */}
             <div className="grid md:grid-cols-4 gap-4">
@@ -2077,7 +2117,7 @@ export default function InterviewDashboard() {
                       <button
                         type="button"
                         onClick={() => {
-                          setActiveTab('hr-screen')
+                          setActiveTab('report')
                           setTimeout(() => {
                             const el = document.querySelector('[data-practice-section]')
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -2164,217 +2204,14 @@ export default function InterviewDashboard() {
               />
             )}
 
-            {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
-            {hasFeedback && likelihood === 'likely' && isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        You've completed the HR screen! Now it's time to prepare for the next stage. Practice with our AI-powered hiring manager interview to get ready for the real thing.
-                      </p>
-                      <div className="flex flex-wrap gap-4 mb-6">
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">30-minute technical discussion</span>
-                        </div>
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Deep dive into your experience</span>
-                        </div>
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Company-specific questions</span>
-                        </div>
-                      </div>
-                      <Link
-                        href="/dashboard"
-                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                      >
-                        <Briefcase className="w-5 h-5" />
-                        <span>Start Hiring Manager Interview</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </Link>
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              </div>
-            )}
-
-            {/* CTA 2: Likely + !Premium — Unlock Hiring Manager OR Unlock All Interviews */}
-            {hasFeedback && likelihood === 'likely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Unlock the Hiring Manager interview to practice the next stage, or unlock all interview rounds with premium.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowPurchaseFlow(true)}
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Unlock Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowPurchaseFlow(true)}
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                        >
-                          <Crown className="w-5 h-5" />
-                          <span>Unlock All Interviews (Premium)</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <p className="text-white/70 text-sm mt-3">One-time payment • No subscription • All interview stages</p>
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              </div>
-            )}
-
-            {/* CTA 4: Unlikely + !Premium — Unlock Full Interview Process */}
-            {hasFeedback && likelihood === 'unlikely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 to-accent-400 rounded-2xl shadow-xl p-8 text-white">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold mb-2">Unlock Full Interview Process</h3>
-                    <p className="text-primary-100 mb-6">
-                      Practice with an AI that has intimate knowledge of the company and job description. Get feedback, practice specific questions, and run through the whole interview again until you're ready to land the job.
-                    </p>
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>Unlock all interview stages (Hiring Manager, Culture Fit, Final Interview)</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>3 practice attempts per interview round</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>Practice specific questions flagged for improvement right in this dashboard</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>AI-powered interviewer with deep knowledge of your target company and role</span>
-                      </li>
-                    </ul>
-                    <div className="mb-4">
-                      <p className="text-indigo-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
-                    </div>
-                    <button 
-                      onClick={() => setShowPurchaseFlow(true)}
-                      className="flex items-center space-x-2 px-6 py-3 bg-white text-primary-500 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg"
-                    >
-                      <span>Unlock All Interviews</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="hidden lg:block ml-8">
-                    <Crown className="w-32 h-32 text-white opacity-20" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* CTA 3: Unlikely + Premium — Retake or move forward (bottom CTA box) */}
-            {hasFeedback && likelihood === 'unlikely' && isPremium && (
-              <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden border-2 border-orange-400">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <RefreshCw className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Retake interview or move forward</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake), or skip ahead to the Hiring Manager interview.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <Link
-                          href="/dashboard"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <RefreshCw className="w-5 h-5" />
-                          <span>Retake Interview (Free)</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                        <Link
-                          href="/dashboard?stage=hiring_manager"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Skip to Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
           </div>
         )}
 
-        {/* HR Screen Tab */}
-        {activeTab === 'hr-screen' && (
+        {/* Report Tab */}
+        {activeTab === 'report' && (
           <div className="space-y-6">
             {hasFeedback ? (
               <>
-                {/* Score Reveal Card with Preppi */}
-                <ScoreRevealCard
-                  score={overallScore}
-                  likelihood={likelihood}
-                  strengths={feedback?.strengths || []}
-                  weaknesses={feedback?.weaknesses || []}
-                />
-
-                {/* Practice Drill CTA */}
-                {currentSessionData?.id && (
-                  <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4">
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">Practice the weak areas</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Duolingo-style drill — one question at a time</p>
-                    </div>
-                    <Link
-                      href={`/practice?sessionId=${currentSessionData.id}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold text-sm hover:bg-primary-600 transition-colors shrink-0"
-                    >
-                      Start Drill
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                )}
               </>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -2768,212 +2605,6 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Next Step - Practice & Retake Section for Unlikely Candidates */}
-            {hasFeedback && likelihood === 'unlikely' && (() => {
-              // Use the same score calculation as the main display
-              const currentScore = areasPassed
-              const targetScore = totalAreas
-              const scoreDisplay = `${currentScore}/${targetScore}`
-              
-              return (
-                <div className="bg-white shadow-xl border-t-4 border-orange-500 rounded-2xl">
-                  {/* Header */}
-                  <div className="p-8 pb-6">
-                    <div className="flex items-center space-x-3">
-                      <Target className="w-8 h-8 text-orange-600" />
-                      <div>
-                        <span className="text-sm font-semibold uppercase tracking-wider text-orange-600">Next Step</span>
-                        <h2 className="text-2xl font-bold text-gray-900 mt-1">Practice & Improve Your Performance</h2>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Plan Steps */}
-                  <div className="px-8 pb-6 space-y-4">
-                    {/* Step 1 */}
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          1
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-bold text-lg text-gray-900">Complete the practice cards above</h3>
-                            <div className="flex items-baseline space-x-2">
-                              <span className="text-sm text-gray-600">Current:</span>
-                              <span className="text-2xl font-bold text-orange-600">{scoreDisplay}</span>
-                            </div>
-                          </div>
-                          <p className="text-gray-700 mb-4">
-                            Work through each practice question for areas that need improvement. Record your responses and review the AI feedback to refine your answers.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const practiceSection = document.querySelector('[data-practice-section]')
-                              if (practiceSection) {
-                                practiceSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }
-                            }}
-                            className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:scale-105 transform"
-                          >
-                            <Target className="w-5 h-5" />
-                            <span>Go to Practice Cards</span>
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Step 2 */}
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          2
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900 mb-2">Review the detailed performance breakdown</h3>
-                          <p className="text-gray-700 mb-4">
-                            Review the "Detailed Performance Breakdown" section above to understand exactly where you need to improve and why. Click the button below to open the full detailed report.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setShowRubricModal(true)}
-                            className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:scale-105 transform"
-                          >
-                            <span>View Full Report</span>
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Step 3 */}
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          3
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900 mb-3">Review focus areas</h3>
-                          <p className="text-gray-700 mb-4">
-                            Focus on the specific areas below that need improvement:
-                          </p>
-                          {needsWorkCards.length > 0 ? (
-                            <div className="space-y-3">
-                              {needsWorkCards.map((area: any, idx: number) => {
-                                // Extract tip from feedback or create actionable tip based on criterion
-                                let tip = area.feedback || ''
-                                // If feedback contains "Consider" or "Try", extract that part as the tip
-                                const considerMatch = tip.match(/Consider[^.]*(?:\.|$)/i)
-                                const tryMatch = tip.match(/Try[^.]*(?:\.|$)/i)
-                                const betterMatch = tip.match(/A better approach[^.]*(?:\.|$)/i)
-                                
-                                if (considerMatch) {
-                                  tip = considerMatch[0].replace(/^Consider\s+/i, '').trim()
-                                } else if (tryMatch) {
-                                  tip = tryMatch[0].replace(/^Try\s+/i, '').trim()
-                                } else if (betterMatch) {
-                                  tip = betterMatch[0].replace(/^A better approach would be:\s*/i, '').trim().replace(/^['"]|['"]$/g, '')
-                                } else {
-                                  // Fallback: create tip from criterion
-                                  if (area.criterion.includes('STAR') || area.criterion.includes('Structure')) {
-                                    tip = 'Use the STAR method (Situation, Task, Action, Result) to structure your answers'
-                                  } else if (area.criterion.includes('Examples')) {
-                                    tip = 'Include specific examples with metrics and concrete results'
-                                  } else if (area.criterion.includes('Questions')) {
-                                    tip = 'Prepare 2-3 thoughtful questions about the role, team, or company'
-                                  } else if (area.criterion.includes('Uncertain') || area.criterion.includes('Difficult')) {
-                                    tip = 'Acknowledge gaps honestly, then pivot to related experience and learning ability'
-                                  } else {
-                                    tip = tip.length > 100 ? tip.substring(0, 100) + '...' : tip
-                                  }
-                                }
-                                
-                                return (
-                                  <div key={idx} className="bg-white rounded-lg p-4 border border-orange-200">
-                                    <h4 className="font-semibold text-gray-900 mb-2">{area.criterion}</h4>
-                                    <p className="text-sm text-gray-700">
-                                      <strong className="text-orange-600">Tip:</strong> {tip}
-                                    </p>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-gray-600 text-sm">No specific focus areas identified. Continue practicing to improve your overall performance.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 4: only for Unlikely + !Premium. Unlikely + Premium see CTA box at bottom of page. */}
-                  <div className="px-8 pb-6" style={isPremium ? { display: 'none' } : undefined}>
-                    <button
-                      type="button"
-                      onClick={() => setShowStep4(!showStep4)}
-                      className="w-full px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:scale-105 transform flex items-center justify-center space-x-2"
-                    >
-                      <span>{showStep4 ? 'Hide Step 4' : 'Reveal Step 4'}</span>
-                      <ArrowRight className={`w-5 h-5 transition-transform duration-300 ${showStep4 ? 'rotate-90' : ''}`} />
-                    </button>
-                  </div>
-
-                  <div className={`relative bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 border-2 border-orange-400 border-t-0 rounded-b-2xl overflow-hidden transition-all duration-500 ease-in-out ${
-                    showStep4 ? 'max-h-[1000px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-4 overflow-hidden'
-                  }`} style={isPremium ? { display: 'none' } : undefined}>
-                    {/* Sheen/Glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-2xl"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-2xl"></div>
-                    
-                    <div className="relative p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-white mb-2">Retake interview or move forward</h3>
-                          <p className="text-white/90 mb-4">
-                            {isPremium
-                              ? "Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake), or skip ahead to the Hiring Manager interview."
-                              : "Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake). Unlock premium to access the Hiring Manager interview and all interview stages."}
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            <Link
-                              href="/dashboard"
-                              className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                            >
-                              <RefreshCw className="w-5 h-5" />
-                              <span>Retake Interview (Free)</span>
-                              <ArrowRight className="w-5 h-5" />
-                            </Link>
-                            {isPremium ? (
-                              <Link
-                                href="/dashboard?stage=hiring_manager"
-                                className="inline-flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg hover:scale-105 transform"
-                              >
-                                <Briefcase className="w-5 h-5" />
-                                <span>Skip to Hiring Manager Interview</span>
-                                <ArrowRight className="w-5 h-5" />
-                              </Link>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setShowPurchaseFlow(true)}
-                                className="inline-flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg hover:scale-105 transform"
-                              >
-                                <Crown className="w-5 h-5" />
-                                <span>Unlock Hiring Manager Interview</span>
-                                <ArrowRight className="w-5 h-5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })()}
 
             {/* Full-Screen Rubric Report Modal */}
             {showRubricModal && (
@@ -3859,6 +3490,18 @@ export default function InterviewDashboard() {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* Train Tab */}
+        {activeTab === 'train' && (
+          <div className="space-y-6">
+            <SkillTrainer
+              feedback={feedback}
+              sessionId={currentSessionData?.id}
+              currentStage={currentStage}
+              structuredTranscript={structuredTranscript}
+            />
           </div>
         )}
 

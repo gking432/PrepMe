@@ -57,3 +57,22 @@ body {
   animation: fade-in 0.3s ease-out;
 }
 
+@keyframes pop-in {
+  0%   { transform: scale(0.4); opacity: 0.5; }
+  70%  { transform: scale(1.25); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out forwards;
+}
+

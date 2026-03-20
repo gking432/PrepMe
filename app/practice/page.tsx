@@ -2,11 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Header from '@/components/Header'
 import Preppi from '@/components/Preppi'
+import Confetti from '@/components/Confetti'
+import { useGameFeedback } from '@/hooks/useGameFeedback'
 import { Mic, MicOff, Send, ChevronRight, RotateCcw, Trophy, Zap, CheckCircle, X } from 'lucide-react'
 
 interface DrillQuestion {
@@ -28,27 +30,48 @@ interface DrillResult {
 const XP_PER_PASS = 50
 const XP_PER_ATTEMPT = 15
 
+// Animated score circle that counts up
 function ScoreAnimation({ score, passed }: { score: number; passed: boolean }) {
+  const [displayed, setDisplayed] = useState(0)
+
+  useEffect(() => {
+    setDisplayed(0)
+    const duration = 700
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3) // easeOutCubic
+      setDisplayed(Math.round(eased * score * 10) / 10)
+      if (t < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }, [score])
+
   return (
-    <div className={`flex items-center justify-center flex-col gap-3 py-6 transition-all`}>
-      <div className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold ${
-        passed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+    <div className="flex items-center justify-center flex-col gap-3 py-6">
+      <div className={`w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold animate-score-pop ${
+        passed
+          ? 'bg-emerald-100 text-emerald-600 ring-4 ring-emerald-200'
+          : 'bg-amber-100 text-amber-600 ring-4 ring-amber-200'
       }`}>
-        {score}/10
+        {displayed}/10
       </div>
-      <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${
+      <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold animate-slide-up ${
         passed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
       }`}>
-        {passed ? <><CheckCircle className="w-4 h-4" />Nice answer</> : <><RotateCcw className="w-4 h-4" />Keep practicing</>}
+        {passed
+          ? <><CheckCircle className="w-4 h-4" />Nice answer!</>
+          : <><RotateCcw className="w-4 h-4" />Keep practicing</>
+        }
       </div>
     </div>
   )
 }
 
-function XPBar({ xp, maxXp, gained }: { xp: number; maxXp: number; gained: number }) {
+function XPBar({ xp, maxXp, gained, xpKey }: { xp: number; maxXp: number; gained: number; xpKey: number }) {
   const pct = Math.min((xp / maxXp) * 100, 100)
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 relative">
       <div className="flex items-center gap-1.5">
         <Zap className="w-4 h-4 text-amber-500" />
         <span className="text-sm font-bold text-amber-600 tabular-nums">{xp} XP</span>
@@ -60,7 +83,12 @@ function XPBar({ xp, maxXp, gained }: { xp: number; maxXp: number; gained: numbe
         />
       </div>
       {gained > 0 && (
-        <span className="text-xs font-bold text-amber-500 animate-bounce">+{gained}</span>
+        <span
+          key={xpKey}
+          className="absolute right-0 text-sm font-extrabold text-amber-500 animate-fly-up"
+        >
+          +{gained} XP
+        </span>
       )}
     </div>
   )
@@ -70,6 +98,7 @@ export default function PracticeDrillPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClient()
+  const { ding } = useGameFeedback()
 
   const [loading, setLoading] = useState(true)
   const [questions, setQuestions] = useState<DrillQuestion[]>([])
@@ -81,8 +110,11 @@ export default function PracticeDrillPage() {
   const [sessionResults, setSessionResults] = useState<DrillResult[]>([])
   const [xp, setXp] = useState(0)
   const [lastXpGain, setLastXpGain] = useState(0)
+  const [xpKey, setXpKey] = useState(0)
   const [recording, setRecording] = useState(false)
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text')
+  const [showCorrectFlash, setShowCorrectFlash] = useState(false)
+  const [confettiActive, setConfettiActive] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
@@ -97,7 +129,6 @@ export default function PracticeDrillPage() {
 
   const loadDrillQuestions = async () => {
     try {
-      // Load feedback + transcript for this session
       const [feedbackRes, sessionRes] = await Promise.all([
         supabase.from('interview_feedback').select('*').eq('interview_session_id', sessionId).order('created_at', { ascending: false }).limit(1),
         supabase.from('interview_sessions').select('transcript_structured, stage').eq('id', sessionId).single(),
@@ -114,7 +145,6 @@ export default function PracticeDrillPage() {
       const drillItems: DrillQuestion[] = []
       const rubric = feedbackData.full_rubric
 
-      // Extract weak criteria from rubric areas
       const extractWeakAreas = (areas: any) => {
         if (!areas) return
         Object.entries(areas).forEach(([criterion, data]: [string, any]) => {
@@ -135,13 +165,11 @@ export default function PracticeDrillPage() {
         })
       }
 
-      // Try to extract from various rubric formats
       if (rubric?.hr_screen_six_areas) extractWeakAreas(rubric.hr_screen_six_areas)
       if (rubric?.hiring_manager_six_areas) extractWeakAreas(rubric.hiring_manager_six_areas)
       if (rubric?.traditional_hr_criteria?.scores) {
         Object.entries(rubric.traditional_hr_criteria.scores).forEach(([criterion, score]: [string, any]) => {
           if (score <= 6) {
-            const feedback = rubric.traditional_hr_criteria.feedback?.[criterion]
             drillItems.push({
               id: `trad-${criterion}`,
               question: `Let's practice: ${criterion.replace(/_/g, ' ')}`,
@@ -153,7 +181,6 @@ export default function PracticeDrillPage() {
         })
       }
 
-      // Fallback: use weaknesses array if no rubric detail
       if (drillItems.length === 0 && feedbackData.weaknesses) {
         feedbackData.weaknesses.slice(0, 5).forEach((weakness: string, i: number) => {
           drillItems.push({
@@ -166,13 +193,27 @@ export default function PracticeDrillPage() {
         })
       }
 
-      setQuestions(drillItems.slice(0, 7)) // Cap at 7 questions
+      setQuestions(drillItems.slice(0, 7))
     } catch (err) {
       console.error('Error loading drill questions:', err)
     } finally {
       setLoading(false)
     }
   }
+
+  const handleResult = useCallback((drillResult: DrillResult, gain: number) => {
+    setResult(drillResult)
+    setXp(prev => prev + gain)
+    setLastXpGain(gain)
+    setXpKey(k => k + 1)
+    setPhase('result')
+
+    if (drillResult.passed) {
+      ding()
+      setShowCorrectFlash(true)
+      setTimeout(() => setShowCorrectFlash(false), 700)
+    }
+  }, [ding])
 
   const startDrill = () => {
     setCurrentIndex(0)
@@ -204,12 +245,9 @@ export default function PracticeDrillPage() {
           passed: data.passed || false,
           feedbackSummary: data.feedback || data.summary || '',
         }
-        setResult(drillResult)
         const gain = data.passed ? XP_PER_PASS : XP_PER_ATTEMPT
-        setXp(prev => prev + gain)
-        setLastXpGain(gain)
         setSessionResults(prev => [...prev, drillResult])
-        setPhase('result')
+        handleResult(drillResult, gain)
       }
     } catch (err) {
       console.error('Practice submit error:', err)
@@ -265,12 +303,9 @@ export default function PracticeDrillPage() {
           passed: data.passed || false,
           feedbackSummary: data.feedback || data.summary || '',
         }
-        setResult(drillResult)
         const gain = data.passed ? XP_PER_PASS : XP_PER_ATTEMPT
-        setXp(prev => prev + gain)
-        setLastXpGain(gain)
         setSessionResults(prev => [...prev, drillResult])
-        setPhase('result')
+        handleResult(drillResult, gain)
       }
     } catch (err) {
       console.error('Audio submit error:', err)
@@ -285,6 +320,12 @@ export default function PracticeDrillPage() {
     setLastXpGain(0)
     const next = currentIndex + 1
     if (next >= questions.length) {
+      const passed = sessionResults.filter(r => r.passed).length + (result?.passed ? 0 : 0)
+      // sessionResults already includes the last result at this point
+      const passRate = sessionResults.length > 0
+        ? sessionResults.filter(r => r.passed).length / sessionResults.length
+        : 0
+      if (passRate >= 0.5) setConfettiActive(true)
       setPhase('summary')
     } else {
       setCurrentIndex(next)
@@ -319,6 +360,18 @@ export default function PracticeDrillPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
+      {/* CORRECT! flash overlay */}
+      {showCorrectFlash && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none animate-correct-flash">
+          <div className="bg-emerald-500 text-white text-4xl font-extrabold px-10 py-6 rounded-3xl shadow-2xl tracking-wide">
+            CORRECT!
+          </div>
+        </div>
+      )}
+
+      {/* Confetti */}
+      <Confetti active={confettiActive} />
+
       <div className="max-w-2xl mx-auto px-4 py-8">
 
         {/* XP bar — always visible during drill */}
@@ -334,7 +387,7 @@ export default function PracticeDrillPage() {
                 style={{ width: `${((currentIndex) / questions.length) * 100}%` }}
               />
             </div>
-            <XPBar xp={xp} maxXp={totalXp} gained={lastXpGain} />
+            <XPBar xp={xp} maxXp={totalXp} gained={lastXpGain} xpKey={xpKey} />
           </div>
         )}
 
@@ -362,7 +415,7 @@ export default function PracticeDrillPage() {
             </div>
             <button
               onClick={startDrill}
-              className="px-8 py-4 bg-primary-500 text-white rounded-2xl font-bold text-lg hover:bg-primary-600 transition-colors shadow-lg shadow-primary-200"
+              className="px-8 py-4 bg-primary-500 text-white rounded-2xl font-bold text-lg hover:bg-primary-600 active:scale-95 transition-all shadow-lg shadow-primary-200"
             >
               Start Drilling
             </button>
@@ -371,21 +424,18 @@ export default function PracticeDrillPage() {
 
         {/* Question screen */}
         {phase === 'question' && currentQuestion && (
-          <div>
+          <div className="animate-slide-up">
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4">
-              {/* Criterion badge */}
               <div className="px-5 pt-5 pb-3">
                 <span className="inline-block px-2.5 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-semibold uppercase tracking-wide">
                   {currentQuestion.criterion.replace(/_/g, ' ')}
                 </span>
               </div>
 
-              {/* Question */}
               <div className="px-5 pb-5">
                 <p className="text-lg font-semibold text-gray-900 leading-snug">{currentQuestion.question}</p>
               </div>
 
-              {/* Original answer (if exists) */}
               {currentQuestion.originalAnswer && (
                 <div className="px-5 pb-5 border-t border-gray-100">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your original answer</p>
@@ -396,7 +446,6 @@ export default function PracticeDrillPage() {
               )}
             </div>
 
-            {/* Input mode toggle */}
             <div className="flex rounded-xl border border-gray-200 overflow-hidden mb-4 bg-white">
               <button
                 onClick={() => setInputMode('text')}
@@ -412,7 +461,6 @@ export default function PracticeDrillPage() {
               </button>
             </div>
 
-            {/* Text input */}
             {inputMode === 'text' && (
               <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <textarea
@@ -426,7 +474,7 @@ export default function PracticeDrillPage() {
                   <button
                     onClick={submitTextAnswer}
                     disabled={!textAnswer.trim() || submitting}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 hover:bg-primary-600 transition-colors"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 hover:bg-primary-600 active:scale-95 transition-all"
                   >
                     {submitting ? (
                       <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Scoring...</>
@@ -438,7 +486,6 @@ export default function PracticeDrillPage() {
               </div>
             )}
 
-            {/* Voice input */}
             {inputMode === 'voice' && (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
                 {submitting ? (
@@ -454,7 +501,7 @@ export default function PracticeDrillPage() {
                     <p className="text-sm font-semibold text-red-600">Recording...</p>
                     <button
                       onClick={stopRecording}
-                      className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors"
+                      className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 active:scale-95 transition-all"
                     >
                       <MicOff className="w-4 h-4" />Done — submit answer
                     </button>
@@ -463,7 +510,7 @@ export default function PracticeDrillPage() {
                   <div className="flex flex-col items-center gap-4">
                     <button
                       onClick={startRecording}
-                      className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center hover:bg-primary-100 transition-colors"
+                      className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center hover:bg-primary-100 active:scale-95 transition-all"
                     >
                       <Mic className="w-7 h-7 text-primary-500" />
                     </button>
@@ -477,7 +524,7 @@ export default function PracticeDrillPage() {
 
         {/* Result screen */}
         {phase === 'result' && result && (
-          <div>
+          <div className="animate-slide-up">
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4">
               <ScoreAnimation score={result.score} passed={result.passed} />
               {result.feedbackSummary && (
@@ -491,13 +538,13 @@ export default function PracticeDrillPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setPhase('question'); setTextAnswer(''); setResult(null) }}
-                className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all"
               >
                 <RotateCcw className="w-4 h-4" />Try again
               </button>
               <button
                 onClick={nextQuestion}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-500 text-white rounded-xl text-sm font-semibold hover:bg-primary-600 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-500 text-white rounded-xl text-sm font-semibold hover:bg-primary-600 active:scale-95 transition-all"
               >
                 {currentIndex + 1 >= questions.length ? 'See results' : 'Next question'}
                 <ChevronRight className="w-4 h-4" />
@@ -508,7 +555,7 @@ export default function PracticeDrillPage() {
 
         {/* Summary screen */}
         {phase === 'summary' && (
-          <div className="text-center">
+          <div className="text-center animate-slide-up">
             <div className="mb-6">
               <Preppi
                 message={
@@ -523,10 +570,11 @@ export default function PracticeDrillPage() {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="flex items-center justify-center gap-2 mb-1">
                 <Trophy className="w-6 h-6 text-amber-500" />
-                <span className="text-2xl font-bold text-amber-600 tabular-nums">{xp} XP</span>
+                <span className="text-3xl font-extrabold text-amber-500 tabular-nums animate-pop-in">{xp} XP</span>
               </div>
+              <p className="text-xs text-gray-400 mb-5">earned this session</p>
 
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="text-center">
@@ -547,7 +595,6 @@ export default function PracticeDrillPage() {
                 </div>
               </div>
 
-              {/* Per-question summary */}
               <div className="space-y-2 text-left">
                 {sessionResults.map((r, i) => (
                   <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl ${r.passed ? 'bg-emerald-50' : 'bg-gray-50'}`}>
@@ -566,14 +613,14 @@ export default function PracticeDrillPage() {
 
             <div className="flex flex-col gap-3">
               <button
-                onClick={() => { setCurrentIndex(0); setPhase('intro'); setSessionResults([]); setXp(0) }}
-                className="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                onClick={() => { setCurrentIndex(0); setPhase('intro'); setSessionResults([]); setXp(0); setConfettiActive(false) }}
+                className="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all"
               >
                 <RotateCcw className="w-4 h-4" />Drill again
               </button>
               <button
                 onClick={() => router.push(sessionId ? `/interview/feedback?sessionId=${sessionId}` : '/dashboard')}
-                className="flex items-center justify-center gap-2 py-3 bg-primary-500 text-white rounded-xl text-sm font-semibold hover:bg-primary-600 transition-colors"
+                className="flex items-center justify-center gap-2 py-3 bg-primary-500 text-white rounded-xl text-sm font-semibold hover:bg-primary-600 active:scale-95 transition-all"
               >
                 Back to report
                 <ChevronRight className="w-4 h-4" />

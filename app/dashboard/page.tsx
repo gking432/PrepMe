@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import { Play, ChevronRight, CheckCircle2, Lock, Crown, ChevronDown } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
+import MobileNav from '@/components/MobileNav'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -371,11 +372,11 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 pb-28 md:pb-8">
 
         {/* Preppi intro */}
         <div className="mb-8">
-          <Preppi message={getPreppiMessage()} size="md" animate />
+          <Preppi message={getPreppiMessage()} size="lg" animate />
         </div>
 
         {/* Progress steps */}
@@ -716,18 +717,18 @@ export default function DashboardPage() {
             {user && isStageLockedFn(selectedStage) ? (
               <button
                 onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-bold bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 md:py-3.5 rounded-xl text-white font-bold text-base md:text-sm bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all"
               >
-                <Lock className="w-4 h-4" />
+                <Lock className="w-5 h-5 md:w-4 md:h-4" />
                 Unlock {STAGE_CONFIG[selectedStage].name} — {STAGE_CONFIG[selectedStage].price}
               </button>
             ) : (
               <button
                 onClick={() => handleStartInterview(selectedStage)}
                 disabled={!canStartInterview() || saving}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-bold bg-primary-500 hover:bg-primary-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-primary-100"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 md:py-3.5 rounded-xl text-white font-bold text-base md:text-sm bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-100"
               >
-                <Play className="w-4 h-4" />
+                <Play className="w-5 h-5 md:w-4 md:h-4" />
                 Start {STAGE_CONFIG[selectedStage].name}
               </button>
             )}
@@ -753,6 +754,8 @@ export default function DashboardPage() {
           highlightStage={purchaseHighlightStage}
         />
       )}
+
+      <MobileNav />
     </div>
   )
 }

@@ -1003,7 +1003,7 @@ export default function InterviewDashboard() {
 
   if (loading || feedbackGenerating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
@@ -1071,7 +1071,7 @@ export default function InterviewDashboard() {
   // Show error message if feedback generation timed out
   if (pollingAttempts >= 12 && !feedback) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md mx-auto px-4">
           <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Feedback Generation Taking Longer Than Expected</h2>
@@ -1814,7 +1814,7 @@ export default function InterviewDashboard() {
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div className="min-h-screen bg-slate-50">
       <Header />
 
       {/* Contextual action bar */}
@@ -1980,7 +1980,7 @@ export default function InterviewDashboard() {
                         : isActive
                           ? isHRScreenCompleted
                             ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
-                            : 'bg-gradient-to-r from-primary-500 to-accent-400 text-white shadow-lg'
+                            : 'bg-primary-500 text-white shadow-lg'
                           : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
@@ -2019,7 +2019,7 @@ export default function InterviewDashboard() {
                 </p>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
+                  className="inline-flex items-center space-x-2 px-8 py-4 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-all shadow-lg"
                 >
                   <span>Start an Interview</span>
                   <ArrowRight className="w-5 h-5" />
@@ -2045,7 +2045,7 @@ export default function InterviewDashboard() {
               </div>
             )}
             {hasFeedback && overallScore >= 5 && overallScore < 7.5 && (
-              <div className="bg-gradient-to-br from-primary-500 to-accent-400 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-primary-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Almost There</p>
                   <h3 className="text-xl font-bold">A few areas to sharpen</h3>
@@ -2222,7 +2222,7 @@ export default function InterviewDashboard() {
                 </p>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
+                  className="inline-flex items-center space-x-2 px-8 py-4 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-all shadow-lg"
                 >
                   <span>Start an Interview</span>
                   <ArrowRight className="w-5 h-5" />
@@ -3253,7 +3253,7 @@ export default function InterviewDashboard() {
 
             {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
             {hasFeedback && likelihood === 'likely' && isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -3301,7 +3301,7 @@ export default function InterviewDashboard() {
 
             {/* CTA 2: Likely + !Premium — Unlock Hiring Manager OR Unlock All Interviews */}
             {hasFeedback && likelihood === 'likely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -3348,7 +3348,7 @@ export default function InterviewDashboard() {
 
             {/* CTA 4: Unlikely + !Premium — Unlock Full Interview Process */}
             {hasFeedback && likelihood === 'unlikely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 to-accent-400 rounded-2xl shadow-xl p-8 text-white">
+              <div className="bg-primary-500 rounded-2xl shadow-xl p-8 text-white">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-2xl font-bold mb-2">Unlock Full Interview Process</h3>
@@ -3432,7 +3432,7 @@ export default function InterviewDashboard() {
 
             {/* Fallback CTA if no next_steps_preparation - CTA 1 or 2 (Likely only) */}
             {hasFeedback && likelihood === 'likely' && !(feedback as any)?.next_steps_preparation && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -3571,7 +3571,7 @@ export default function InterviewDashboard() {
             )}
             {/* Start Interview CTA (when eligible but no HM feedback yet) */}
             {canStartHiringManager1 && !hasHmFeedback && (
-              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
+              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-primary-700">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
                   <div className="flex-1">
@@ -3601,7 +3601,7 @@ export default function InterviewDashboard() {
               <>
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
-                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
+                    ? 'bg-primary-600'
                     : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
@@ -4142,7 +4142,7 @@ export default function InterviewDashboard() {
             )}
             {/* Start Interview CTA (when eligible but no CF feedback yet) */}
             {interviewData.hiringManager1.completed && !hasCfFeedback && (
-              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
+              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-primary-700">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
                   <div className="flex-1">
@@ -4172,7 +4172,7 @@ export default function InterviewDashboard() {
               <>
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
-                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
+                    ? 'bg-primary-600'
                     : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
@@ -4631,7 +4631,7 @@ export default function InterviewDashboard() {
             )}
             {/* Start Interview CTA (when eligible but no FR feedback yet) */}
             {interviewData.cultureFit.completed && !hasFrFeedback && (
-              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
+              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-primary-700">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
                   <div className="flex-1">
@@ -4661,7 +4661,7 @@ export default function InterviewDashboard() {
               <>
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
-                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
+                    ? 'bg-primary-600'
                     : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
@@ -5264,7 +5264,7 @@ export default function InterviewDashboard() {
             // TODO: Open feedback chat interface
             console.log('Feedback chat clicked')
           }}
-          className="w-14 h-14 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+          className="w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center group"
           aria-label="Ask about feedback"
         >
           <MessageCircle className="w-6 h-6" />

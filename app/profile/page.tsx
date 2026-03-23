@@ -404,7 +404,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading profile...</p>
@@ -416,7 +416,7 @@ export default function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div className="min-h-screen bg-slate-50">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -424,7 +424,7 @@ export default function ProfilePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-400 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center">
                 <User className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -437,7 +437,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <Link href="/dashboard" className="flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-medium hover:from-primary-600 hover:to-accent-500 transition-all">
+            <Link href="/dashboard" className="flex items-center space-x-1 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
               <span className="text-lg">+</span>
               <span>New Interview</span>
             </Link>
@@ -477,7 +477,7 @@ export default function ProfilePage() {
                   <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No interviews yet</h3>
                   <p className="text-gray-600 mb-6">Start your first interview to see your history here</p>
-                  <Link href="/dashboard" className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-medium hover:from-primary-600 hover:to-accent-500 transition-all">
+                  <Link href="/dashboard" className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
                     <span>Get Started</span>
                     <ArrowRight className="w-5 h-5" />
                   </Link>
@@ -541,7 +541,7 @@ export default function ProfilePage() {
                         {/* Progress Bar */}
                         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-6">
                           <div
-                            className="bg-gradient-to-r from-primary-500 to-accent-400 h-full rounded-full transition-all duration-500 ease-out"
+                            className="bg-primary-500 h-full rounded-full transition-all duration-500 ease-out"
                             style={{ width: `${progressPercentage}%` }}
                           />
                         </div>

@@ -1876,7 +1876,7 @@ export default function InterviewDashboard() {
                         type="text"
                         defaultValue={extractedName}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
                     </div>
                     <div>
@@ -1885,7 +1885,7 @@ export default function InterviewDashboard() {
                         type="email"
                         defaultValue={extractedEmail}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
                     </div>
                     <button
@@ -1896,7 +1896,7 @@ export default function InterviewDashboard() {
                         const query = params.toString()
                         router.push(`/auth/signup${query ? `?${query}` : ''}`)
                       }}
-                      className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-lg"
+                      className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-all shadow-lg"
                     >
                       Create Account
                     </button>
@@ -1929,7 +1929,7 @@ export default function InterviewDashboard() {
             </div>
             <p className="text-sm text-gray-500 mt-4 text-center">
               Already have an account?{' '}
-              <a href="/auth/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+              <a href="/auth/login" className="text-primary-600 hover:text-primary-700 font-medium">
                 Sign in
               </a>
             </p>
@@ -1940,13 +1940,13 @@ export default function InterviewDashboard() {
       {/* Persistent signup banner for anonymous users who dismissed the modal */}
       {isAnonymous && !showAccountPrompt && accountPromptDismissed && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 flex items-center justify-between">
-            <p className="text-sm text-indigo-800 font-medium">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg px-4 py-3 flex items-center justify-between">
+            <p className="text-sm text-primary-800 font-medium">
               Create an account to save your results and continue to the Hiring Manager round →
             </p>
             <button
               onClick={() => router.push('/auth/signup')}
-              className="ml-4 px-4 py-1.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+              className="ml-4 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors whitespace-nowrap"
             >
               Sign Up
             </button>
@@ -2156,15 +2156,15 @@ export default function InterviewDashboard() {
               {/* Hiring Manager - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('hiring_manager'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-indigo-200 hover:border-indigo-400"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-primary-200 hover:border-primary-400"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <Briefcase className="w-6 h-6 text-indigo-400" />
-                  <Lock className="w-4 h-4 text-indigo-400" />
+                  <Briefcase className="w-6 h-6 text-primary-400" />
+                  <Lock className="w-4 h-4 text-primary-400" />
                 </div>
                 <h3 className="font-bold text-gray-700 mb-1 text-sm">Hiring Manager</h3>
                 <p className="text-xs text-gray-400 mb-2">Your biggest unlock.</p>
-                <p className="text-xs font-bold text-indigo-600">$4.99 — Unlock</p>
+                <p className="text-xs font-bold text-primary-600">$4.99 — Unlock</p>
               </button>
 
               {/* Culture Fit - Locked teaser */}
@@ -2246,7 +2246,7 @@ export default function InterviewDashboard() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
-                          <div className="text-3xl font-bold text-indigo-600">
+                          <div className="text-3xl font-bold text-primary-600">
                             {areasPassed}/{totalAreas}
                           </div>
                           <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -2284,7 +2284,7 @@ export default function InterviewDashboard() {
                     <div className="mt-4">
                       <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                          className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                           style={{ width: `${areasProgress}%` }}
                         ></div>
                       </div>
@@ -2292,7 +2292,7 @@ export default function InterviewDashboard() {
                         <span className="text-gray-600">
                           Focus on the orange areas below to level up faster.
                         </span>
-                        <span className="text-indigo-600 font-semibold">
+                        <span className="text-primary-600 font-semibold">
                           Master all 6 to be HR-screen ready.
                         </span>
                       </div>
@@ -2519,7 +2519,7 @@ export default function InterviewDashboard() {
                                   {isCandidate ? (
                                     <Users className="w-5 h-5 text-gray-700" />
                                   ) : (
-                                    <Phone className="w-5 h-5 text-indigo-600" />
+                                    <Phone className="w-5 h-5 text-primary-600" />
                                   )}
                                 </div>
                                 <div className="flex-1">
@@ -2528,7 +2528,7 @@ export default function InterviewDashboard() {
                                       className={`text-sm font-semibold ${
                                         isCandidate
                                           ? 'text-gray-900'
-                                          : 'text-indigo-700'
+                                          : 'text-primary-700'
                                       }`}
                                     >
                                       {isCandidate ? 'You' : 'AI Interviewer'}
@@ -2556,12 +2556,12 @@ export default function InterviewDashboard() {
                             {structuredTranscript.questions_asked.map((q: any, idx: number) => (
                               <div key={idx} className="p-4 rounded-lg border-2 border-gray-200 bg-white">
                                 <div className="flex items-start space-x-3">
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-100">
-                                    <Phone className="w-5 h-5 text-indigo-600" />
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary-100">
+                                    <Phone className="w-5 h-5 text-primary-600" />
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex justify-between mb-1">
-                                      <span className="text-sm font-semibold text-indigo-700">AI Interviewer</span>
+                                      <span className="text-sm font-semibold text-primary-700">AI Interviewer</span>
                                       {q.timestamp && (
                                         <span className="text-xs text-gray-500">{q.timestamp}</span>
                                       )}
@@ -2597,7 +2597,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -2652,7 +2652,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                     {/* Modal Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900">
                           Detailed Performance Report
@@ -3132,21 +3132,21 @@ export default function InterviewDashboard() {
 
             {/* Combined CTA - Preparing for Hiring Manager Round */}
             {hasFeedback && likelihood === 'likely' && (feedback as any)?.next_steps_preparation && (
-              <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-indigo-500">
+              <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-primary-500">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-6">
-                  <Briefcase className="w-8 h-8 text-indigo-600" />
+                  <Briefcase className="w-8 h-8 text-primary-600" />
                   <div>
-                    <span className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Next Step</span>
+                    <span className="text-sm font-semibold uppercase tracking-wider text-primary-600">Next Step</span>
                     <h2 className="text-2xl font-bold text-gray-900 mt-1">Preparing for the Hiring Manager Round</h2>
                   </div>
                 </div>
 
                 {/* Readiness Assessment */}
-                <div className="bg-indigo-50 rounded-xl p-6 mb-6 border border-indigo-100">
+                <div className="bg-primary-50 rounded-xl p-6 mb-6 border border-primary-100">
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"/>
                         <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
                       </svg>
@@ -3157,13 +3157,13 @@ export default function InterviewDashboard() {
                     </div>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                    <div className="bg-white rounded-lg p-4 border border-primary-200">
                       <div className="text-sm text-gray-600 mb-1">Ready for Next Round?</div>
-                      <div className="text-2xl font-bold text-indigo-600">{(feedback as any).next_steps_preparation.ready_for_hiring_manager ? 'Yes' : 'Not Yet'}</div>
+                      <div className="text-2xl font-bold text-primary-600">{(feedback as any).next_steps_preparation.ready_for_hiring_manager ? 'Yes' : 'Not Yet'}</div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                    <div className="bg-white rounded-lg p-4 border border-primary-200">
                       <div className="text-sm text-gray-600 mb-1">Confidence Level</div>
-                      <div className="text-2xl font-bold text-indigo-600 capitalize">{(feedback as any).next_steps_preparation.confidence_level}</div>
+                      <div className="text-2xl font-bold text-primary-600 capitalize">{(feedback as any).next_steps_preparation.confidence_level}</div>
                     </div>
                   </div>
                 </div>
@@ -3177,7 +3177,7 @@ export default function InterviewDashboard() {
                       className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                     >
                       <h3 className="font-bold text-lg text-gray-900 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 mr-2 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
                         </svg>
                         Areas to Study Before Hiring Manager Interview
@@ -3218,7 +3218,7 @@ export default function InterviewDashboard() {
                       className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                     >
                       <h3 className="font-bold text-lg text-gray-900 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 mr-2 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"/>
                         </svg>
                         Predicted Hiring Manager Questions
@@ -3238,7 +3238,7 @@ export default function InterviewDashboard() {
                         <div className="space-y-2">
                           {(feedback as any).next_steps_preparation.predicted_hiring_manager_questions.map((question: string, idx: number) => (
                             <div key={idx} className="bg-gray-50 rounded-lg p-3 text-sm border border-gray-200">
-                              <span className="font-bold text-indigo-600 mr-2">{idx + 1}.</span>
+                              <span className="font-bold text-primary-600 mr-2">{idx + 1}.</span>
                               <span className="text-gray-700">"{question}"</span>
                             </div>
                           ))}
@@ -3282,7 +3282,7 @@ export default function InterviewDashboard() {
                       </div>
                       <Link
                         href="/dashboard"
-                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
+                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                       >
                         <Briefcase className="w-5 h-5" />
                         <span>Start Hiring Manager Interview</span>
@@ -3374,7 +3374,7 @@ export default function InterviewDashboard() {
                       </li>
                     </ul>
                     <div className="mb-4">
-                      <p className="text-indigo-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
+                      <p className="text-primary-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
                     </div>
                     <button 
                       onClick={() => setShowPurchaseFlow(true)}
@@ -3450,7 +3450,7 @@ export default function InterviewDashboard() {
                       {isPremium ? (
                         <Link
                           href="/dashboard"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
+                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                         >
                           <Briefcase className="w-5 h-5" />
                           <span>Start Hiring Manager Interview</span>
@@ -3585,7 +3585,7 @@ export default function InterviewDashboard() {
                     </p>
                     <Link
                       href="/dashboard?stage=hiring_manager"
-                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
+                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <Briefcase className="w-5 h-5" />
                       <span>Start Hiring Manager Interview</span>
@@ -3602,7 +3602,7 @@ export default function InterviewDashboard() {
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
                     ? 'bg-primary-600'
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                    : 'bg-orange-600'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                   <div className="relative z-10">
@@ -3658,7 +3658,7 @@ export default function InterviewDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-indigo-600">
+                      <div className="text-3xl font-bold text-primary-600">
                         {hmAreasPassed}/{hmTotalAreas}
                       </div>
                       <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -3681,13 +3681,13 @@ export default function InterviewDashboard() {
                 <div className="mt-4">
                   <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                       style={{ width: `${hmAreasProgress}%` }}
                     ></div>
                   </div>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-gray-600">Focus on the orange areas below to level up.</span>
-                    <span className="text-indigo-600 font-semibold">Master all 6 to be hiring-manager ready.</span>
+                    <span className="text-primary-600 font-semibold">Master all 6 to be hiring-manager ready.</span>
                   </div>
                 </div>
               </div>
@@ -3956,11 +3956,11 @@ export default function InterviewDashboard() {
                           <div key={idx} className={`${baseClasses} ${toneClasses}`}>
                             <div className="flex space-x-3">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-indigo-600" />}
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-primary-600" />}
                               </div>
                               <div className="flex-1">
                                 <div className="flex justify-between mb-1">
-                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-primary-700'}`}>
                                     {isCandidate ? 'You' : 'AI Interviewer'}
                                   </span>
                                   {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
@@ -4001,7 +4001,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowHmRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -4041,7 +4041,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                       {/* Modal Header */}
-                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
                             Detailed Performance Report
@@ -4054,7 +4054,7 @@ export default function InterviewDashboard() {
                           <button
                             type="button"
                             onClick={() => window.print()}
-                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-all text-sm font-medium flex items-center space-x-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -4156,7 +4156,7 @@ export default function InterviewDashboard() {
                     </p>
                     <Link
                       href="/dashboard?stage=culture_fit"
-                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
+                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <Users className="w-5 h-5" />
                       <span>Start Culture Fit Interview</span>
@@ -4173,7 +4173,7 @@ export default function InterviewDashboard() {
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
                     ? 'bg-primary-600'
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                    : 'bg-orange-600'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                   <div className="relative z-10">
@@ -4229,7 +4229,7 @@ export default function InterviewDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-indigo-600">
+                      <div className="text-3xl font-bold text-primary-600">
                         {cfAreasPassed}/{cfTotalAreas}
                       </div>
                       <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -4252,13 +4252,13 @@ export default function InterviewDashboard() {
                 <div className="mt-4">
                   <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                       style={{ width: `${cfAreasProgress}%` }}
                     ></div>
                   </div>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-gray-600">Focus on the orange areas below to level up.</span>
-                    <span className="text-indigo-600 font-semibold">Master all areas to be culture-fit ready.</span>
+                    <span className="text-primary-600 font-semibold">Master all areas to be culture-fit ready.</span>
                   </div>
                 </div>
               </div>
@@ -4444,11 +4444,11 @@ export default function InterviewDashboard() {
                           <div key={idx} className={`${baseClasses} ${toneClasses}`}>
                             <div className="flex space-x-3">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-indigo-600" />}
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-primary-600" />}
                               </div>
                               <div className="flex-1">
                                 <div className="flex justify-between mb-1">
-                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-primary-700'}`}>
                                     {isCandidate ? 'You' : 'AI Interviewer'}
                                   </span>
                                   {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
@@ -4489,7 +4489,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowCfRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -4529,7 +4529,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                       {/* Modal Header */}
-                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
                             Detailed Performance Report
@@ -4542,7 +4542,7 @@ export default function InterviewDashboard() {
                           <button
                             type="button"
                             onClick={() => window.print()}
-                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-all text-sm font-medium flex items-center space-x-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -4645,7 +4645,7 @@ export default function InterviewDashboard() {
                     </p>
                     <Link
                       href="/dashboard?stage=final"
-                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
+                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <Crown className="w-5 h-5" />
                       <span>Start Final Interview</span>
@@ -4662,7 +4662,7 @@ export default function InterviewDashboard() {
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
                     ? 'bg-primary-600'
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                    : 'bg-orange-600'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                   <div className="relative z-10">
@@ -4718,7 +4718,7 @@ export default function InterviewDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-indigo-600">
+                      <div className="text-3xl font-bold text-primary-600">
                         {frAreasPassed}/{frTotalAreas}
                       </div>
                       <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -4741,13 +4741,13 @@ export default function InterviewDashboard() {
                 <div className="mt-4">
                   <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                       style={{ width: `${frAreasProgress}%` }}
                     ></div>
                   </div>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-gray-600">Focus on the orange areas below to level up.</span>
-                    <span className="text-indigo-600 font-semibold">Master all areas to be final-round ready.</span>
+                    <span className="text-primary-600 font-semibold">Master all areas to be final-round ready.</span>
                   </div>
                 </div>
               </div>
@@ -4933,11 +4933,11 @@ export default function InterviewDashboard() {
                           <div key={idx} className={`${baseClasses} ${toneClasses}`}>
                             <div className="flex space-x-3">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Crown className="w-5 h-5 text-indigo-600" />}
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Crown className="w-5 h-5 text-primary-600" />}
                               </div>
                               <div className="flex-1">
                                 <div className="flex justify-between mb-1">
-                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-primary-700'}`}>
                                     {isCandidate ? 'You' : 'AI Interviewer'}
                                   </span>
                                   {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
@@ -4978,7 +4978,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowFrRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -5018,7 +5018,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                       {/* Modal Header */}
-                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
                             Detailed Performance Report
@@ -5031,7 +5031,7 @@ export default function InterviewDashboard() {
                           <button
                             type="button"
                             onClick={() => window.print()}
-                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-all text-sm font-medium flex items-center space-x-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />

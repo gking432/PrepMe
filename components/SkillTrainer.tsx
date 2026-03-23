@@ -316,7 +316,7 @@ export default function SkillTrainer({ feedback, sessionId, currentStage, struct
               isPassed
                 ? 'border-emerald-300'
                 : isExpanded
-                ? 'border-violet-400 shadow-lg shadow-violet-50'
+                ? 'border-accent-400 shadow-lg shadow-accent-50'
                 : 'border-gray-200'
             }`}
           >
@@ -385,13 +385,13 @@ export default function SkillTrainer({ feedback, sessionId, currentStage, struct
                 <div className="flex rounded-xl border border-gray-200 overflow-hidden text-sm">
                   <button
                     onClick={() => setInputMode('text')}
-                    className={`flex-1 py-2 font-semibold transition-colors ${inputMode === 'text' ? 'bg-violet-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`flex-1 py-2 font-semibold transition-colors ${inputMode === 'text' ? 'bg-accent-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
                   >
                     Type
                   </button>
                   <button
                     onClick={() => setInputMode('voice')}
-                    className={`flex-1 py-2 font-semibold transition-colors ${inputMode === 'voice' ? 'bg-violet-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+                    className={`flex-1 py-2 font-semibold transition-colors ${inputMode === 'voice' ? 'bg-accent-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
                   >
                     Voice
                   </button>
@@ -405,7 +405,7 @@ export default function SkillTrainer({ feedback, sessionId, currentStage, struct
                       onChange={e => setAnswers(a => ({ ...a, [card.id]: e.target.value }))}
                       rows={4}
                       placeholder="Give a clear, specific answer. Use a real example (STAR format)."
-                      className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-violet-400 resize-none transition-colors"
+                      className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-accent-400 resize-none transition-colors"
                     />
                     <div className="flex gap-2">
                       <button
@@ -417,7 +417,7 @@ export default function SkillTrainer({ feedback, sessionId, currentStage, struct
                       <button
                         onClick={() => handleSubmitText(card)}
                         disabled={!answers[card.id]?.trim() || isSubmitting}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-bold disabled:opacity-40 hover:bg-violet-700 active:scale-95 transition-all"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-accent-600 text-white rounded-xl text-sm font-bold disabled:opacity-40 hover:bg-accent-700 active:scale-95 transition-all"
                       >
                         {isSubmitting
                           ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Scoring...</>
@@ -433,7 +433,7 @@ export default function SkillTrainer({ feedback, sessionId, currentStage, struct
                   <div className="text-center py-4 space-y-3">
                     {isSubmitting ? (
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm text-gray-500">Scoring your answer…</p>
                       </div>
                     ) : isRecording ? (
@@ -453,9 +453,9 @@ export default function SkillTrainer({ feedback, sessionId, currentStage, struct
                       <>
                         <button
                           onClick={() => startRecording(card.id)}
-                          className="w-16 h-16 bg-violet-50 rounded-full flex items-center justify-center mx-auto hover:bg-violet-100 active:scale-95 transition-all"
+                          className="w-16 h-16 bg-accent-50 rounded-full flex items-center justify-center mx-auto hover:bg-accent-100 active:scale-95 transition-all"
                         >
-                          <Mic className="w-7 h-7 text-violet-600" />
+                          <Mic className="w-7 h-7 text-accent-600" />
                         </button>
                         <p className="text-sm text-gray-400">Tap to record your answer</p>
                       </>

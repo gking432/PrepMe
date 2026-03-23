@@ -22,7 +22,7 @@ const STAGE_CONFIG: Record<InterviewStage, {
 }> = {
   hr_screen:      { name: 'HR Screen',       subtitle: 'Phone screening with a recruiter',   emoji: '📱', bg: 'bg-emerald-500', activeBorder: 'border-emerald-700' },
   hiring_manager: { name: 'Hiring Manager',  subtitle: 'Deep-dive with your future boss',    emoji: '💼', price: '$4.99', bg: 'bg-blue-500',    activeBorder: 'border-blue-700'    },
-  culture_fit:    { name: 'Culture Fit',     subtitle: 'Team & values alignment',            emoji: '🤝', price: '$3.99', bg: 'bg-violet-500',  activeBorder: 'border-violet-700'  },
+  culture_fit:    { name: 'Culture Fit',     subtitle: 'Team & values alignment',            emoji: '🤝', price: '$3.99', bg: 'bg-accent-500',  activeBorder: 'border-accent-700'  },
   final:          { name: 'Final Round',     subtitle: 'Executive-level evaluation',          emoji: '🏆', price: '$5.99', bg: 'bg-amber-500',   activeBorder: 'border-amber-700'   },
 }
 
@@ -332,7 +332,7 @@ export default function DashboardPage() {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-5">
           <Preppi size="md" animate />
-          <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     )
@@ -368,7 +368,7 @@ export default function DashboardPage() {
               </button>
               {!user && (
                 <Link href="/auth" className="block text-center text-sm text-gray-400 hover:text-gray-600 py-2">
-                  Already have an account? <span className="font-semibold text-violet-600">Sign in</span>
+                  Already have an account? <span className="font-semibold text-accent-600">Sign in</span>
                 </Link>
               )}
             </div>
@@ -380,7 +380,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-6 animate-slide-up">
             {/* Progress dots */}
             <div className="flex justify-center gap-2 pt-2 mb-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-accent-500" />
               <div className="w-2.5 h-2.5 rounded-full bg-gray-200" />
             </div>
 
@@ -393,14 +393,14 @@ export default function DashboardPage() {
                 type="text"
                 value={interviewData.companyName}
                 onChange={(e) => setInterviewData(prev => ({ ...prev, companyName: e.target.value }))}
-                className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-violet-400 font-medium placeholder-gray-300 transition-colors"
+                className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-accent-400 font-medium placeholder-gray-300 transition-colors"
                 placeholder="Company"
               />
               <input
                 type="text"
                 value={interviewData.positionTitle}
                 onChange={(e) => setInterviewData(prev => ({ ...prev, positionTitle: e.target.value }))}
-                className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-violet-400 font-medium placeholder-gray-300 transition-colors"
+                className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-accent-400 font-medium placeholder-gray-300 transition-colors"
                 placeholder="Role / position title"
               />
             </div>
@@ -414,8 +414,8 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-6 animate-slide-up">
             {/* Progress dots */}
             <div className="flex justify-center gap-2 pt-2 mb-1">
-              <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
-              <div className="w-2.5 h-2.5 rounded-full bg-violet-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-accent-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-accent-500" />
             </div>
 
             <Preppi message="Now let me get to know you!" size="md" animate className="justify-center" />
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                       setExtractedUserInfo({ email: null, name: null, phone: null })
                     }
                   }}
-                  className="w-full px-4 py-3.5 text-sm border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-violet-400 bg-white font-medium transition-colors"
+                  className="w-full px-4 py-3.5 text-sm border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-accent-400 bg-white font-medium transition-colors"
                 >
                   <option value="">Use a saved resume…</option>
                   {savedResumes.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
@@ -496,7 +496,7 @@ export default function DashboardPage() {
 
               {!user && hasResume && (
                 <label className="flex items-center gap-2.5 cursor-pointer py-1">
-                  <input type="checkbox" checked={createAccountChecked} onChange={(e) => setCreateAccountChecked(e.target.checked)} className="w-4 h-4 text-violet-500 border-gray-300 rounded" />
+                  <input type="checkbox" checked={createAccountChecked} onChange={(e) => setCreateAccountChecked(e.target.checked)} className="w-4 h-4 text-accent-500 border-gray-300 rounded" />
                   <span className="text-xs text-gray-500">
                     {extractedUserInfo.email ? `Save progress to ${extractedUserInfo.email}` : 'Create free account to save progress'}
                   </span>
@@ -518,7 +518,7 @@ export default function DashboardPage() {
                 <span className="text-sm text-gray-400 font-medium">
                   {[interviewData.positionTitle, interviewData.companyName].filter(Boolean).join(' at ')}
                 </span>
-                <button onClick={() => setOnboardStep('job')} className="text-xs text-violet-500 font-semibold hover:text-violet-700">
+                <button onClick={() => setOnboardStep('job')} className="text-xs text-accent-500 font-semibold hover:text-accent-700">
                   Edit
                 </button>
               </div>
@@ -566,7 +566,7 @@ export default function DashboardPage() {
                     {isLocked && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Lock className="w-4 h-4 text-gray-400" />
-                        <span className="text-xs font-bold text-indigo-500">{config.price}</span>
+                        <span className="text-xs font-bold text-primary-500">{config.price}</span>
                       </div>
                     )}
                     {!isLocked && stage !== 'hr_screen' && (
@@ -581,7 +581,7 @@ export default function DashboardPage() {
             {user && PAID_STAGES.some(s => isStageLockedFn(s)) && (
               <button
                 onClick={() => { setPurchaseHighlightStage(undefined); setShowPurchaseFlow(true) }}
-                className="flex items-center justify-center gap-2 py-2 text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors"
+                className="flex items-center justify-center gap-2 py-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition-colors"
               >
                 <Crown className="w-4 h-4" />
                 Unlock all 4 stages — bundle from $9.99
@@ -597,7 +597,7 @@ export default function DashboardPage() {
           {onboardStep === 'job' && (
             <button
               onClick={() => setOnboardStep('resume')}
-              className="w-full py-4 bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-violet-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg shadow-violet-100"
+              className="w-full py-4 bg-accent-600 hover:bg-accent-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-accent-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg shadow-accent-100"
             >
               CONTINUE →
             </button>
@@ -607,7 +607,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setOnboardStep('stage')}
               disabled={!hasResume}
-              className="w-full py-4 bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-violet-800 active:border-b-0 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-100"
+              className="w-full py-4 bg-accent-600 hover:bg-accent-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-accent-800 active:border-b-0 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-accent-100"
             >
               {hasResume ? 'CONTINUE →' : 'Add your resume to continue'}
             </button>
@@ -617,7 +617,7 @@ export default function DashboardPage() {
             user && isStageLockedFn(selectedStage) ? (
               <button
                 onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-indigo-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                className="w-full py-4 bg-primary-600 hover:bg-primary-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-primary-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
               >
                 <Lock className="inline w-5 h-5 mr-2" />
                 Unlock {STAGE_CONFIG[selectedStage].name} · {STAGE_CONFIG[selectedStage].price}

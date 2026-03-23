@@ -116,14 +116,14 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
                     key={stage.id}
                     className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
                       isHighlighted
-                        ? 'border-indigo-500 bg-indigo-50 shadow-md'
+                        ? 'border-primary-500 bg-primary-50 shadow-md'
                         : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                      isHighlighted ? 'bg-indigo-100' : 'bg-gray-100'
+                      isHighlighted ? 'bg-primary-100' : 'bg-gray-100'
                     }`}>
-                      <Icon className={`w-5 h-5 ${isHighlighted ? 'text-indigo-600' : 'text-gray-500'}`} />
+                      <Icon className={`w-5 h-5 ${isHighlighted ? 'text-primary-600' : 'text-gray-500'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900">{stage.name}</p>
@@ -137,7 +137,7 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
                         disabled={loading !== null}
                         className={`mt-1 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 ${
                           isHighlighted
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            ? 'bg-primary-600 text-white hover:bg-primary-700'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
@@ -153,11 +153,11 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
           {/* Bundle Deal */}
           <div className="relative">
             <div className="absolute -top-3 left-4">
-              <span className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full shadow-sm">
+              <span className="px-3 py-1 bg-primary-600 text-white text-xs font-bold rounded-full shadow-sm">
                 Best Value — Save ${savingsAmount}
               </span>
             </div>
-            <div className="border-2 border-indigo-500 bg-gradient-to-br from-indigo-50 to-white rounded-xl p-5 pt-6">
+            <div className="border-2 border-primary-500 bg-gradient-to-br from-primary-50 to-white rounded-xl p-5 pt-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="font-bold text-gray-900 text-lg">Full Interview Prep Bundle</h3>
@@ -175,7 +175,7 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
                       type="checkbox"
                       checked={skipCultureFit}
                       onChange={e => setSkipCultureFit(e.target.checked)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <span className="text-gray-500">
                       Skip Culture Fit ({skipCultureFit ? '$9.99' : '-$2.00'})
@@ -188,7 +188,7 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
                   <button
                     onClick={() => handlePurchase('bundle_3')}
                     disabled={loading !== null}
-                    className="mt-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-sm"
+                    className="mt-2 px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold text-sm hover:bg-primary-700 transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {loading === 'bundle_3' || loading === 'bundle_2_no_cf' ? 'Processing...' : 'Get Bundle'}
                   </button>
@@ -218,7 +218,7 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
                 <button
                   onClick={() => handlePurchase('subscription_monthly')}
                   disabled={loading !== null}
-                  className="mt-2 px-5 py-2 text-sm text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 font-semibold transition-colors disabled:opacity-50"
+                  className="mt-2 px-5 py-2 text-sm text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 font-semibold transition-colors disabled:opacity-50"
                 >
                   {loading === 'subscription_monthly' ? 'Processing...' : 'Subscribe'}
                 </button>

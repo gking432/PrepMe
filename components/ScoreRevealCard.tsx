@@ -68,8 +68,8 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      {/* Preppi reaction header */}
-      <div className="px-6 pt-6 pb-4 bg-gray-50 border-b border-gray-100">
+      {/* Preppi reaction header — mobile only */}
+      <div className="md:hidden px-6 pt-6 pb-4 bg-gray-50 border-b border-gray-100">
         <Preppi
           message={getPreppiMessage(score, likelihood)}
           size="md"

@@ -32,7 +32,7 @@ export default function Preppi({ message, size = 'md', animate = true, className
 
   return (
     <div
-      className={`flex items-end ${s.wrapper} transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} ${className}`}
+      className={`md:hidden flex items-end ${s.wrapper} transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} ${className}`}
     >
       {/* Parrot SVG */}
       <div className="shrink-0" style={{ width: s.bird, height: s.bird }}>

@@ -385,6 +385,7 @@ export default function DashboardPage() {
             </div>
 
             <Preppi message="What job are you interviewing for?" size="md" animate className="justify-center" />
+            <p className="hidden md:block text-center text-base font-semibold text-gray-700">What job are you interviewing for?</p>
 
             <div className="space-y-3">
               <input
@@ -418,6 +419,7 @@ export default function DashboardPage() {
             </div>
 
             <Preppi message="Now let me get to know you!" size="md" animate className="justify-center" />
+            <p className="hidden md:block text-center text-base font-semibold text-gray-700">Add your resume</p>
 
             <div className="space-y-3">
               {user && savedResumes.length > 0 && (
@@ -508,6 +510,7 @@ export default function DashboardPage() {
         {onboardStep === 'stage' && (
           <div className="flex flex-col gap-5 animate-slide-up">
             <Preppi message={getPreppiMessage()} size="md" animate className="justify-center" />
+            <p className="hidden md:block text-center text-base font-semibold text-gray-700">Which stage are you preparing for?</p>
 
             {/* Company / role summary */}
             {(interviewData.companyName || interviewData.positionTitle) && (

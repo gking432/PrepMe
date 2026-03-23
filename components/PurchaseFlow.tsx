@@ -97,7 +97,7 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Unlock Paid Interview Stages</h2>
             <p className="text-gray-600 mt-2">
-              Practice with AI interviewers that adapt to your resume and job description.
+              Every mock interview is built around your company, your role, and your resume.
             </p>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function PurchaseFlow({ onClose, userEmail, highlightStage }: Pur
                   Up to 5 full interview processes per month. All stages included.
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Perfect for active job seekers applying to multiple roles.
+                  Built for candidates actively applying to multiple roles.
                 </p>
               </div>
               <div className="text-center shrink-0">

@@ -51,9 +51,6 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Why Choose PrepMe?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Everything you need to prepare for your interview in one place
-            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -66,7 +63,7 @@ export default function HomePage() {
                 Company-Specific Practice
               </h3>
               <p className="text-gray-600">
-                Our AI has deep knowledge of the company and job description you're applying for. Get interview questions and feedback tailored to your specific role and company culture.
+                The AI is briefed on the company, the role, and your resume. It asks the questions your actual interviewer will ask.
               </p>
             </div>
 
@@ -89,10 +86,10 @@ export default function HomePage() {
                 <Trophy className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Affordable Pricing
+                Pay per round, not per month
               </h3>
               <p className="text-gray-600">
-                HR Screen is free. Unlock individual stages from $3.99 or get the full bundle for $11.99. Each purchase includes 3 attempts. Monthly subscription available for power users.
+                HR Screen is free. Unlock individual stages from $3.99 or get the full bundle for $11.99. Each purchase includes 3 attempts.
               </p>
             </div>
           </div>
@@ -104,9 +101,6 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               How It Works
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Get started in three simple steps
-            </p>
           </div>
 
           <div className="max-w-4xl mx-auto">
@@ -119,7 +113,7 @@ export default function HomePage() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Upload Your Materials</h3>
                   <p className="text-gray-600">
-                    Share your resume and the job description URL. Our AI will analyze both and gather company information to create an interviewer with intimate knowledge of the company and role you're applying for.
+                    Drop your resume and the job posting URL. We pull the company data, read the role requirements, and build an interviewer who knows exactly what they're looking for.
                   </p>
                 </div>
               </div>
@@ -132,7 +126,7 @@ export default function HomePage() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Practice Your Interview</h3>
                   <p className="text-gray-600">
-                    Engage in a realistic mock interview with an AI that knows the company, role, and your background. Answer naturally and get real-time feedback on your responses.
+                    Talk to an AI briefed on the company, the role, and you. Answer out loud. Get scored.
                   </p>
                 </div>
               </div>
@@ -145,7 +139,7 @@ export default function HomePage() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Get Feedback & Practice Again</h3>
                   <p className="text-gray-600">
-                    Receive detailed feedback on your responses. Practice specific questions flagged for improvement right in the dashboard, then run through the whole interview again. Repeat until you're ready to land the job.
+                    See where you landed on every question. Drill the weak spots. Go again when you're ready.
                   </p>
                 </div>
               </div>
@@ -157,10 +151,10 @@ export default function HomePage() {
         <div className="py-20">
           <div className="bg-primary-500 rounded-3xl shadow-2xl p-12 text-center text-white">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Ready to Land Your Dream Job?
+              The interview is coming. Get ready.
             </h2>
             <p className="text-xl text-primary-100 mb-4 max-w-2xl mx-auto">
-              Practice with an AI that knows the company and role. Get feedback, improve, and practice again until you're confident.
+              One real practice round is worth more than two hours of reading interview tips.
             </p>
             <p className="text-lg text-primary-200 mb-8 max-w-2xl mx-auto">
               HR Screen free • Individual stages from $3.99 • Full bundle $11.99
@@ -188,7 +182,7 @@ export default function HomePage() {
               />
             </Link>
             <p className="text-gray-600 text-sm">
-              © 2025 PrepMe. All rights reserved.
+              © 2026 PrepMe. All rights reserved.
             </p>
           </div>
         </div>

@@ -476,7 +476,7 @@ export default function ProfilePage() {
                 <div className="p-12 text-center">
                   <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No interviews yet</h3>
-                  <p className="text-gray-600 mb-6">Start your first interview to see your history here</p>
+                  <p className="text-gray-600 mb-6">Complete your first round to see how you stack up.</p>
                   <Link href="/dashboard" className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
                     <span>Get Started</span>
                     <ArrowRight className="w-5 h-5" />

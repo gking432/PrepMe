@@ -65,7 +65,7 @@ export default function LoginPage() {
             Sign in to PrepMe
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Practice job interviews with AI
+            Real interview practice, built around your company and role.
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>

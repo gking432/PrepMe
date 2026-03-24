@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
@@ -311,7 +313,7 @@ export default function AdminPage() {
         <div className="mb-6">
           <Link
             href="/dashboard"
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mb-4"
+            className="inline-flex items-center text-primary-600 hover:text-primary-800 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
@@ -327,7 +329,7 @@ export default function AdminPage() {
               onClick={() => setActiveTab('prompts')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'prompts'
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -337,7 +339,7 @@ export default function AdminPage() {
               onClick={() => setActiveTab('criteria')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'criteria'
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -347,7 +349,7 @@ export default function AdminPage() {
               onClick={() => setActiveTab('settings')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'settings'
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -380,7 +382,7 @@ export default function AdminPage() {
                       value={prompt.system_prompt}
                       onChange={(e) => updatePrompt(index, 'system_prompt', e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       placeholder="System prompt for the AI interviewer..."
                     />
                   </div>
@@ -394,7 +396,7 @@ export default function AdminPage() {
                       value={prompt.question_set.join('\n')}
                       onChange={(e) => updatePrompt(index, 'question_set', e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-gray-50"
                       placeholder="Optional: Reference questions (not used during interview)"
                     />
                     <p className="text-xs text-gray-400 mt-1">
@@ -411,7 +413,7 @@ export default function AdminPage() {
                       <select
                         value={prompt.tone}
                         onChange={(e) => updatePrompt(index, 'tone', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       >
                         <option value="professional">Professional</option>
                         <option value="friendly">Friendly</option>
@@ -425,7 +427,7 @@ export default function AdminPage() {
                       <select
                         value={prompt.depth_level}
                         onChange={(e) => updatePrompt(index, 'depth_level', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       >
                         <option value="basic">Basic</option>
                         <option value="medium">Medium</option>
@@ -442,7 +444,7 @@ export default function AdminPage() {
               <button
                 onClick={savePrompts}
                 disabled={saving}
-                className="flex items-center space-x-2 px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" />
                 <span>{saving ? 'Saving...' : 'Save Prompts'}</span>
@@ -460,7 +462,7 @@ export default function AdminPage() {
               </p>
               <button
                 onClick={addNewCriteria}
-                className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Criteria</span>
@@ -490,7 +492,7 @@ export default function AdminPage() {
                         value={item.assessment_area}
                         onChange={(e) => updateCriteria(index, 'assessment_area', e.target.value)}
                         disabled={!item.id.startsWith('new-')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100"
                         placeholder="e.g., technical_skills"
                       />
                     </div>
@@ -502,7 +504,7 @@ export default function AdminPage() {
                         type="text"
                         value={item.area_name}
                         onChange={(e) => updateCriteria(index, 'area_name', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         placeholder="e.g., Technical Skills"
                       />
                     </div>
@@ -516,7 +518,7 @@ export default function AdminPage() {
                       value={item.description}
                       onChange={(e) => updateCriteria(index, 'description', e.target.value)}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       placeholder="What does this area assess?"
                     />
                   </div>
@@ -529,7 +531,7 @@ export default function AdminPage() {
                       value={item.evaluation_guidelines}
                       onChange={(e) => updateCriteria(index, 'evaluation_guidelines', e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       placeholder="Detailed guidelines on how to evaluate this area..."
                     />
                   </div>
@@ -542,7 +544,7 @@ export default function AdminPage() {
                       value={item.rubric}
                       onChange={(e) => updateCriteria(index, 'rubric', e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                       placeholder="10: Excellent, 7-9: Good, 4-6: Adequate, 1-3: Poor"
                     />
                   </div>
@@ -557,7 +559,7 @@ export default function AdminPage() {
                         step="0.1"
                         value={item.weight}
                         onChange={(e) => updateCriteria(index, 'weight', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                         min="0"
                       />
                     </div>
@@ -567,7 +569,7 @@ export default function AdminPage() {
                           type="checkbox"
                           checked={item.is_active}
                           onChange={(e) => updateCriteria(index, 'is_active', e.target.checked)}
-                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
                         <span className="text-sm font-medium text-gray-700">Active</span>
                       </label>
@@ -582,7 +584,7 @@ export default function AdminPage() {
               <button
                 onClick={saveCriteria}
                 disabled={saving}
-                className="flex items-center space-x-2 px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" />
                 <span>{saving ? 'Saving...' : 'Save Criteria'}</span>
@@ -602,7 +604,7 @@ export default function AdminPage() {
                 <select
                   value={settings.honesty_level}
                   onChange={(e) => updateSettings('honesty_level', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="lenient">Lenient - More forgiving, focuses on positives</option>
                   <option value="fair">Fair - Balanced assessment</option>
@@ -619,7 +621,7 @@ export default function AdminPage() {
                   value={settings.evaluation_instructions}
                   onChange={(e) => updateSettings('evaluation_instructions', e.target.value)}
                   rows={12}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
                   placeholder="Instructions for the AI evaluator..."
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -633,7 +635,7 @@ export default function AdminPage() {
                     type="checkbox"
                     checked={settings.require_job_alignment}
                     onChange={(e) => updateSettings('require_job_alignment', e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Require strict job alignment evaluation
@@ -648,7 +650,7 @@ export default function AdminPage() {
                     type="checkbox"
                     checked={settings.require_specific_examples}
                     onChange={(e) => updateSettings('require_specific_examples', e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Require specific examples from transcript
@@ -665,7 +667,7 @@ export default function AdminPage() {
               <button
                 onClick={saveSettings}
                 disabled={saving}
-                className="flex items-center space-x-2 px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50"
               >
                 <Save className="w-5 h-5" />
                 <span>{saving ? 'Saving...' : 'Save Settings'}</span>

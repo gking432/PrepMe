@@ -1,9 +1,11 @@
 // Claude (Anthropic) client for post-interview grading
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-})
+let _anthropic: Anthropic | null = null
+function getAnthropic() {
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
+  return _anthropic
+}
 
 export interface GradingMaterials {
   transcript: string
@@ -105,7 +107,7 @@ async function callClaudeGrader(
   }
 
   try {
-    const message = await anthropic.messages.create({
+    const message = await getAnthropic().messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8000,
       system: systemPrompt,
@@ -180,36 +182,42 @@ Your task is to assess the candidate using TWO tiers:
 TIER 1 - UNIVERSAL HIRING MANAGER CRITERIA (score each 1-10):
 These apply to every candidate regardless of industry or role:
 
-1. Depth of Knowledge
+1. Technical Depth / Domain Knowledge
    - Did they go beyond surface-level answers?
    - Could they explain the "why" behind their decisions and approaches?
-   - Did they demonstrate mastery vs. familiarity?
+   - Did they demonstrate mastery vs. mere familiarity?
 
 2. Problem-Solving Approach
    - When given challenges or scenarios, how did they think through them?
    - Did they show structured thinking (break down problems, consider tradeoffs)?
    - Did they ask clarifying questions before jumping to solutions?
 
-3. Impact & Results
-   - Did they quantify achievements with real numbers/metrics?
-   - Did they show outcomes, not just activities?
-   - Could they articulate their specific contribution vs. team effort?
+3. Experience Storytelling (STAR Method)
+   - Did they anchor answers in specific, concrete past experiences?
+   - Did they follow a clear Situation → Task → Action → Result structure?
+   - Did they quantify outcomes with real numbers or measurable impact?
 
-4. Role Alignment
+4. Role-Specific Competencies
    - Do their actual skills match what the job description requires?
    - Did their answers demonstrate capability for THIS specific role?
    - Are there critical skill gaps vs. nice-to-have gaps?
 
-5. Growth & Self-Awareness
-   - Can they articulate what they've learned from failures?
-   - Do they show awareness of their own strengths and weaknesses?
-   - Do they demonstrate a growth mindset and desire to improve?
+5. Critical Thinking Under Pressure
+   - When pushed back on or asked follow-up questions, did they hold up?
+   - Did they reason through ambiguous or novel scenarios calmly?
+   - Did they show intellectual honesty (admit uncertainty vs. bluff)?
 
-6. Red Flags & Concerns
-   - Any inconsistencies between resume claims and interview answers?
-   - Blame-shifting, defensiveness, or inability to take ownership?
-   - Vague answers on topics where specificity was expected?
-   - Signs of exaggeration or dishonesty?
+6. Questions Asked to Interviewer
+   - Did they ask thoughtful, substantive questions about the role/team/company?
+   - Did their questions signal genuine interest and preparation?
+   - Did they avoid generic or surface-level questions?
+
+RED FLAGS (not scored — flag as present/absent with brief explanation):
+- Inconsistencies between resume claims and interview answers
+- Blame-shifting, defensiveness, or inability to take ownership
+- Vague answers on topics where specificity was clearly expected
+- Signs of exaggeration or dishonesty
+- Negative comments about past employers or colleagues
 
 TIER 2 - ROLE-SPECIFIC CRITERIA (Claude identifies from JD):
 Read the job description carefully and identify the 3-4 most critical technical/functional competencies for THIS specific role.
@@ -236,7 +244,7 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
   "hiring_manager_six_areas": {
     "what_went_well": [
       {
-        "criterion": "Depth of Knowledge",
+        "criterion": "Technical Depth / Domain Knowledge",
         "feedback": "[1-2 sentence explanation with specific transcript reference]",
         "evidence": [
           {
@@ -249,7 +257,7 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
     ],
     "what_needs_improve": [
       {
-        "criterion": "Impact & Results",
+        "criterion": "Experience Storytelling (STAR Method)",
         "feedback": "[1-2 sentence explanation with specific transcript reference]",
         "evidence": [
           {
@@ -259,11 +267,19 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
           }
         ]
       }
+    ],
+    "red_flags": [
+      {
+        "flag": "Brief description of the concern",
+        "present": true,
+        "explanation": "[1 sentence citing the specific moment]"
+      }
     ]
   }
 }
 
-Each of the 6 universal criteria should appear in either "what_went_well" or "what_needs_improve" (not both).`
+Each of the 6 universal criteria must appear in either "what_went_well" or "what_needs_improve" (not both).
+Include "red_flags" as an array — use an empty array [] if none were observed.`
 
   // Add cross-stage context if HR screen feedback is available
   if (materials.hrScreenFeedback) {
@@ -306,12 +322,12 @@ Use this context to:
 
   prompt += `\n\nMANDATORY REQUIREMENTS FOR hiring_manager_criteria:`
   prompt += `\nYou MUST include ALL 6 criteria in both "scores" and "feedback" objects with these EXACT names:`
-  prompt += `\n1. depth_of_knowledge`
-  prompt += `\n2. problem_solving`
-  prompt += `\n3. impact_and_results`
-  prompt += `\n4. role_alignment`
-  prompt += `\n5. growth_and_self_awareness`
-  prompt += `\n6. red_flags`
+  prompt += `\n1. technical_depth_domain_knowledge`
+  prompt += `\n2. problem_solving_approach`
+  prompt += `\n3. experience_storytelling_star`
+  prompt += `\n4. role_specific_competencies`
+  prompt += `\n5. critical_thinking_under_pressure`
+  prompt += `\n6. questions_asked_to_interviewer`
   prompt += `\n\nDO NOT use alternative names. Every single one must be present with both a score and feedback text.`
 
   prompt += `\n\nSCORING SCALE (STRICT - SCORES MUST ALIGN WITH YOUR ANALYSIS):`
@@ -820,3 +836,91 @@ Include a detailed "cross_stage_progress" section addressing all 4 points above.
   return prompt
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Combined Final Report
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface StageFeedbackSummary {
+  stage: string
+  overall_score: number
+  strengths: string[]
+  weaknesses: string[]
+  likelihood_to_advance?: string
+}
+
+export interface CombinedReportResult {
+  overall_hire_recommendation: 'strong_hire' | 'hire' | 'lean_hire' | 'lean_no_hire' | 'no_hire'
+  confidence_level: 'high' | 'medium' | 'low'
+  composite_score: number
+  score_progression: Array<{ stage: string; score: number }>
+  top_strengths: string[]
+  top_gaps: string[]
+  cross_stage_patterns: string[]
+  stage_summaries: Array<{ stage: string; headline: string; trajectory: 'improving' | 'consistent' | 'declining' }>
+  final_verdict: string
+  coaching_priorities: string[]
+}
+
+/**
+ * Generate a combined synthesis report from all completed stage rubrics.
+ */
+export async function gradeCombinedReport(
+  stages: StageFeedbackSummary[],
+  jobTitle: string,
+  companyName: string
+): Promise<CombinedReportResult> {
+  const anthropic = getAnthropic()
+
+  const systemPrompt = `You are a senior talent advisor synthesizing a candidate's full interview loop.
+You have received feedback from every completed stage of their interview process.
+Your job is to produce one concise, data-driven final verdict.
+
+OUTPUT FORMAT - respond with valid JSON matching this structure:
+{
+  "overall_hire_recommendation": "strong_hire" | "hire" | "lean_hire" | "lean_no_hire" | "no_hire",
+  "confidence_level": "high" | "medium" | "low",
+  "composite_score": <weighted average 1-10>,
+  "score_progression": [{ "stage": "<name>", "score": <number> }],
+  "top_strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "top_gaps": ["<gap 1>", "<gap 2>", "<gap 3>"],
+  "cross_stage_patterns": ["<pattern 1>", "<pattern 2>"],
+  "stage_summaries": [{ "stage": "<name>", "headline": "<1 sentence>", "trajectory": "improving" | "consistent" | "declining" }],
+  "final_verdict": "<2-3 sentence plain-English summary of the overall picture>",
+  "coaching_priorities": ["<priority 1>", "<priority 2>", "<priority 3>"]
+}
+
+SCORING GUIDANCE:
+- composite_score: weight later stages more heavily (final round = 40%, hiring manager = 30%, culture fit = 20%, hr screen = 10%)
+- Be honest. A candidate who improved across rounds is different from one who peaked in HR screen then declined.
+- cross_stage_patterns should identify themes that appeared in 2+ rounds (good or bad)
+- coaching_priorities are the most impactful things this candidate should work on before their next opportunity`
+
+  const userMessage = `Role: ${jobTitle} at ${companyName}
+
+STAGE FEEDBACK:
+${stages.map(s => `
+=== ${s.stage.toUpperCase().replace(/_/g, ' ')} ===
+Score: ${s.overall_score}/10
+Likelihood to Advance: ${s.likelihood_to_advance || 'N/A'}
+Strengths: ${(s.strengths || []).join(', ') || 'none noted'}
+Weaknesses: ${(s.weaknesses || []).join(', ') || 'none noted'}
+`).join('\n')}
+
+Please generate the combined synthesis report.`
+
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: userMessage }],
+    system: systemPrompt,
+  })
+
+  const content = message.content[0]
+  if (content.type !== 'text') throw new Error('Unexpected response type from Claude')
+
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) throw new Error('No JSON found in combined report response')
+
+  return JSON.parse(jsonMatch[0]) as CombinedReportResult
+}

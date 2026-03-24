@@ -3,9 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase'
 import Stripe from 'stripe'
 import { PRICING } from '@/lib/pricing'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
+let _stripe: Stripe | null = null
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2023-10-16' })
+  return _stripe
+}
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     let event: Stripe.Event
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+      event = getStripe().webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message)
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })

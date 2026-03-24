@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
@@ -62,6 +64,9 @@ export default function InterviewPage() {
   }, [askedQuestions])
   
   const wsRef = useRef<WebSocket | null>(null)
+  const pcRef = useRef<RTCPeerConnection | null>(null)
+  const dcRef = useRef<RTCDataChannel | null>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null)
@@ -175,7 +180,11 @@ export default function InterviewPage() {
         data: { session },
       } = await supabase.auth.getSession()
       if (!session) {
-        router.push('/auth/login')
+        // HR screen is free and anonymous — let them through.
+        // connectRealtime / startInterviewTraditional already handle localStorage-based anonymous flow.
+        if (stageToUse !== 'hr_screen') {
+          router.push('/auth/login')
+        }
         return
       }
 
@@ -282,42 +291,21 @@ export default function InterviewPage() {
         }
       }
 
-      let interviewDataId = null
-      if (authSession) {
-        // Get latest interview data for logged-in users
-        const { data: interviewData } = await supabase
-          .from('user_interview_data')
-          .select('id')
-          .eq('user_id', authSession.user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        interviewDataId = interviewData?.id || null
-      }
-
-      // Create NEW interview session
-      // For anonymous users, we'll use a placeholder user_id or handle it in the API
-      const { data: newSession, error: sessionError } = await supabase
-        .from('interview_sessions')
-        .insert({
-          user_id: authSession?.user.id || null, // Allow null for anonymous users
-          user_interview_data_id: interviewDataId,
-          stage: stage,
-          status: 'in_progress',
-        })
-        .select()
-        .single()
-
-      if (sessionError) {
-        console.error('Error creating session:', sessionError)
+      // Create session via API (uses supabaseAdmin to bypass RLS for anonymous users)
+      const sessionRes = await fetch('/api/interview/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage, tempInterviewData }),
+      })
+      if (!sessionRes.ok) {
+        const err = await sessionRes.json()
+        console.error('Error creating session:', err)
         throw new Error('Failed to create interview session')
       }
-
-      if (newSession) {
-        setSessionId(newSession.id)
-        sessionIdRef.current = newSession.id
-        console.log('Created new interview session:', newSession.id)
-      }
+      const { sessionId: newSessionId } = await sessionRes.json()
+      setSessionId(newSessionId)
+      sessionIdRef.current = newSessionId
+      console.log('Created new interview session:', newSessionId)
       
       // Mark interview as active before connecting
       isInterviewActiveRef.current = true
@@ -327,7 +315,7 @@ export default function InterviewPage() {
       const response = await fetch('/api/interview/realtime', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage, sessionId: newSession.id }),
+        body: JSON.stringify({ stage, sessionId: newSessionId }),
       })
 
       if (!response.ok) {
@@ -350,82 +338,110 @@ export default function InterviewPage() {
         throw new Error('No client secret received from server')
       }
       
-      // Connect to OpenAI Realtime API WebSocket
-      // The client_secret should be in the URL for authentication
-      const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-realtime-mini&client_secret=${encodeURIComponent(clientSecret)}`
-      
-      console.log('Connecting to WebSocket with client_secret in URL')
-      const ws = new WebSocket(wsUrl)
+      // Connect to OpenAI Realtime API via WebRTC (browser-native audio pipeline)
+      const pc = new RTCPeerConnection()
+      pcRef.current = pc
 
-      wsRef.current = ws
+      // Remote audio plays through a hidden <audio> element
+      const audioEl = document.createElement('audio')
+      audioEl.autoplay = true
+      remoteAudioRef.current = audioEl
+      pc.ontrack = (e) => {
+        audioEl.srcObject = e.streams[0]
+        setIsPlayingAudio(true)
+        e.streams[0].getTracks().forEach((t) => {
+          t.onended = () => setIsPlayingAudio(false)
+        })
+      }
 
-      ws.onopen = () => {
-        console.log('WebSocket connected - sending session configuration')
-        
-        // Configure the session
-        ws.send(JSON.stringify({
+      // Add local mic track — WebRTC handles encoding natively
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStreamRef.current = stream
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+
+      // Data channel for control events
+      const dc = pc.createDataChannel('oai-events')
+      dcRef.current = dc
+
+      dc.onopen = () => {
+        console.log('WebRTC data channel open - configuring session')
+        dc.send(JSON.stringify({
           type: 'session.update',
           session: {
             modalities: ['text', 'audio'],
             instructions: instructions || '',
-            voice: 'alloy',
-            input_audio_format: 'pcm16',
-            output_audio_format: 'pcm16',
+            input_audio_transcription: { model: 'whisper-1' },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.5,
+              threshold: 0.8,
               prefix_padding_ms: 300,
-              silence_duration_ms: 500,
+              silence_duration_ms: 800,
             },
             temperature: 0.7,
-            max_response_output_tokens: 150,
+            max_response_output_tokens: 400,
           },
         }))
-        
-        console.log('Sent session configuration')
-
-        // Wait for session to be configured before starting audio
-        setTimeout(() => {
-          startAudioInput()
-          setIsConnected(true)
-          setIsListening(true)
-        }, 1000)
+        setIsConnected(true)
+        setIsListening(true)
+        // Trigger the interviewer to speak first — without this the AI waits for VAD
+        dc.send(JSON.stringify({ type: 'response.create' }))
       }
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        handleRealtimeMessage(data)
+      dc.onmessage = (e) => {
+        const msg = JSON.parse(e.data)
+        handleRealtimeMessage(msg)
       }
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+      dc.onerror = (err) => {
+        console.error('Data channel error:', err)
         setIsConnected(false)
         setIsListening(false)
-        alert('WebSocket connection error. Check console for details.')
       }
 
-      ws.onclose = (event) => {
-        console.log('WebSocket closed', { code: event.code, reason: event.reason, wasClean: event.wasClean })
+      dc.onclose = () => {
+        console.log('Data channel closed')
         setIsConnected(false)
         setIsListening(false)
-        
-        // If closed due to authentication error, fallback to traditional approach
-        if (event.reason?.includes('authentication') || event.reason?.includes('Missing bearer')) {
-          console.log('WebSocket closed due to authentication error, falling back to traditional approach')
-          // Ensure interview is active before starting traditional approach
-          setIsInterviewActive(true)
-          startInterviewTraditional()
-          return
-        }
-        
-        // If closed unexpectedly, show error
-        if (!event.wasClean && event.code !== 1000 && !isInterviewComplete) {
-          console.log('WebSocket closed unexpectedly, falling back to traditional approach')
-          // Ensure interview is active before starting traditional approach
-          setIsInterviewActive(true)
+        // Only fall back if the interview is still supposed to be active.
+        // isInterviewActiveRef is set to false BEFORE disconnectRealtime() is called
+        // during normal cleanup, so this only fires on unexpected disconnects.
+        if (isInterviewActiveRef.current) {
           startInterviewTraditional()
         }
       }
+
+      pc.oniceconnectionstatechange = () => {
+        console.log('ICE state:', pc.iceConnectionState)
+        if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+          setIsConnected(false)
+          setIsListening(false)
+        }
+      }
+
+      // SDP offer/answer exchange
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+
+      const sdpRes = await fetch(
+        'https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview',
+        {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${clientSecret}`,
+            'Content-Type': 'application/sdp',
+          },
+        }
+      )
+
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text()
+        throw new Error(`WebRTC SDP exchange failed: ${sdpRes.status} - ${errText}`)
+      }
+
+      const answerSdp = await sdpRes.text()
+      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
+      console.log('WebRTC connection established')
     } catch (error) {
       console.error('Error connecting to Realtime API:', error)
       alert('Failed to start interview. Please try again.')
@@ -523,13 +539,6 @@ export default function InterviewPage() {
         })
         break
 
-      case 'response.audio.delta':
-        // Stream audio chunks
-        if (data.delta) {
-          playAudioChunk(data.delta)
-        }
-        break
-
       case 'error':
         console.error('Realtime API error:', data.error)
         setIsConnected(false)
@@ -555,108 +564,19 @@ export default function InterviewPage() {
     }
   }
 
-  const startAudioInput = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          sampleRate: 24000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        }
-      })
-      mediaStreamRef.current = stream
-
-      // Create AudioContext with 24kHz sample rate (Realtime API requirement)
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 24000,
-      })
-      audioContextRef.current = audioContext
-
-      const source = audioContext.createMediaStreamSource(stream)
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
-
-      processor.onaudioprocess = (e) => {
-        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
-
-        const inputData = e.inputBuffer.getChannelData(0)
-        // Convert Float32Array to Int16Array (PCM16)
-        const pcm16 = new Int16Array(inputData.length)
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]))
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
-        }
-
-        // Convert to base64 for transmission
-        const buffer = new Uint8Array(pcm16.buffer)
-        const base64 = btoa(String.fromCharCode(...buffer))
-
-        // Send audio to Realtime API
-        wsRef.current.send(JSON.stringify({
-          type: 'input_audio_buffer.append',
-          audio: base64,
-        }))
-      }
-
-      source.connect(processor)
-      processor.connect(audioContext.destination)
-    } catch (error: any) {
-      console.error('Error starting audio input:', error)
-      
-      let errorMessage = 'Microphone access denied. '
-      
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        errorMessage += 'Please allow microphone access in your browser settings.\n\n'
-        errorMessage += 'Steps:\n'
-        errorMessage += '1. Check the browser address bar for a microphone icon\n'
-        errorMessage += '2. Click it and select "Allow"\n'
-        errorMessage += '3. Or go to browser Settings > Privacy > Site Settings > Microphone\n'
-        errorMessage += '4. Make sure this site (localhost or your domain) is allowed'
-      } else if (error.name === 'NotFoundError') {
-        errorMessage += 'No microphone found. Please connect a microphone.'
-      } else if (error.name === 'NotReadableError') {
-        errorMessage += 'Microphone is being used by another application. Please close other apps using the mic.'
-      } else {
-        errorMessage += `Error: ${error.message || error.name}`
-      }
-      
-      alert(errorMessage)
-    }
-  }
-
-  const playAudioChunk = (base64Audio: string) => {
-    // Decode base64 audio and play
-    try {
-      if (!audioContextRef.current) return
-
-      const audioData = atob(base64Audio)
-      const audioBytes = new Uint8Array(audioData.length)
-      for (let i = 0; i < audioData.length; i++) {
-        audioBytes[i] = audioData.charCodeAt(i)
-      }
-
-      // Convert to Int16Array (PCM16)
-      const pcm16 = new Int16Array(audioBytes.buffer, audioBytes.byteOffset, audioBytes.length / 2)
-      
-      // Create audio buffer (24kHz sample rate)
-      const audioBuffer = audioContextRef.current.createBuffer(1, pcm16.length, 24000)
-      const channelData = audioBuffer.getChannelData(0)
-      
-      // Convert PCM16 to Float32
-      for (let i = 0; i < pcm16.length; i++) {
-        channelData[i] = pcm16[i] / 32768.0
-      }
-
-      const source = audioContextRef.current.createBufferSource()
-      source.buffer = audioBuffer
-      source.connect(audioContextRef.current.destination)
-      source.start()
-    } catch (error) {
-      console.error('Error playing audio chunk:', error)
-    }
-  }
-
   const disconnectRealtime = () => {
+    if (dcRef.current) {
+      dcRef.current.close()
+      dcRef.current = null
+    }
+    if (pcRef.current) {
+      pcRef.current.close()
+      pcRef.current = null
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null
+      remoteAudioRef.current = null
+    }
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
@@ -717,40 +637,22 @@ export default function InterviewPage() {
       // Reuse existing session if one was already created, otherwise create new
       let activeSessionId = existingSessionId
       if (!activeSessionId) {
-        let interviewDataId = null
-        if (authSession) {
-          const { data: interviewData } = await supabase
-            .from('user_interview_data')
-            .select('id')
-            .eq('user_id', authSession.user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
-          interviewDataId = interviewData?.id || null
-        }
-
-        const { data: newSession, error: sessionError } = await supabase
-          .from('interview_sessions')
-          .insert({
-            user_id: authSession?.user.id || null,
-            user_interview_data_id: interviewDataId,
-            stage: stage,
-            status: 'in_progress',
-          })
-          .select()
-          .single()
-
-        if (sessionError) {
-          console.error('Error creating session:', sessionError)
+        // Create session via API (uses supabaseAdmin to bypass RLS for anonymous users)
+        const sessionRes = await fetch('/api/interview/create-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage, tempInterviewData }),
+        })
+        if (!sessionRes.ok) {
+          const err = await sessionRes.json()
+          console.error('Error creating session:', err)
           throw new Error('Failed to create interview session')
         }
-
-        if (newSession) {
-          activeSessionId = newSession.id
-          setSessionId(newSession.id)
-          sessionIdRef.current = newSession.id
-          console.log('Created new interview session:', newSession.id)
-        }
+        const { sessionId: newSessionId } = await sessionRes.json()
+        activeSessionId = newSessionId
+        setSessionId(newSessionId)
+        sessionIdRef.current = newSessionId
+        console.log('Created new interview session:', newSessionId)
       } else {
         console.log('Reusing existing session from Realtime attempt:', activeSessionId)
       }
@@ -1485,17 +1387,14 @@ export default function InterviewPage() {
         console.log('Session updated to completed:', currentSessionId)
       }
 
-      // Generate feedback - API will fetch transcript from database
+      // Generate feedback - pass transcript directly since anon users can't write to DB via RLS
       try {
-        // Generating feedback for session
-        
-        // Feedback API will fetch transcript from database, so we don't need to send it
         const feedbackResponse = await fetch('/api/interview/feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            sessionId: currentSessionId
-            // Transcript will be fetched from database by API
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            transcript: finalTranscript || undefined,
           }),
         })
 
@@ -1539,12 +1438,12 @@ export default function InterviewPage() {
   }
 
   const handleTextResponse = async (text: string) => {
-    if (!text.trim() || !wsRef.current) return
+    if (!text.trim() || !dcRef.current) return
 
     setTranscript((prev) => [...prev, `You: ${text}`])
 
-    // Send text input to Realtime API
-    wsRef.current.send(JSON.stringify({
+    // Send text input to Realtime API via data channel
+    dcRef.current.send(JSON.stringify({
       type: 'conversation.item.create',
       item: {
         type: 'message',
@@ -1559,7 +1458,7 @@ export default function InterviewPage() {
     }))
 
     // Trigger response
-    wsRef.current.send(JSON.stringify({
+    dcRef.current.send(JSON.stringify({
       type: 'response.create',
     }))
   }

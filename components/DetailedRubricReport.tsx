@@ -226,7 +226,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
   return (
     <div className="max-w-5xl mx-auto bg-gray-50 p-6">
       {/* Report Header */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 border-t-4 border-indigo-600">
+      <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 border-t-4 border-primary-600">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -246,11 +246,11 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
         </div>
 
         {/* Executive Summary */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+        <div className="bg-primary-50 rounded-xl p-6 border border-primary-100">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-indigo-900 mb-1">OVERALL ASSESSMENT</div>
-              <div className="text-3xl font-bold text-indigo-600">
+              <div className="text-sm font-semibold text-primary-900 mb-1">OVERALL ASSESSMENT</div>
+              <div className="text-3xl font-bold text-primary-600">
                 {data.overall_assessment.overall_score}/100
               </div>
               <div className="text-sm text-gray-700 mt-1 capitalize">
@@ -324,7 +324,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
       {/* Traditional HR Criteria */}
       <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-          <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"/>
           </svg>
@@ -333,14 +333,14 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
 
         <div className="space-y-6">
           {/* Communication Skills */}
-          <div className="border-l-4 border-indigo-500 pl-6 py-4">
+          <div className="border-l-4 border-primary-500 pl-6 py-4">
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Communication Skills</h3>
                 <p className="text-sm text-gray-600">Clarity, articulation, pacing, tone, active listening, professional language</p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-indigo-600">
+                <div className="text-3xl font-bold text-primary-600">
                   {data.traditional_hr_criteria.communication_skills.score}/5
                 </div>
                 <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -351,13 +351,13 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
             </div>
             <div className="bg-gray-200 rounded-full h-2 mb-3">
               <div 
-                className="score-meter bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-1000"
+                className="score-meter bg-gradient-to-r from-primary-500 to-accent-500 h-2 rounded-full transition-all duration-1000"
                 style={{ width: `${(data.traditional_hr_criteria.communication_skills.score / 5) * 100}%` }}
               ></div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
               {Object.entries(data.traditional_hr_criteria.communication_skills.components).map(([key, value]) => (
-                <div key={key} className="bg-indigo-50 rounded-lg p-3">
+                <div key={key} className="bg-primary-50 rounded-lg p-3">
                   <div className="text-xs text-gray-600 mb-1 capitalize">{key.replace(/_/g, ' ')}</div>
                   {renderStars(value as number)}
                 </div>
@@ -474,14 +474,14 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
 
           {/* Interest and Enthusiasm */}
           {data.traditional_hr_criteria.interest_and_enthusiasm && (
-            <div className="border-l-4 border-purple-500 pl-6 py-4">
+            <div className="border-l-4 border-accent-500 pl-6 py-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">Interest and Enthusiasm</h3>
                   <p className="text-sm text-gray-600">Company knowledge, energy level, genuine interest, thoughtful questions</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-purple-600">
+                  <div className="text-3xl font-bold text-accent-600">
                     {data.traditional_hr_criteria.interest_and_enthusiasm.score}/5
                   </div>
                   <div className="text-xs text-gray-500 uppercase tracking-wide">High</div>
@@ -489,25 +489,25 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
               </div>
               <div className="bg-gray-200 rounded-full h-2 mb-3">
                 <div 
-                  className="score-meter bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-1000"
+                  className="score-meter bg-gradient-to-r from-accent-500 to-pink-500 h-2 rounded-full transition-all duration-1000"
                   style={{ width: `${(data.traditional_hr_criteria.interest_and_enthusiasm.score / 5) * 100}%` }}
                 ></div>
               </div>
               {data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-3">
+                <div className="bg-accent-50 border border-accent-200 rounded-lg p-4 mb-3">
                   <h4 className="font-semibold text-sm text-gray-900 mb-2">Enthusiasm Indicators</h4>
                   <div className="grid md:grid-cols-2 gap-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-700">Company Knowledge</span>
-                      <span className="font-semibold text-purple-700">{data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators.company_knowledge || 'Not Assessed'}</span>
+                      <span className="font-semibold text-accent-700">{data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators.company_knowledge || 'Not Assessed'}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-700">Energy Level</span>
-                      <span className="font-semibold text-purple-700">{data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators.energy_level || 'Not Assessed'}</span>
+                      <span className="font-semibold text-accent-700">{data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators.energy_level || 'Not Assessed'}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-700">Tone Enthusiasm</span>
-                      <span className="font-semibold text-purple-700">{data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators.tone_enthusiasm || 'Not Assessed'}</span>
+                      <span className="font-semibold text-accent-700">{data.traditional_hr_criteria.interest_and_enthusiasm.enthusiasm_indicators.tone_enthusiasm || 'Not Assessed'}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-700">Follow-up Questions</span>
@@ -655,7 +655,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
       {data.time_management_analysis && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
             </svg>
             Time Management & Pacing Analysis
@@ -663,9 +663,9 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
 
           {data.time_management_analysis.total_interview_duration && (
             <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-5">
+              <div className="bg-primary-50 border border-primary-200 rounded-xl p-5">
                 <div className="text-sm text-gray-600 mb-1">Total Duration</div>
-                <div className="text-3xl font-bold text-indigo-600">
+                <div className="text-3xl font-bold text-primary-600">
                   {data.time_management_analysis.total_interview_duration}
                 </div>
                 {data.time_management_analysis.target_duration && (
@@ -684,9 +684,9 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                 </div>
               )}
               {data.time_management_analysis.time_per_question && data.time_management_analysis.time_per_question.length > 0 && (
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-5">
+                <div className="bg-accent-50 border border-accent-200 rounded-xl p-5">
                   <div className="text-sm text-gray-600 mb-1">Avg Response Time</div>
-                  <div className="text-3xl font-bold text-purple-600">
+                  <div className="text-3xl font-bold text-accent-600">
                     {(() => {
                       const times = data.time_management_analysis.time_per_question
                         .map((q: any) => q.candidate_response_time)
@@ -757,7 +757,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
       {data.observer_notes && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
               <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
             </svg>
@@ -767,8 +767,8 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
           <div className="bg-gradient-to-br from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-6 mb-6">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
                   </svg>
                 </div>
@@ -781,15 +781,15 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
                 <div className="flex items-center space-x-6 text-sm">
                   <div>
                     <span className="text-gray-600">Confidence Level:</span>
-                    <span className="font-semibold text-indigo-600 ml-2">{data.observer_notes.confidence_level}</span>
+                    <span className="font-semibold text-primary-600 ml-2">{data.observer_notes.confidence_level}</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Engagement:</span>
-                    <span className="font-semibold text-indigo-600 ml-2">{data.observer_notes.engagement}</span>
+                    <span className="font-semibold text-primary-600 ml-2">{data.observer_notes.engagement}</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Authenticity:</span>
-                    <span className="font-semibold text-indigo-600 ml-2">{data.observer_notes.authenticity}</span>
+                    <span className="font-semibold text-primary-600 ml-2">{data.observer_notes.authenticity}</span>
                   </div>
                 </div>
               </div>
@@ -838,12 +838,12 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
             </div>
           </div>
 
-          <div className="mt-6 bg-indigo-50 border border-indigo-200 rounded-xl p-5">
+          <div className="mt-6 bg-primary-50 border border-primary-200 rounded-xl p-5">
             <h4 className="font-semibold text-gray-900 mb-3">Additional Observations</h4>
             <ul className="space-y-2 text-sm text-gray-700">
               {data.observer_notes.additional_observations.map((obs, idx) => (
                 <li key={idx} className="flex items-start space-x-2">
-                  <span className="text-indigo-600 flex-shrink-0 mt-0.5">•</span>
+                  <span className="text-primary-600 flex-shrink-0 mt-0.5">•</span>
                   <span>{obs}</span>
                 </li>
               ))}
@@ -856,17 +856,17 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
       {data.comparative_analysis && data.comparative_analysis.percentile_estimate !== null && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
             </svg>
             How You Compare
           </h2>
           
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 mb-6">
+          <div className="bg-primary-50 border border-primary-200 rounded-xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Percentile Ranking</h3>
               <div className="text-right">
-                <div className="text-4xl font-bold text-indigo-600">{data.comparative_analysis.percentile_estimate}th</div>
+                <div className="text-4xl font-bold text-primary-600">{data.comparative_analysis.percentile_estimate}th</div>
                 <div className="text-sm text-gray-600">percentile</div>
               </div>
             </div>
@@ -879,7 +879,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
             <div className="relative h-2 bg-gray-200 rounded-full">
               <div className="absolute h-2 bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 rounded-full" style={{ width: '100%' }}></div>
               <div 
-                className="absolute h-4 w-1 bg-indigo-600 rounded" 
+                className="absolute h-4 w-1 bg-primary-600 rounded" 
                 style={{ left: `${data.comparative_analysis.percentile_estimate}%`, top: '-4px', boxShadow: '0 0 0 4px white' }}
               ></div>
             </div>
@@ -934,7 +934,7 @@ export default function DetailedRubricReport({ data }: { data: RubricData }) {
 
       {/* Preparing for the Hiring Manager Round */}
       {data.next_steps_preparation && (
-        <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-lg p-8 mb-6 text-white">
+        <div className="bg-primary-700 rounded-xl shadow-lg p-8 mb-6 text-white">
           <div className="relative z-10">
             {/* Header */}
             <div className="flex items-center space-x-3 mb-6">

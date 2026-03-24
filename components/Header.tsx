@@ -38,7 +38,7 @@ export default function Header() {
             <img src="/logo.svg" alt="PrepMe" className="h-9 w-auto" />
           </Link>
           {!loading && (
-            <div className="flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1">
               {user ? (
                 <>
                   <Link
@@ -53,7 +53,7 @@ export default function Header() {
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline">Logout</span>
+                    <span>Logout</span>
                   </button>
                 </>
               ) : (

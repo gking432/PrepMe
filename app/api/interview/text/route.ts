@@ -111,8 +111,8 @@ export async function POST(request: NextRequest) {
     
     // Tone guidance
     const toneGuidance = {
-      professional: 'Maintain a formal, business-like tone. Be respectful and courteous.',
-      friendly: 'Use a warm, approachable, and conversational tone. Be encouraging and supportive.',
+      professional: 'Maintain a professional, neutral tone. Be respectful but not overly warm. Acknowledge answers briefly and move on. Do not praise or gush.',
+      friendly: 'Use a conversational tone. Be approachable but not over-the-top. Acknowledge answers naturally without excessive validation.',
       challenging: 'Be direct and probing. Ask tough questions and push for detailed answers. Challenge assumptions when appropriate.'
     }
     
@@ -143,14 +143,14 @@ export async function POST(request: NextRequest) {
     const hasResume = interviewData?.resume_text && interviewData.resume_text.trim().length > 0
     const hasJobDescription = interviewData?.job_description_text && interviewData.job_description_text.trim().length > 0
     
+    const isHrScreen = stage === 'hr_screen'
     const contextSection = hasResume && hasJobDescription ? `
-CRITICAL: You have full access to the candidate's resume, the job description, and company information. You MUST:
-1. Reference specific experiences, skills, and achievements from their resume
-2. Ask about specific projects, roles, or accomplishments mentioned in their resume
-3. Connect their background to the job requirements
-4. If the candidate asks if you have their resume, confirm that you do and reference specific details
-5. Take on the persona of an HR professional from ${companyName} - embody the company culture, values, and tone based on the company website
-6. Use the company website information to understand the company's mission, values, and culture - reflect this in your questions and responses
+CRITICAL: You have the candidate's resume and job description in front of you.
+${isHrScreen ? `As an HR screener, you use this to VERIFY, not to deep-dive. You've glanced at the resume and know the basics. You are an HR generalist — NOT a domain expert.` : `You MUST reference specific experiences, skills, and achievements from their resume and connect their background to the job requirements.`}
+1. If the candidate asks if you have their resume, confirm yes and reference a detail from it
+2. ${isHrScreen ? 'Use resume details to frame high-level questions: "I see you were at [Company] — tell me a bit about that"' : 'Ask about specific projects, roles, or accomplishments mentioned in their resume'}
+3. Take on the persona of a professional from ${companyName}
+4. DO NOT make up companies, roles, or experiences not in the resume
 
 CANDIDATE'S RESUME:
 ${interviewData.resume_text}
@@ -163,13 +163,17 @@ ${websiteContent}
 ` : `COMPANY WEBSITE: ${interviewData.company_website || 'Not provided'}
 `}
 
-When asking questions:
+${isHrScreen ? `When asking questions:
+- Keep questions surface-level. You are checking boxes, not evaluating domain skills.
+- Good: "I see you were at [Company] — tell me a bit about that"
+- Bad: "What specific methodologies did you use to optimize conversion rates?" (too deep)
+- Do NOT ask questions that require domain expertise to evaluate the answer
+- Do NOT praise or gush. Use neutral filler: "Okay." / "Got it." / "Mm-hm."
+- If the candidate says something off-putting, get cooler and shorter. If hostile/abusive, end the interview.` : `When asking questions:
 - Reference specific companies, roles, or projects from their resume
 - Ask about gaps, transitions, or interesting experiences mentioned
 - Connect their past experience to the role requirements
-- Be specific: "I see you worked at [Company] as a [Role] - tell me about that experience"
-- Use company culture and values from the website to inform your tone and questions
-- Do NOT ask generic questions when you have specific resume details available
+- Be specific: "I see you worked at [Company] as a [Role] - tell me about that experience"`}
 ` : hasResume ? `
 CRITICAL: You have access to the candidate's resume. You MUST:
 1. Reference specific experiences and achievements from their resume
@@ -213,7 +217,9 @@ Depth Level: ${depthGuidance[depthLevel as keyof typeof depthGuidance] || depthG
 Interview Guidelines:
 - Ask questions naturally based on the candidate's responses. Do not use predefined question lists.
 - Keep responses concise and natural for voice conversation (under 60 words).
-- Ask follow-up questions when appropriate based on the candidate's answers.
+- Do NOT praise, gush, or over-validate answers. Acknowledge briefly and move on.
+- Use neutral filler: "Mm-hm." / "Okay." / "Got it." — not "Wow!" or "That's incredible!"
+${isHrScreen ? '- Maximum ONE follow-up per topic, surface-level only. You are a gatekeeper, not an evaluator.' : '- Ask follow-up questions when appropriate based on the candidate\'s answers.'}
 
 ${contextSection}`,
       },

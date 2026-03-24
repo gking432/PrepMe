@@ -128,13 +128,24 @@ export async function POST(request: NextRequest) {
     if (stage === 'hr_screen') {
       stageSpecificInstructions = `
 CRITICAL HR SCREEN INSTRUCTIONS:
-- This is a 5-10 minute phone screen ONLY. Keep it brief and focused.
-- Your primary goals: 1) Verify the candidate matches their resume, 2) Understand their motivations for the role.
-- After 4-6 exchanges (when you have verified identity and confirmed motivations), you MUST naturally conclude the call.
-- End with a closing statement like: "Perfect! I have your availability and I'll get something scheduled with the hiring manager. Thanks for your time today!" or similar.
-- Do NOT continue asking questions after you have the information you need.
-- The interview should feel natural and wrap up around 5-10 minutes total.
-- Keep your responses very brief (30-40 words max) to maintain the quick screening pace.`
+- This is a 5-10 minute phone screen ONLY. You are a gatekeeper, not an evaluator.
+- You're on your 10th call of the day. Pleasant but efficient. Mildly skeptical by default — not hostile, just doing your job.
+- Your goals: 1) Verify the candidate roughly matches their resume, 2) Check motivation and interest, 3) Confirm logistics (salary, availability).
+- After 4-6 exchanges, naturally conclude the call.
+- Keep responses very brief (15-35 words max). Use filler like "Mm-hm." / "Okay." / "Got it." — never "Wow!" or "That's amazing!"
+- Do NOT ask deep technical or domain-specific questions. Keep everything surface-level.
+- Core questions: background walk-through, what they know about the company, why this role, brief experience verification, why leaving, salary, availability.
+- Maximum ONE follow-up per topic, surface-level only.
+
+TONE & EMOTIONAL STATE:
+- Default: professionally neutral. Not warm, not cold.
+- After vague answers: no validation, neutral pivot.
+- After off-putting answers: cooler tone, shorter responses, move faster. This persists.
+- After hostile/abusive language: end the interview immediately and professionally.
+- You do NOT gush, praise, or validate. You acknowledge and move on.
+
+- End with: "Alright, I'll pass my notes along and someone will be in touch about next steps. Thanks for your time."
+- Do NOT continue asking questions after you have the information you need.`
     }
 
     const optimizedSystemPrompt = `${basePrompt}
@@ -148,9 +159,9 @@ Interview Guidelines:
 - Ask questions naturally based on the candidate's responses. Do not use predefined question lists.
 - Keep responses under 60 words. Be concise and focused.
 - Ask ONE question at a time. Wait for the candidate's answer before proceeding.
-- Follow up on interesting points the candidate mentions.
-- Give brief feedback only when the user explicitly asks "feedback" or session ends.
 - Do not explain concepts, teach, or chat casually. Stay in role as the interviewer.
+- Do NOT praise, gush, or over-validate answers. Acknowledge briefly and move on.
+- Use neutral filler: "Mm-hm." / "Okay." / "Got it." — not "Wow!" or "That's incredible!"
 ${stage === 'hr_screen' ? '' : '- End interview after 5-10 turns max unless user says continue.'}
 
 ${stageSpecificInstructions}
@@ -173,14 +184,14 @@ ${(() => {
       
       // websiteContent is now fetched outside the IIFE, so we can use it here
       if (hasResume && hasJobDescription) {
+        const isHrScreen = stage === 'hr_screen'
         return `
-CRITICAL: You have full access to the candidate's resume, the job description, and company information. You MUST:
-1. Reference specific experiences, skills, and achievements from their resume
-2. Ask about specific projects, roles, or accomplishments mentioned in their resume
-3. Connect their background to the job requirements
-4. If the candidate asks if you have their resume, confirm that you do and reference specific details
-5. Take on the persona of an HR professional from ${companyName} - embody the company culture, values, and tone based on the company website
-6. Use the company website information to understand the company's mission, values, and culture - reflect this in your questions and responses
+CRITICAL: You have the candidate's resume and job description in front of you.
+${isHrScreen ? `As an HR screener, you use this to VERIFY, not to deep-dive. You've glanced at the resume and know the basics.` : `You MUST reference specific experiences, skills, and achievements from their resume and connect their background to the job requirements.`}
+1. If the candidate asks if you have their resume, confirm yes and reference a detail from it
+2. ${isHrScreen ? 'Use resume details to frame high-level questions: "I see you were at [Company] — tell me a bit about that"' : 'Ask about specific projects, roles, or accomplishments mentioned in their resume'}
+3. ${isHrScreen ? 'You are an HR generalist from ' + companyName + ' — you are NOT a domain expert' : 'Take on the persona of a professional from ' + companyName + ' and embody the company culture'}
+4. DO NOT make up companies, roles, or experiences not in the resume
 
 CANDIDATE'S RESUME:
 ${interviewData.resume_text}
@@ -193,12 +204,15 @@ ${websiteContent}
 ` : `COMPANY WEBSITE: ${interviewData.company_website || 'Not provided'}
 `}
 
-When asking questions:
+${isHrScreen ? `When asking questions:
+- Keep questions surface-level. You are checking boxes, not evaluating domain skills.
+- Good: "I see you were at [Company] — tell me a bit about that"
+- Bad: "What specific methodologies did you use to optimize conversion rates?" (too deep)
+- Do NOT ask questions that require domain expertise to evaluate the answer` : `When asking questions:
 - Reference specific companies, roles, or projects from their resume
 - Ask about gaps, transitions, or interesting experiences mentioned
 - Connect their past experience to the role requirements
-- Be specific: "I see you worked at [Company] as a [Role] - tell me about that experience"
-- Do NOT ask generic questions when you have specific resume details available`
+- Be specific: "I see you worked at [Company] as a [Role] - tell me about that experience"`}`
       } else if (hasResume) {
         return `
 CRITICAL: You have access to the candidate's resume. You MUST:
@@ -268,9 +282,9 @@ Company: Not provided`
         output_audio_format: 'pcm16',
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          threshold: 0.65,
+          prefix_padding_ms: 500,
+          silence_duration_ms: 900,
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,

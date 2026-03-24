@@ -332,66 +332,88 @@ ${askedQuestionsCount >= 6 ?
       
       if (currentPhaseForPrompt === 'screening') {
         // Check what topics have been covered
-        const hasAskedAboutExperience = askedQuestionsPreview.some((q: string) => 
-          q.toLowerCase().includes('experience') || 
+        const hasAskedAboutBackground = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('about yourself') ||
           q.toLowerCase().includes('tell me about') ||
+          q.toLowerCase().includes('walk me through') ||
+          q.toLowerCase().includes('background')
+        )
+
+        const hasAskedAboutCompanyKnowledge = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('know about us') ||
+          q.toLowerCase().includes('know about our') ||
+          q.toLowerCase().includes('know about the company') ||
+          q.toLowerCase().includes('heard about us')
+        )
+
+        const hasAskedAboutMotivation = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('interest') ||
+          q.toLowerCase().includes('why') && (q.toLowerCase().includes('this role') || q.toLowerCase().includes('position') || q.toLowerCase().includes('drew you'))
+        )
+
+        const hasAskedAboutExperience = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('experience') ||
           q.toLowerCase().includes('worked at') ||
           q.toLowerCase().includes('role at')
         )
-        
-        const hasAskedAboutMotivation = askedQuestionsPreview.some((q: string) => 
-          q.toLowerCase().includes('interest') || 
-          q.toLowerCase().includes('why') && (q.toLowerCase().includes('this role') || q.toLowerCase().includes('position') || q.toLowerCase().includes('drew you'))
-        )
-        
-        const hasAskedAboutLeaving = askedQuestionsPreview.some((q: string) => 
-          q.toLowerCase().includes('leaving') || 
+
+        const hasAskedAboutLeaving = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('leaving') ||
           q.toLowerCase().includes('moving on') ||
-          q.toLowerCase().includes('why are you')
+          q.toLowerCase().includes('why are you') ||
+          q.toLowerCase().includes('prompting')
         )
-        
-        const hasAskedAboutSalary = askedQuestionsPreview.some((q: string) => 
-          q.toLowerCase().includes('salary') || 
+
+        const hasAskedAboutSalary = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('salary') ||
           q.toLowerCase().includes('compensation') ||
           q.toLowerCase().includes('expectations')
         )
-        
-        const hasAskedAboutAvailability = askedQuestionsPreview.some((q: string) => 
-          q.toLowerCase().includes('start') || 
+
+        const hasAskedAboutAvailability = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('start') ||
           q.toLowerCase().includes('available') ||
           q.toLowerCase().includes('when could')
         )
-        
+
         phaseInstructions = `
-CONVERSATION STAGE: Main Interview
+CONVERSATION STAGE: Main Interview (HR Screen — keep it surface-level)
 
-CORE TOPICS TO COVER (naturally, not rigidly):
-${!hasAskedAboutExperience ? 
-  '✓ START HERE: Their most relevant work experience (from resume)' : 
-  '✗ Already covered experience'}
+CORE TOPICS TO COVER (roughly this order, naturally):
+${!hasAskedAboutBackground ?
+  '✓ START HERE: "Tell me a bit about yourself" / brief background walk-through' :
+  '✗ Already covered background'}
 
-${!hasAskedAboutMotivation ? 
-  '✓ NEXT: Why they want THIS role specifically' : 
+${!hasAskedAboutCompanyKnowledge ?
+  '✓ NEXT: "What do you know about our company?" (tests if they did homework)' :
+  '✗ Already covered company knowledge'}
+
+${!hasAskedAboutMotivation ?
+  '✓ "What interests you about this role specifically?"' :
   '✗ Already covered motivation'}
 
-${!hasAskedAboutLeaving ? 
-  '✓ Why they\'re leaving current position' : 
+${!hasAskedAboutExperience ?
+  '✓ "I see you have experience with [X from resume]. Tell me a bit more about that."' :
+  '✗ Already covered experience'}
+
+${!hasAskedAboutLeaving ?
+  '✓ "Why are you exploring new opportunities?" / "What\'s prompting the move?"' :
   '✗ Already covered leaving reasons'}
 
-${!hasAskedAboutSalary ? 
-  '○ Salary expectations (ask later in conversation, after covering experience/motivation)' : 
+${!hasAskedAboutSalary ?
+  '○ Salary expectations (ask AFTER experience/motivation, not before)' :
   '✗ Already covered salary'}
 
-${!hasAskedAboutAvailability ? 
-  '○ Start date availability (near end)' : 
+${!hasAskedAboutAvailability ?
+  '○ Start date / availability (near end)' :
   '✗ Already covered availability'}
 
-FLOW GUIDANCE:
-- If they just shared a specific achievement/metric → ask a follow-up about it
-- If you've covered the main topics → transition to Q&A
-- If they mention something interesting → explore it before moving on
-- Build on previous answers: "You mentioned X - tell me more about that"
-- Show you're listening: "That makes sense given your background in..."
+DEPTH RULES — CRITICAL:
+- Maximum ONE follow-up per topic, surface-level only
+- Good: "Can you tell me a bit more about that?" / "How long were you there?"
+- Bad: "What specific methodologies did you use?" (too deep — save for hiring manager)
+- If their answer is vague, ask for slight clarification ONCE, then move on regardless
+- You are a gatekeeper, not an evaluator. Check boxes and move on.
 `
       } else if (currentPhaseForPrompt === 'q_and_a') {
         phaseInstructions = `PHASE: Q&A

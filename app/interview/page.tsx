@@ -419,7 +419,7 @@ export default function InterviewPage() {
         }
         
         // If closed unexpectedly, show error
-        if (!event.wasClean && event.code !== 1000 && !isInterviewComplete) {
+        if (!event.wasClean && event.code !== 1000 && !interviewComplete) {
           console.log('WebSocket closed unexpectedly, falling back to traditional approach')
           // Ensure interview is active before starting traditional approach
           setIsInterviewActive(true)

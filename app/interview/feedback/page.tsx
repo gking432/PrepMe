@@ -75,29 +75,46 @@ export default function InterviewDashboard() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Admin preview: detect admin user and inject mock data if no real feedback
+  // Admin preview: detect admin user (or ?preview=mock URL param) and inject mock data
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const email = session?.user?.email || null
       setUserEmail(email)
-      if (isAdminPreview(email)) {
+      const isMockParam = searchParams?.get('preview') === 'mock'
+      if (isAdminPreview(email) || isMockParam) {
         setIsAdmin(true)
       }
     }
     checkAdmin()
   }, [])
 
-  // Inject mock data for admin when no real feedback exists
+  // Inject mock data for admin when loading completes with no real feedback
   useEffect(() => {
-    if (isAdmin && !feedback && !loading) {
+    if (isAdmin && !feedback && !loading && !feedbackGenerating) {
       console.log('[Admin Preview] Injecting mock feedback data')
-      setFeedback(MOCK_FEEDBACK)
+      setFeedback(MOCK_FEEDBACK as any)
       setStructuredTranscript(MOCK_TRANSCRIPT)
       setCurrentSessionData(MOCK_SESSION_DATA)
       setHasTranscript(true)
     }
-  }, [isAdmin, feedback, loading])
+  }, [isAdmin, feedback, loading, feedbackGenerating])
+
+  // Fallback: if admin check finishes after loadFeedback, retry mock injection
+  useEffect(() => {
+    if (!isAdmin) return
+    const timer = setTimeout(() => {
+      if (!feedback) {
+        console.log('[Admin Preview] Fallback mock injection')
+        setFeedback(MOCK_FEEDBACK as any)
+        setStructuredTranscript(MOCK_TRANSCRIPT)
+        setCurrentSessionData(MOCK_SESSION_DATA)
+        setHasTranscript(true)
+        setLoading(false)
+      }
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [isAdmin])
 
   useEffect(() => {
     loadFeedback()

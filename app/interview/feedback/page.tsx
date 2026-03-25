@@ -1,17 +1,22 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User } from 'lucide-react'
+import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
+import ScoreRevealCard from '@/components/ScoreRevealCard'
+import LockedStageTeasers from '@/components/LockedStageTeasers'
+import SkillTrainer from '@/components/SkillTrainer'
 
 export default function InterviewDashboard() {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('results')
   const [isPremium, setIsPremium] = useState(false)
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
@@ -57,6 +62,9 @@ export default function InterviewDashboard() {
   const [showAreasToStudy, setShowAreasToStudy] = useState(false)
   const [showPredictedQuestions, setShowPredictedQuestions] = useState(false)
   const [showStep4, setShowStep4] = useState(false)
+  const [combinedReport, setCombinedReport] = useState<any>(null)
+  const [combinedReportLoading, setCombinedReportLoading] = useState(false)
+  const [combinedReportError, setCombinedReportError] = useState<string | null>(null)
   const mediaRecorderRefs = useRef<Record<string, MediaRecorder>>({})
   const audioChunksRefs = useRef<Record<string, Blob[]>>({})
   const router = useRouter()
@@ -306,22 +314,15 @@ export default function InterviewDashboard() {
         // Set default tab to the most recent completed interview
         // Map stage to tab ID (do this as soon as we find a session)
         if (!defaultTabSet) {
-          let defaultTabId = 'overview'
-          
+          let defaultTabId = 'results'
+
           // Check if stage is provided in URL params (from profile page)
           const stageFromUrl = searchParams?.get('stage')
           const stageToUse = stageFromUrl || sessionData.stage
           
           // Map session stage to tab ID
-          if (stageToUse === 'hr_screen') {
-            defaultTabId = 'hr-screen'
-          } else if (stageToUse === 'hiring_manager') {
-            defaultTabId = 'hiring-manager-1'
-          } else if (stageToUse === 'culture_fit') {
-            defaultTabId = 'culture-fit'
-          } else if (stageToUse === 'final_interview') {
-            defaultTabId = 'hiring-manager-2'
-          }
+          // Always start on results tab
+          defaultTabId = 'results'
           
           setActiveTab(defaultTabId)
           setDefaultTabSet(true)
@@ -722,6 +723,24 @@ export default function InterviewDashboard() {
     }
   }
 
+  const loadCombinedReport = async () => {
+    setCombinedReportLoading(true)
+    setCombinedReportError(null)
+    try {
+      const res = await fetch('/api/interview/combined-report')
+      const data = await res.json()
+      if (!res.ok) {
+        setCombinedReportError(data.error || 'Failed to generate report')
+      } else {
+        setCombinedReport(data)
+      }
+    } catch (err: any) {
+      setCombinedReportError(err.message || 'Network error')
+    } finally {
+      setCombinedReportLoading(false)
+    }
+  }
+
   // Voice practice functions
   const playAudio = (audioBase64: string, practiceKey: string, type: 'question' | 'feedback') => {
     return new Promise<void>((resolve, reject) => {
@@ -984,7 +1003,7 @@ export default function InterviewDashboard() {
 
   if (loading || feedbackGenerating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
@@ -1052,7 +1071,7 @@ export default function InterviewDashboard() {
   // Show error message if feedback generation timed out
   if (pollingAttempts >= 12 && !feedback) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md mx-auto px-4">
           <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Feedback Generation Taking Longer Than Expected</h2>
@@ -1786,18 +1805,16 @@ export default function InterviewDashboard() {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: Target },
-    { id: 'hr-screen', label: 'HR Screen', icon: Phone, completed: hasFeedback },
-    { id: 'hiring-manager-1', label: 'Hiring Manager (30min)', icon: Briefcase, locked: !stageAccess?.hiring_manager?.hasAccess && !isPremium, stage: 'hiring_manager' },
-    { id: 'culture-fit', label: 'Culture Fit', icon: Users, optional: true, locked: !stageAccess?.culture_fit?.hasAccess && !isPremium, stage: 'culture_fit' },
-    { id: 'hiring-manager-2', label: 'Final Interview', icon: Crown, locked: !stageAccess?.final?.hasAccess && !isPremium, stage: 'final' }
+    { id: 'results', label: 'Results', icon: Target },
+    { id: 'report', label: 'Report', icon: TrendingUp, completed: hasFeedback },
+    { id: 'train', label: 'Train', icon: Zap },
   ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div className="min-h-screen bg-slate-50">
       <Header />
 
       {/* Contextual action bar */}
@@ -1859,7 +1876,7 @@ export default function InterviewDashboard() {
                         type="text"
                         defaultValue={extractedName}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
                     </div>
                     <div>
@@ -1868,7 +1885,7 @@ export default function InterviewDashboard() {
                         type="email"
                         defaultValue={extractedEmail}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       />
                     </div>
                     <button
@@ -1879,7 +1896,7 @@ export default function InterviewDashboard() {
                         const query = params.toString()
                         router.push(`/auth/signup${query ? `?${query}` : ''}`)
                       }}
-                      className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-lg"
+                      className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-all shadow-lg"
                     >
                       Create Account
                     </button>
@@ -1912,7 +1929,7 @@ export default function InterviewDashboard() {
             </div>
             <p className="text-sm text-gray-500 mt-4 text-center">
               Already have an account?{' '}
-              <a href="/auth/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+              <a href="/auth/login" className="text-primary-600 hover:text-primary-700 font-medium">
                 Sign in
               </a>
             </p>
@@ -1923,13 +1940,13 @@ export default function InterviewDashboard() {
       {/* Persistent signup banner for anonymous users who dismissed the modal */}
       {isAnonymous && !showAccountPrompt && accountPromptDismissed && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 flex items-center justify-between">
-            <p className="text-sm text-indigo-800 font-medium">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg px-4 py-3 flex items-center justify-between">
+            <p className="text-sm text-primary-800 font-medium">
               Create an account to save your results and continue to the Hiring Manager round →
             </p>
             <button
               onClick={() => router.push('/auth/signup')}
-              className="ml-4 px-4 py-1.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+              className="ml-4 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors whitespace-nowrap"
             >
               Sign Up
             </button>
@@ -1943,7 +1960,7 @@ export default function InterviewDashboard() {
           <div className="flex space-x-2 min-w-max">
             {tabs.map((tab) => {
               const Icon = tab.icon
-              const isHRScreenCompleted = tab.id === 'hr-screen' && tab.completed
+              const isHRScreenCompleted = tab.id === 'report' && tab.completed
               const isActive = activeTab === tab.id
               const isLocked = 'locked' in tab && tab.locked
 
@@ -1963,13 +1980,13 @@ export default function InterviewDashboard() {
                         : isActive
                           ? isHRScreenCompleted
                             ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
-                            : 'bg-gradient-to-r from-primary-500 to-accent-400 text-white shadow-lg'
+                            : 'bg-primary-500 text-white shadow-lg'
                           : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <Icon className={`w-4 h-4 ${isLocked ? 'text-gray-400' : ''}`} />
                     <span>{tab.label}</span>
-                    {tab.optional && !isLocked && <span className="text-xs opacity-75">(Optional)</span>}
+                    {'optional' in tab && tab.optional && !isLocked && <span className="text-xs opacity-75">(Optional)</span>}
                     {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
                     {!isLocked && isHRScreenCompleted && (
                       <CheckCircle className={`w-5 h-5 ${isActive ? 'text-white' : 'text-green-600'}`} />
@@ -1982,43 +1999,92 @@ export default function InterviewDashboard() {
           </div>
         </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
+        {/* Results Tab */}
+        {activeTab === 'results' && (
           <div className="space-y-6">
-            {/* Overall Score Card - Locked for now */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-50 opacity-50"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-400">Overall Performance</h2>
-                  <div className="flex items-center space-x-2 text-gray-400">
-                    <Lock className="w-5 h-5" />
-                    <span className="text-sm font-medium">Available after all interviews</span>
-                  </div>
+            {/* Score Reveal Card */}
+            {hasFeedback ? (
+              <ScoreRevealCard
+                score={overallScore}
+                likelihood={likelihood}
+                strengths={feedback?.strengths || []}
+                weaknesses={feedback?.weaknesses || []}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                <Phone className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">No Interview Completed Yet</h2>
+                <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                  Complete an HR screen interview to see your performance feedback and detailed insights here.
+                </p>
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center space-x-2 px-8 py-4 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-all shadow-lg"
+                >
+                  <span>Start an Interview</span>
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+            )}
+
+            {/* Smart CTA based on score */}
+            {hasFeedback && overallScore >= 7.5 && (
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Strong Showing</p>
+                  <h3 className="text-xl font-bold">Ready to level up?</h3>
+                  <p className="text-white/80 text-sm mt-1">Unlock your next interview stage to keep the momentum going.</p>
                 </div>
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gray-200 mb-4">
-                      <span className="text-5xl font-bold text-gray-400">--</span>
-                    </div>
-                    <p className="text-gray-400 font-medium">Out of 100</p>
-                  </div>
-                  <div className="space-y-4">
-                    {['Communication', 'Technical Skills', 'Cultural Fit', 'Problem Solving'].map((skill) => (
-                      <div key={skill}>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-400">{skill}</span>
-                          <span className="text-sm text-gray-400">--/100</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-gray-300 h-2 rounded-full" style={{ width: '0%' }}></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <button
+                  onClick={() => setShowPurchaseFlow(true)}
+                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-emerald-700 rounded-xl font-bold border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                >
+                  <Crown className="w-4 h-4" />
+                  Unlock Next Stage
+                </button>
+              </div>
+            )}
+            {hasFeedback && overallScore >= 5 && overallScore < 7.5 && (
+              <div className="bg-primary-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Almost There</p>
+                  <h3 className="text-xl font-bold">A few areas to sharpen</h3>
+                  <p className="text-white/80 text-sm mt-1">Practice the weak spots and you&apos;ll be interview-ready.</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('train')}
+                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-primary-700 rounded-xl font-bold border-b-4 border-primary-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                >
+                  <Zap className="w-4 h-4" />
+                  Go to Train
+                </button>
+              </div>
+            )}
+            {hasFeedback && overallScore > 0 && overallScore < 5 && (
+              <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Needs Work</p>
+                  <h3 className="text-xl font-bold">Let&apos;s rebuild the fundamentals</h3>
+                  <p className="text-white/80 text-sm mt-1">Train on each area, then retake when you&apos;re ready.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <button
+                    onClick={() => setActiveTab('train')}
+                    className="flex items-center gap-2 px-5 py-3 bg-white text-orange-700 rounded-xl font-bold border-b-4 border-orange-900 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Train Now
+                  </button>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 px-5 py-3 bg-white/20 border-2 border-white/40 text-white rounded-xl font-bold hover:bg-white/30 transition-all"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Retake
+                  </Link>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Interview Progress */}
             <div className="grid md:grid-cols-4 gap-4">
@@ -2051,7 +2117,7 @@ export default function InterviewDashboard() {
                       <button
                         type="button"
                         onClick={() => {
-                          setActiveTab('hr-screen')
+                          setActiveTab('report')
                           setTimeout(() => {
                             const el = document.querySelector('[data-practice-section]')
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -2087,325 +2153,65 @@ export default function InterviewDashboard() {
                 </div>
               )}
 
-              {/* Hiring Manager - Locked */}
+              {/* Hiring Manager - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('hiring_manager'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-primary-200 hover:border-primary-400"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Briefcase className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">Hiring Manager</h3>
-                  <p className="text-sm text-gray-400 mb-3">30-minute technical discussion</p>
-                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $4.99</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Briefcase className="w-6 h-6 text-primary-400" />
+                  <Lock className="w-4 h-4 text-primary-400" />
                 </div>
+                <h3 className="font-bold text-gray-700 mb-1 text-sm">Hiring Manager</h3>
+                <p className="text-xs text-gray-400 mb-2">Your biggest unlock.</p>
+                <p className="text-xs font-bold text-primary-600">$4.99 — Unlock</p>
               </button>
 
-              {/* Culture Fit - Locked */}
+              {/* Culture Fit - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('culture_fit'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-emerald-200 hover:border-emerald-400"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Users className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">Culture Fit</h3>
-                  <p className="text-sm text-gray-400 mb-3">Team member interviews</p>
-                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $3.99</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Users className="w-6 h-6 text-emerald-400" />
+                  <Lock className="w-4 h-4 text-emerald-400" />
                 </div>
+                <h3 className="font-bold text-gray-700 mb-1 text-sm">Culture Fit</h3>
+                <p className="text-xs text-gray-400 mb-2">The one that surprises people.</p>
+                <p className="text-xs font-bold text-emerald-600">$3.99 — Unlock</p>
               </button>
 
-              {/* Final Interview - Locked */}
+              {/* Final Round - Locked teaser */}
               <button
                 onClick={() => { setPurchaseHighlightStage('final'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-amber-200 hover:border-amber-400"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 opacity-70 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <Crown className="w-8 h-8 text-gray-400" />
-                    <Lock className="w-6 h-6 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">Final Interview</h3>
-                  <p className="text-sm text-gray-400 mb-3">Executive-level evaluation</p>
-                  <p className="text-xs font-semibold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">Click to unlock — $5.99</p>
+                <div className="flex items-center justify-between mb-3">
+                  <Crown className="w-6 h-6 text-amber-400" />
+                  <Lock className="w-4 h-4 text-amber-400" />
                 </div>
+                <h3 className="font-bold text-gray-700 mb-1 text-sm">Final Round</h3>
+                <p className="text-xs text-gray-400 mb-2">The offer is on the table.</p>
+                <p className="text-xs font-bold text-amber-600">$5.99 — Unlock</p>
               </button>
             </div>
 
-            {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
-            {hasFeedback && likelihood === 'likely' && isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        You've completed the HR screen! Now it's time to prepare for the next stage. Practice with our AI-powered hiring manager interview to get ready for the real thing.
-                      </p>
-                      <div className="flex flex-wrap gap-4 mb-6">
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">30-minute technical discussion</span>
-                        </div>
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Deep dive into your experience</span>
-                        </div>
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Company-specific questions</span>
-                        </div>
-                      </div>
-                      <Link
-                        href="/dashboard"
-                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                      >
-                        <Briefcase className="w-5 h-5" />
-                        <span>Start Hiring Manager Interview</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </Link>
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              </div>
-            )}
-
-            {/* CTA 2: Likely + !Premium — Unlock Hiring Manager OR Unlock All Interviews */}
-            {hasFeedback && likelihood === 'likely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Unlock the Hiring Manager interview to practice the next stage, or unlock all interview rounds with premium.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowPurchaseFlow(true)}
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Unlock Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowPurchaseFlow(true)}
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                        >
-                          <Crown className="w-5 h-5" />
-                          <span>Unlock All Interviews (Premium)</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <p className="text-white/70 text-sm mt-3">One-time payment • No subscription • All interview stages</p>
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              </div>
-            )}
-
-            {/* CTA 4: Unlikely + !Premium — Unlock Full Interview Process */}
-            {hasFeedback && likelihood === 'unlikely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 to-accent-400 rounded-2xl shadow-xl p-8 text-white">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold mb-2">Unlock Full Interview Process</h3>
-                    <p className="text-primary-100 mb-6">
-                      Practice with an AI that has intimate knowledge of the company and job description. Get feedback, practice specific questions, and run through the whole interview again until you're ready to land the job.
-                    </p>
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>Unlock all interview stages (Hiring Manager, Culture Fit, Final Interview)</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>3 practice attempts per interview round</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>Practice specific questions flagged for improvement right in this dashboard</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>AI-powered interviewer with deep knowledge of your target company and role</span>
-                      </li>
-                    </ul>
-                    <div className="mb-4">
-                      <p className="text-indigo-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
-                    </div>
-                    <button 
-                      onClick={() => setShowPurchaseFlow(true)}
-                      className="flex items-center space-x-2 px-6 py-3 bg-white text-primary-500 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg"
-                    >
-                      <span>Unlock All Interviews</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="hidden lg:block ml-8">
-                    <Crown className="w-32 h-32 text-white opacity-20" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* CTA 3: Unlikely + Premium — Retake or move forward (bottom CTA box) */}
-            {hasFeedback && likelihood === 'unlikely' && isPremium && (
-              <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden border-2 border-orange-400">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <RefreshCw className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Retake interview or move forward</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake), or skip ahead to the Hiring Manager interview.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <Link
-                          href="/dashboard"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <RefreshCw className="w-5 h-5" />
-                          <span>Retake Interview (Free)</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                        <Link
-                          href="/dashboard?stage=hiring_manager"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Skip to Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            {/* Teaser section for non-premium users who completed HR screen */}
+            {hasFeedback && !isPremium && (
+              <LockedStageTeasers
+                onUnlock={(stage) => { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }}
+                score={overallScore}
+              />
             )}
 
           </div>
         )}
 
-        {/* HR Screen Tab */}
-        {activeTab === 'hr-screen' && (
+        {/* Report Tab */}
+        {activeTab === 'report' && (
           <div className="space-y-6">
             {hasFeedback ? (
               <>
-                {/* HR Screen Completion Banner - Prominent */}
-                <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
-                  likelihood === 'likely' 
-                    ? 'bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500' 
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
-                }`}>
-                  <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                  <div className="relative z-10">
-                    <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
-                      <div className="flex items-start space-x-6 flex-1">
-                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg ${
-                          likelihood === 'likely' 
-                            ? 'bg-white/20 backdrop-blur-md' 
-                            : 'bg-white/20 backdrop-blur-md'
-                        }`}>
-                          {likelihood === 'likely' ? (
-                            <CheckCircle className="w-12 h-12 text-white" />
-                          ) : (
-                            <AlertCircle className="w-12 h-12 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1 text-white">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <Phone className="w-6 h-6" />
-                            <span className="text-sm font-semibold uppercase tracking-wider opacity-90">HR Screen Complete</span>
-                          </div>
-                          <h2 className="text-4xl font-bold mb-3">
-                            {likelihood === 'likely' 
-                              ? "You're Likely to Move Forward!" 
-                              : "Keep Improving to Move Forward"}
-                          </h2>
-                          <p className="text-lg text-white/90 mb-4 max-w-2xl">
-                            {likelihood === 'likely'
-                              ? "Based on your qualifications and conversation, we think you're likely to move onto the formal interview process. Your experience aligns well with the role, and here are some tips to strengthen your performance even further."
-                              : "Based on your qualifications and conversation, there are some areas to strengthen before the formal interview process. Review the feedback below to improve your chances and better align your responses with the job requirements."}
-                          </p>
-                          <div className="flex items-center space-x-4">
-                            <div className="bg-white/20 backdrop-blur-md rounded-xl px-4 py-2">
-                              <div className="text-3xl font-bold">{scorePercentage}%</div>
-                              <div className="text-xs uppercase tracking-wider opacity-90">Score</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-center md:items-end space-y-4">
-                        {likelihood === 'likely' && (
-                          <div className="text-center md:text-right">
-                            <p className="text-white/90 text-sm mb-3 font-medium">Ready for the next step?</p>
-                            <Link
-                              href="/dashboard"
-                              className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                            >
-                              <Briefcase className="w-5 h-5" />
-                              <span>Start Hiring Manager Interview</span>
-                              <ArrowRight className="w-5 h-5" />
-                            </Link>
-                          </div>
-                        )}
-                        {likelihood === 'unlikely' && !isPremium && (
-                          <div className="text-center md:text-right">
-                            <p className="text-white/90 text-sm mb-3 font-medium">Unlock the full process</p>
-                            <button
-                              type="button"
-                              onClick={() => setShowPurchaseFlow(true)}
-                              className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                            >
-                              <Crown className="w-5 h-5" />
-                              <span>Unlock Hiring Manager Interview</span>
-                              <ArrowRight className="w-5 h-5" />
-                            </button>
-                            <p className="text-white/70 text-xs mt-2">Get premium to access all interview stages</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-                </div>
               </>
             ) : (
               <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -2416,7 +2222,7 @@ export default function InterviewDashboard() {
                 </p>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-500 transition-all shadow-lg"
+                  className="inline-flex items-center space-x-2 px-8 py-4 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-all shadow-lg"
                 >
                   <span>Start an Interview</span>
                   <ArrowRight className="w-5 h-5" />
@@ -2440,7 +2246,7 @@ export default function InterviewDashboard() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
-                          <div className="text-3xl font-bold text-indigo-600">
+                          <div className="text-3xl font-bold text-primary-600">
                             {areasPassed}/{totalAreas}
                           </div>
                           <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -2478,7 +2284,7 @@ export default function InterviewDashboard() {
                     <div className="mt-4">
                       <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                          className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                           style={{ width: `${areasProgress}%` }}
                         ></div>
                       </div>
@@ -2486,7 +2292,7 @@ export default function InterviewDashboard() {
                         <span className="text-gray-600">
                           Focus on the orange areas below to level up faster.
                         </span>
-                        <span className="text-indigo-600 font-semibold">
+                        <span className="text-primary-600 font-semibold">
                           Master all 6 to be HR-screen ready.
                         </span>
                       </div>
@@ -2713,7 +2519,7 @@ export default function InterviewDashboard() {
                                   {isCandidate ? (
                                     <Users className="w-5 h-5 text-gray-700" />
                                   ) : (
-                                    <Phone className="w-5 h-5 text-indigo-600" />
+                                    <Phone className="w-5 h-5 text-primary-600" />
                                   )}
                                 </div>
                                 <div className="flex-1">
@@ -2722,7 +2528,7 @@ export default function InterviewDashboard() {
                                       className={`text-sm font-semibold ${
                                         isCandidate
                                           ? 'text-gray-900'
-                                          : 'text-indigo-700'
+                                          : 'text-primary-700'
                                       }`}
                                     >
                                       {isCandidate ? 'You' : 'AI Interviewer'}
@@ -2750,12 +2556,12 @@ export default function InterviewDashboard() {
                             {structuredTranscript.questions_asked.map((q: any, idx: number) => (
                               <div key={idx} className="p-4 rounded-lg border-2 border-gray-200 bg-white">
                                 <div className="flex items-start space-x-3">
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-indigo-100">
-                                    <Phone className="w-5 h-5 text-indigo-600" />
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary-100">
+                                    <Phone className="w-5 h-5 text-primary-600" />
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex justify-between mb-1">
-                                      <span className="text-sm font-semibold text-indigo-700">AI Interviewer</span>
+                                      <span className="text-sm font-semibold text-primary-700">AI Interviewer</span>
                                       {q.timestamp && (
                                         <span className="text-xs text-gray-500">{q.timestamp}</span>
                                       )}
@@ -2791,7 +2597,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -2799,212 +2605,6 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Next Step - Practice & Retake Section for Unlikely Candidates */}
-            {hasFeedback && likelihood === 'unlikely' && (() => {
-              // Use the same score calculation as the main display
-              const currentScore = areasPassed
-              const targetScore = totalAreas
-              const scoreDisplay = `${currentScore}/${targetScore}`
-              
-              return (
-                <div className="bg-white shadow-xl border-t-4 border-orange-500 rounded-2xl">
-                  {/* Header */}
-                  <div className="p-8 pb-6">
-                    <div className="flex items-center space-x-3">
-                      <Target className="w-8 h-8 text-orange-600" />
-                      <div>
-                        <span className="text-sm font-semibold uppercase tracking-wider text-orange-600">Next Step</span>
-                        <h2 className="text-2xl font-bold text-gray-900 mt-1">Practice & Improve Your Performance</h2>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Plan Steps */}
-                  <div className="px-8 pb-6 space-y-4">
-                    {/* Step 1 */}
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          1
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-bold text-lg text-gray-900">Complete the practice cards above</h3>
-                            <div className="flex items-baseline space-x-2">
-                              <span className="text-sm text-gray-600">Current:</span>
-                              <span className="text-2xl font-bold text-orange-600">{scoreDisplay}</span>
-                            </div>
-                          </div>
-                          <p className="text-gray-700 mb-4">
-                            Work through each practice question for areas that need improvement. Record your responses and review the AI feedback to refine your answers.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const practiceSection = document.querySelector('[data-practice-section]')
-                              if (practiceSection) {
-                                practiceSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }
-                            }}
-                            className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:scale-105 transform"
-                          >
-                            <Target className="w-5 h-5" />
-                            <span>Go to Practice Cards</span>
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Step 2 */}
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          2
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900 mb-2">Review the detailed performance breakdown</h3>
-                          <p className="text-gray-700 mb-4">
-                            Review the "Detailed Performance Breakdown" section above to understand exactly where you need to improve and why. Click the button below to open the full detailed report.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => setShowRubricModal(true)}
-                            className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:scale-105 transform"
-                          >
-                            <span>View Full Report</span>
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Step 3 */}
-                    <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                          3
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-gray-900 mb-3">Review focus areas</h3>
-                          <p className="text-gray-700 mb-4">
-                            Focus on the specific areas below that need improvement:
-                          </p>
-                          {needsWorkCards.length > 0 ? (
-                            <div className="space-y-3">
-                              {needsWorkCards.map((area: any, idx: number) => {
-                                // Extract tip from feedback or create actionable tip based on criterion
-                                let tip = area.feedback || ''
-                                // If feedback contains "Consider" or "Try", extract that part as the tip
-                                const considerMatch = tip.match(/Consider[^.]*(?:\.|$)/i)
-                                const tryMatch = tip.match(/Try[^.]*(?:\.|$)/i)
-                                const betterMatch = tip.match(/A better approach[^.]*(?:\.|$)/i)
-                                
-                                if (considerMatch) {
-                                  tip = considerMatch[0].replace(/^Consider\s+/i, '').trim()
-                                } else if (tryMatch) {
-                                  tip = tryMatch[0].replace(/^Try\s+/i, '').trim()
-                                } else if (betterMatch) {
-                                  tip = betterMatch[0].replace(/^A better approach would be:\s*/i, '').trim().replace(/^['"]|['"]$/g, '')
-                                } else {
-                                  // Fallback: create tip from criterion
-                                  if (area.criterion.includes('STAR') || area.criterion.includes('Structure')) {
-                                    tip = 'Use the STAR method (Situation, Task, Action, Result) to structure your answers'
-                                  } else if (area.criterion.includes('Examples')) {
-                                    tip = 'Include specific examples with metrics and concrete results'
-                                  } else if (area.criterion.includes('Questions')) {
-                                    tip = 'Prepare 2-3 thoughtful questions about the role, team, or company'
-                                  } else if (area.criterion.includes('Uncertain') || area.criterion.includes('Difficult')) {
-                                    tip = 'Acknowledge gaps honestly, then pivot to related experience and learning ability'
-                                  } else {
-                                    tip = tip.length > 100 ? tip.substring(0, 100) + '...' : tip
-                                  }
-                                }
-                                
-                                return (
-                                  <div key={idx} className="bg-white rounded-lg p-4 border border-orange-200">
-                                    <h4 className="font-semibold text-gray-900 mb-2">{area.criterion}</h4>
-                                    <p className="text-sm text-gray-700">
-                                      <strong className="text-orange-600">Tip:</strong> {tip}
-                                    </p>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-gray-600 text-sm">No specific focus areas identified. Continue practicing to improve your overall performance.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 4: only for Unlikely + !Premium. Unlikely + Premium see CTA box at bottom of page. */}
-                  <div className="px-8 pb-6" style={isPremium ? { display: 'none' } : undefined}>
-                    <button
-                      type="button"
-                      onClick={() => setShowStep4(!showStep4)}
-                      className="w-full px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-all shadow-lg hover:scale-105 transform flex items-center justify-center space-x-2"
-                    >
-                      <span>{showStep4 ? 'Hide Step 4' : 'Reveal Step 4'}</span>
-                      <ArrowRight className={`w-5 h-5 transition-transform duration-300 ${showStep4 ? 'rotate-90' : ''}`} />
-                    </button>
-                  </div>
-
-                  <div className={`relative bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 border-2 border-orange-400 border-t-0 rounded-b-2xl overflow-hidden transition-all duration-500 ease-in-out ${
-                    showStep4 ? 'max-h-[1000px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-4 overflow-hidden'
-                  }`} style={isPremium ? { display: 'none' } : undefined}>
-                    {/* Sheen/Glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"></div>
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-2xl"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-2xl"></div>
-                    
-                    <div className="relative p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-lg text-white mb-2">Retake interview or move forward</h3>
-                          <p className="text-white/90 mb-4">
-                            {isPremium
-                              ? "Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake), or skip ahead to the Hiring Manager interview."
-                              : "Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake). Unlock premium to access the Hiring Manager interview and all interview stages."}
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            <Link
-                              href="/dashboard"
-                              className="inline-flex items-center space-x-2 px-6 py-3 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                            >
-                              <RefreshCw className="w-5 h-5" />
-                              <span>Retake Interview (Free)</span>
-                              <ArrowRight className="w-5 h-5" />
-                            </Link>
-                            {isPremium ? (
-                              <Link
-                                href="/dashboard?stage=hiring_manager"
-                                className="inline-flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg hover:scale-105 transform"
-                              >
-                                <Briefcase className="w-5 h-5" />
-                                <span>Skip to Hiring Manager Interview</span>
-                                <ArrowRight className="w-5 h-5" />
-                              </Link>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setShowPurchaseFlow(true)}
-                                className="inline-flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg hover:scale-105 transform"
-                              >
-                                <Crown className="w-5 h-5" />
-                                <span>Unlock Hiring Manager Interview</span>
-                                <ArrowRight className="w-5 h-5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })()}
 
             {/* Full-Screen Rubric Report Modal */}
             {showRubricModal && (
@@ -3052,7 +2652,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                     {/* Modal Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900">
                           Detailed Performance Report
@@ -3532,21 +3132,21 @@ export default function InterviewDashboard() {
 
             {/* Combined CTA - Preparing for Hiring Manager Round */}
             {hasFeedback && likelihood === 'likely' && (feedback as any)?.next_steps_preparation && (
-              <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-indigo-500">
+              <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-primary-500">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-6">
-                  <Briefcase className="w-8 h-8 text-indigo-600" />
+                  <Briefcase className="w-8 h-8 text-primary-600" />
                   <div>
-                    <span className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Next Step</span>
+                    <span className="text-sm font-semibold uppercase tracking-wider text-primary-600">Next Step</span>
                     <h2 className="text-2xl font-bold text-gray-900 mt-1">Preparing for the Hiring Manager Round</h2>
                   </div>
                 </div>
 
                 {/* Readiness Assessment */}
-                <div className="bg-indigo-50 rounded-xl p-6 mb-6 border border-indigo-100">
+                <div className="bg-primary-50 rounded-xl p-6 mb-6 border border-primary-100">
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"/>
                         <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
                       </svg>
@@ -3557,13 +3157,13 @@ export default function InterviewDashboard() {
                     </div>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                    <div className="bg-white rounded-lg p-4 border border-primary-200">
                       <div className="text-sm text-gray-600 mb-1">Ready for Next Round?</div>
-                      <div className="text-2xl font-bold text-indigo-600">{(feedback as any).next_steps_preparation.ready_for_hiring_manager ? 'Yes' : 'Not Yet'}</div>
+                      <div className="text-2xl font-bold text-primary-600">{(feedback as any).next_steps_preparation.ready_for_hiring_manager ? 'Yes' : 'Not Yet'}</div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                    <div className="bg-white rounded-lg p-4 border border-primary-200">
                       <div className="text-sm text-gray-600 mb-1">Confidence Level</div>
-                      <div className="text-2xl font-bold text-indigo-600 capitalize">{(feedback as any).next_steps_preparation.confidence_level}</div>
+                      <div className="text-2xl font-bold text-primary-600 capitalize">{(feedback as any).next_steps_preparation.confidence_level}</div>
                     </div>
                   </div>
                 </div>
@@ -3577,7 +3177,7 @@ export default function InterviewDashboard() {
                       className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                     >
                       <h3 className="font-bold text-lg text-gray-900 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 mr-2 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
                         </svg>
                         Areas to Study Before Hiring Manager Interview
@@ -3618,7 +3218,7 @@ export default function InterviewDashboard() {
                       className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
                     >
                       <h3 className="font-bold text-lg text-gray-900 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 mr-2 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"/>
                         </svg>
                         Predicted Hiring Manager Questions
@@ -3638,7 +3238,7 @@ export default function InterviewDashboard() {
                         <div className="space-y-2">
                           {(feedback as any).next_steps_preparation.predicted_hiring_manager_questions.map((question: string, idx: number) => (
                             <div key={idx} className="bg-gray-50 rounded-lg p-3 text-sm border border-gray-200">
-                              <span className="font-bold text-indigo-600 mr-2">{idx + 1}.</span>
+                              <span className="font-bold text-primary-600 mr-2">{idx + 1}.</span>
                               <span className="text-gray-700">"{question}"</span>
                             </div>
                           ))}
@@ -3653,7 +3253,7 @@ export default function InterviewDashboard() {
 
             {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
             {hasFeedback && likelihood === 'likely' && isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -3682,7 +3282,7 @@ export default function InterviewDashboard() {
                       </div>
                       <Link
                         href="/dashboard"
-                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
+                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                       >
                         <Briefcase className="w-5 h-5" />
                         <span>Start Hiring Manager Interview</span>
@@ -3701,7 +3301,7 @@ export default function InterviewDashboard() {
 
             {/* CTA 2: Likely + !Premium — Unlock Hiring Manager OR Unlock All Interviews */}
             {hasFeedback && likelihood === 'likely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -3748,7 +3348,7 @@ export default function InterviewDashboard() {
 
             {/* CTA 4: Unlikely + !Premium — Unlock Full Interview Process */}
             {hasFeedback && likelihood === 'unlikely' && !isPremium && (
-              <div className="bg-gradient-to-br from-primary-500 to-accent-400 rounded-2xl shadow-xl p-8 text-white">
+              <div className="bg-primary-500 rounded-2xl shadow-xl p-8 text-white">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-2xl font-bold mb-2">Unlock Full Interview Process</h3>
@@ -3774,7 +3374,7 @@ export default function InterviewDashboard() {
                       </li>
                     </ul>
                     <div className="mb-4">
-                      <p className="text-indigo-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
+                      <p className="text-primary-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
                     </div>
                     <button 
                       onClick={() => setShowPurchaseFlow(true)}
@@ -3832,7 +3432,7 @@ export default function InterviewDashboard() {
 
             {/* Fallback CTA if no next_steps_preparation - CTA 1 or 2 (Likely only) */}
             {hasFeedback && likelihood === 'likely' && !(feedback as any)?.next_steps_preparation && (
-              <div className="bg-gradient-to-br from-primary-500 via-accent-400 to-pink-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -3850,7 +3450,7 @@ export default function InterviewDashboard() {
                       {isPremium ? (
                         <Link
                           href="/dashboard"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
+                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
                         >
                           <Briefcase className="w-5 h-5" />
                           <span>Start Hiring Manager Interview</span>
@@ -3890,6 +3490,18 @@ export default function InterviewDashboard() {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* Train Tab */}
+        {activeTab === 'train' && (
+          <div className="space-y-6">
+            <SkillTrainer
+              feedback={feedback}
+              sessionId={currentSessionData?.id}
+              currentStage={currentStage}
+              structuredTranscript={structuredTranscript}
+            />
           </div>
         )}
 
@@ -3959,7 +3571,7 @@ export default function InterviewDashboard() {
             )}
             {/* Start Interview CTA (when eligible but no HM feedback yet) */}
             {canStartHiringManager1 && !hasHmFeedback && (
-              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
+              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-primary-700">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
                   <div className="flex-1">
@@ -3973,7 +3585,7 @@ export default function InterviewDashboard() {
                     </p>
                     <Link
                       href="/dashboard?stage=hiring_manager"
-                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
+                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <Briefcase className="w-5 h-5" />
                       <span>Start Hiring Manager Interview</span>
@@ -3989,8 +3601,8 @@ export default function InterviewDashboard() {
               <>
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
-                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                    ? 'bg-primary-600'
+                    : 'bg-orange-600'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                   <div className="relative z-10">
@@ -4046,7 +3658,7 @@ export default function InterviewDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-indigo-600">
+                      <div className="text-3xl font-bold text-primary-600">
                         {hmAreasPassed}/{hmTotalAreas}
                       </div>
                       <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -4069,13 +3681,13 @@ export default function InterviewDashboard() {
                 <div className="mt-4">
                   <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                       style={{ width: `${hmAreasProgress}%` }}
                     ></div>
                   </div>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-gray-600">Focus on the orange areas below to level up.</span>
-                    <span className="text-indigo-600 font-semibold">Master all 6 to be hiring-manager ready.</span>
+                    <span className="text-primary-600 font-semibold">Master all 6 to be hiring-manager ready.</span>
                   </div>
                 </div>
               </div>
@@ -4344,11 +3956,11 @@ export default function InterviewDashboard() {
                           <div key={idx} className={`${baseClasses} ${toneClasses}`}>
                             <div className="flex space-x-3">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-indigo-600" />}
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-primary-600" />}
                               </div>
                               <div className="flex-1">
                                 <div className="flex justify-between mb-1">
-                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-primary-700'}`}>
                                     {isCandidate ? 'You' : 'AI Interviewer'}
                                   </span>
                                   {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
@@ -4389,7 +4001,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowHmRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -4429,7 +4041,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                       {/* Modal Header */}
-                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
                             Detailed Performance Report
@@ -4442,7 +4054,7 @@ export default function InterviewDashboard() {
                           <button
                             type="button"
                             onClick={() => window.print()}
-                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-all text-sm font-medium flex items-center space-x-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -4530,7 +4142,7 @@ export default function InterviewDashboard() {
             )}
             {/* Start Interview CTA (when eligible but no CF feedback yet) */}
             {interviewData.hiringManager1.completed && !hasCfFeedback && (
-              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
+              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-primary-700">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
                   <div className="flex-1">
@@ -4544,7 +4156,7 @@ export default function InterviewDashboard() {
                     </p>
                     <Link
                       href="/dashboard?stage=culture_fit"
-                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
+                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <Users className="w-5 h-5" />
                       <span>Start Culture Fit Interview</span>
@@ -4560,8 +4172,8 @@ export default function InterviewDashboard() {
               <>
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
-                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                    ? 'bg-primary-600'
+                    : 'bg-orange-600'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                   <div className="relative z-10">
@@ -4617,7 +4229,7 @@ export default function InterviewDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-indigo-600">
+                      <div className="text-3xl font-bold text-primary-600">
                         {cfAreasPassed}/{cfTotalAreas}
                       </div>
                       <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -4640,13 +4252,13 @@ export default function InterviewDashboard() {
                 <div className="mt-4">
                   <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                       style={{ width: `${cfAreasProgress}%` }}
                     ></div>
                   </div>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-gray-600">Focus on the orange areas below to level up.</span>
-                    <span className="text-indigo-600 font-semibold">Master all areas to be culture-fit ready.</span>
+                    <span className="text-primary-600 font-semibold">Master all areas to be culture-fit ready.</span>
                   </div>
                 </div>
               </div>
@@ -4832,11 +4444,11 @@ export default function InterviewDashboard() {
                           <div key={idx} className={`${baseClasses} ${toneClasses}`}>
                             <div className="flex space-x-3">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-indigo-600" />}
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Briefcase className="w-5 h-5 text-primary-600" />}
                               </div>
                               <div className="flex-1">
                                 <div className="flex justify-between mb-1">
-                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-primary-700'}`}>
                                     {isCandidate ? 'You' : 'AI Interviewer'}
                                   </span>
                                   {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
@@ -4877,7 +4489,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowCfRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -4917,7 +4529,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                       {/* Modal Header */}
-                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
                             Detailed Performance Report
@@ -4930,7 +4542,7 @@ export default function InterviewDashboard() {
                           <button
                             type="button"
                             onClick={() => window.print()}
-                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-all text-sm font-medium flex items-center space-x-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -5019,7 +4631,7 @@ export default function InterviewDashboard() {
             )}
             {/* Start Interview CTA (when eligible but no FR feedback yet) */}
             {interviewData.cultureFit.completed && !hasFrFeedback && (
-              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-gradient-to-br from-primary-500 via-accent-400 to-indigo-600">
+              <div className="rounded-2xl shadow-2xl p-8 relative overflow-hidden bg-primary-700">
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
                 <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
                   <div className="flex-1">
@@ -5033,7 +4645,7 @@ export default function InterviewDashboard() {
                     </p>
                     <Link
                       href="/dashboard?stage=final"
-                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
+                      className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
                     >
                       <Crown className="w-5 h-5" />
                       <span>Start Final Interview</span>
@@ -5049,8 +4661,8 @@ export default function InterviewDashboard() {
               <>
                 <div className={`rounded-2xl shadow-2xl p-8 relative overflow-hidden ${
                   feedback?.full_rubric?.overall_assessment?.likelihood_to_advance === 'likely'
-                    ? 'bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600'
-                    : 'bg-gradient-to-br from-orange-500 via-red-500 to-pink-500'
+                    ? 'bg-primary-600'
+                    : 'bg-orange-600'
                 }`}>
                   <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                   <div className="relative z-10">
@@ -5106,7 +4718,7 @@ export default function InterviewDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-indigo-600">
+                      <div className="text-3xl font-bold text-primary-600">
                         {frAreasPassed}/{frTotalAreas}
                       </div>
                       <div className="text-xs text-gray-500 uppercase tracking-wide">
@@ -5129,13 +4741,13 @@ export default function InterviewDashboard() {
                 <div className="mt-4">
                   <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
                       style={{ width: `${frAreasProgress}%` }}
                     ></div>
                   </div>
                   <div className="mt-2 flex justify-between text-sm">
                     <span className="text-gray-600">Focus on the orange areas below to level up.</span>
-                    <span className="text-indigo-600 font-semibold">Master all areas to be final-round ready.</span>
+                    <span className="text-primary-600 font-semibold">Master all areas to be final-round ready.</span>
                   </div>
                 </div>
               </div>
@@ -5321,11 +4933,11 @@ export default function InterviewDashboard() {
                           <div key={idx} className={`${baseClasses} ${toneClasses}`}>
                             <div className="flex space-x-3">
                               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Crown className="w-5 h-5 text-indigo-600" />}
+                                {isCandidate ? <Users className="w-5 h-5 text-gray-700" /> : <Crown className="w-5 h-5 text-primary-600" />}
                               </div>
                               <div className="flex-1">
                                 <div className="flex justify-between mb-1">
-                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-indigo-700'}`}>
+                                  <span className={`text-sm font-semibold ${isCandidate ? 'text-gray-900' : 'text-primary-700'}`}>
                                     {isCandidate ? 'You' : 'AI Interviewer'}
                                   </span>
                                   {msg.timestamp && <span className="text-xs text-gray-500">{msg.timestamp}</span>}
@@ -5366,7 +4978,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowFrRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -5406,7 +5018,7 @@ export default function InterviewDashboard() {
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
                     <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
                       {/* Modal Header */}
-                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 print:border-b-2">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
                             Detailed Performance Report
@@ -5419,7 +5031,7 @@ export default function InterviewDashboard() {
                           <button
                             type="button"
                             onClick={() => window.print()}
-                            className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all text-sm font-medium flex items-center space-x-2"
+                            className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-all text-sm font-medium flex items-center space-x-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -5476,6 +5088,160 @@ export default function InterviewDashboard() {
             )}
           </div>
         )}
+
+        {/* Combined Full Report Tab */}
+        {activeTab === 'combined-report' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Full Interview Loop Report</h2>
+                  <p className="text-gray-500 mt-1">A synthesized view of your performance across all completed stages</p>
+                </div>
+                <button
+                  onClick={loadCombinedReport}
+                  disabled={combinedReportLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${combinedReportLoading ? 'animate-spin' : ''}`} />
+                  {combinedReport ? 'Regenerate' : 'Generate Report'}
+                </button>
+              </div>
+
+              {combinedReportError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm mb-6">
+                  {combinedReportError}
+                </div>
+              )}
+
+              {!combinedReport && !combinedReportLoading && !combinedReportError && (
+                <div className="text-center py-16 text-gray-400">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg font-medium text-gray-500">Generate your full loop report</p>
+                  <p className="text-sm mt-1">Requires at least 2 completed interview stages</p>
+                </div>
+              )}
+
+              {combinedReportLoading && (
+                <div className="text-center py-16 text-gray-400">
+                  <RefreshCw className="w-10 h-10 mx-auto mb-4 animate-spin opacity-40" />
+                  <p className="text-base font-medium text-gray-500">Synthesizing your interview loop...</p>
+                </div>
+              )}
+
+              {combinedReport && !combinedReportLoading && (() => {
+                const r = combinedReport.report
+                const recommendationColors: Record<string, string> = {
+                  strong_hire: 'bg-green-100 text-green-800 border-green-200',
+                  hire: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                  lean_hire: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                  lean_no_hire: 'bg-orange-100 text-orange-800 border-orange-200',
+                  no_hire: 'bg-red-100 text-red-800 border-red-200',
+                }
+                const recommendationLabels: Record<string, string> = {
+                  strong_hire: 'Strong Hire',
+                  hire: 'Hire',
+                  lean_hire: 'Lean Hire',
+                  lean_no_hire: 'Lean No Hire',
+                  no_hire: 'No Hire',
+                }
+                return (
+                  <div className="space-y-6">
+                    {/* Header: Recommendation + Score */}
+                    <div className="flex flex-wrap items-center gap-4">
+                      <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${recommendationColors[r.overall_hire_recommendation] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                        {recommendationLabels[r.overall_hire_recommendation] || r.overall_hire_recommendation}
+                      </span>
+                      <span className="text-3xl font-bold text-gray-900">{r.composite_score}<span className="text-lg text-gray-400 font-normal">/10</span></span>
+                      <span className="text-sm text-gray-400 capitalize">Confidence: {r.confidence_level}</span>
+                    </div>
+
+                    {/* Verdict */}
+                    <p className="text-gray-700 text-base leading-relaxed border-l-4 border-primary-300 pl-4">
+                      {r.final_verdict}
+                    </p>
+
+                    {/* Score Progression */}
+                    {r.score_progression?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Score by Stage</h3>
+                        <div className="flex flex-wrap gap-3">
+                          {r.score_progression.map((sp: any, i: number) => (
+                            <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-center min-w-[120px]">
+                              <div className="text-xs text-gray-500 capitalize mb-1">{sp.stage.replace(/_/g, ' ')}</div>
+                              <div className="text-xl font-bold text-gray-800">{sp.score}<span className="text-xs text-gray-400">/10</span></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Strengths + Gaps */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-green-50 rounded-xl p-5 border border-green-100">
+                        <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" /> Top Strengths
+                        </h3>
+                        <ul className="space-y-2">
+                          {(r.top_strengths || []).map((s: string, i: number) => (
+                            <li key={i} className="text-sm text-green-700 flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="bg-red-50 rounded-xl p-5 border border-red-100">
+                        <h3 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
+                          <TrendingDown className="w-4 h-4" /> Top Gaps
+                        </h3>
+                        <ul className="space-y-2">
+                          {(r.top_gaps || []).map((g: string, i: number) => (
+                            <li key={i} className="text-sm text-red-700 flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                              {g}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Cross-stage patterns */}
+                    {r.cross_stage_patterns?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Patterns Across Stages</h3>
+                        <ul className="space-y-2">
+                          {r.cross_stage_patterns.map((p: string, i: number) => (
+                            <li key={i} className="text-sm text-gray-700 bg-blue-50 rounded-lg px-4 py-2 border border-blue-100">{p}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Coaching Priorities */}
+                    {r.coaching_priorities?.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Coaching Priorities</h3>
+                        <ol className="space-y-2">
+                          {r.coaching_priorities.map((c: string, i: number) => (
+                            <li key={i} className="text-sm text-gray-700 flex items-start gap-3">
+                              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center">{i + 1}</span>
+                              {c}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-400 text-right">
+                      Generated {new Date(combinedReport.generated_at).toLocaleString()} · Includes {combinedReport.stages_included?.join(', ')}
+                    </p>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Feedback Chat Button - Bottom Right */}
@@ -5498,7 +5264,7 @@ export default function InterviewDashboard() {
             // TODO: Open feedback chat interface
             console.log('Feedback chat clicked')
           }}
-          className="w-14 h-14 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+          className="w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center group"
           aria-label="Ask about feedback"
         >
           <MessageCircle className="w-6 h-6" />

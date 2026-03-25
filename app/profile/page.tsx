@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
@@ -402,7 +404,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading profile...</p>
@@ -414,7 +416,7 @@ export default function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+    <div className="min-h-screen bg-slate-50">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -422,7 +424,7 @@ export default function ProfilePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-400 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center">
                 <User className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -435,7 +437,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <Link href="/dashboard" className="flex items-center space-x-1 px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-medium hover:from-primary-600 hover:to-accent-500 transition-all">
+            <Link href="/dashboard" className="flex items-center space-x-1 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
               <span className="text-lg">+</span>
               <span>New Interview</span>
             </Link>
@@ -455,7 +457,7 @@ export default function ProfilePage() {
                 onClick={() => setActiveTab(tab.key as any)}
                 className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.key
-                    ? 'border-indigo-500 text-indigo-600'
+                    ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -474,8 +476,8 @@ export default function ProfilePage() {
                 <div className="p-12 text-center">
                   <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No interviews yet</h3>
-                  <p className="text-gray-600 mb-6">Start your first interview to see your history here</p>
-                  <Link href="/dashboard" className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-400 text-white rounded-lg font-medium hover:from-primary-600 hover:to-accent-500 transition-all">
+                  <p className="text-gray-600 mb-6">Complete your first round to see how you stack up.</p>
+                  <Link href="/dashboard" className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
                     <span>Get Started</span>
                     <ArrowRight className="w-5 h-5" />
                   </Link>
@@ -539,7 +541,7 @@ export default function ProfilePage() {
                         {/* Progress Bar */}
                         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-6">
                           <div
-                            className="bg-gradient-to-r from-primary-500 to-accent-400 h-full rounded-full transition-all duration-500 ease-out"
+                            className="bg-primary-500 h-full rounded-full transition-all duration-500 ease-out"
                             style={{ width: `${progressPercentage}%` }}
                           />
                         </div>
@@ -562,7 +564,7 @@ export default function ProfilePage() {
                                   isCompleted
                                     ? 'border-green-200 bg-green-50 cursor-pointer hover:border-green-300 hover:shadow-md'
                                     : isNextStep
-                                    ? 'border-indigo-200 bg-indigo-50'
+                                    ? 'border-primary-200 bg-primary-50'
                                     : 'border-gray-200 bg-gray-50 opacity-60'
                                 }`}
                                 onClick={() => {
@@ -572,10 +574,10 @@ export default function ProfilePage() {
                                 }}
                               >
                                 <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full mb-2 ${
-                                  isCompleted ? 'bg-green-100' : isNextStep ? 'bg-indigo-100' : 'bg-gray-100'
+                                  isCompleted ? 'bg-green-100' : isNextStep ? 'bg-primary-100' : 'bg-gray-100'
                                 }`}>
                                   <StageIcon className={`w-5 h-5 ${
-                                    isCompleted ? 'text-green-600' : isNextStep ? 'text-indigo-600' : 'text-gray-400'
+                                    isCompleted ? 'text-green-600' : isNextStep ? 'text-primary-600' : 'text-gray-400'
                                   }`} />
                                 </div>
                                 <h3 className="text-sm font-semibold text-gray-900 mb-1">
@@ -598,7 +600,7 @@ export default function ProfilePage() {
                                 {!isCompleted && isNextStep && (
                                   <Link
                                     href={`/interview?stage=${stageKey}`}
-                                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 mt-2"
+                                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 mt-2"
                                     onClick={e => e.stopPropagation()}
                                   >
                                     <span>Start</span>
@@ -635,7 +637,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingResume}
-                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   <span>{uploadingResume ? 'Uploading...' : 'Upload Resume'}</span>
@@ -682,7 +684,7 @@ export default function ProfilePage() {
                           }
                         }}
                         className={`group relative flex flex-col rounded-lg border overflow-hidden bg-white transition-all hover:shadow-lg cursor-pointer ${
-                          resume.is_active ? 'border-indigo-300 shadow-md ring-1 ring-indigo-100' : 'border-gray-200 hover:border-gray-300'
+                          resume.is_active ? 'border-primary-300 shadow-md ring-1 ring-primary-100' : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
                         {/* Top half: PDF preview or text fallback (Google Drive style) */}
@@ -711,7 +713,7 @@ export default function ProfilePage() {
                             </>
                           )}
                           <div className="absolute bottom-2 right-2 opacity-60">
-                            <FileText className={`w-8 h-8 ${resume.is_active ? 'text-indigo-500' : 'text-gray-500'}`} />
+                            <FileText className={`w-8 h-8 ${resume.is_active ? 'text-primary-500' : 'text-gray-500'}`} />
                           </div>
                         </div>
                         {/* Bottom half: title and info */}
@@ -724,7 +726,7 @@ export default function ProfilePage() {
                               onBlur={() => updateResumeLabel(resume.id, editingResumeLabel)}
                               onKeyDown={e => { e.key === 'Enter' && updateResumeLabel(resume.id, editingResumeLabel); e.stopPropagation() }}
                               onClick={e => e.stopPropagation()}
-                              className="text-sm font-semibold text-gray-900 border border-indigo-300 rounded px-2 py-1 w-full mb-1"
+                              className="text-sm font-semibold text-gray-900 border border-primary-300 rounded px-2 py-1 w-full mb-1"
                               autoFocus
                             />
                           ) : (
@@ -735,7 +737,7 @@ export default function ProfilePage() {
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setEditingResumeId(resume.id); setEditingResumeLabel(resume.label) }}
-                                className="opacity-0 group-hover/title:opacity-100 p-1 text-gray-400 hover:text-indigo-600 rounded transition-opacity shrink-0"
+                                className="opacity-0 group-hover/title:opacity-100 p-1 text-gray-400 hover:text-primary-600 rounded transition-opacity shrink-0"
                                 aria-label="Edit resume name"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
@@ -747,14 +749,14 @@ export default function ProfilePage() {
                           </p>
                           <div className="mt-auto flex items-center gap-2 flex-wrap">
                             {resume.is_active && (
-                              <span className="inline-flex items-center px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+                              <span className="inline-flex items-center px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
                                 <Star className="w-3 h-3 mr-1" />Active
                               </span>
                             )}
                             {!resume.is_active && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); setActiveResume(resume.id) }}
-                                className="text-xs px-2 py-1 text-indigo-600 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors"
+                                className="text-xs px-2 py-1 text-primary-600 border border-primary-200 rounded hover:bg-primary-50 transition-colors"
                               >
                                 Set Active
                               </button>
@@ -783,17 +785,17 @@ export default function ProfilePage() {
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Current Plan</h2>
               {subscription?.active ? (
-                <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-xl border border-indigo-200">
+                <div className="flex items-center justify-between p-4 bg-primary-50 rounded-xl border border-primary-200">
                   <div>
-                    <p className="font-semibold text-indigo-900">Monthly Subscription</p>
-                    <p className="text-sm text-indigo-700">
+                    <p className="font-semibold text-primary-900">Monthly Subscription</p>
+                    <p className="text-sm text-primary-700">
                       {subscription.interviewsUsed} of {subscription.interviewsMax} interviews used this period
                     </p>
-                    <p className="text-xs text-indigo-500 mt-1">
+                    <p className="text-xs text-primary-500 mt-1">
                       Renews {formatDate(subscription.periodEnd)}
                     </p>
                   </div>
-                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold">Active</span>
+                  <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">Active</span>
                 </div>
               ) : (
                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
@@ -923,7 +925,7 @@ export default function ProfilePage() {
                       href={resume.pdf_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="absolute bottom-6 right-6 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shadow-lg"
+                      className="absolute bottom-6 right-6 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 shadow-lg"
                     >
                       Open PDF in new tab
                     </a>

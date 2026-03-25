@@ -137,7 +137,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
 
   const getScoreBgColor = (score: number): string => {
     if (score >= 8) return 'from-green-500 to-emerald-500';
-    if (score >= 6) return 'from-blue-500 to-indigo-500';
+    if (score >= 6) return 'from-blue-500 to-primary-500';
     if (score >= 4) return 'from-yellow-500 to-orange-500';
     return 'from-red-500 to-pink-500';
   };
@@ -174,7 +174,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
   return (
     <div className="max-w-5xl mx-auto bg-gray-50 p-6">
       {/* Report Header */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 border-t-4 border-indigo-600">
+      <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 border-t-4 border-primary-600">
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -194,10 +194,10 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
         </div>
 
         {/* Executive Summary */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+        <div className="bg-primary-50 rounded-xl p-6 border border-primary-100">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm font-semibold text-indigo-900 mb-1">OVERALL ASSESSMENT</div>
+              <div className="text-sm font-semibold text-primary-900 mb-1">OVERALL ASSESSMENT</div>
               <div className={`text-3xl font-bold ${getScoreColor(data.overall_assessment.overall_score)}`}>
                 {data.overall_assessment.overall_score}/10
               </div>
@@ -279,7 +279,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
       {data.hiring_manager_criteria && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
               <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"/>
             </svg>
@@ -333,7 +333,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
       {data.role_specific_criteria?.criteria_identified && data.role_specific_criteria.criteria_identified.length > 0 && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-            <svg className="w-7 h-7 text-purple-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-accent-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z"/>
               <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/>
             </svg>
@@ -374,7 +374,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
       {data.hiring_manager_six_areas && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
             </svg>
             Evidence-Based Assessment
@@ -450,7 +450,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
       {data.cross_stage_progress && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"/>
             </svg>
             Progress from HR Screen
@@ -511,7 +511,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
       {data.time_management_analysis && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
             </svg>
             Time Management & Pacing Analysis
@@ -520,9 +520,9 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
           {(data.time_management_analysis.total_interview_duration || data.time_management_analysis.questions_asked) && (
             <div className="grid md:grid-cols-3 gap-4 mb-6">
               {data.time_management_analysis.total_interview_duration && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-5">
+                <div className="bg-primary-50 border border-primary-200 rounded-xl p-5">
                   <div className="text-sm text-gray-600 mb-1">Total Duration</div>
-                  <div className="text-3xl font-bold text-indigo-600">{data.time_management_analysis.total_interview_duration}</div>
+                  <div className="text-3xl font-bold text-primary-600">{data.time_management_analysis.total_interview_duration}</div>
                 </div>
               )}
               {data.time_management_analysis.questions_asked != null && (
@@ -532,9 +532,9 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
                 </div>
               )}
               {data.time_management_analysis.overall_pace && (
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-5">
+                <div className="bg-accent-50 border border-accent-200 rounded-xl p-5">
                   <div className="text-sm text-gray-600 mb-1">Overall Pace</div>
-                  <div className="text-lg font-bold text-purple-600">{data.time_management_analysis.overall_pace}</div>
+                  <div className="text-lg font-bold text-accent-600">{data.time_management_analysis.overall_pace}</div>
                 </div>
               )}
             </div>
@@ -602,17 +602,17 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
       {data.comparative_analysis && data.comparative_analysis.percentile_estimate != null && (
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg className="w-7 h-7 text-indigo-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-7 h-7 text-primary-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
             </svg>
             How You Compare
           </h2>
 
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 mb-6">
+          <div className="bg-primary-50 border border-primary-200 rounded-xl p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Percentile Ranking</h3>
               <div className="text-right">
-                <div className="text-4xl font-bold text-indigo-600">{data.comparative_analysis.percentile_estimate}th</div>
+                <div className="text-4xl font-bold text-primary-600">{data.comparative_analysis.percentile_estimate}th</div>
                 <div className="text-sm text-gray-600">percentile</div>
               </div>
             </div>
@@ -623,7 +623,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
               <div className="relative h-2 bg-gray-200 rounded-full">
                 <div className="absolute h-2 bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 rounded-full" style={{ width: '100%' }}></div>
                 <div
-                  className="absolute h-4 w-1 bg-indigo-600 rounded"
+                  className="absolute h-4 w-1 bg-primary-600 rounded"
                   style={{ left: `${data.comparative_analysis.percentile_estimate}%`, top: '-4px', boxShadow: '0 0 0 4px white' }}
                 ></div>
               </div>
@@ -685,7 +685,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
 
       {/* Next Steps Preparation */}
       {data.next_steps_preparation && (
-        <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-lg p-8 mb-6 text-white">
+        <div className="bg-primary-700 rounded-xl shadow-lg p-8 mb-6 text-white">
           <div className="relative z-10">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center">

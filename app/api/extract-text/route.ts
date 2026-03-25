@@ -100,6 +100,44 @@ export async function POST(request: NextRequest) {
           text: `[PDF file: ${file.name}]\n\nError extracting text from PDF. Please paste the text manually.`,
         }, { status: 500 })
       }
+    } else if (file.type.startsWith('image/')) {
+      // Use Claude vision to OCR a resume screenshot
+      try {
+        const Anthropic = (await import('@anthropic-ai/sdk')).default
+        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+        const arrayBuffer = await file.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
+        const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+
+        const response = await anthropic.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: mediaType, data: base64 },
+              },
+              {
+                type: 'text',
+                text: 'Extract all text from this resume image. Return only the extracted text, preserving the structure as closely as possible. No commentary.',
+              },
+            ],
+          }],
+        })
+
+        const text = response.content[0].type === 'text' ? response.content[0].text : ''
+        if (!text.trim()) {
+          return NextResponse.json({ error: 'Could not read text from this image. Try uploading a clearer photo or paste the text instead.' }, { status: 400 })
+        }
+
+        return NextResponse.json({ text })
+      } catch (imgError: any) {
+        console.error('Image OCR error:', imgError)
+        return NextResponse.json({ error: 'Failed to read resume from image. Please paste the text instead.' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })

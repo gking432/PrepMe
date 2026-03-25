@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _openai
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -155,6 +157,8 @@ You are conducting a ${stage.replace('_', ' ')} interview.
 Tone: ${toneGuidance[tone as keyof typeof toneGuidance] || toneGuidance.professional}
 Depth Level: ${depthGuidance[depthLevel as keyof typeof depthGuidance] || depthGuidance.medium}
 
+OPENING: You always speak first. Begin the call immediately with a natural phone-screen greeting. Example: "Hi, this is [your name] calling from [company] — thanks for taking the time to chat today. I wanted to ask you a few questions about your background, and then leave some time for any questions you might have for me. To start, can you give me a quick overview of your background?" Adapt the intro to match the company name, your persona, and the stage. Do NOT wait for the candidate to speak first.
+
 Interview Guidelines:
 - Ask questions naturally based on the candidate's responses. Do not use predefined question lists.
 - Keep responses under 60 words. Be concise and focused.
@@ -246,26 +250,6 @@ Company: Not provided`
       }
     })()}`
 
-    // Try creating a client_secret first (for browser use)
-    // Then create the session
-    const clientSecretResponse = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'realtime=v1',
-      },
-    })
-
-    let ephemeralClientSecret = null
-    if (clientSecretResponse.ok) {
-      const clientSecretData = await clientSecretResponse.json()
-      ephemeralClientSecret = clientSecretData.client_secret?.value || clientSecretData.client_secret
-      console.log('Created ephemeral client secret')
-    } else {
-      console.warn('Could not create ephemeral client secret, will try session method')
-    }
-
     // Create Realtime API session
     const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
@@ -275,20 +259,20 @@ Company: Not provided`
         'OpenAI-Beta': 'realtime=v1',
       },
       body: JSON.stringify({
-        model: 'gpt-realtime-mini',
-        voice: 'alloy',
+        model: 'gpt-4o-mini-realtime-preview',
+        voice: (['coral', 'shimmer', 'ash'] as const)[Math.floor(Math.random() * 3)],
         instructions: optimizedSystemPrompt,
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.65,
-          prefix_padding_ms: 500,
-          silence_duration_ms: 900,
+          threshold: 0.8,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 800,
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,
-        max_response_output_tokens: 150,
+        max_response_output_tokens: 400,
       }),
     })
 
@@ -307,8 +291,7 @@ Company: Not provided`
                         session.client_secret_value ||
                         session.data?.client_secret
 
-    // Prefer ephemeral client secret, fallback to session client_secret
-    const finalClientSecret = ephemeralClientSecret || clientSecret
+    const finalClientSecret = clientSecret
 
     if (!finalClientSecret) {
       console.error('No client_secret available. Session response:', JSON.stringify(session, null, 2))

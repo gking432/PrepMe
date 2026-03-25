@@ -17,9 +17,11 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _openai
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert audio to text using OpenAI Whisper
-    const transcription = await openai.audio.transcriptions.create({
+    const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
       model: 'whisper-1',
     })
@@ -676,7 +678,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     // Get current phase for logging
     const currentPhaseForPrompt = nextConversationPhase || conversationPhase || 'screening'
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: 'gpt-4o', // Upgraded from gpt-4o-mini for better conversation flow
       messages,
       temperature: 0.75, // Natural variation for conversational flow
@@ -697,7 +699,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     // Generate speech audio using OpenAI TTS
     let audioBase64 = null
     try {
-      const mp3 = await openai.audio.speech.create({
+      const mp3 = await getOpenAI().audio.speech.create({
         model: 'tts-1',
         voice: 'alloy', // Options: alloy, echo, fable, onyx, nova, shimmer
         input: assistantMessage,

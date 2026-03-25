@@ -13,9 +13,10 @@ import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import ScoreRevealCard from '@/components/ScoreRevealCard'
 import LockedStageTeasers from '@/components/LockedStageTeasers'
-import SkillTrainer from '@/components/SkillTrainer'
 import InterviewTimeline from '@/components/InterviewTimeline'
+import PracticeLessonFlow from '@/components/PracticeLessonFlow'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
+import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('results')
@@ -57,6 +58,7 @@ export default function InterviewDashboard() {
   const [practicedCriteria, setPracticedCriteria] = useState<string[]>([])
   const [passedCriteria, setPassedCriteria] = useState<string[]>([])
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
+  const [activePracticeLesson, setActivePracticeLesson] = useState<{ criterion: string; rootCause: string; question?: string; answer?: string } | null>(null)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showRubricModal, setShowRubricModal] = useState(false)
@@ -2182,117 +2184,113 @@ export default function InterviewDashboard() {
                   </div>
                 )}
 
-                {/* Master These Questions */}
-                {sixAreas && (
-                  <div className="space-y-6" data-practice-section>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-2xl font-bold text-gray-900">
-                        Master These Questions
-                      </h3>
-                      <div className="text-sm text-gray-600 flex space-x-4">
-                        <span className="inline-flex items-center space-x-1">
-                          <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                          <span>Passed / Strengths</span>
-                        </span>
-                        <span className="inline-flex items-center space-x-1">
-                          <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                          <span>Needs Work</span>
-                        </span>
-                      </div>
+                {/* ═══ PRACTICE WORLD — "A whole different experience" ═══ */}
+                {sixAreas && needsImproveAreas.length > 0 && (
+                  <div data-practice-section className="relative">
+                    {/* Separator — visual break between reporting and practice */}
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent-300 to-transparent" />
+                      <span className="text-xs font-bold uppercase tracking-widest text-accent-500">Practice Mode</span>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent-300 to-transparent" />
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Strengths / Passed Stack */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-gray-700">
-                            Passed Areas
-                          </h4>
-                          {strengthsCards.length > 1 && (
-                            <div className="flex items-center space-x-3 text-xs text-gray-500">
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setStrengthCarouselIndex((prev) =>
-                                    prev - 1
-                                  )
-                                }
-                              >
-                                <span>←</span>
-                              </button>
-                              <span>
-                                Card{' '}
-                                {getSafeIndex(
-                                  strengthsCards.length,
-                                  strengthCarouselIndex
-                                ) + 1}{' '}
-                                of {strengthsCards.length}
-                              </span>
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setStrengthCarouselIndex((prev) =>
-                                    prev + 1
-                                  )
-                                }
-                              >
-                                <span>→</span>
-                              </button>
-                            </div>
-                          )}
+                    <div className="bg-gradient-to-br from-accent-50 via-white to-accent-50 rounded-2xl shadow-xl border border-accent-100 overflow-hidden">
+                      {/* Header */}
+                      <div className="bg-gradient-to-r from-accent-600 to-accent-500 px-6 py-5 text-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-xl font-extrabold md:text-2xl">Level Up Your Skills</h3>
+                            <p className="text-accent-100 text-sm mt-1">
+                              Interactive lessons to strengthen your weak areas. Learn the skill, practice it, then re-answer.
+                            </p>
+                          </div>
+                          <Zap className="w-8 h-8 text-accent-200 hidden md:block" />
                         </div>
-                        {renderStackedCarousel(
-                          strengthsCards,
-                          strengthCarouselIndex,
-                          setStrengthCarouselIndex,
-                          'strength'
-                        )}
                       </div>
 
-                      {/* Needs Work Stack */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-gray-700">
-                            Needs Work
-                          </h4>
-                          {needsWorkCards.length > 1 && (
-                            <div className="flex items-center space-x-3 text-xs text-gray-500">
+                      {/* Skill Cards Grid */}
+                      <div className="p-5 md:p-6">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          {needsImproveAreas.map((area: any) => {
+                            const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
+                            const bundle = getBundleForRootCause(rootCause)
+                            const isPracticed = practicedCriteria.includes(area.criterion)
+                            const isPassed = passedCriteria.includes(area.criterion)
+                            const evidence = area.evidence?.[0]
+
+                            return (
                               <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setImproveCarouselIndex((prev) =>
-                                    prev - 1
-                                  )
-                                }
+                                key={area.criterion}
+                                onClick={() => setActivePracticeLesson({
+                                  criterion: area.criterion,
+                                  rootCause,
+                                  question: evidence?.question,
+                                  answer: evidence?.excerpt,
+                                })}
+                                className={`group relative text-left rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-lg active:scale-[0.98] ${
+                                  isPassed
+                                    ? 'border-emerald-300 bg-emerald-50'
+                                    : isPracticed
+                                    ? 'border-amber-300 bg-amber-50'
+                                    : 'border-gray-200 bg-white hover:border-accent-300 hover:bg-accent-50/50'
+                                }`}
                               >
-                                <span>←</span>
+                                {/* Status badge */}
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`text-xs font-bold uppercase tracking-wide ${
+                                    isPassed ? 'text-emerald-600' : isPracticed ? 'text-amber-600' : 'text-accent-500'
+                                  }`}>
+                                    {isPassed ? 'Passed' : isPracticed ? 'Attempted' : 'Start Lesson'}
+                                  </span>
+                                  {isPassed ? (
+                                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                                  ) : (
+                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all" />
+                                  )}
+                                </div>
+
+                                {/* Skill name */}
+                                <h4 className="font-bold text-gray-900 text-sm leading-snug mb-1">
+                                  {bundle.displayName}
+                                </h4>
+                                <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                                  {area.feedback}
+                                </p>
+
+                                {/* Score indicator */}
+                                {area.score != null && (
+                                  <div className="mt-3 flex items-center gap-2">
+                                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-700 ${
+                                          area.score >= 7 ? 'bg-emerald-500' : area.score >= 5 ? 'bg-amber-400' : 'bg-red-400'
+                                        }`}
+                                        style={{ width: `${area.score * 10}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-400 tabular-nums">{area.score}/10</span>
+                                  </div>
+                                )}
                               </button>
-                              <span>
-                                Card{' '}
-                                {getSafeIndex(
-                                  needsWorkCards.length,
-                                  improveCarouselIndex
-                                ) + 1}{' '}
-                                of {needsWorkCards.length}
-                              </span>
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setImproveCarouselIndex((prev) =>
-                                    prev + 1
-                                  )
-                                }
-                              >
-                                <span>→</span>
-                              </button>
-                            </div>
-                          )}
+                            )
+                          })}
                         </div>
-                        {renderStackedCarousel(
-                          needsWorkCards,
-                          improveCarouselIndex,
-                          setImproveCarouselIndex,
-                          'improve'
+
+                        {/* Strengths summary (collapsed) */}
+                        {wentWellAreas.length > 0 && (
+                          <div className="mt-5 pt-4 border-t border-gray-100">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                              Strengths ({wentWellAreas.length})
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {wentWellAreas.map((area: any) => (
+                                <span key={area.criterion} className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-medium text-emerald-700">
+                                  <CheckCircle className="w-3 h-3" />
+                                  {area.criterion}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -3130,15 +3128,30 @@ export default function InterviewDashboard() {
                   </div>
                 )}
 
-                {/* ─── SECTION 3: Integrated Practice (SkillTrainer) ─── */}
-                <div data-practice-section>
-                  <SkillTrainer
-                    feedback={feedback}
-                    sessionId={currentSessionData?.id}
-                    currentStage={currentStage}
-                    structuredTranscript={structuredTranscript}
-                  />
-                </div>
+                {/* ─── Practice Lesson Overlay (replaces SkillTrainer) ─── */}
+                {activePracticeLesson && (
+                  <div className="fixed inset-0 z-50 bg-white md:bg-black/50 md:backdrop-blur-sm flex items-start md:items-center justify-center overflow-y-auto">
+                    <div className="w-full md:max-w-3xl md:mx-4 md:my-8 md:bg-white md:rounded-2xl md:shadow-2xl md:max-h-[90vh] md:overflow-y-auto">
+                      <PracticeLessonFlow
+                        bundle={getBundleForRootCause(activePracticeLesson.rootCause)}
+                        criterion={activePracticeLesson.criterion}
+                        originalQuestion={activePracticeLesson.question}
+                        originalAnswer={activePracticeLesson.answer}
+                        sessionId={currentSessionData?.id}
+                        currentStage={currentStage}
+                        onComplete={(passed, xpEarned) => {
+                          const criterion = activePracticeLesson.criterion
+                          setPracticedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                          if (passed) {
+                            setPassedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                          }
+                          setActivePracticeLesson(null)
+                        }}
+                        onClose={() => setActivePracticeLesson(null)}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* ─── SECTION 5: Readiness + Organic Upgrade CTA ─── */}
                 {!isPremium && (

@@ -731,7 +731,7 @@ export default function PreppiWalkthrough({
       </div>
 
       {/* ── Bottom-anchored Continue Button ── */}
-      {state !== 'fork' && state !== 'complete' && state !== 'lesson_roadmap' && (
+      {state !== 'fork' && state !== 'complete' && (
         <div className="shrink-0 px-5 py-4 md:px-12 border-t border-gray-100 bg-white">
           <div className="max-w-md mx-auto">
             <button

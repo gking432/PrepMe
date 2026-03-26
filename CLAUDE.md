@@ -167,3 +167,11 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 - No new TypeScript errors introduced (pre-existing sandbox errors remain)
 
 **Next session should**: Test on `?preview=mock`, wire HM/CF/FR practice, get custom Preppi SVG from user.
+
+### 2026-03-26 (Session 3)
+- Verified all session 2 work committed on branch `claude/read-project-docs-E36ZX`
+- Pushed branch to remote (`git push -u origin claude/read-project-docs-E36ZX`)
+- Confirmed zero new TypeScript errors in our modified files
+- Confirmed mock data structure (`what_needs_improve` with criterion/score/rootCause/evidence) matches `WeaknessArea` interface in LessonRoadmap
+
+**Next session should**: Test on `?preview=mock`, wire HM/CF/FR stages into LessonRoadmap (currently only `sixAreas?.what_needs_improve` wired for HR screen), get custom Preppi SVG from user.

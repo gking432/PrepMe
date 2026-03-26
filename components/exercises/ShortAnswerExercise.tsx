@@ -58,7 +58,7 @@ export default function ShortAnswerExercise({
               ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-default'
               : isOverLimit
               ? 'border-red-300 focus:border-red-400 bg-red-50/30'
-              : 'border-gray-200 focus:border-accent-400 bg-white'
+              : 'border-[#e5e5e5] focus:border-[#58CC02] bg-white'
           }`}
         />
 
@@ -84,8 +84,8 @@ export default function ShortAnswerExercise({
         disabled={isEmpty || isOverLimit || submitted}
         className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
           submitted
-            ? 'bg-emerald-500 text-white cursor-default'
-            : 'bg-accent-600 text-white hover:bg-accent-700 active:scale-[0.98] shadow-lg shadow-accent-200 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed'
+            ? 'bg-[#58CC02] border-b-4 border-[#46a302] text-white cursor-default font-extrabold rounded-2xl'
+            : 'btn-duo-green disabled:opacity-40 disabled:cursor-not-allowed'
         }`}
       >
         {submitted ? (

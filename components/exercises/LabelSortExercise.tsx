@@ -107,8 +107,8 @@ export default function LabelSortExercise({
                     ? 'border-emerald-300 bg-emerald-50/50'
                     : 'border-red-300 bg-red-50/50'
                   : selected
-                  ? 'border-primary-300 bg-white shadow-md'
-                  : 'border-gray-200 bg-white'
+                  ? 'border-[#1CB0F6] bg-white shadow-md'
+                  : 'border-[#e5e5e5] bg-white'
               }`}
             >
               {/* Segment text */}
@@ -184,7 +184,7 @@ export default function LabelSortExercise({
       {!checked && allLabeled && (
         <button
           onClick={handleCheck}
-          className="w-full py-3 bg-accent-600 text-white rounded-xl text-sm font-bold hover:bg-accent-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-accent-200"
+          className="w-full btn-duo-green py-3"
         >
           Check Answers
         </button>
@@ -193,7 +193,7 @@ export default function LabelSortExercise({
       {checked && (
         <button
           onClick={() => onComplete(passed)}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-accent-600 text-white rounded-xl text-sm font-bold hover:bg-accent-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-accent-200"
+          className="w-full btn-duo-green flex items-center justify-center gap-2 py-3"
         >
           Continue
           <ArrowRight className="w-4 h-4" />

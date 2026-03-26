@@ -102,11 +102,11 @@ export default function TeachCard({
               key={key}
               className="flex items-start gap-3 rounded-xl bg-white border border-gray-100 px-4 py-3 shadow-sm"
             >
-              <span className="shrink-0 w-8 h-8 rounded-full bg-accent-100 flex items-center justify-center text-xs font-extrabold text-accent-700">
+              <span className="shrink-0 w-8 h-8 rounded-full bg-[#d7f5b1] flex items-center justify-center text-xs font-extrabold text-[#2a7a00]">
                 {formatBreakdownKey(key)}
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-accent-600 uppercase tracking-wide">
+                <p className="text-xs font-bold text-[#58CC02] uppercase tracking-wide">
                   {breakdownKeyLabel(key)}
                 </p>
                 <p className="text-sm text-gray-700 leading-relaxed">
@@ -121,7 +121,7 @@ export default function TeachCard({
       {/* Continue button */}
       <button
         onClick={onContinue}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-accent-600 text-white rounded-xl text-sm font-bold hover:bg-accent-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-accent-200"
+        className="w-full btn-duo-green flex items-center justify-center gap-2 py-4"
       >
         Got it — Let&apos;s practice
         <ArrowRight className="w-4 h-4" />

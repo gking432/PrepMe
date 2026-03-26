@@ -23,10 +23,10 @@ export default function Preppi({ message, size = 'md', animate = true, className
   }, [animate])
 
   const sizes = {
-    sm: { bird: 40, wrapper: 'gap-2' },
-    md: { bird: 56, wrapper: 'gap-3' },
-    lg: { bird: 80, wrapper: 'gap-4' },
-    xl: { bird: 120, wrapper: 'gap-5' },
+    sm: { bird: 48, wrapper: 'gap-2' },
+    md: { bird: 64, wrapper: 'gap-3' },
+    lg: { bird: 88, wrapper: 'gap-4' },
+    xl: { bird: 128, wrapper: 'gap-5' },
   }
 
   const s = sizes[size]
@@ -42,11 +42,11 @@ export default function Preppi({ message, size = 'md', animate = true, className
 
       {/* Speech bubble */}
       {message && (
-        <div className="relative bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm max-w-xs">
-          <p className="text-sm text-gray-700 leading-snug">{message}</p>
+        <div className="relative bg-white border-2 border-[#86efac] rounded-2xl rounded-bl-sm px-4 py-3.5 shadow-md max-w-xs">
+          <p className="text-sm font-bold text-gray-800 leading-snug">{message}</p>
           {/* Tail */}
           <div className="absolute -left-2 bottom-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-white border-b-[6px] border-b-transparent" />
-          <div className="absolute -left-[9px] bottom-[10px] w-0 h-0 border-t-[7px] border-t-transparent border-r-[9px] border-r-gray-200 border-b-[7px] border-b-transparent" />
+          <div className="absolute -left-[11px] bottom-[10px] w-0 h-0 border-t-[7px] border-t-transparent border-r-[10px] border-r-[#86efac] border-b-[7px] border-b-transparent" />
         </div>
       )}
     </div>

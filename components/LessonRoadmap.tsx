@@ -243,16 +243,16 @@ export default function LessonRoadmap({
       </div>
 
       {/* ── Scrollable content ── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-[#f0fdf4]">
         <div className="max-w-xs mx-auto px-4 py-8">
 
           {/* Preppi */}
           <div className="text-center mb-10">
-            <div className="w-20 h-20 mx-auto mb-3 animate-preppi-bounce">
+            <div className="w-24 h-24 mx-auto mb-3 animate-preppi-bounce">
               <PreppiSVG />
             </div>
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl rounded-t-sm px-4 py-3 inline-block max-w-[260px] animate-bubble-pop">
-              <p className="text-sm text-gray-700 font-medium leading-snug">{preppiMessage}</p>
+            <div className="bg-white border border-[#86efac] rounded-2xl rounded-t-sm px-4 py-3 inline-block max-w-[280px] animate-bubble-pop shadow-sm">
+              <p className="text-sm font-bold text-gray-800 leading-snug">{preppiMessage}</p>
             </div>
           </div>
 
@@ -291,41 +291,43 @@ export default function LessonRoadmap({
                       </div>
                     )}
 
-                    {/* The badge */}
+                    {/* The badge — 3D coin style */}
                     <button
                       onClick={() => canStart && handleStartLesson(idx)}
                       disabled={!canStart}
                       className={`
-                        w-20 h-20 rounded-full border-4 flex items-center justify-center
-                        transition-all duration-500 shadow-md relative overflow-hidden
+                        w-24 h-24 rounded-full border-[5px] flex items-center justify-center
+                        transition-all duration-500 relative overflow-hidden active:translate-y-1
                         ${
                           isCompleted && isPassed
-                            ? `bg-[#58CC02] border-[#46a302] ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
+                            ? `bg-[#58CC02] border-[#2d8f00] ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
                             : isCompleted
-                            ? 'bg-amber-400 border-amber-500'
+                            ? 'bg-amber-400 border-amber-600'
                             : isNext
                             ? 'bg-white border-[#58CC02] animate-badge-pulse'
-                            : 'bg-white border-gray-200 hover:border-[#58CC02]/50'
+                            : 'bg-[#e5e5e5] border-[#c0c0c0]'
                         }
                       `}
                       style={{
                         boxShadow:
                           isCompleted && isPassed
-                            ? '0 4px 14px rgba(88, 204, 2, 0.4)'
+                            ? '0 6px 0 #1a5e00, inset 0 2px 0 rgba(255,255,255,0.3)'
+                            : isCompleted
+                            ? '0 5px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.2)'
                             : isNext
-                            ? '0 4px 14px rgba(88, 204, 2, 0.3)'
-                            : '0 2px 8px rgba(0,0,0,0.08)',
+                            ? '0 6px 0 #46a302'
+                            : '0 4px 0 #a0a0a0, inset 0 1px 0 rgba(255,255,255,0.5)',
                       }}
                     >
                       {isCompleted && isPassed ? (
-                        <CheckCircle className="w-9 h-9 text-white" />
+                        <CheckCircle className="w-10 h-10 text-white drop-shadow-sm" />
                       ) : isCompleted ? (
                         <div className="flex flex-col items-center">
-                          <RotateCcw className="w-5 h-5 text-amber-700" />
-                          <span className="text-[9px] font-bold text-amber-700 mt-0.5">retry</span>
+                          <RotateCcw className="w-5 h-5 text-amber-800" />
+                          <span className="text-[9px] font-extrabold text-amber-800 mt-0.5">retry</span>
                         </div>
                       ) : (
-                        <span className="text-3xl">{icon}</span>
+                        <span className="text-4xl">{icon}</span>
                       )}
                     </button>
                   </div>
@@ -359,8 +361,8 @@ export default function LessonRoadmap({
                   {/* Connector line */}
                   {!isLast && (
                     <div
-                      className={`w-0.5 h-12 my-1 rounded-full transition-colors duration-700 ${
-                        isCompleted ? 'bg-green-200' : 'bg-gray-200'
+                      className={`w-1.5 h-14 my-1 rounded-full transition-colors duration-700 ${
+                        isCompleted ? 'bg-[#58CC02]/40' : 'bg-[#c0c0c0]/60'
                       }`}
                     />
                   )}
@@ -370,7 +372,7 @@ export default function LessonRoadmap({
           </div>
 
           {/* ── Bottom actions ── */}
-          <div className="mt-10 space-y-3">
+          <div className="mt-10 space-y-3 bg-white rounded-2xl p-4 shadow-sm border border-[#d1fae5]">
             {allDone && (
               <div className="text-center mb-2 animate-slide-up">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">

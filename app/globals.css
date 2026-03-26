@@ -228,3 +228,82 @@ body {
   color: #9ca3af;
 }
 
+/* ── Badge filling green (task/lesson complete) ── */
+@keyframes badge-fill-green {
+  0%   { transform: scale(1);    background-color: #f3f4f6; border-color: #d1d5db; }
+  40%  { transform: scale(1.25); background-color: #4ade80; border-color: #22c55e; }
+  70%  { transform: scale(0.92); background-color: #22c55e; border-color: #16a34a; }
+  100% { transform: scale(1);    background-color: #22c55e; border-color: #16a34a; }
+}
+
+.animate-badge-fill-green {
+  animation: badge-fill-green 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ── Preppi hop to next badge ── */
+@keyframes preppi-hop {
+  0%   { transform: translateY(0) scale(1) rotate(0deg); }
+  25%  { transform: translateY(-22px) scale(1.12) rotate(-8deg); }
+  55%  { transform: translateY(-10px) scale(1.06) rotate(5deg); }
+  80%  { transform: translateY(-2px) scale(1.02) rotate(-2deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+.animate-preppi-hop {
+  animation: preppi-hop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ── Transcript interviewer card (slides in from top) ── */
+@keyframes slide-in-top {
+  from { transform: translateY(-40px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.animate-slide-in-top {
+  animation: slide-in-top 0.4s ease-out forwards;
+}
+
+/* ── Transcript user card (slides in from bottom, delayed) ── */
+@keyframes slide-in-bottom {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-bottom 0.4s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+/* ── Mini confetti burst (smaller, quicker than full confetti) ── */
+@keyframes mini-confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(80px) rotate(360deg) scale(0.5); opacity: 0; }
+}
+
+.mini-confetti-piece {
+  animation: mini-confetti-fall 0.8s ease-in forwards;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ── Lesson badge pulse (current/available) ── */
+@keyframes badge-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0); }
+}
+
+.animate-badge-pulse {
+  animation: badge-pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Task badge scale-in on complete ── */
+@keyframes task-badge-complete {
+  0%   { transform: scale(0.6) rotate(-20deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(5deg);  opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);    opacity: 1; }
+}
+
+.animate-task-badge-complete {
+  animation: task-badge-complete 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+

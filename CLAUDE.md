@@ -56,15 +56,15 @@ hooks/
 - Walkthrough persistence via localStorage
 
 ### Active Branch
-`claude/improve-interview-feedback-9BBeR` — all work goes here
+`claude/read-project-docs-E36ZX` — current session work
 
 ### What Needs Work Next
-See `RE-DESIGN_STATE.md` for the full detailed task list. Key priorities:
-1. End-to-end testing of the walkthrough flow
-2. Fix practice overlay click/z-index issues in static results view
-3. Polish desktop Preppi companion sidebar
-4. Ensure detailed report modal opens correctly from walkthrough
-5. Transcript integration into detailed report
+1. End-to-end test on `?preview=mock` — verify every flow state renders correctly
+2. Wire LessonRoadmap + practice for HM/CF/FR stages (currently only HR screen)
+3. Custom Preppi SVG illustration (currently using basic SVG) — user will build in Figma
+4. XP/badge persistence to Supabase
+5. Streak system (lower priority)
+6. Test voice re-answer scoring end-to-end with real microphone
 
 ---
 
@@ -131,7 +131,7 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 
 ## Session Update Log
 
-### 2026-03-26
+### 2026-03-26 (Session 1)
 - Built PreppiWalkthrough component (Duolingo-style guided experience)
 - Built PracticeLessonFlow + 4 exercise components
 - Made PracticeLessonFlow voice-only (removed text input for re-answer)
@@ -140,6 +140,30 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 - Wired walkthrough into feedback page (early-return pattern)
 - Added Replay Walkthrough button to static results view
 - Created RE-DESIGN_STATE.md with full vision documentation
-- Created this CLAUDE.md file
 
-**Next session should**: Test the walkthrough end-to-end, fix any click/rendering issues, polish the desktop layout, and ensure the detailed report modal integration works.
+### 2026-03-26 (Session 2)
+- Built `LessonRoadmap` component — Duolingo badge path, two-level (lesson → task)
+  - Grey/locked badges turn green w/ confetti on lesson complete
+  - Preppi hops along to next badge
+  - Mini confetti burst per badge
+- Rewrote `PreppiWalkthrough`:
+  - Fork now goes to `LessonRoadmap` (not direct to practice)
+  - Added `TranscriptOverlay` — animated Q&A popup on weakness cards ("See what you said")
+  - Interviewer icon: male/female deterministic from sessionId
+  - Removed `practice_transition` state (LessonRoadmap handles between-lesson flow)
+- Rewrote `PracticeLessonFlow`:
+  - Replaced progress bar with badge-style step indicators (Learn → Q1..Qn → Apply)
+  - Mini confetti burst after each step completes
+  - Step badge turns green with `animate-task-badge-complete`
+  - Added "Try Again" button when voice re-answer fails
+- Updated `app/globals.css`: added `badge-fill-green`, `preppi-hop`, `slide-in-top`,
+  `slide-in-bottom`, `mini-confetti-fall`, `badge-pulse-glow`, `task-badge-complete`
+- Polished static results view (`app/interview/feedback/page.tsx`):
+  - Removed colored score-based CTA banners
+  - Replaced practice grid with clean criteria breakdown (all criteria, strengths + weaknesses)
+  - Weak area cards have embedded "Practice →" button → opens LessonRoadmap
+  - "View Full Performance Report" card at bottom
+  - LessonRoadmap overlay wired as early-return before main static view
+- No new TypeScript errors introduced (pre-existing sandbox errors remain)
+
+**Next session should**: Test on `?preview=mock`, wire HM/CF/FR practice, get custom Preppi SVG from user.

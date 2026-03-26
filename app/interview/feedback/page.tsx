@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap } from 'lucide-react'
+import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, AlertTriangle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap, FileText } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
@@ -16,6 +16,7 @@ import LockedStageTeasers from '@/components/LockedStageTeasers'
 import InterviewTimeline from '@/components/InterviewTimeline'
 import PracticeLessonFlow from '@/components/PracticeLessonFlow'
 import PreppiWalkthrough from '@/components/PreppiWalkthrough'
+import LessonRoadmap from '@/components/LessonRoadmap'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
@@ -61,6 +62,7 @@ export default function InterviewDashboard() {
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [activePracticeLesson, setActivePracticeLesson] = useState<{ criterion: string; rootCause: string; question?: string; answer?: string } | null>(null)
   const [walkthroughActive, setWalkthroughActive] = useState(true)
+  const [showLessonRoadmap, setShowLessonRoadmap] = useState(false)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showRubricModal, setShowRubricModal] = useState(false)
@@ -1893,6 +1895,24 @@ export default function InterviewDashboard() {
     )
   }
 
+  // ── LessonRoadmap overlay (launched from static results view) ────────────────
+  if (showLessonRoadmap && hasFeedback) {
+    const weaknesses = sixAreas?.what_needs_improve || []
+    return (
+      <LessonRoadmap
+        weaknesses={weaknesses}
+        sessionId={currentSessionData?.id}
+        currentStage={currentStage}
+        onAllComplete={() => setShowLessonRoadmap(false)}
+        onViewReport={() => {
+          setShowLessonRoadmap(false)
+          setShowRubricModal(true)
+        }}
+        onClose={() => setShowLessonRoadmap(false)}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -2100,249 +2120,142 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Smart CTA based on score */}
-            {hasFeedback && overallScore >= 7.5 && (
-              <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Strong Showing</p>
-                  <h3 className="text-xl font-bold">Ready to level up?</h3>
-                  <p className="text-white/80 text-sm mt-1">Unlock your next interview stage to keep the momentum going.</p>
-                </div>
-                <button
-                  onClick={() => setShowPurchaseFlow(true)}
-                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-emerald-700 rounded-xl font-bold border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
-                >
-                  <Crown className="w-4 h-4" />
-                  Unlock Next Stage
-                </button>
-              </div>
-            )}
-            {hasFeedback && overallScore >= 5 && overallScore < 7.5 && (
-              <div className="bg-primary-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Almost There</p>
-                  <h3 className="text-xl font-bold">A few areas to sharpen</h3>
-                  <p className="text-white/80 text-sm mt-1">Practice the weak spots and you&apos;ll be interview-ready.</p>
-                </div>
-                <button
-                  onClick={() => { const el = document.querySelector('[data-practice-section]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
-                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-primary-700 rounded-xl font-bold border-b-4 border-primary-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
-                >
-                  <Zap className="w-4 h-4" />
-                  Practice Now
-                </button>
-              </div>
-            )}
-            {hasFeedback && overallScore > 0 && overallScore < 5 && (
-              <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Needs Work</p>
-                  <h3 className="text-xl font-bold">Let&apos;s rebuild the fundamentals</h3>
-                  <p className="text-white/80 text-sm mt-1">Train on each area, then retake when you&apos;re ready.</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                  <button
-                    onClick={() => { const el = document.querySelector('[data-practice-section]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
-                    className="flex items-center gap-2 px-5 py-3 bg-white text-orange-700 rounded-xl font-bold border-b-4 border-orange-900 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
-                  >
-                    <Zap className="w-4 h-4" />
-                    Train Now
-                  </button>
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 px-5 py-3 bg-white/20 border-2 border-white/40 text-white rounded-xl font-bold hover:bg-white/30 transition-all"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Retake
-                  </Link>
-                </div>
-              </div>
-            )}
 
-            {/* ─── SECTION 2: Performance Feedback & Practice ─── */}
+            {/* ─── SECTION 2: Performance Breakdown ─── */}
 
             {hasFeedback && (
-              <div className="space-y-6">
-                {/* Areas Passed Tracker */}
-                {sixAreas && (
-                  <div className="bg-white rounded-2xl shadow-xl p-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">
-                          Your HR Screen Progress
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Pass all 6 core areas to master the HR phone screen fundamentals.
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="text-3xl font-bold text-primary-600">
-                            {areasPassed}/{totalAreas}
-                          </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Areas Passed
-                          </div>
+              <div className="space-y-4">
+
+                {/* All-criteria breakdown */}
+                {sixAreas && (wentWellAreas.length > 0 || needsImproveAreas.length > 0) && (
+                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div className="px-6 py-5 border-b border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Performance Breakdown</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            {areasPassed} of {totalAreas} areas strong
+                          </p>
                         </div>
-                        <svg className="w-20 h-20">
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r={circleRadius}
-                            stroke="#e5e7eb"
-                            strokeWidth="8"
-                            fill="none"
-                          />
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r={circleRadius}
-                            stroke="#6366f1"
-                            strokeWidth="8"
-                            fill="none"
-                            strokeDasharray={circleCircumference}
-                            strokeDashoffset={circleDashOffset}
-                            strokeLinecap="round"
-                            style={{
-                              transform: 'rotate(-90deg)',
-                              transformOrigin: '50% 50%',
-                              transition: 'stroke-dashoffset 0.5s ease-out',
-                            }}
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
-                          style={{ width: `${areasProgress}%` }}
-                        ></div>
-                      </div>
-                      <div className="mt-2 flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Focus on the orange areas below to level up faster.
-                        </span>
-                        <span className="text-primary-600 font-semibold">
-                          Master all 6 to be HR-screen ready.
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ═══ PRACTICE WORLD — "A whole different experience" ═══ */}
-                {sixAreas && needsImproveAreas.length > 0 && (
-                  <div data-practice-section className="relative">
-                    {/* Separator — visual break between reporting and practice */}
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent-300 to-transparent" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-accent-500">Practice Mode</span>
-                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-accent-300 to-transparent" />
-                    </div>
-
-                    <div className="bg-gradient-to-br from-accent-50 via-white to-accent-50 rounded-2xl shadow-xl border border-accent-100 overflow-hidden">
-                      {/* Header */}
-                      <div className="bg-gradient-to-r from-accent-600 to-accent-500 px-6 py-5 text-white">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-xl font-extrabold md:text-2xl">Level Up Your Skills</h3>
-                            <p className="text-accent-100 text-sm mt-1">
-                              Interactive lessons to strengthen your weak areas. Learn the skill, practice it, then re-answer.
-                            </p>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <div className="text-2xl font-extrabold text-primary-600">{areasPassed}/{totalAreas}</div>
+                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Passed</div>
                           </div>
-                          <Zap className="w-8 h-8 text-accent-200 hidden md:block" />
+                          <svg className="w-14 h-14" viewBox="0 0 56 56">
+                            <circle cx="28" cy="28" r="20" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                            <circle
+                              cx="28" cy="28" r="20"
+                              stroke="#6366f1" strokeWidth="6" fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={2 * Math.PI * 20}
+                              strokeDashoffset={2 * Math.PI * 20 - (areasPassed / (totalAreas || 1)) * 2 * Math.PI * 20}
+                              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.6s ease-out' }}
+                            />
+                          </svg>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Skill Cards Grid */}
-                      <div className="p-5 md:p-6">
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {needsImproveAreas.map((area: any) => {
-                            const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
-                            const bundle = getBundleForRootCause(rootCause)
-                            const isPracticed = practicedCriteria.includes(area.criterion)
-                            const isPassed = passedCriteria.includes(area.criterion)
-                            const evidence = area.evidence?.[0]
+                    <div className="divide-y divide-gray-50">
+                      {/* Strengths */}
+                      {wentWellAreas.map((area: any) => (
+                        <div key={area.criterion} className="px-6 py-4 flex items-start gap-4">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-3 mb-1">
+                              <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
+                              {area.score != null && (
+                                <span className="text-xs font-bold text-emerald-600 shrink-0 tabular-nums">{area.score}/10</span>
+                              )}
+                            </div>
+                            {area.score != null && (
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${area.score * 10}%` }} />
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
+                          </div>
+                        </div>
+                      ))}
 
-                            return (
-                              <button
-                                key={area.criterion}
-                                onClick={() => setActivePracticeLesson({
-                                  criterion: area.criterion,
-                                  rootCause,
-                                  question: evidence?.question,
-                                  answer: evidence?.excerpt,
-                                })}
-                                className={`group relative text-left rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-lg active:scale-[0.98] ${
-                                  isPassed
-                                    ? 'border-emerald-300 bg-emerald-50'
-                                    : isPracticed
-                                    ? 'border-amber-300 bg-amber-50'
-                                    : 'border-gray-200 bg-white hover:border-accent-300 hover:bg-accent-50/50'
-                                }`}
-                              >
-                                {/* Status badge */}
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className={`text-xs font-bold uppercase tracking-wide ${
-                                    isPassed ? 'text-emerald-600' : isPracticed ? 'text-amber-600' : 'text-accent-500'
-                                  }`}>
-                                    {isPassed ? 'Passed' : isPracticed ? 'Attempted' : 'Start Lesson'}
-                                  </span>
-                                  {isPassed ? (
-                                    <CheckCircle className="w-5 h-5 text-emerald-500" />
-                                  ) : (
-                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all" />
+                      {/* Weaknesses */}
+                      {needsImproveAreas.map((area: any) => {
+                        const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
+                        const bundle = getBundleForRootCause(rootCause)
+                        const isPassed = passedCriteria.includes(area.criterion)
+
+                        return (
+                          <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/40">
+                            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                              <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-3 mb-1">
+                                <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {area.score != null && (
+                                    <span className="text-xs font-bold text-amber-600 tabular-nums">{area.score}/10</span>
                                   )}
+                                  <button
+                                    onClick={() => setShowLessonRoadmap(true)}
+                                    className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
+                                      isPassed
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                        : 'bg-accent-50 border-accent-200 text-accent-700 hover:bg-accent-100'
+                                    }`}
+                                  >
+                                    {isPassed ? '✓ Passed' : 'Practice →'}
+                                  </button>
                                 </div>
-
-                                {/* Skill name */}
-                                <h4 className="font-bold text-gray-900 text-sm leading-snug mb-1">
-                                  {bundle.displayName}
-                                </h4>
-                                <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
-                                  {area.feedback}
-                                </p>
-
-                                {/* Score indicator */}
-                                {area.score != null && (
-                                  <div className="mt-3 flex items-center gap-2">
-                                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                      <div
-                                        className={`h-full rounded-full transition-all duration-700 ${
-                                          area.score >= 7 ? 'bg-emerald-500' : area.score >= 5 ? 'bg-amber-400' : 'bg-red-400'
-                                        }`}
-                                        style={{ width: `${area.score * 10}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-gray-400 tabular-nums">{area.score}/10</span>
-                                  </div>
-                                )}
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        {/* Strengths summary (collapsed) */}
-                        {wentWellAreas.length > 0 && (
-                          <div className="mt-5 pt-4 border-t border-gray-100">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                              Strengths ({wentWellAreas.length})
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {wentWellAreas.map((area: any) => (
-                                <span key={area.criterion} className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-medium text-emerald-700">
-                                  <CheckCircle className="w-3 h-3" />
-                                  {area.criterion}
-                                </span>
-                              ))}
+                              </div>
+                              {area.score != null && (
+                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-700 ${area.score >= 5 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                    style={{ width: `${area.score * 10}%` }}
+                                  />
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
+                              <p className="text-xs text-accent-500 font-semibold mt-1.5">
+                                📚 {bundle.displayName}
+                              </p>
                             </div>
                           </div>
-                        )}
-                      </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
+
+                {/* Practice CTA */}
+                {needsImproveAreas.length > 0 && (
+                  <button
+                    onClick={() => setShowLessonRoadmap(true)}
+                    className="w-full btn-duo-green py-4 text-base flex items-center justify-center gap-2"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Practice Weak Areas
+                  </button>
+                )}
+
+                {/* View Full Report */}
+                <button
+                  onClick={() => setShowRubricModal(true)}
+                  className="w-full bg-white rounded-2xl shadow-lg p-5 text-left flex items-center justify-between hover:shadow-xl transition-all group border border-gray-100"
+                >
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">View Full Performance Report</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Detailed rubric, scoring rationale, and evidence from your interview.</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </button>
 
                 {/* Transcript Section (simplified, with green/red highlights for extremes only) */}
                 {structuredTranscript && (

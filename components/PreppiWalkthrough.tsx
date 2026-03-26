@@ -581,7 +581,7 @@ export default function PreppiWalkthrough({
                   {hasTranscriptData && (
                     <button
                       onClick={() => setShowTranscript(true)}
-                      className="flex items-center gap-2 text-xs font-semibold text-primary-600 hover:text-primary-700 mb-4 transition-colors"
+                      className="flex items-center gap-2 text-xs font-semibold text-[#58CC02] hover:text-[#46a302] mb-4 transition-colors"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       See what you said
@@ -589,10 +589,10 @@ export default function PreppiWalkthrough({
                   )}
 
                   {/* Practice teaser */}
-                  <div className="bg-accent-50 rounded-xl p-3 border border-accent-100">
+                  <div className="bg-[#d7f5b1] rounded-xl p-3 border border-[#a8e06a]">
                     <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-accent-500" />
-                      <p className="text-xs text-accent-700 font-semibold">
+                      <Zap className="w-4 h-4 text-[#46a302]" />
+                      <p className="text-xs text-[#2a7a00] font-semibold">
                         Practice lesson ready for this skill!
                       </p>
                     </div>
@@ -604,8 +604,8 @@ export default function PreppiWalkthrough({
             {/* ── FORK ── */}
             {state === 'fork' && (
               <div className="w-full max-w-md text-center animate-slide-up" key={`fork-${animKey}`}>
-                <div className="w-20 h-20 mx-auto mb-5 bg-accent-100 rounded-full flex items-center justify-center">
-                  <Star className="w-10 h-10 text-accent-600" />
+                <div className="w-20 h-20 mx-auto mb-5 bg-[#d7f5b1] rounded-full flex items-center justify-center">
+                  <Star className="w-10 h-10 text-[#58CC02]" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-2">
                   Review Complete!
@@ -672,7 +672,7 @@ export default function PreppiWalkthrough({
                   </div>
                   <div className="w-px h-10 bg-gray-200" />
                   <div className="text-center">
-                    <p className="text-2xl font-extrabold text-accent-600">{practicedCount || weaknesses.length}</p>
+                    <p className="text-2xl font-extrabold text-[#58CC02]">{practicedCount || weaknesses.length}</p>
                     <p className="text-xs text-gray-400 font-semibold">Practiced</p>
                   </div>
                 </div>
@@ -717,7 +717,7 @@ export default function PreppiWalkthrough({
                   {!isPremium && (
                     <button
                       onClick={onUnlockNextStage}
-                      className="w-full py-3.5 text-sm font-bold text-primary-600 border-2 border-primary-200 rounded-2xl hover:bg-primary-50 transition-all flex items-center justify-center gap-2"
+                      className="w-full btn-duo-white py-3.5 text-sm flex items-center justify-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
                       Unlock Next Stage

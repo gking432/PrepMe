@@ -300,20 +300,20 @@ export default function LessonRoadmap({
                         transition-all duration-500 shadow-md relative overflow-hidden
                         ${
                           isCompleted && isPassed
-                            ? `bg-green-500 border-green-600 ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
+                            ? `bg-[#58CC02] border-[#46a302] ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
                             : isCompleted
                             ? 'bg-amber-400 border-amber-500'
                             : isNext
-                            ? 'bg-white border-accent-400 animate-badge-pulse'
-                            : 'bg-white border-gray-200 hover:border-accent-300'
+                            ? 'bg-white border-[#58CC02] animate-badge-pulse'
+                            : 'bg-white border-gray-200 hover:border-[#58CC02]/50'
                         }
                       `}
                       style={{
                         boxShadow:
                           isCompleted && isPassed
-                            ? '0 4px 14px rgba(34, 197, 94, 0.35)'
+                            ? '0 4px 14px rgba(88, 204, 2, 0.4)'
                             : isNext
-                            ? '0 4px 14px rgba(124, 58, 237, 0.25)'
+                            ? '0 4px 14px rgba(88, 204, 2, 0.3)'
                             : '0 2px 8px rgba(0,0,0,0.08)',
                       }}
                     >
@@ -381,7 +381,7 @@ export default function LessonRoadmap({
             )}
             <button
               onClick={onViewReport}
-              className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-gray-600 border-2 border-gray-200 rounded-2xl hover:bg-gray-50 transition-all"
+              className="w-full btn-duo-white flex items-center justify-center gap-2 py-3.5 text-sm"
             >
               <FileText className="w-4 h-4" />
               View Detailed Report

@@ -74,6 +74,66 @@ const PREPPI_MESSAGES: Record<string, string> = {
   complete_fail:    "Good effort! Review the tips and give it another shot when you're ready.",
 }
 
+// ── Feedback bottom sheet (correct / wrong) ────────────────────────────────────
+
+function FeedbackBottomSheet({
+  correct,
+  xpGained,
+  onContinue,
+}: {
+  correct: boolean
+  xpGained: number
+  onContinue: () => void
+}) {
+  return (
+    <>
+      {/* Invisible backdrop — tap anywhere to continue */}
+      <div className="fixed inset-0 z-50" onClick={onContinue} />
+      {/* Sheet */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl px-5 pt-6 pb-10 animate-sheet-slide-up ${
+          correct ? 'bg-[#d7f5b1]' : 'bg-[#ffdfe0]'
+        }`}
+      >
+        <div className="max-w-lg mx-auto">
+          {/* Header row */}
+          <div className="flex items-center gap-4 mb-5">
+            <div
+              className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${
+                correct ? 'bg-[#58CC02]' : 'bg-[#FF4B4B]'
+              }`}
+            >
+              {correct
+                ? <CheckCircle className="w-7 h-7 text-white" />
+                : <X className="w-7 h-7 text-white" />
+              }
+            </div>
+            <div>
+              <p className={`text-2xl font-extrabold leading-tight ${correct ? 'text-[#2a7a00]' : 'text-[#9b1c1c]'}`}>
+                {correct ? 'Correct!' : 'Not quite!'}
+              </p>
+              {correct && (
+                <p className="text-sm font-bold text-[#2a7a00] opacity-80">+{xpGained} XP</p>
+              )}
+            </div>
+          </div>
+          {/* 3D press Continue button */}
+          <button
+            onClick={onContinue}
+            className={`w-full py-4 rounded-2xl font-extrabold text-white text-base transition-transform active:translate-y-[3px] ${
+              correct
+                ? 'bg-[#58CC02] border-b-4 border-[#46a302] active:border-b-0'
+                : 'bg-[#FF4B4B] border-b-4 border-[#cc3c3c] active:border-b-0'
+            }`}
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ── Mini confetti burst (used per-step) ───────────────────────────────────────
 
 function MiniStepBurst({ active }: { active: boolean }) {
@@ -121,9 +181,9 @@ function StepBadge({ label, icon, state, justCompleted }: StepBadgeProps) {
         className={`
           w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-500
           ${state === 'done'
-            ? `bg-green-500 border-green-600 shadow-sm shadow-green-200 ${justCompleted ? 'animate-task-badge-complete' : ''}`
+            ? `bg-[#58CC02] border-[#46a302] shadow-sm shadow-green-200 ${justCompleted ? 'animate-task-badge-complete' : ''}`
             : state === 'active'
-            ? 'bg-white border-accent-400 shadow-sm shadow-accent-100 animate-badge-pulse'
+            ? 'bg-white border-[#58CC02] shadow-sm shadow-green-100 animate-badge-pulse'
             : 'bg-gray-100 border-gray-200'
           }
         `}
@@ -131,13 +191,13 @@ function StepBadge({ label, icon, state, justCompleted }: StepBadgeProps) {
         {state === 'done' ? (
           <CheckCircle className="w-5 h-5 text-white" />
         ) : (
-          <span className={state === 'active' ? 'text-accent-600' : 'text-gray-300'}>
+          <span className={state === 'active' ? 'text-[#58CC02]' : 'text-gray-300'}>
             {icon}
           </span>
         )}
       </div>
       <span className={`text-[9px] font-bold uppercase tracking-wide ${
-        state === 'done' ? 'text-green-600' : state === 'active' ? 'text-accent-600' : 'text-gray-300'
+        state === 'done' ? 'text-[#46a302]' : state === 'active' ? 'text-[#58CC02]' : 'text-gray-300'
       }`}>
         {label}
       </span>
@@ -169,6 +229,13 @@ export default function PracticeLessonFlow({
   const [confettiActive, setConfettiActive] = useState(false)
   const [stepBurst, setStepBurst]           = useState(false)
   const [justCompletedStep, setJustCompletedStep] = useState<number | null>(null)
+
+  // Feedback bottom sheet
+  const [feedbackSheet, setFeedbackSheet] = useState<{
+    correct: boolean
+    xpGained: number
+    onContinue: () => void
+  } | null>(null)
 
   // Re-answer state
   const [reanswerSubmitting, setReanswerSubmitting] = useState(false)
@@ -232,20 +299,22 @@ export default function PracticeLessonFlow({
 
   const advanceFromExercise = useCallback(
     (index: number, correct: boolean) => {
+      const xpGained = correct ? XP_EXERCISE_CORRECT : XP_EXERCISE_ATTEMPT
       setExerciseResults(prev => ({ ...prev, [index]: correct }))
       if (correct) {
-        addXp(XP_EXERCISE_CORRECT)
+        addXp(xpGained)
         ding()
-        setPreppiMsg(PREPPI_MESSAGES.exercise_correct)
         setJustCompletedStep(1 + index)
         triggerStepBurst()
         setTimeout(() => setJustCompletedStep(null), 700)
       } else {
-        addXp(XP_EXERCISE_ATTEMPT)
-        setPreppiMsg(PREPPI_MESSAGES.exercise_wrong)
+        addXp(xpGained)
       }
+      setPreppiMsg(correct ? PREPPI_MESSAGES.exercise_correct : PREPPI_MESSAGES.exercise_wrong)
 
-      setTimeout(() => {
+      // Show Duolingo-style feedback bottom sheet; advance on tap
+      const doAdvance = () => {
+        setFeedbackSheet(null)
         if (index + 1 < exerciseCount) {
           setFlowState(`exercise_${index + 1}`)
           setPreppiMsg(PREPPI_MESSAGES.exercise)
@@ -253,7 +322,8 @@ export default function PracticeLessonFlow({
           setFlowState('reanswer')
           setPreppiMsg(PREPPI_MESSAGES.reanswer)
         }
-      }, 1200)
+      }
+      setFeedbackSheet({ correct, xpGained, onContinue: doAdvance })
     },
     [addXp, ding, exerciseCount, triggerStepBurst],
   )
@@ -466,11 +536,11 @@ export default function PracticeLessonFlow({
 
   const renderIntro = () => (
     <div className="flex flex-col items-center justify-center text-center px-6 py-12 md:py-16 min-h-[60vh] md:min-h-0">
-      <div className="w-20 h-20 bg-accent-50 rounded-full flex items-center justify-center mb-6 animate-slide-up">
-        <BookOpen className="w-10 h-10 text-accent-500" />
+      <div className="w-20 h-20 bg-[#d7f5b1] rounded-full flex items-center justify-center mb-6 animate-slide-up">
+        <BookOpen className="w-10 h-10 text-[#58CC02]" />
       </div>
       <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3 animate-slide-up">
-        Let&apos;s work on <span className="text-accent-600">{bundle.displayName}</span>
+        Let&apos;s work on <span className="text-[#58CC02]">{bundle.displayName}</span>
       </h2>
       <p className="text-gray-500 text-base leading-relaxed max-w-md mb-8 animate-slide-up">
         {bundle.description}
@@ -479,8 +549,8 @@ export default function PracticeLessonFlow({
       {/* Lesson outline */}
       <div className="w-full max-w-sm bg-gray-50 rounded-2xl p-5 mb-8 text-left space-y-3 animate-slide-up">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-accent-100 rounded-full flex items-center justify-center shrink-0">
-            <BookOpen className="w-3.5 h-3.5 text-accent-600" />
+          <div className="w-7 h-7 bg-[#d7f5b1] rounded-full flex items-center justify-center shrink-0">
+            <BookOpen className="w-3.5 h-3.5 text-[#58CC02]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">Learn the technique</p>
@@ -488,8 +558,8 @@ export default function PracticeLessonFlow({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center shrink-0">
-            <Sparkles className="w-3.5 h-3.5 text-primary-600" />
+          <div className="w-7 h-7 bg-[#dbeafe] rounded-full flex items-center justify-center shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-[#1CB0F6]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">{exerciseCount} practice exercises</p>
@@ -513,7 +583,7 @@ export default function PracticeLessonFlow({
 
       <button
         onClick={advanceToTeach}
-        className="flex items-center gap-2 px-8 py-4 bg-accent-600 hover:bg-accent-700 text-white text-base font-bold rounded-2xl shadow-lg shadow-accent-200 active:scale-95 transition-all"
+        className="btn-duo-green flex items-center gap-2 px-8 py-4"
       >
         Start Lesson
         <ArrowRight className="w-5 h-5" />
@@ -578,9 +648,9 @@ export default function PracticeLessonFlow({
         </div>
 
         {/* The question */}
-        <div className="bg-primary-50 border border-primary-100 rounded-2xl p-5">
-          <p className="text-xs font-semibold text-primary-400 uppercase tracking-wide mb-2">Interview Question</p>
-          <p className="text-base font-semibold text-primary-800 leading-relaxed">{question}</p>
+        <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-2xl p-5">
+          <p className="text-xs font-semibold text-[#1CB0F6] uppercase tracking-wide mb-2">Interview Question</p>
+          <p className="text-base font-semibold text-gray-900 leading-relaxed">{question}</p>
         </div>
 
         {/* Original answer */}
@@ -615,7 +685,7 @@ export default function PracticeLessonFlow({
           <div className="text-center py-6 space-y-3">
             {reanswerSubmitting ? (
               <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-[#58CC02] border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm text-gray-500">Scoring your answer…</p>
               </div>
             ) : recording ? (
@@ -636,9 +706,9 @@ export default function PracticeLessonFlow({
               <>
                 <button
                   onClick={startRecording}
-                  className="w-20 h-20 bg-accent-50 rounded-full flex items-center justify-center mx-auto hover:bg-accent-100 active:scale-95 transition-all shadow-lg"
+                  className="w-20 h-20 bg-[#d7f5b1] rounded-full flex items-center justify-center mx-auto hover:bg-[#c3f093] active:scale-95 transition-all shadow-lg"
                 >
-                  <Mic className="w-8 h-8 text-accent-600" />
+                  <Mic className="w-8 h-8 text-[#58CC02]" />
                 </button>
                 <p className="text-sm text-gray-500 font-medium">Tap to record your answer</p>
                 <p className="text-xs text-gray-400">Speak clearly — just like in the real interview</p>
@@ -687,7 +757,7 @@ export default function PracticeLessonFlow({
           </div>
           <div className="w-px h-10 bg-gray-200" />
           <div className="text-center">
-            <p className="text-2xl font-extrabold text-accent-600">{correctCount}/{exerciseCount}</p>
+            <p className="text-2xl font-extrabold text-[#1CB0F6]">{correctCount}/{exerciseCount}</p>
             <p className="text-xs text-gray-400 font-semibold">Correct</p>
           </div>
           {finalPassed && (
@@ -722,11 +792,7 @@ export default function PracticeLessonFlow({
           {/* Primary action */}
           <button
             onClick={() => onComplete(finalPassed, xp)}
-            className={`w-full flex items-center justify-center gap-2 px-8 py-4 text-white text-base font-bold rounded-2xl shadow-lg active:scale-95 transition-all ${
-              finalPassed
-                ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200'
-                : 'bg-accent-600 hover:bg-accent-700 shadow-accent-200'
-            }`}
+            className="w-full btn-duo-green flex items-center justify-center gap-2 px-8 py-4"
           >
             {finalPassed ? 'Continue' : 'Done for now'}
             <ArrowRight className="w-5 h-5" />
@@ -736,7 +802,7 @@ export default function PracticeLessonFlow({
           {!finalPassed && (
             <button
               onClick={handleRetry}
-              className="w-full flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-accent-600 border-2 border-accent-200 rounded-2xl hover:bg-accent-50 transition-all"
+              className="w-full btn-duo-white flex items-center justify-center gap-2 py-3.5 text-sm"
             >
               <RotateCcw className="w-4 h-4" />
               Try Again
@@ -776,6 +842,15 @@ export default function PracticeLessonFlow({
           <div className="flex-1 overflow-y-auto px-6 py-6">{renderCurrentStep()}</div>
         </div>
       </div>
+
+      {/* Duolingo-style feedback bottom sheet */}
+      {feedbackSheet && (
+        <FeedbackBottomSheet
+          correct={feedbackSheet.correct}
+          xpGained={feedbackSheet.xpGained}
+          onContinue={feedbackSheet.onContinue}
+        />
+      )}
     </>
   )
 }

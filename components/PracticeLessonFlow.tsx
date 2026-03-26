@@ -7,7 +7,6 @@ import {
   Trophy,
   Mic,
   MicOff,
-  Send,
   ArrowRight,
   BookOpen,
   CheckCircle,
@@ -97,14 +96,14 @@ export default function PracticeLessonFlow({
   const [confettiActive, setConfettiActive] = useState(false)
 
   // Re-answer state
-  const [reanswerText, setReanswerText] = useState('')
+  const [reanswerText] = useState('')
   const [reanswerSubmitting, setReanswerSubmitting] = useState(false)
   const [reanswerResult, setReanswerResult] = useState<{
     score: number
     passed: boolean
     feedback: string
   } | null>(null)
-  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text')
+  const [inputMode] = useState<'text' | 'voice'>('voice')
   const [recording, setRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -225,10 +224,6 @@ export default function PracticeLessonFlow({
     },
     [sessionId, originalQuestion, originalAnswer, currentStage, bundle.teach.example.question, addXp, ding],
   )
-
-  const submitReanswerText = useCallback(() => {
-    submitReanswer(reanswerText)
-  }, [reanswerText, submitReanswer])
 
   // ── Voice recording ──────────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
@@ -649,97 +644,42 @@ export default function PracticeLessonFlow({
           </div>
         )}
 
-        {/* Input mode toggle */}
+        {/* Voice-only re-answer — the whole point is to practice speaking */}
         {!reanswerResult && (
           <>
-            <div className="flex rounded-xl border border-gray-200 overflow-hidden text-sm">
-              <button
-                onClick={() => setInputMode('text')}
-                className={`flex-1 py-2.5 font-semibold transition-colors ${
-                  inputMode === 'text'
-                    ? 'bg-accent-600 text-white'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                Type
-              </button>
-              <button
-                onClick={() => setInputMode('voice')}
-                className={`flex-1 py-2.5 font-semibold transition-colors ${
-                  inputMode === 'voice'
-                    ? 'bg-accent-600 text-white'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                Voice
-              </button>
-            </div>
-
-            {/* Text input */}
-            {inputMode === 'text' && (
-              <div className="space-y-3">
-                <textarea
-                  value={reanswerText}
-                  onChange={(e) => setReanswerText(e.target.value)}
-                  rows={5}
-                  placeholder="Give a clear, structured answer. Use what you learned in this lesson."
-                  className="w-full px-4 py-3 text-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-accent-400 resize-none transition-colors"
-                />
-                <button
-                  onClick={submitReanswerText}
-                  disabled={!reanswerText.trim() || reanswerSubmitting}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold disabled:opacity-40 active:scale-[0.98] transition-all"
-                >
-                  {reanswerSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Scoring your answer...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      Submit Answer
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Voice input */}
-            {inputMode === 'voice' && (
-              <div className="text-center py-6 space-y-3">
-                {reanswerSubmitting ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-gray-500">Scoring your answer...</p>
+            <div className="text-center py-6 space-y-3">
+              {reanswerSubmitting ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-gray-500">Scoring your answer...</p>
+                </div>
+              ) : recording ? (
+                <>
+                  <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                    <div className="w-6 h-6 bg-red-500 rounded-full animate-pulse" />
                   </div>
-                ) : recording ? (
-                  <>
-                    <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto">
-                      <div className="w-6 h-6 bg-red-500 rounded-full animate-pulse" />
-                    </div>
-                    <p className="text-sm font-semibold text-red-600">Recording...</p>
-                    <button
-                      onClick={stopRecording}
-                      className="flex items-center gap-2 px-8 py-3 bg-red-500 text-white rounded-xl font-semibold text-sm mx-auto active:scale-95 transition-all"
-                    >
-                      <MicOff className="w-4 h-4" />
-                      Done
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={startRecording}
-                      className="w-20 h-20 bg-accent-50 rounded-full flex items-center justify-center mx-auto hover:bg-accent-100 active:scale-95 transition-all"
-                    >
-                      <Mic className="w-8 h-8 text-accent-600" />
-                    </button>
-                    <p className="text-sm text-gray-400">Tap to record your answer</p>
-                  </>
-                )}
-              </div>
-            )}
+                  <p className="text-sm font-semibold text-red-600">Recording...</p>
+                  <button
+                    onClick={stopRecording}
+                    className="flex items-center gap-2 px-8 py-3 bg-red-500 text-white rounded-xl font-semibold text-sm mx-auto active:scale-95 transition-all"
+                  >
+                    <MicOff className="w-4 h-4" />
+                    Done
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={startRecording}
+                    className="w-20 h-20 bg-accent-50 rounded-full flex items-center justify-center mx-auto hover:bg-accent-100 active:scale-95 transition-all shadow-lg"
+                  >
+                    <Mic className="w-8 h-8 text-accent-600" />
+                  </button>
+                  <p className="text-sm text-gray-500 font-medium">Tap to record your answer</p>
+                  <p className="text-xs text-gray-400">Speak clearly — just like in the real interview</p>
+                </>
+              )}
+            </div>
           </>
         )}
       </div>

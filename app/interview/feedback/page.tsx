@@ -15,6 +15,7 @@ import ScoreRevealCard from '@/components/ScoreRevealCard'
 import LockedStageTeasers from '@/components/LockedStageTeasers'
 import InterviewTimeline from '@/components/InterviewTimeline'
 import PracticeLessonFlow from '@/components/PracticeLessonFlow'
+import PreppiWalkthrough from '@/components/PreppiWalkthrough'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
@@ -59,6 +60,7 @@ export default function InterviewDashboard() {
   const [passedCriteria, setPassedCriteria] = useState<string[]>([])
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [activePracticeLesson, setActivePracticeLesson] = useState<{ criterion: string; rootCause: string; question?: string; answer?: string } | null>(null)
+  const [walkthroughActive, setWalkthroughActive] = useState(true)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showRubricModal, setShowRubricModal] = useState(false)
@@ -1862,6 +1864,35 @@ export default function InterviewDashboard() {
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
 
+  // ── Preppi Walkthrough: takes over the entire screen on first visit ──
+  if (hasFeedback && walkthroughActive) {
+    return (
+      <PreppiWalkthrough
+        feedback={feedback}
+        structuredTranscript={structuredTranscript}
+        currentSessionData={currentSessionData}
+        currentStage={currentStage}
+        isPremium={isPremium}
+        sessionId={currentSessionData?.id}
+        onOpenDetailedReport={() => {
+          setWalkthroughActive(false)
+          setShowRubricModal(true)
+        }}
+        onRetakeInterview={() => {
+          setWalkthroughActive(false)
+          router.push('/dashboard')
+        }}
+        onUnlockNextStage={() => {
+          setWalkthroughActive(false)
+          setShowPurchaseFlow(true)
+        }}
+        onSkipToResults={() => {
+          setWalkthroughActive(false)
+        }}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -2022,12 +2053,28 @@ export default function InterviewDashboard() {
         )}
 
         {/* ═══════════════════════════════════════════════════════════════
-            SINGLE-FLOW POST-INTERVIEW EXPERIENCE
-            Section 1: Score Reveal → Section 2: Feedback Cards → Section 3: Practice
-            → Section 4: Transcript → Section 5: Readiness + Upgrade CTA
+            STATIC RESULTS VIEW (shown after walkthrough or on revisit)
             ═══════════════════════════════════════════════════════════════ */}
 
         <div className="space-y-6">
+            {/* Replay Walkthrough button */}
+            {hasFeedback && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    if (currentSessionData?.id) {
+                      localStorage.removeItem(`walkthrough_seen_${currentSessionData.id}`)
+                    }
+                    setWalkthroughActive(true)
+                  }}
+                  className="text-xs text-accent-500 hover:text-accent-700 font-semibold flex items-center gap-1 transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Replay Walkthrough
+                </button>
+              </div>
+            )}
+
             {/* Score Reveal Card */}
             {hasFeedback ? (
               <ScoreRevealCard

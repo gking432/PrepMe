@@ -15,19 +15,22 @@ interface TeachCardProps {
   onContinue: () => void
 }
 
-// Map common breakdown keys to short display labels
-function formatBreakdownKey(key: string): string {
-  const map: Record<string, string> = {
-    situation: 'S',
-    task: 'T',
-    action: 'A',
-    result: 'R',
+// For STAR keys show S/T/A/R badge; for other keys show the number (1,2,3...) based on index
+// Label is always the human-readable key (underscores → spaces, title case)
+function formatBreakdownKey(key: string, index: number): string {
+  const star: Record<string, string> = {
+    situation: 'S', task: 'T', action: 'A', result: 'R',
   }
-  return map[key.toLowerCase()] || key.charAt(0).toUpperCase()
+  return star[key.toLowerCase()] ?? String(index + 1)
 }
 
 function breakdownKeyLabel(key: string): string {
-  return key.charAt(0).toUpperCase() + key.slice(1)
+  // Convert snake_case / camelCase to readable label
+  return key
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^\w/, c => c.toUpperCase())
+    .trim()
 }
 
 export default function TeachCard({
@@ -97,13 +100,13 @@ export default function TeachCard({
           Breakdown
         </p>
         <div className="space-y-2">
-          {Object.entries(example.breakdown).map(([key, value]) => (
+          {Object.entries(example.breakdown).map(([key, value], index) => (
             <div
               key={key}
               className="flex items-start gap-3 rounded-xl bg-white border border-gray-100 px-4 py-3 shadow-sm"
             >
               <span className="shrink-0 w-8 h-8 rounded-full bg-[#d7f5b1] flex items-center justify-center text-xs font-extrabold text-[#2a7a00]">
-                {formatBreakdownKey(key)}
+                {formatBreakdownKey(key, index)}
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-[#58CC02] uppercase tracking-wide">

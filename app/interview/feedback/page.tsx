@@ -7,13 +7,18 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap } from 'lucide-react'
+import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, AlertTriangle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap, FileText } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import ScoreRevealCard from '@/components/ScoreRevealCard'
 import LockedStageTeasers from '@/components/LockedStageTeasers'
-import SkillTrainer from '@/components/SkillTrainer'
+import InterviewTimeline from '@/components/InterviewTimeline'
+import SubLessonRoadmap from '@/components/SubLessonRoadmap'
+import PreppiWalkthrough from '@/components/PreppiWalkthrough'
+import LessonRoadmap from '@/components/LessonRoadmap'
+import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
+import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('results')
@@ -41,6 +46,8 @@ export default function InterviewDashboard() {
   const [practiceRecording, setPracticeRecording] = useState<Record<string, boolean>>({}) // Recording state per question
   const [practicePlayingQuestion, setPracticePlayingQuestion] = useState<Record<string, boolean>>({}) // Playing question audio
   const [practicePlayingFeedback, setPracticePlayingFeedback] = useState<Record<string, boolean>>({}) // Playing feedback audio
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const [showFeedbackChatTooltip, setShowFeedbackChatTooltip] = useState(true) // Show tooltip on initial load
   const [strengthCarouselIndex, setStrengthCarouselIndex] = useState(0)
   const [improveCarouselIndex, setImproveCarouselIndex] = useState(0)
@@ -53,6 +60,9 @@ export default function InterviewDashboard() {
   const [practicedCriteria, setPracticedCriteria] = useState<string[]>([])
   const [passedCriteria, setPassedCriteria] = useState<string[]>([])
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
+  const [activePracticeLesson, setActivePracticeLesson] = useState<{ criterion: string; rootCause: string; question?: string; answer?: string } | null>(null)
+  const [walkthroughActive, setWalkthroughActive] = useState(true)
+  const [showLessonRoadmap, setShowLessonRoadmap] = useState(false)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [showRubricModal, setShowRubricModal] = useState(false)
@@ -71,15 +81,56 @@ export default function InterviewDashboard() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
+  // Admin preview: detect admin user (or ?preview=mock URL param) and inject mock data
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const email = session?.user?.email || null
+      setUserEmail(email)
+      const isMockParam = searchParams?.get('preview') === 'mock'
+      if (isAdminPreview(email) || isMockParam) {
+        setIsAdmin(true)
+      }
+    }
+    checkAdmin()
+  }, [])
+
+  // Inject mock data for admin when loading completes with no real feedback
+  useEffect(() => {
+    if (isAdmin && !feedback && !loading && !feedbackGenerating) {
+      console.log('[Admin Preview] Injecting mock feedback data')
+      setFeedback(MOCK_FEEDBACK as any)
+      setStructuredTranscript(MOCK_TRANSCRIPT)
+      setCurrentSessionData(MOCK_SESSION_DATA)
+      setHasTranscript(true)
+    }
+  }, [isAdmin, feedback, loading, feedbackGenerating])
+
+  // Fallback: if admin check finishes after loadFeedback, retry mock injection
+  useEffect(() => {
+    if (!isAdmin) return
+    const timer = setTimeout(() => {
+      if (!feedback) {
+        console.log('[Admin Preview] Fallback mock injection')
+        setFeedback(MOCK_FEEDBACK as any)
+        setStructuredTranscript(MOCK_TRANSCRIPT)
+        setCurrentSessionData(MOCK_SESSION_DATA)
+        setHasTranscript(true)
+        setLoading(false)
+      }
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [isAdmin])
+
   useEffect(() => {
     loadFeedback()
-    
+
     // Check if user just signed up and needs to migrate data
     const checkMigration = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      
+
       if (session) {
         const tempData = localStorage.getItem('temp_interview_data')
         if (tempData) {
@@ -88,7 +139,7 @@ export default function InterviewDashboard() {
         }
       }
     }
-    
+
     // Check for migration after a short delay (to ensure session is established)
     const migrationTimer = setTimeout(checkMigration, 1000)
     return () => clearTimeout(migrationTimer)
@@ -1804,18 +1855,74 @@ export default function InterviewDashboard() {
     }
   }
 
-  const tabs = [
-    { id: 'results', label: 'Results', icon: Target },
-    { id: 'report', label: 'Report', icon: TrendingUp, completed: hasFeedback },
-    { id: 'train', label: 'Train', icon: Zap },
+  // Determine which stages are completed for timeline
+  const completedStages = [
+    ...(hasFeedback ? ['hr_screen'] : []),
+    ...(hasHmFeedback ? ['hiring_manager'] : []),
+    ...(hasCfFeedback ? ['culture_fit'] : []),
+    ...(hasFrFeedback ? ['final'] : []),
   ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
 
+  // ── Preppi Walkthrough: takes over the entire screen on first visit ──
+  if (hasFeedback && walkthroughActive) {
+    return (
+      <PreppiWalkthrough
+        feedback={feedback}
+        structuredTranscript={structuredTranscript}
+        currentSessionData={currentSessionData}
+        currentStage={currentStage}
+        isPremium={isPremium}
+        sessionId={currentSessionData?.id}
+        onOpenDetailedReport={() => {
+          setWalkthroughActive(false)
+          setShowRubricModal(true)
+        }}
+        onRetakeInterview={() => {
+          setWalkthroughActive(false)
+          router.push('/dashboard')
+        }}
+        onUnlockNextStage={() => {
+          setWalkthroughActive(false)
+          setShowPurchaseFlow(true)
+        }}
+        onSkipToResults={() => {
+          setWalkthroughActive(false)
+        }}
+      />
+    )
+  }
+
+  // ── LessonRoadmap overlay (launched from static results view) ────────────────
+  if (showLessonRoadmap && hasFeedback) {
+    const weaknesses = sixAreas?.what_needs_improve || []
+    return (
+      <LessonRoadmap
+        weaknesses={weaknesses}
+        sessionId={currentSessionData?.id}
+        currentStage={currentStage}
+        onAllComplete={() => setShowLessonRoadmap(false)}
+        onViewReport={() => {
+          setShowLessonRoadmap(false)
+          setShowRubricModal(true)
+        }}
+        onClose={() => setShowLessonRoadmap(false)}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
+
+      {/* Interview Process Timeline */}
+      <InterviewTimeline
+        currentStage={currentStage}
+        completedStages={completedStages}
+        isPremium={isPremium}
+      />
 
       {/* Contextual action bar */}
       {(!loading && ((!hasFeedback && hasTranscript) || !isPremium)) && (
@@ -1955,53 +2062,39 @@ export default function InterviewDashboard() {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-lg p-2 mb-6 overflow-x-auto">
-          <div className="flex space-x-2 min-w-max">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              const isHRScreenCompleted = tab.id === 'report' && tab.completed
-              const isActive = activeTab === tab.id
-              const isLocked = 'locked' in tab && tab.locked
-
-              return (
-                <div key={tab.id} className="relative group">
-                  <button
-                    onClick={() => {
-                      if (isLocked) {
-                        setShowPurchaseFlow(true)
-                      } else {
-                        setActiveTab(tab.id)
-                      }
-                    }}
-                    className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
-                      isLocked
-                        ? 'text-gray-400 bg-gray-50 cursor-pointer hover:bg-gray-100'
-                        : isActive
-                          ? isHRScreenCompleted
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg'
-                            : 'bg-primary-500 text-white shadow-lg'
-                          : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className={`w-4 h-4 ${isLocked ? 'text-gray-400' : ''}`} />
-                    <span>{tab.label}</span>
-                    {'optional' in tab && tab.optional && !isLocked && <span className="text-xs opacity-75">(Optional)</span>}
-                    {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
-                    {!isLocked && isHRScreenCompleted && (
-                      <CheckCircle className={`w-5 h-5 ${isActive ? 'text-white' : 'text-green-600'}`} />
-                    )}
-                    {!isLocked && tab.completed && !isHRScreenCompleted && <CheckCircle className="w-4 h-4" />}
-                  </button>
-                </div>
-              )
-            })}
+        {/* Admin preview banner */}
+        {isAdmin && !feedback?.id && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">Admin Preview Mode</span> — Viewing with mock data. Complete a real interview to see live results.
+            </p>
           </div>
-        </div>
+        )}
 
-        {/* Results Tab */}
-        {activeTab === 'results' && (
-          <div className="space-y-6">
+        {/* ═══════════════════════════════════════════════════════════════
+            STATIC RESULTS VIEW (shown after walkthrough or on revisit)
+            ═══════════════════════════════════════════════════════════════ */}
+
+        <div className="space-y-6">
+            {/* Replay Walkthrough button */}
+            {hasFeedback && (
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    if (currentSessionData?.id) {
+                      localStorage.removeItem(`walkthrough_seen_${currentSessionData.id}`)
+                    }
+                    setWalkthroughActive(true)
+                  }}
+                  className="text-xs text-accent-500 hover:text-accent-700 font-semibold flex items-center gap-1 transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Replay Walkthrough
+                </button>
+              </div>
+            )}
+
             {/* Score Reveal Card */}
             {hasFeedback ? (
               <ScoreRevealCard
@@ -2027,395 +2120,142 @@ export default function InterviewDashboard() {
               </div>
             )}
 
-            {/* Smart CTA based on score */}
-            {hasFeedback && overallScore >= 7.5 && (
-              <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Strong Showing</p>
-                  <h3 className="text-xl font-bold">Ready to level up?</h3>
-                  <p className="text-white/80 text-sm mt-1">Unlock your next interview stage to keep the momentum going.</p>
-                </div>
-                <button
-                  onClick={() => setShowPurchaseFlow(true)}
-                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-emerald-700 rounded-xl font-bold border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
-                >
-                  <Crown className="w-4 h-4" />
-                  Unlock Next Stage
-                </button>
-              </div>
-            )}
-            {hasFeedback && overallScore >= 5 && overallScore < 7.5 && (
-              <div className="bg-primary-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Almost There</p>
-                  <h3 className="text-xl font-bold">A few areas to sharpen</h3>
-                  <p className="text-white/80 text-sm mt-1">Practice the weak spots and you&apos;ll be interview-ready.</p>
-                </div>
-                <button
-                  onClick={() => setActiveTab('train')}
-                  className="shrink-0 flex items-center gap-2 px-6 py-3 bg-white text-primary-700 rounded-xl font-bold border-b-4 border-primary-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
-                >
-                  <Zap className="w-4 h-4" />
-                  Go to Train
-                </button>
-              </div>
-            )}
-            {hasFeedback && overallScore > 0 && overallScore < 5 && (
-              <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-xl p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider opacity-80 mb-1">Needs Work</p>
-                  <h3 className="text-xl font-bold">Let&apos;s rebuild the fundamentals</h3>
-                  <p className="text-white/80 text-sm mt-1">Train on each area, then retake when you&apos;re ready.</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                  <button
-                    onClick={() => setActiveTab('train')}
-                    className="flex items-center gap-2 px-5 py-3 bg-white text-orange-700 rounded-xl font-bold border-b-4 border-orange-900 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
-                  >
-                    <Zap className="w-4 h-4" />
-                    Train Now
-                  </button>
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 px-5 py-3 bg-white/20 border-2 border-white/40 text-white rounded-xl font-bold hover:bg-white/30 transition-all"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Retake
-                  </Link>
-                </div>
-              </div>
-            )}
 
-            {/* Interview Progress */}
-            <div className="grid md:grid-cols-4 gap-4">
-              {/* HR Screen - Completed or Empty */}
-              {hasFeedback ? (
-                <div className={`bg-white rounded-xl shadow-lg p-6 border-2 ${likelihood === 'unlikely' ? 'border-orange-500' : 'border-green-500'}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <Phone className={`w-8 h-8 ${likelihood === 'unlikely' ? 'text-orange-600' : 'text-green-600'}`} />
-                    {likelihood === 'unlikely' ? (
-                      <AlertCircle className="w-6 h-6 text-orange-600" />
-                    ) : (
-                      <CheckCircle className="w-6 h-6 text-green-600" />
-                    )}
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2">HR Screen</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {likelihood === 'unlikely' ? 'Needs improvement' : 'Initial screening completed'}
-                  </p>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <div className={`flex-1 rounded-full h-2 ${likelihood === 'unlikely' ? 'bg-orange-100' : 'bg-green-100'}`}>
-                      <div
-                        className={`h-2 rounded-full ${likelihood === 'unlikely' ? 'bg-orange-600' : 'bg-green-600'}`}
-                        style={{ width: `${scorePercentage}%` }}
-                      />
-                    </div>
-                    <span className={`text-xs font-bold ${likelihood === 'unlikely' ? 'text-orange-600' : 'text-green-600'}`}>{scorePercentage}%</span>
-                  </div>
-                  {likelihood === 'unlikely' && (
-                    <div className="flex flex-col gap-2 pt-2 border-t border-orange-200">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('report')
-                          setTimeout(() => {
-                            const el = document.querySelector('[data-practice-section]')
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                          }, 150)
-                        }}
-                        className="w-full inline-flex items-center justify-center space-x-1.5 px-4 py-2 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700 transition-all text-sm"
-                      >
-                        <Target className="w-4 h-4" />
-                        <span>Go to practice cards</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                      <Link
-                        href="/dashboard"
-                        className="w-full inline-flex items-center justify-center space-x-1.5 px-3 py-2 text-orange-600 border-2 border-orange-500 rounded-lg font-medium hover:bg-orange-50 transition-all text-sm"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                        <span>Retake</span>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <Phone className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="font-bold text-gray-500 mb-2">HR Screen</h3>
-                  <p className="text-sm text-gray-400 mb-3">No interview completed yet</p>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2"></div>
-                    <span className="text-xs font-bold text-gray-400">--</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Hiring Manager - Locked teaser */}
-              <button
-                onClick={() => { setPurchaseHighlightStage('hiring_manager'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-primary-200 hover:border-primary-400"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <Briefcase className="w-6 h-6 text-primary-400" />
-                  <Lock className="w-4 h-4 text-primary-400" />
-                </div>
-                <h3 className="font-bold text-gray-700 mb-1 text-sm">Hiring Manager</h3>
-                <p className="text-xs text-gray-400 mb-2">Your biggest unlock.</p>
-                <p className="text-xs font-bold text-primary-600">$4.99 — Unlock</p>
-              </button>
-
-              {/* Culture Fit - Locked teaser */}
-              <button
-                onClick={() => { setPurchaseHighlightStage('culture_fit'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-emerald-200 hover:border-emerald-400"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <Users className="w-6 h-6 text-emerald-400" />
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                </div>
-                <h3 className="font-bold text-gray-700 mb-1 text-sm">Culture Fit</h3>
-                <p className="text-xs text-gray-400 mb-2">The one that surprises people.</p>
-                <p className="text-xs font-bold text-emerald-600">$3.99 — Unlock</p>
-              </button>
-
-              {/* Final Round - Locked teaser */}
-              <button
-                onClick={() => { setPurchaseHighlightStage('final'); setShowPurchaseFlow(true) }}
-                className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden text-left group hover:shadow-xl transition-all cursor-pointer border-2 border-dashed border-amber-200 hover:border-amber-400"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <Crown className="w-6 h-6 text-amber-400" />
-                  <Lock className="w-4 h-4 text-amber-400" />
-                </div>
-                <h3 className="font-bold text-gray-700 mb-1 text-sm">Final Round</h3>
-                <p className="text-xs text-gray-400 mb-2">The offer is on the table.</p>
-                <p className="text-xs font-bold text-amber-600">$5.99 — Unlock</p>
-              </button>
-            </div>
-
-            {/* Teaser section for non-premium users who completed HR screen */}
-            {hasFeedback && !isPremium && (
-              <LockedStageTeasers
-                onUnlock={(stage) => { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }}
-                score={overallScore}
-              />
-            )}
-
-          </div>
-        )}
-
-        {/* Report Tab */}
-        {activeTab === 'report' && (
-          <div className="space-y-6">
-            {hasFeedback ? (
-              <>
-              </>
-            ) : (
-              <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-                <Phone className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">No Interview Completed Yet</h2>
-                <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-                  Complete an HR screen interview to see your performance feedback and detailed insights here.
-                </p>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center space-x-2 px-8 py-4 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-all shadow-lg"
-                >
-                  <span>Start an Interview</span>
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-            )}
+            {/* ─── SECTION 2: Performance Breakdown ─── */}
 
             {hasFeedback && (
-              <div className="space-y-6">
-                {/* Areas Passed Tracker */}
-                {sixAreas && (
-                  <div className="bg-white rounded-2xl shadow-xl p-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">
-                          Your HR Screen Progress
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Pass all 6 core areas to master the HR phone screen fundamentals.
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="text-3xl font-bold text-primary-600">
-                            {areasPassed}/{totalAreas}
-                          </div>
-                          <div className="text-xs text-gray-500 uppercase tracking-wide">
-                            Areas Passed
-                          </div>
+              <div className="space-y-4">
+
+                {/* All-criteria breakdown */}
+                {sixAreas && (wentWellAreas.length > 0 || needsImproveAreas.length > 0) && (
+                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div className="px-6 py-5 border-b border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">Performance Breakdown</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            {areasPassed} of {totalAreas} areas strong
+                          </p>
                         </div>
-                        <svg className="w-20 h-20">
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r={circleRadius}
-                            stroke="#e5e7eb"
-                            strokeWidth="8"
-                            fill="none"
-                          />
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r={circleRadius}
-                            stroke="#6366f1"
-                            strokeWidth="8"
-                            fill="none"
-                            strokeDasharray={circleCircumference}
-                            strokeDashoffset={circleDashOffset}
-                            strokeLinecap="round"
-                            style={{
-                              transform: 'rotate(-90deg)',
-                              transformOrigin: '50% 50%',
-                              transition: 'stroke-dashoffset 0.5s ease-out',
-                            }}
-                          />
-                        </svg>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <div className="text-2xl font-extrabold text-primary-600">{areasPassed}/{totalAreas}</div>
+                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Passed</div>
+                          </div>
+                          <svg className="w-14 h-14" viewBox="0 0 56 56">
+                            <circle cx="28" cy="28" r="20" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                            <circle
+                              cx="28" cy="28" r="20"
+                              stroke="#6366f1" strokeWidth="6" fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={2 * Math.PI * 20}
+                              strokeDashoffset={2 * Math.PI * 20 - (areasPassed / (totalAreas || 1)) * 2 * Math.PI * 20}
+                              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.6s ease-out' }}
+                            />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all"
-                          style={{ width: `${areasProgress}%` }}
-                        ></div>
-                      </div>
-                      <div className="mt-2 flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Focus on the orange areas below to level up faster.
-                        </span>
-                        <span className="text-primary-600 font-semibold">
-                          Master all 6 to be HR-screen ready.
-                        </span>
-                      </div>
+
+                    <div className="divide-y divide-gray-50">
+                      {/* Strengths */}
+                      {wentWellAreas.map((area: any) => (
+                        <div key={area.criterion} className="px-6 py-4 flex items-start gap-4">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-3 mb-1">
+                              <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
+                              {area.score != null && (
+                                <span className="text-xs font-bold text-emerald-600 shrink-0 tabular-nums">{area.score}/10</span>
+                              )}
+                            </div>
+                            {area.score != null && (
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${area.score * 10}%` }} />
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Weaknesses */}
+                      {needsImproveAreas.map((area: any) => {
+                        const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
+                        const bundle = getBundleForRootCause(rootCause)
+                        const isPassed = passedCriteria.includes(area.criterion)
+
+                        return (
+                          <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/40">
+                            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                              <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-3 mb-1">
+                                <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {area.score != null && (
+                                    <span className="text-xs font-bold text-amber-600 tabular-nums">{area.score}/10</span>
+                                  )}
+                                  <button
+                                    onClick={() => setShowLessonRoadmap(true)}
+                                    className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
+                                      isPassed
+                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                        : 'bg-accent-50 border-accent-200 text-accent-700 hover:bg-accent-100'
+                                    }`}
+                                  >
+                                    {isPassed ? '✓ Passed' : 'Practice →'}
+                                  </button>
+                                </div>
+                              </div>
+                              {area.score != null && (
+                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-700 ${area.score >= 5 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                    style={{ width: `${area.score * 10}%` }}
+                                  />
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
+                              <p className="text-xs text-accent-500 font-semibold mt-1.5">
+                                📚 {bundle.displayName}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Master These Questions */}
-                {sixAreas && (
-                  <div className="space-y-6" data-practice-section>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-2xl font-bold text-gray-900">
-                        Master These Questions
-                      </h3>
-                      <div className="text-sm text-gray-600 flex space-x-4">
-                        <span className="inline-flex items-center space-x-1">
-                          <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                          <span>Passed / Strengths</span>
-                        </span>
-                        <span className="inline-flex items-center space-x-1">
-                          <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
-                          <span>Needs Work</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Strengths / Passed Stack */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-gray-700">
-                            Passed Areas
-                          </h4>
-                          {strengthsCards.length > 1 && (
-                            <div className="flex items-center space-x-3 text-xs text-gray-500">
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setStrengthCarouselIndex((prev) =>
-                                    prev - 1
-                                  )
-                                }
-                              >
-                                <span>←</span>
-                              </button>
-                              <span>
-                                Card{' '}
-                                {getSafeIndex(
-                                  strengthsCards.length,
-                                  strengthCarouselIndex
-                                ) + 1}{' '}
-                                of {strengthsCards.length}
-                              </span>
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setStrengthCarouselIndex((prev) =>
-                                    prev + 1
-                                  )
-                                }
-                              >
-                                <span>→</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        {renderStackedCarousel(
-                          strengthsCards,
-                          strengthCarouselIndex,
-                          setStrengthCarouselIndex,
-                          'strength'
-                        )}
-                      </div>
-
-                      {/* Needs Work Stack */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-gray-700">
-                            Needs Work
-                          </h4>
-                          {needsWorkCards.length > 1 && (
-                            <div className="flex items-center space-x-3 text-xs text-gray-500">
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setImproveCarouselIndex((prev) =>
-                                    prev - 1
-                                  )
-                                }
-                              >
-                                <span>←</span>
-                              </button>
-                              <span>
-                                Card{' '}
-                                {getSafeIndex(
-                                  needsWorkCards.length,
-                                  improveCarouselIndex
-                                ) + 1}{' '}
-                                of {needsWorkCards.length}
-                              </span>
-                              <button
-                                className="hover:text-gray-900 flex items-center space-x-1"
-                                onClick={() =>
-                                  setImproveCarouselIndex((prev) =>
-                                    prev + 1
-                                  )
-                                }
-                              >
-                                <span>→</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        {renderStackedCarousel(
-                          needsWorkCards,
-                          improveCarouselIndex,
-                          setImproveCarouselIndex,
-                          'improve'
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                {/* Practice CTA */}
+                {needsImproveAreas.length > 0 && (
+                  <button
+                    onClick={() => setShowLessonRoadmap(true)}
+                    className="w-full btn-duo-green py-4 text-base flex items-center justify-center gap-2"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Practice Weak Areas
+                  </button>
                 )}
+
+                {/* View Full Report */}
+                <button
+                  onClick={() => setShowRubricModal(true)}
+                  className="w-full bg-white rounded-2xl shadow-lg p-5 text-left flex items-center justify-between hover:shadow-xl transition-all group border border-gray-100"
+                >
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">View Full Performance Report</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Detailed rubric, scoring rationale, and evidence from your interview.</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </button>
 
                 {/* Transcript Section (simplified, with green/red highlights for extremes only) */}
                 {structuredTranscript && (
@@ -3248,262 +3088,60 @@ export default function InterviewDashboard() {
                   </div>
                 )}
 
-              </div>
-            )}
+                {/* ─── Practice Lesson Overlay (replaces SkillTrainer) ─── */}
+                {activePracticeLesson && (
+                  <div className="fixed inset-0 z-50 bg-white md:bg-black/50 md:backdrop-blur-sm flex items-start md:items-center justify-center overflow-y-auto">
+                    <div className="w-full md:max-w-3xl md:mx-4 md:my-8 md:bg-white md:rounded-2xl md:shadow-2xl md:max-h-[90vh] md:overflow-y-auto">
+                      <SubLessonRoadmap
+                        bundle={getBundleForRootCause(activePracticeLesson.rootCause)}
+                        criterion={activePracticeLesson.criterion}
+                        originalQuestion={activePracticeLesson.question}
+                        originalAnswer={activePracticeLesson.answer}
+                        sessionId={currentSessionData?.id}
+                        currentStage={currentStage}
+                        onAllComplete={(totalXp) => {
+                          const criterion = activePracticeLesson.criterion
+                          setPracticedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                          setPassedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                          setActivePracticeLesson(null)
+                        }}
+                        onClose={() => setActivePracticeLesson(null)}
+                      />
+                    </div>
+                  </div>
+                )}
 
-            {/* CTA 1: Likely + Premium — Start Hiring Manager Interview */}
-            {hasFeedback && likelihood === 'likely' && isPremium && (
-              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        You've completed the HR screen! Now it's time to prepare for the next stage. Practice with our AI-powered hiring manager interview to get ready for the real thing.
+                {/* ─── SECTION 5: Readiness + Organic Upgrade CTA ─── */}
+                {!isPremium && (
+                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-5 text-white">
+                      <h3 className="text-lg font-bold">Ready for the next round?</h3>
+                      <p className="text-primary-100 text-sm mt-1">
+                        You&apos;ve reviewed your feedback and practiced your weak spots. The next step in the real interview process is the Hiring Manager round.
                       </p>
-                      <div className="flex flex-wrap gap-4 mb-6">
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">30-minute technical discussion</span>
-                        </div>
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Deep dive into your experience</span>
-                        </div>
-                        <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-md rounded-lg px-4 py-2">
-                          <CheckCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">Company-specific questions</span>
-                        </div>
-                      </div>
-                      <Link
-                        href="/dashboard"
-                        className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
+                    </div>
+                    <div className="p-6">
+                      <p className="text-sm text-gray-600 mb-4">
+                        Continue your interview preparation with the full process — Hiring Manager, Culture Fit, and Final Round — each with the same detailed feedback and practice.
+                      </p>
+                      <button
+                        onClick={() => setShowPurchaseFlow(true)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold hover:bg-primary-600 transition-all shadow-lg"
                       >
-                        <Briefcase className="w-5 h-5" />
-                        <span>Start Hiring Manager Interview</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </Link>
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
+                        <Crown className="w-4 h-4" />
+                        Continue Your Interview Process
+                      </button>
                     </div>
                   </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
+                )}
+
               </div>
             )}
-
-            {/* CTA 2: Likely + !Premium — Unlock Hiring Manager OR Unlock All Interviews */}
-            {hasFeedback && likelihood === 'likely' && !isPremium && (
-              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Unlock the Hiring Manager interview to practice the next stage, or unlock all interview rounds with premium.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowPurchaseFlow(true)}
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Unlock Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowPurchaseFlow(true)}
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                        >
-                          <Crown className="w-5 h-5" />
-                          <span>Unlock All Interviews (Premium)</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <p className="text-white/70 text-sm mt-3">One-time payment • No subscription • All interview stages</p>
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              </div>
-            )}
-
-            {/* CTA 4: Unlikely + !Premium — Unlock Full Interview Process */}
-            {hasFeedback && likelihood === 'unlikely' && !isPremium && (
-              <div className="bg-primary-500 rounded-2xl shadow-xl p-8 text-white">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold mb-2">Unlock Full Interview Process</h3>
-                    <p className="text-primary-100 mb-6">
-                      Practice with an AI that has intimate knowledge of the company and job description. Get feedback, practice specific questions, and run through the whole interview again until you're ready to land the job.
-                    </p>
-                    <ul className="space-y-3 mb-6">
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>Unlock all interview stages (Hiring Manager, Culture Fit, Final Interview)</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>3 practice attempts per interview round</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>Practice specific questions flagged for improvement right in this dashboard</span>
-                      </li>
-                      <li className="flex items-center space-x-3">
-                        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                        <span>AI-powered interviewer with deep knowledge of your target company and role</span>
-                      </li>
-                    </ul>
-                    <div className="mb-4">
-                      <p className="text-primary-200 text-sm font-medium">One-time payment • No subscription • Land the job and never pay again</p>
-                    </div>
-                    <button 
-                      onClick={() => setShowPurchaseFlow(true)}
-                      className="flex items-center space-x-2 px-6 py-3 bg-white text-primary-500 rounded-xl font-semibold hover:bg-gray-50 transition-all shadow-lg"
-                    >
-                      <span>Unlock All Interviews</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="hidden lg:block ml-8">
-                    <Crown className="w-32 h-32 text-white opacity-20" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* CTA 3: Unlikely + Premium — Retake or move forward (bottom CTA box) */}
-            {hasFeedback && likelihood === 'unlikely' && isPremium && (
-              <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden border-2 border-orange-400">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <RefreshCw className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Retake interview or move forward</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        Once you've completed the practice cards and reviewed the focus areas, you can retake this interview to show your improvement (one free retake), or skip ahead to the Hiring Manager interview.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <Link
-                          href="/dashboard"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-orange-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <RefreshCw className="w-5 h-5" />
-                          <span>Retake Interview (Free)</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                        <Link
-                          href="/dashboard?stage=hiring_manager"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Skip to Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Fallback CTA if no next_steps_preparation - CTA 1 or 2 (Likely only) */}
-            {hasFeedback && likelihood === 'likely' && !(feedback as any)?.next_steps_preparation && (
-              <div className="bg-primary-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <Briefcase className="w-8 h-8" />
-                        <span className="text-sm font-semibold uppercase tracking-wider opacity-90">Next Step</span>
-                      </div>
-                      <h3 className="text-3xl font-bold mb-3">Ready for the Hiring Manager Interview?</h3>
-                      <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                        {isPremium
-                          ? "You've completed the HR screen! Now it's time to prepare for the next stage. Practice with our AI-powered hiring manager interview to get ready for the real thing."
-                          : "Unlock the Hiring Manager interview to practice the next stage, or unlock all interview rounds with premium."}
-                      </p>
-                      {isPremium ? (
-                        <Link
-                          href="/dashboard"
-                          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-600 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg hover:scale-105 transform"
-                        >
-                          <Briefcase className="w-5 h-5" />
-                          <span>Start Hiring Manager Interview</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </Link>
-                      ) : (
-                        <div className="flex flex-wrap gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setShowPurchaseFlow(true)}
-                            className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-50 transition-all shadow-lg"
-                          >
-                            <Briefcase className="w-5 h-5" />
-                            <span>Unlock Hiring Manager Interview</span>
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowPurchaseFlow(true)}
-                            className="inline-flex items-center space-x-2 px-8 py-4 bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 rounded-xl font-bold hover:bg-white/30 transition-all shadow-lg"
-                          >
-                            <Crown className="w-5 h-5" />
-                            <span>Unlock All Interviews (Premium)</span>
-                            <ArrowRight className="w-5 h-5" />
-                          </button>
-                        </div>
-                      )}
-                      {!isPremium && <p className="text-white/70 text-sm mt-3">One-time payment • No subscription • All interview stages</p>}
-                    </div>
-                    <div className="hidden lg:block">
-                      <Briefcase className="w-32 h-32 text-white/20" />
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              </div>
-            )}
-
           </div>
-        )}
+        </div>
 
-        {/* Train Tab */}
-        {activeTab === 'train' && (
-          <div className="space-y-6">
-            <SkillTrainer
-              feedback={feedback}
-              sessionId={currentSessionData?.id}
-              currentStage={currentStage}
-              structuredTranscript={structuredTranscript}
-            />
-          </div>
-        )}
+        {/* ═══ Premium interview stage sections (kept for paid users) ═══ */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Hiring Manager 1 Tab */}
         {activeTab === 'hiring-manager-1' && (

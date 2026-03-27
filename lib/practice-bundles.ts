@@ -1,15 +1,3 @@
-/**
- * Practice bundles for adaptive post-interview training.
- * Each bundle targets a specific root cause of poor interview answers
- * and provides teach + exercises to build the underlying skill.
- *
- * Exercise types:
- * - multiple_choice: 4 options, one correct
- * - label_sort: categorize segments into buckets
- * - fill_in_blank: complete a template with blanks
- * - short_answer: free-text response (bridges to full AI re-answer)
- */
-
 export interface MultipleChoiceExercise {
   type: 'multiple_choice'
   question: string
@@ -24,26 +12,32 @@ export interface LabelSortExercise {
   segments: { text: string; correctLabel: string }[]
 }
 
-export interface FillInBlankExercise {
-  type: 'fill_in_blank'
+export interface WordBankExercise {
+  type: 'word_bank'
   instruction: string
-  template: string
-  blanks: string[]
+  sentenceWithBlank: string
+  options: string[]
+  correctIndex: number
+  explanation: string
 }
 
-export interface ShortAnswerExercise {
-  type: 'short_answer'
-  prompt: string
-  hint: string
-  maxLength: number
+export interface TapSelectExercise {
+  type: 'tap_select'
+  instruction: string
+  items: string[]
+  correctIndices: number[]
+  explanation: string
 }
 
-export type Exercise = MultipleChoiceExercise | LabelSortExercise | FillInBlankExercise | ShortAnswerExercise
+export type Exercise =
+  | MultipleChoiceExercise
+  | LabelSortExercise
+  | WordBankExercise
+  | TapSelectExercise
 
-export interface PracticeBundle {
-  rootCause: string
-  displayName: string
-  description: string
+export interface SubLesson {
+  title: string
+  difficulty: 'easy' | 'medium' | 'hard'
   teach: {
     title: string
     explanation: string
@@ -57,76 +51,235 @@ export interface PracticeBundle {
   exercises: Exercise[]
 }
 
+export interface PracticeBundle {
+  rootCause: string
+  displayName: string
+  description: string
+  lessons: SubLesson[]
+}
+
 export const PRACTICE_BUNDLES: PracticeBundle[] = [
   {
     rootCause: 'poor_structure',
     displayName: 'Answer Structure',
-    description: "Your answers lacked clear organization. Let's learn a framework.",
-    teach: {
-      title: 'The STAR Method',
-      explanation:
-        'Strong answers follow a clear story: Situation, Task, Action, Result. This keeps your response focused and easy to follow while showing impact.',
-      example: {
-        question: 'Tell me about a time you solved a problem.',
-        badAnswer:
-          "Yeah, I've solved a lot of problems. One time there was an issue with a project timeline and I worked with the team to fix it and we got things back on track.",
-        goodAnswer:
-          'At my previous internship, our team fell behind on a product launch due to unclear responsibilities. I was responsible for coordinating communication across teams. I created a shared task tracker and held short daily check-ins to align everyone. As a result, we caught up within a week and launched on time.',
-        breakdown: {
-          situation: 'Our team fell behind on a product launch due to unclear responsibilities.',
-          task: 'I was responsible for coordinating communication across teams.',
-          action: 'I created a shared task tracker and held short daily check-ins.',
-          result: 'We caught up within a week and launched on time.',
+    description: "Your answers lacked clear structure. Let's fix that.",
+    lessons: [
+      {
+        title: 'Recognizing STAR',
+        difficulty: 'easy',
+        teach: {
+          title: 'STAR gives your answer a clean spine',
+          explanation:
+            'STAR means Situation, Task, Action, Result. Situation gives context, Task states the goal, Action shows what you did, and Result proves it worked. Strong interview answers move through all four parts in order so the listener never has to guess what happened or why it mattered.',
+          example: {
+            question: 'Tell me about a time you solved a difficult problem.',
+            badAnswer:
+              'At my last job there was a reporting issue and I worked hard on it with the team. We did a lot, and it ended up better. It was a good learning experience.',
+            goodAnswer:
+              'At my last job, our weekly revenue report was delayed by two days because data from three systems had to be merged manually. I was responsible for making the report reliable before the CFO review. I mapped the data sources, built one validation script, and created a single export template so the team stopped reconciling by hand. Within two weeks, the report went out the same day every Friday and finance stopped escalating data errors.',
+            breakdown: {
+              Situation: 'Weekly revenue reporting was delayed because three systems were merged manually.',
+              Task: 'Make the report reliable before the CFO review.',
+              Action: 'Mapped sources, built a validation script, and created one export template.',
+              Result: 'Report shipped same day every Friday and escalations stopped.',
+            },
+          },
         },
-      },
-    },
-    exercises: [
-      {
-        type: 'multiple_choice',
-        question: 'What is the main purpose of using the STAR method?',
-        options: [
-          'To make answers longer',
-          'To organize answers clearly and show impact',
-          'To memorize responses',
-          'To avoid giving examples',
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which part of STAR explains what you personally did?',
+            options: ['Situation', 'Task', 'Action', 'Result'],
+            correctIndex: 2,
+            explanation: 'Action is the step where you describe your own moves, decisions, and execution.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment with the correct STAR element.',
+            segments: [
+              { text: 'Customer support tickets had doubled after a product launch.', correctLabel: 'Situation' },
+              { text: 'I needed to cut the backlog before the next release.', correctLabel: 'Task' },
+              { text: 'I built a triage rubric and reassigned issues by severity.', correctLabel: 'Action' },
+              { text: 'The backlog dropped by 40% in one week.', correctLabel: 'Result' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing STAR element.',
+            sentenceWithBlank: 'In STAR, the [___] explains the measurable outcome of your work.',
+            options: ['Situation', 'Task', 'Action', 'Result'],
+            correctIndex: 3,
+            explanation: 'Result is where you show the outcome, impact, or evidence.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the STAR elements that belong in a complete answer.',
+            items: ['Situation', 'Task', 'Action', 'Result', 'Opinion'],
+            correctIndices: [0, 1, 2, 3],
+            explanation: 'A complete STAR answer uses Situation, Task, Action, and Result. Opinion is not a STAR element.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer is best structured as STAR?',
+            options: [
+              'I like solving messy problems and I usually stay calm under pressure.',
+              'We had a delivery issue, I owned the fix, I changed the routing plan, and on-time delivery improved from 82% to 96%.',
+              'The project was hard, but I learned a lot and people were happy.',
+              'My manager trusted me, and I always try to communicate well.',
+            ],
+            correctIndex: 1,
+            explanation: 'Option 2 clearly gives context, goal, action, and result in a logical flow.',
+          },
         ],
-        correctIndex: 1,
-        explanation: 'STAR helps structure answers clearly and demonstrate results.',
       },
       {
-        type: 'multiple_choice',
-        question: 'Which part of STAR focuses on what you actually did?',
-        options: ['Situation', 'Task', 'Action', 'Result'],
-        correctIndex: 2,
-        explanation: 'Action is where you explain your specific steps.',
-      },
-      {
-        type: 'label_sort',
-        instruction: 'Label each part of this answer as S, T, A, or R',
-        segments: [
-          { text: 'Our team was missing deadlines due to unclear ownership.', correctLabel: 'situation' },
-          { text: 'I was asked to improve team coordination.', correctLabel: 'task' },
-          { text: 'I introduced a weekly planning meeting and task assignments.', correctLabel: 'action' },
-          { text: 'We improved delivery speed by 30%.', correctLabel: 'result' },
+        title: 'Strengthening Action and Result',
+        difficulty: 'medium',
+        teach: {
+          title: 'Most weak STAR answers collapse in Action and Result',
+          explanation:
+            'Candidates often describe the setup well, then rush through what they actually did and what changed. The fix is simple: name the actions you chose and end with a concrete result.',
+          example: {
+            question: 'Tell me about a time you improved a process.',
+            badAnswer:
+              'Our onboarding was confusing, so I helped improve it. We made updates and it was smoother afterward.',
+            goodAnswer:
+              'New hires were taking almost two weeks to get system access, which slowed their ramp-up. I was asked to shorten that timeline without adding headcount. I mapped every approval step, removed duplicate manager sign-offs, and created one request form tied to IT and HR workflows. Access time dropped from 9 business days to 3, and new hires completed their first tasks in week one.',
+            breakdown: {
+              Focus: 'The hardest part is not naming the problem; it is proving your intervention.',
+              Action: 'Mapped steps, removed duplicate approvals, created one request form.',
+              Result: 'Access time dropped from 9 days to 3.',
+              WhyItWorks: 'Specific actions create credibility and the metric closes the story.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What is missing from this answer? "Our backlog was growing, so I jumped in and helped the team. It ended up going well."',
+            options: ['Situation only', 'Task and concrete Action', 'Result only', 'Nothing important'],
+            correctIndex: 1,
+            explanation: 'The answer hints at a problem but never states the goal clearly or the specific actions taken.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment. One segment is stronger because it is specific.',
+            segments: [
+              { text: 'The sales team was losing follow-up notes in spreadsheets.', correctLabel: 'Situation' },
+              { text: 'I needed to make handoffs consistent before quarter close.', correctLabel: 'Task' },
+              { text: 'I built a CRM template with required fields and reminders.', correctLabel: 'Action' },
+              { text: 'Missed follow-ups fell by 30% that month.', correctLabel: 'Result' },
+              { text: 'Everyone felt more organized.', correctLabel: 'Result' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Pick the strongest word to complete the coaching tip.',
+            sentenceWithBlank: 'If your STAR answer feels flat, add a [___] result instead of a vague ending.',
+            options: ['measurable', 'friendly', 'longer', 'general'],
+            correctIndex: 0,
+            explanation: 'A measurable result makes the ending credible and memorable.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the segments that improve the Action section.',
+            items: [
+              'I coordinated with IT and finance to map the failure points.',
+              'It was a challenging time for everyone.',
+              'I replaced the manual checklist with an automated trigger.',
+              'People appreciated the effort.',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'The correct items describe concrete actions. The others are commentary, not execution.',
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing STAR element.',
+            sentenceWithBlank: '"I redesigned the handoff checklist" belongs in the [___] part of STAR.',
+            options: ['Situation', 'Task', 'Action', 'Result'],
+            correctIndex: 2,
+            explanation: 'That sentence describes what you did, so it belongs in Action.',
+          },
         ],
       },
       {
-        type: 'multiple_choice',
-        question: 'Which of these is the strongest "Result" statement?',
-        options: [
-          'Things got better after that.',
-          'The project was completed.',
-          'We reduced delivery time by 30% and received positive client feedback.',
-          'Everyone was happy with the outcome.',
+        title: 'Mastering Tight STAR Answers',
+        difficulty: 'hard',
+        teach: {
+          title: 'Use enough context to orient, but do not let Situation swallow the answer',
+          explanation:
+            'Edge case: an answer can sound structured while still failing if the Action is generic or the Result is weak. Good STAR is balanced, not just ordered.',
+          example: {
+            question: 'Describe a time you influenced without authority.',
+            badAnswer:
+              'We had a disagreement between teams, and I spent a lot of time aligning people. In the end, we moved forward and it all worked out.',
+            goodAnswer:
+              'Product and support disagreed on the rollout timeline for a billing change, which risked confusing current customers. My goal was to get agreement on a launch sequence without formal authority over either team. I collected the top support risks, paired them with product dependencies, and proposed a phased launch with customer messaging checkpoints. Both teams adopted the plan, the change shipped on schedule, and support tickets stayed flat during rollout.',
+            breakdown: {
+              EdgeCase: 'The answer sounds polished only if Action shows real influence moves.',
+              Situation: 'Product and support disagreed on rollout timing.',
+              Action: 'Collected risks, mapped dependencies, proposed phased launch.',
+              Result: 'Shipped on schedule and support tickets stayed flat.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer subtly fails STAR even though it sounds polished?',
+            options: [
+              'Our team missed deadlines, so I reset the workflow, assigned owners, and delivery improved from 70% to 93% on time.',
+              'A client escalation hit our team, I owned the response, coordinated fixes, and the client renewed for another year.',
+              'The launch was complex and high-visibility. I worked closely with everyone and kept communication strong. In the end, leadership was pleased.',
+              'We had duplicate work across teams, so I centralized intake, set SLAs, and cut turnaround time by 35%.',
+            ],
+            correctIndex: 2,
+            explanation: 'It sounds professional, but the Action is vague and the Result is not concrete.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label the segments of this compact STAR answer.',
+            segments: [
+              { text: 'Returns were rising after a packaging change.', correctLabel: 'Situation' },
+              { text: 'I had to identify the cause before the next warehouse order.', correctLabel: 'Task' },
+              { text: 'I compared return notes, found one box size causing damage, and updated the packing rule.', correctLabel: 'Action' },
+              { text: 'Damage-related returns dropped by 22% the next month.', correctLabel: 'Result' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Fill in the missing coaching phrase.',
+            sentenceWithBlank: 'A STAR answer with a long setup and generic execution usually fails in the [___] section.',
+            options: ['Action', 'Situation', 'Title', 'Greeting'],
+            correctIndex: 0,
+            explanation: 'The subtle failure is usually weak Action, not missing context.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the statements that are valid Result lines.',
+            items: [
+              'Cycle time dropped from 6 days to 2.',
+              'Everyone was excited.',
+              'We reduced error rates by 18% in one quarter.',
+              'It felt like a win.',
+              'The client expanded the contract by $120k.',
+            ],
+            correctIndices: [0, 2, 4],
+            explanation: 'Strong Results are concrete and outcome-based, not just emotional impressions.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the best revision to strengthen this weak ending: "The project turned out well"?',
+            options: [
+              'It was a great success for the team.',
+              'I was proud of how it went.',
+              'The rollout finished one week early and support tickets dropped 15% after launch.',
+              'People noticed the improvement right away.',
+            ],
+            correctIndex: 2,
+            explanation: 'The best revision supplies clear evidence and closes the STAR answer with a real result.',
+          },
         ],
-        correctIndex: 2,
-        explanation: 'Strong results are specific and measurable.',
-      },
-      {
-        type: 'short_answer',
-        prompt: 'Write a full STAR response to: Tell me about a time you handled a tight deadline.',
-        hint: 'Include all 4 parts: situation, task, action, result. Keep it under 5 sentences.',
-        maxLength: 300,
       },
     ],
   },
@@ -134,78 +287,236 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
     rootCause: 'lack_of_specificity',
     displayName: 'Specificity & Impact',
     description: "Your answers were too vague. Let's make every claim provable.",
-    teach: {
-      title: 'The Specificity Ladder',
-      explanation:
-        'Vague answers lose credibility. Climb three rungs: (1) Name the exact thing. (2) Say what you did to it. (3) Quantify what changed. "More efficient" means nothing — "cut reporting time by 80%" is unforgettable.',
-      example: {
-        question: 'Tell me about a time you improved a process.',
-        badAnswer:
-          'I helped streamline a process at work and made things more efficient for everyone.',
-        goodAnswer:
-          'Our team spent 4 hours every Friday generating client reports by hand. I wrote a script that pulled the data automatically — reducing report time from 4 hours to 15 minutes. The team reinvested that time into actual analysis.',
-        breakdown: {
-          claim: 'Name the thing: "client reports"',
-          specifics: 'Name what you did: "wrote a script to automate data pulls"',
-          metric: 'Quantify it: "4 hours → 15 minutes"',
-          impact: 'State why it mattered: "team reinvested time into higher-value work"',
+    lessons: [
+      {
+        title: 'Recognizing the Specificity Ladder',
+        difficulty: 'easy',
+        teach: {
+          title: 'Climb the Specificity Ladder',
+          explanation:
+            'The Specificity Ladder has three steps: Name it, Quantify it, Show impact. First, state the exact thing you worked on. Next, attach a number, frequency, size, or scope. Finally, explain why that change mattered to the business, customer, or team.',
+          example: {
+            question: 'Tell me about a project you are proud of.',
+            badAnswer:
+              'I improved our onboarding process a lot and it really helped the team. It was more efficient and people liked it.',
+            goodAnswer:
+              'I redesigned the customer onboarding checklist for our SMB accounts. Before the change, setup took an average of 12 days; after I removed duplicate approvals and added automated reminders, it dropped to 7 days. That shorter ramp meant customers reached first value faster and our implementation team could handle more accounts each month.',
+            breakdown: {
+              NameIt: 'Customer onboarding checklist for SMB accounts.',
+              QuantifyIt: 'Setup time dropped from 12 days to 7.',
+              ShowImpact: 'Customers reached value faster and team capacity increased.',
+            },
+          },
         },
-      },
-    },
-    exercises: [
-      {
-        type: 'multiple_choice',
-        question: 'Which statement passes the specificity test?',
-        options: [
-          'I improved team efficiency.',
-          'I helped the team work better together.',
-          'I cut our deployment time from 45 minutes to 8 minutes by parallelizing the build steps.',
-          'I made significant improvements to our processes.',
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which sentence is the best example of "Name it"?',
+            options: [
+              'I improved things a lot.',
+              'I worked on a process.',
+              'I redesigned the refund approval workflow for enterprise orders.',
+              'It was helpful overall.',
+            ],
+            correctIndex: 2,
+            explanation: 'It identifies the exact process rather than using generic language.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment by the Specificity Ladder step.',
+            segments: [
+              { text: 'I rebuilt the weekly staffing forecast model.', correctLabel: 'Name it' },
+              { text: 'Forecast error dropped from 18% to 6%.', correctLabel: 'Quantify it' },
+              { text: 'That let managers schedule fewer overtime shifts.', correctLabel: 'Show impact' },
+              { text: 'I updated the churn dashboard for sales.', correctLabel: 'Name it' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing step.',
+            sentenceWithBlank: 'If you already named the project and added a metric, the next step is to [___].',
+            options: ['show impact', 'change topics', 'add humor', 'slow down'],
+            correctIndex: 0,
+            explanation: 'The ladder ends by connecting the evidence to why it mattered.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the statements that are specific enough to sound credible.',
+            items: [
+              'I improved retention.',
+              'I raised trial-to-paid conversion from 14% to 19%.',
+              'I made reports faster.',
+              'I cut monthly reporting time by 6 hours.',
+            ],
+            correctIndices: [1, 3],
+            explanation: 'Specific statements name a metric or scope. Generic claims do not.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Why is "Show impact" important?',
+            options: [
+              'It makes the answer longer.',
+              'It connects your evidence to business value.',
+              'It avoids using numbers.',
+              'It replaces the need for examples.',
+            ],
+            correctIndex: 1,
+            explanation: 'Impact explains why the metric matters beyond the task itself.',
+          },
         ],
-        correctIndex: 2,
-        explanation: 'It names the thing, says what was done, and quantifies the change.',
       },
       {
-        type: 'multiple_choice',
-        question: "Why is 'I reduced onboarding from 12 steps to 4' stronger than 'I simplified onboarding'?",
-        options: [
-          "It's longer",
-          'It proves the claim with a measurable before and after',
-          'It uses more impressive vocabulary',
-          'It shows more effort',
+        title: 'Making Claims Provable',
+        difficulty: 'medium',
+        teach: {
+          title: 'The hard part is not adding numbers; it is choosing numbers that prove the claim',
+          explanation:
+            'A weak answer says something improved. A stronger answer shows what improved, by how much, and for whom. Use the metric that best supports the claim you are making.',
+          example: {
+            question: 'Describe a time you increased efficiency.',
+            badAnswer:
+              'I made our reporting process much more efficient, and the team definitely noticed the difference.',
+            goodAnswer:
+              'I streamlined the monthly compliance report by removing duplicate data pulls and standardizing the template. The process went from 5 hours of manual work to 90 minutes, which freed the analyst team to review exceptions instead of formatting spreadsheets.',
+            breakdown: {
+              Claim: 'Increased efficiency.',
+              Proof: 'Reduced manual work from 5 hours to 90 minutes.',
+              Impact: 'Freed analysts for higher-value review work.',
+              Tip: 'Choose the metric that directly proves the claim.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer better proves "I improved team efficiency"?',
+            options: [
+              'The team liked the new process.',
+              'I reduced ticket triage time from 20 minutes to 8 minutes per case.',
+              'People said the workflow felt smoother.',
+              'The process was much easier after my update.',
+            ],
+            correctIndex: 1,
+            explanation: 'That option directly proves the efficiency claim with a relevant metric.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Sort each segment by the Specificity Ladder step.',
+            segments: [
+              { text: 'I rebuilt the interview scheduling workflow.', correctLabel: 'Name it' },
+              { text: 'Scheduling time dropped from 3 days to 1 day.', correctLabel: 'Quantify it' },
+              { text: 'Recruiters could move candidates through the funnel faster.', correctLabel: 'Show impact' },
+              { text: 'I updated the recruiter scorecard.', correctLabel: 'Name it' },
+              { text: 'Offer acceptance rose 6 points after follow-up speed improved.', correctLabel: 'Show impact' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the strongest phrase.',
+            sentenceWithBlank: 'When a claim sounds vague, the fastest fix is to replace "better" with [___].',
+            options: ['a metric', 'a joke', 'more adjectives', 'a disclaimer'],
+            correctIndex: 0,
+            explanation: 'A metric turns a soft claim into something provable.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the details that would strengthen the claim "I improved customer retention."',
+            items: [
+              'Renewal rate increased from 81% to 88%.',
+              'Customers seemed happier.',
+              'Churn fell by 3 percentage points.',
+              'The team was energized.',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'Both correct choices directly measure retention. The others are indirect and vague.',
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Complete the ladder in the correct order.',
+            sentenceWithBlank: 'Name it -> Quantify it -> [___].',
+            options: ['Show impact', 'Start over', 'Generalize it', 'Apologize'],
+            correctIndex: 0,
+            explanation: 'The final step is to connect the quantified claim to business or customer value.',
+          },
         ],
-        correctIndex: 1,
-        explanation: 'Numbers are proof. Adjectives are just claims anyone can make.',
       },
       {
-        type: 'label_sort',
-        instruction: 'Specific (provable) or Vague (unverifiable)?',
-        segments: [
-          { text: 'I made things more efficient.', correctLabel: 'vague' },
-          { text: 'I reduced customer wait time from 8 minutes to 3 minutes.', correctLabel: 'specific' },
-          { text: 'I was involved in improving team performance.', correctLabel: 'vague' },
-          { text: 'I automated 12 weekly reports, saving 6 hours per week.', correctLabel: 'specific' },
-          { text: 'I helped grow revenue.', correctLabel: 'vague' },
-          { text: 'I redesigned the checkout flow, increasing conversion by 14%.', correctLabel: 'specific' },
+        title: 'Mastering Precision Under Pressure',
+        difficulty: 'hard',
+        teach: {
+          title: 'Do not add random numbers; add the right evidence for the claim',
+          explanation:
+            'Edge case: a number can still be weak if it does not prove the point you are making. Precision means relevant evidence, not just any evidence.',
+          example: {
+            question: 'Tell me about a time you improved customer experience.',
+            badAnswer:
+              'I handled a lot of tickets and customers were happier. We also had more meetings, which helped us stay aligned.',
+            goodAnswer:
+              'I noticed billing tickets were taking too long because agents had to verify account history in two systems. I created one lookup view and a macro for the three most common billing issues. First-response time on billing tickets fell from 11 hours to 4, and CSAT on that queue rose from 82% to 91%.',
+            breakdown: {
+              EdgeCase: 'Ticket volume alone would not prove customer experience improved.',
+              RelevantMetric: 'First-response time and CSAT fit the claim.',
+              Impact: 'The evidence ties directly to the customer experience outcome.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which metric best supports the claim "I improved onboarding quality"?',
+            options: [
+              'We held more team meetings.',
+              'The onboarding completion rate rose from 76% to 92%.',
+              'I answered many questions.',
+              'The project lasted six weeks.',
+            ],
+            correctIndex: 1,
+            explanation: 'Completion rate is directly relevant to onboarding quality; the others are not proof.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each statement by the ladder step.',
+            segments: [
+              { text: 'I redesigned the new-customer kickoff deck.', correctLabel: 'Name it' },
+              { text: 'No-show rates fell from 18% to 9%.', correctLabel: 'Quantify it' },
+              { text: 'That gave account managers more time for active accounts.', correctLabel: 'Show impact' },
+              { text: 'I updated the support queue tags.', correctLabel: 'Name it' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best completion.',
+            sentenceWithBlank: 'A number is weak evidence when it is [___] to the claim you are making.',
+            options: ['unrelated', 'large', 'recent', 'surprising'],
+            correctIndex: 0,
+            explanation: 'Relevance matters more than raw size or novelty.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the details that actually prove the claim "I improved reliability."',
+            items: [
+              'Uptime rose from 97.8% to 99.4%.',
+              'The team met twice a week.',
+              'Incident volume dropped by 28%.',
+              'Leadership thanked us.',
+              'Mean time to recovery fell from 50 minutes to 18.',
+            ],
+            correctIndices: [0, 2, 4],
+            explanation: 'These metrics directly reflect reliability. The others may be true but do not prove the claim.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer is most precise?',
+            options: [
+              'I improved hiring a lot and it helped the business.',
+              'I made our recruiting process more organized.',
+              'I cut average interview scheduling time from 4 days to 36 hours, which reduced candidate drop-off before final rounds.',
+              'People said recruiting felt smoother after my changes.',
+            ],
+            correctIndex: 2,
+            explanation: 'It names the process, quantifies the change, and shows the business impact.',
+          },
         ],
-      },
-      {
-        type: 'multiple_choice',
-        question: "Best way to add specificity to 'I improved a process'?",
-        options: [
-          'I significantly improved an important process.',
-          'I improved the onboarding process — reducing steps from 12 to 4 and cutting completion time by 60%.',
-          'I improved a process and the team was very happy.',
-          'I worked hard to improve a key process at the company.',
-        ],
-        correctIndex: 1,
-        explanation: 'It names the process, the change, and the measurable result.',
-      },
-      {
-        type: 'short_answer',
-        prompt: "Climb the Specificity Ladder on this answer: 'I improved a process at work.'",
-        hint: 'Name the exact process, what you did to it, and at least one number that proves it.',
-        maxLength: 200,
       },
     ],
   },
@@ -213,353 +524,927 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
     rootCause: 'weak_communication',
     displayName: 'Confident Delivery',
     description: "Hedge words are killing your credibility. Let's cut them.",
-    teach: {
-      title: 'Cut the Hedges',
-      explanation:
-        "Hedge words — 'I think', 'kind of', 'sort of', 'I guess', 'maybe' — make you sound unsure of your own experience. You were there. You did it. Every hedge word transfers doubt to the interviewer. Lead with your answer, then support it.",
-      example: {
-        question: 'Why are you interested in this role?',
-        badAnswer:
-          "Um, so I guess I kind of feel like this could be a really good opportunity and I think I could maybe learn a lot and grow, you know?",
-        goodAnswer:
-          "I'm interested because this role combines data analysis and product strategy — two areas I've been building in parallel. I ran A/B tests and built dashboards in my last internship. I want to apply that at the product decision level.",
-        breakdown: {
-          hedge_count: '8 hedges in the weak answer: um, so, I guess, kind of, feel like, could be, I think, maybe',
-          lead_strong: 'Lead with the direct answer: "I\'m interested because..."',
-          evidence: 'Back it with concrete proof: A/B tests, dashboards — real things',
-          forward: 'End with what you want to do, not what you "hope" might happen',
+    lessons: [
+      {
+        title: 'Recognizing Hedge Words',
+        difficulty: 'easy',
+        teach: {
+          title: 'Cut the Hedges',
+          explanation:
+            'Confident delivery uses three habits: remove hedge words, lead with the answer, and use active voice. Hedge words like "maybe," "kind of," or "I think" make a solid point sound uncertain. Start with the claim, then support it directly.',
+          example: {
+            question: 'Why should we hire you?',
+            badAnswer:
+              'I think I would probably be a pretty good fit because I have kind of done similar work before and I guess I learn quickly.',
+            goodAnswer:
+              'You should hire me because I have already done this work at scale. I led a process redesign that cut response time by 35%, and I can bring that same operational discipline to this role.',
+            breakdown: {
+              NoHedges: 'The good answer removes "I think," "probably," and "kind of."',
+              LeadWithAnswer: 'It starts with a clear claim instead of circling toward one.',
+              ActiveVoice: 'It says "I led" instead of hiding behind passive language.',
+            },
+          },
         },
-      },
-    },
-    exercises: [
-      {
-        type: 'multiple_choice',
-        question: 'Which sentence has zero hedge words?',
-        options: [
-          "I think I kind of helped improve the process.",
-          "I guess I was sort of responsible for the project.",
-          "I redesigned the onboarding flow and cut drop-off by 35%.",
-          "I maybe contributed to some improvements.",
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which phrase is a hedge word?',
+            options: ['I led the rollout', 'We shipped on time', 'I think we improved it', 'Revenue rose 12%'],
+            correctIndex: 2,
+            explanation: '"I think" weakens certainty and sounds less credible.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment with the communication habit it best represents.',
+            segments: [
+              { text: 'You should hire me because I have managed this exact type of launch.', correctLabel: 'Lead with the answer' },
+              { text: 'I removed the manual approval step.', correctLabel: 'Active voice' },
+              { text: 'I probably could help here.', correctLabel: 'Hedge word' },
+              { text: 'I owned the customer handoff design.', correctLabel: 'Active voice' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing word.',
+            sentenceWithBlank: 'To sound more confident, cut [___] words like "maybe" and "sort of."',
+            options: ['hedge', 'transition', 'technical', 'filler'],
+            correctIndex: 0,
+            explanation: 'Hedge words soften the statement and reduce confidence.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap all hedge words.',
+            items: ['maybe', 'probably', 'led', 'kind of', 'delivered'],
+            correctIndices: [0, 1, 3],
+            explanation: 'The hedge words are "maybe," "probably," and "kind of."',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer leads with the answer?',
+            options: [
+              'Well, there are a few ways to think about it.',
+              'I guess one thing I would say is that communication matters.',
+              'Yes. My strongest fit is stakeholder management in fast-moving teams.',
+              'It probably depends on the situation.',
+            ],
+            correctIndex: 2,
+            explanation: 'It answers directly first, then leaves room to support the claim.',
+          },
         ],
-        correctIndex: 2,
-        explanation: "It states what happened directly, with no uncertainty injected.",
       },
       {
-        type: 'label_sort',
-        instruction: 'Hedge word or confident language?',
-        segments: [
-          { text: 'I think I was involved in...', correctLabel: 'hedge' },
-          { text: 'I led the redesign of...', correctLabel: 'confident' },
-          { text: 'I kind of helped improve...', correctLabel: 'hedge' },
-          { text: 'I reduced churn by 20% by...', correctLabel: 'confident' },
-          { text: 'I guess I sort of managed...', correctLabel: 'hedge' },
-          { text: 'I owned the project end-to-end.', correctLabel: 'confident' },
+        title: 'Replacing Soft Language',
+        difficulty: 'medium',
+        teach: {
+          title: 'The hard part is cutting soft openers without sounding robotic',
+          explanation:
+            'You do not need to sound aggressive. You need to sound clear. Replace soft openers with direct claims and use active verbs that show ownership.',
+          example: {
+            question: 'What is your leadership style?',
+            badAnswer:
+              'I would say I am probably pretty collaborative, and I try to help the team where I can.',
+            goodAnswer:
+              'My leadership style is collaborative and direct. I set clear priorities, remove blockers early, and give teams enough context to move without waiting on me.',
+            breakdown: {
+              DirectClaim: 'Starts with the answer immediately.',
+              ActiveVerbs: 'Set, remove, and give are ownership verbs.',
+              Tone: 'Clear does not mean harsh; it means unambiguous.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which revision is most confident without sounding arrogant?',
+            options: [
+              'I guess I am sort of good at managing projects.',
+              'I am the best project manager you will ever meet.',
+              'I manage projects by setting milestones, clarifying owners, and tracking risks early.',
+              'Project work is something I have maybe done a little.',
+            ],
+            correctIndex: 2,
+            explanation: 'It is direct, specific, and grounded without exaggeration.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each phrase by the communication habit it illustrates.',
+            segments: [
+              { text: 'Yes. I enjoy mentoring because I like turning ambiguity into clear next steps.', correctLabel: 'Lead with the answer' },
+              { text: 'The process was redesigned by me.', correctLabel: 'Passive voice' },
+              { text: 'I kind of helped with the launch.', correctLabel: 'Hedge word' },
+              { text: 'I redesigned the launch checklist.', correctLabel: 'Active voice' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Pick the strongest replacement.',
+            sentenceWithBlank: 'Replace "I think I could help" with "[___] can help by reducing response time and clarifying ownership."',
+            options: ['I', 'maybe I', 'I guess I', 'sort of I'],
+            correctIndex: 0,
+            explanation: 'A direct first-person subject removes the hedge and keeps the sentence clean.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the phrases that weaken credibility.',
+            items: [
+              'I probably would approach it this way.',
+              'I led the rollout across three teams.',
+              'I guess the result was positive.',
+              'I reduced rework by 20%.',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'The correct choices hedge. The other two are direct and credible.',
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing habit.',
+            sentenceWithBlank: 'If your sentence starts with "Well, it depends," you probably failed to [___].',
+            options: ['lead with the answer', 'use a bigger metric', 'add more context', 'tell a longer story'],
+            correctIndex: 0,
+            explanation: 'You should answer first, then explain nuance if needed.',
+          },
         ],
       },
       {
-        type: 'multiple_choice',
-        question: "How should you start an answer to 'Tell me about yourself'?",
-        options: [
-          "Well, so basically I'm like a pretty good generalist I guess...",
-          "Um, I think I would describe myself as kind of a problem-solver...",
-          "I'm a product analyst with 2 years of experience building data pipelines.",
-          "I guess you could say I'm someone who likes to learn new things.",
+        title: 'Sounding Clear in Edge Cases',
+        difficulty: 'hard',
+        teach: {
+          title: 'Confidence is clarity, not overclaiming',
+          explanation:
+            'Edge case: some candidates remove hedges by making claims that are too absolute. The goal is a direct answer that is still accurate. State the answer clearly, then qualify with evidence instead of verbal wobbling.',
+          example: {
+            question: 'How do you handle conflict?',
+            badAnswer:
+              'I never really have conflict, and I am always able to fix it right away.',
+            goodAnswer:
+              'I address conflict early and directly. I start by clarifying the disagreement, align on the decision needed, and document next steps so the issue does not keep resurfacing.',
+            breakdown: {
+              EdgeCase: 'Avoid fake certainty like "always" or "never" when it is not credible.',
+              ClearClaim: 'Start with a direct statement of approach.',
+              Support: 'Use process and evidence instead of hedges or exaggeration.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer is confident and credible?',
+            options: [
+              'I never make mistakes in communication.',
+              'I probably communicate well most of the time.',
+              'I communicate directly, summarize decisions in writing, and confirm owners before work starts.',
+              'Maybe I am strong at communication depending on the team.',
+            ],
+            correctIndex: 2,
+            explanation: 'It is direct, specific, and believable without overclaiming.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each phrase with the best fit.',
+            segments: [
+              { text: 'I always solve every stakeholder issue instantly.', correctLabel: 'Overclaim' },
+              { text: 'I address stakeholder issues early and clarify decision owners.', correctLabel: 'Lead with the answer' },
+              { text: 'The escalation was resolved by me.', correctLabel: 'Passive voice' },
+              { text: 'I resolved the escalation within one business day.', correctLabel: 'Active voice' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Complete the coaching sentence.',
+            sentenceWithBlank: 'The safest way to sound confident is to make a direct claim and support it with [___].',
+            options: ['evidence', 'hedges', 'jokes', 'volume'],
+            correctIndex: 0,
+            explanation: 'Evidence keeps the answer confident without drifting into exaggeration.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the phrases that should be cut or revised.',
+            items: [
+              'always',
+              'never',
+              'I led the migration',
+              'sort of',
+              'probably',
+            ],
+            correctIndices: [0, 1, 3, 4],
+            explanation: '"Always" and "never" often overclaim; "sort of" and "probably" hedge. "I led the migration" is strong.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the best opening to a difficult answer?',
+            options: [
+              'That is a great question and there are a lot of ways to think about it.',
+              'Yes. The main risk was timing, so I reduced it by sequencing the rollout in phases.',
+              'I guess I would maybe start by saying it was complicated.',
+              'It always works out when people communicate.',
+            ],
+            correctIndex: 1,
+            explanation: 'It leads with a clear answer and stays grounded in a real action.',
+          },
         ],
-        correctIndex: 2,
-        explanation: 'Lead with a direct, concrete statement of who you are and what you do.',
-      },
-      {
-        type: 'multiple_choice',
-        question: "Best clean rewrite of: 'I think I sort of helped the team maybe improve their process.'",
-        options: [
-          "I helped improve things for the team.",
-          "I streamlined the team's QA process, cutting review cycles from 3 days to 1.",
-          "I was involved in some process improvements.",
-          "I contributed to making the team more efficient.",
-        ],
-        correctIndex: 1,
-        explanation: 'No hedges, names the process, and quantifies the result.',
-      },
-      {
-        type: 'short_answer',
-        prompt: "Remove ALL hedge words and rewrite this directly: 'I think I sort of helped my team become maybe a bit more organized.'",
-        hint: 'Say exactly what you did. Name the thing you improved. No "I think", "kind of", "sort of", "maybe".',
-        maxLength: 150,
       },
     ],
   },
   {
     rootCause: 'missing_knowledge',
     displayName: 'Research That Lands',
-    description: "Generic answers signal zero prep. Let's make yours impossible to ignore.",
-    teach: {
-      title: 'The Research Bridge',
-      explanation:
-        "The Research Bridge connects three things: their priority → your evidence → how you'd bring it. 'Great culture' flatters no one. Naming what they actually care about and proving you can deliver it is what gets you hired.",
-      example: {
-        question: 'Why do you want to work here?',
-        badAnswer:
-          "It seems like a great company with a lot of opportunities to grow and learn.",
-        goodAnswer:
-          "Your shift to ML-powered recommendations caught my attention. I built a collaborative filtering model for a course project that improved recommendation accuracy by 18%. I want to work on that problem at scale — with real user data behind it.",
-        breakdown: {
-          their_priority: 'What they care about: ML-powered recommendations (from product blog)',
-          your_evidence: 'What you\'ve done: collaborative filtering model, 18% accuracy improvement',
-          the_bridge: 'The connection: "I\'ve done this in small-scale — I want to do it at yours"',
-          no_flattery: 'Notice: zero generic praise. Every word earns credibility.',
+    description: "Generic answers signal zero prep. Let's fix that.",
+    lessons: [
+      {
+        title: 'Recognizing the Research Bridge',
+        difficulty: 'easy',
+        teach: {
+          title: 'Use the Research Bridge',
+          explanation:
+            'Research Bridge has three parts: their priority, your evidence, and the connection. First, identify what the company or role likely cares about. Then show your relevant proof. Finally, connect your proof back to that priority so your answer sounds prepared, not generic.',
+          example: {
+            question: 'Why do you want to work here?',
+            badAnswer:
+              'Your company seems great, and I think it would be a good place to grow my career. I like the culture and the mission.',
+            goodAnswer:
+              'What stands out to me is your push to shorten implementation time for mid-market customers. In my current role, I redesigned onboarding steps and cut average time-to-launch from 21 days to 12. That is why this role makes sense to me: the problem you are solving is one I have already improved in practice.',
+            breakdown: {
+              TheirPriority: 'Shortening implementation time for mid-market customers.',
+              YourEvidence: 'Cut average time-to-launch from 21 days to 12.',
+              TheConnection: 'Your past work directly matches their stated priority.',
+            },
+          },
         },
-      },
-    },
-    exercises: [
-      {
-        type: 'multiple_choice',
-        question: 'What makes "Why this company?" feel tailored vs generic?',
-        options: [
-          "It's enthusiastic",
-          'It names something specific about the company and connects it to your experience',
-          'It uses industry terminology',
-          "It's longer than average",
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What comes first in the Research Bridge?',
+            options: ['Your evidence', 'Their priority', 'Your salary target', 'A generic compliment'],
+            correctIndex: 1,
+            explanation: 'Start by naming what the company or role appears to care about.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment by the Research Bridge step.',
+            segments: [
+              { text: 'You are investing heavily in self-serve onboarding.', correctLabel: 'Their priority' },
+              { text: 'I previously reduced setup friction by consolidating five onboarding emails into one guided flow.', correctLabel: 'Your evidence' },
+              { text: 'That experience is why I am excited about this role.', correctLabel: 'The connection' },
+              { text: 'Your team is focused on account expansion.', correctLabel: 'Their priority' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing phrase.',
+            sentenceWithBlank: 'Research Bridge = their priority -> your evidence -> [___].',
+            options: ['the connection', 'small talk', 'your resume summary', 'a disclaimer'],
+            correctIndex: 0,
+            explanation: 'The final step explains why your background matches the priority.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the statements that count as real company research signals.',
+            items: [
+              'A public note about expanding into healthcare',
+              'Their logo looks modern',
+              'A hiring manager mentions reducing churn',
+              'The office seems nice',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'Real research signals are business priorities, not surface-level compliments.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer uses the Research Bridge best?',
+            options: [
+              'I like your mission and culture.',
+              'I want a new challenge, and your company seems interesting.',
+              'You are focused on retention in SMB accounts, and I recently led a renewal playbook that raised retention by 7 points in that segment.',
+              'I have always wanted to work at a fast-growing company.',
+            ],
+            correctIndex: 2,
+            explanation: 'It names their priority and provides matching evidence from the candidate.',
+          },
         ],
-        correctIndex: 1,
-        explanation: "Specificity proves research. Enthusiasm proves nothing.",
       },
       {
-        type: 'label_sort',
-        instruction: 'Tailored (shows research) or Generic (could be about any company)?',
-        segments: [
-          { text: "I want to work here because it's a great company.", correctLabel: 'generic' },
-          { text: "Your push into B2B SaaS aligns with the enterprise sales work I did at my internship.", correctLabel: 'tailored' },
-          { text: 'I think I would learn a lot here.', correctLabel: 'generic' },
-          { text: "I read your CTO's post on event-driven architecture — that's the pattern I've been using.", correctLabel: 'tailored' },
-          { text: 'I heard good things about the culture.', correctLabel: 'generic' },
-          { text: "You're one of three companies using this tech stack at scale — that's exactly where I want to grow.", correctLabel: 'tailored' },
+        title: 'Turning Research Into Relevance',
+        difficulty: 'medium',
+        teach: {
+          title: 'The gap is usually the connection, not the research',
+          explanation:
+            'Many candidates mention a company fact and stop there. The stronger move is to connect that fact to a relevant piece of your own experience so the answer sounds targeted.',
+          example: {
+            question: 'Why this role?',
+            badAnswer:
+              'I saw that your company is expanding in Europe, which is exciting to me.',
+            goodAnswer:
+              'I saw that this team is expanding in Europe and building more multilingual support coverage. In my last role, I standardized escalation flows across three regions, which reduced handoff delays and made issue ownership clearer. That is why this role stands out to me: the scaling challenge is one I have already worked through.',
+            breakdown: {
+              Miss: 'The bad answer notices a fact but never makes it relevant.',
+              Evidence: 'Regional escalation workflow experience is the proof.',
+              Connection: 'The candidate ties prior work to the company challenge.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer makes the best connection?',
+            options: [
+              'I noticed you launched a new product, and that seems exciting.',
+              'I saw you are expanding your partner channel, and I previously built partner onboarding guides that cut ramp time by 30%, so that priority fits my background well.',
+              'Your company is growing quickly, which is interesting.',
+              'I admire your leadership team and mission.',
+            ],
+            correctIndex: 1,
+            explanation: 'It links a company priority to direct, relevant evidence.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment of the answer.',
+            segments: [
+              { text: 'Your team is prioritizing implementation speed for enterprise customers.', correctLabel: 'Their priority' },
+              { text: 'I led a rollout that reduced enterprise go-live delays by standardizing approvals.', correctLabel: 'Your evidence' },
+              { text: 'That is why this problem space feels like a direct fit.', correctLabel: 'The connection' },
+              { text: 'You also seem to value operational rigor.', correctLabel: 'Their priority' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Fill in the strongest completion.',
+            sentenceWithBlank: 'Mentioning a company fact without linking it to your background is missing the [___].',
+            options: ['connection', 'timeline', 'closing joke', 'resume'],
+            correctIndex: 0,
+            explanation: 'The connection is what turns research into a targeted answer.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the details that would count as "your evidence."',
+            items: [
+              'I reduced onboarding time from 14 days to 8.',
+              'Your mission is inspiring.',
+              'I managed a cross-functional launch across finance and ops.',
+              'Your website looks polished.',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'Evidence comes from your own relevant work, not company compliments.',
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best word.',
+            sentenceWithBlank: 'A researched answer feels strong only when the evidence is [___] to their stated priority.',
+            options: ['relevant', 'long', 'casual', 'emotional'],
+            correctIndex: 0,
+            explanation: 'Relevance is the core of the Research Bridge.',
+          },
         ],
       },
       {
-        type: 'multiple_choice',
-        question: 'Best places to research before an interview?',
-        options: [
-          "Only the interviewer's personal Twitter",
-          "Company website, job description, recent news, and the engineering/product blog",
-          "Only Glassdoor reviews",
-          "The company's Wikipedia page only",
+        title: 'Avoiding Fake Prep',
+        difficulty: 'hard',
+        teach: {
+          title: 'Do not confuse trivia with preparation',
+          explanation:
+            'Edge case: candidates sometimes cite random facts that do not matter to the role. Strong research focuses on operating priorities, customer problems, or team goals that your experience can actually address.',
+          example: {
+            question: 'Why are you interested in this company?',
+            badAnswer:
+              'I know you were founded in 2017, raised funding last year, and your headquarters moved recently, which I found interesting.',
+            goodAnswer:
+              'I noticed your recent hiring push in customer education, which suggests adoption and retention are core priorities right now. In my current role, I built a webinar-to-onboarding handoff that increased activation for new accounts. That is the bridge for me: the customer problem you are investing in is one I have already helped solve.',
+            breakdown: {
+              EdgeCase: 'Random company facts do not prove understanding of the role.',
+              BetterResearch: 'Focus on business priorities that map to the job.',
+              Bridge: 'Tie those priorities to relevant proof from your experience.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which detail is the strongest research signal for an interview answer?',
+            options: [
+              'The company mascot',
+              'A recent note that the team is reducing implementation time',
+              'The color palette on the homepage',
+              'The city where the office opened',
+            ],
+            correctIndex: 1,
+            explanation: 'It points to an operating priority that can be linked to your experience.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment.',
+            segments: [
+              { text: 'You are trying to improve activation for self-serve users.', correctLabel: 'Their priority' },
+              { text: 'I previously simplified first-run setup and increased activation by 11 points.', correctLabel: 'Your evidence' },
+              { text: 'That is why this role feels unusually aligned with my background.', correctLabel: 'The connection' },
+              { text: 'You have recently expanded your customer education team.', correctLabel: 'Their priority' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the strongest completion.',
+            sentenceWithBlank: 'Interview research should focus on role-relevant [___], not random trivia.',
+            options: ['priorities', 'headlines', 'logos', 'office snacks'],
+            correctIndex: 0,
+            explanation: 'Priorities are what you can connect to your own evidence.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the details that are usually weak or off-target in a "Why this company?" answer.',
+            items: [
+              'Their homepage uses a clean design',
+              'They are trying to reduce churn in a key segment',
+              'Their founder gave a talk about customer retention',
+              'Their office has a nice location',
+            ],
+            correctIndices: [0, 3],
+            explanation: 'Design preferences and office location are weak signals compared with business priorities.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer sounds best prepared?',
+            options: [
+              'I saw you were founded eight years ago and recently changed offices.',
+              'I know your company is growing, and I like growth.',
+              'You are investing in onboarding quality for new enterprise customers, and I have already improved onboarding speed and consistency in that exact environment.',
+              'Your brand seems modern and exciting to me.',
+            ],
+            correctIndex: 2,
+            explanation: 'It identifies a business priority and matches it with relevant proof.',
+          },
         ],
-        correctIndex: 1,
-        explanation: 'These sources give you the priorities, language, and context you need.',
-      },
-      {
-        type: 'multiple_choice',
-        question: "You're asked about a recent initiative you didn't know about. Best move?",
-        options: [
-          'Make something up that sounds plausible',
-          'Say you have no idea and move on',
-          'Be honest about the gap, then connect to something adjacent you do know',
-          'Change the subject to your strengths',
-        ],
-        correctIndex: 2,
-        explanation: "Honesty + resourcefulness beats bluffing or silence. 'I hadn't seen that specifically — but it sounds similar to [X], which I have experience with' shows genuine engagement.",
-      },
-      {
-        type: 'short_answer',
-        prompt: "Write a Research Bridge answer to: 'Why do you want to work here?'",
-        hint: 'Pick one specific thing about a company (real or hypothetical) and bridge it to something you\'ve actually done. No generic praise.',
-        maxLength: 250,
       },
     ],
   },
   {
     rootCause: 'off_topic',
     displayName: 'Answering the Real Question',
-    description: "You're answering what you want to say, not what was actually asked.",
-    teach: {
-      title: 'Decode the Hidden Question',
-      explanation:
-        "Every interview question has a surface question and a hidden question. 'Tell me about a failure' isn't about failure — it's about self-awareness and growth. 'Tell me about a conflict' is about collaboration and professionalism. Hear the real question. Answer that.",
-      example: {
-        question: 'Tell me about a time you failed.',
-        badAnswer:
-          "I'm a perfectionist, so I don't really fail. I see every setback as a learning opportunity and I always try my best.",
-        goodAnswer:
-          "I missed a product launch deadline because I underestimated QA time. I told my manager immediately, reprioritized testing, and we shipped 4 days late. I now build buffer into every timeline — it hasn't happened again.",
-        breakdown: {
-          surface: 'Surface question: "Tell me about a failure"',
-          hidden: 'Hidden question: "Are you self-aware? Do you own mistakes? Can you course-correct?"',
-          what_failed: 'Bad answer hears: "describe failure" → deflects with "I don\'t fail"',
-          what_worked: 'Good answer hears hidden question → specific failure + ownership + change = yes to all three',
+    description: "You're answering what you want to say, not what was asked.",
+    lessons: [
+      {
+        title: 'Recognizing the Hidden Question',
+        difficulty: 'easy',
+        teach: {
+          title: 'Decode the Hidden Question',
+          explanation:
+            'Interview questions usually have two layers: the surface question and what the interviewer is actually evaluating. A strong answer addresses both. If someone asks about a conflict, they are usually testing judgment, communication, and accountability, not looking for a dramatic story.',
+          example: {
+            question: 'Tell me about a time you received difficult feedback.',
+            badAnswer:
+              'I work really hard and care a lot about quality. In general, I always try to improve and support the team.',
+            goodAnswer:
+              'The surface question is about feedback, but the hidden question is whether I can absorb criticism and change my behavior. In one role, I was told my project updates were too detailed for executives. I started sending one-page summaries with decisions, risks, and asks, and the updates became easier for leadership to use.',
+            breakdown: {
+              SurfaceQuestion: 'Tell me about difficult feedback.',
+              HiddenQuestion: 'Can you accept criticism and adapt?',
+              WhyBadFails: 'It talks about values in general, not the feedback example.',
+              WhyGoodWorks: 'It answers both the event and the capability being evaluated.',
+            },
+          },
         },
-      },
-    },
-    exercises: [
-      {
-        type: 'multiple_choice',
-        question: "The hidden question beneath 'Tell me about a conflict with a coworker' is:",
-        options: [
-          'How confrontational are you?',
-          'Can you work with difficult people professionally and collaboratively?',
-          'What kinds of people do you dislike?',
-          'Have you ever been in a fight at work?',
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'If asked about conflict, what is the interviewer often really evaluating?',
+            options: [
+              'Whether you can tell dramatic stories',
+              'Whether you can handle disagreement with judgment and professionalism',
+              'Whether you dislike teammates',
+              'Whether you can memorize definitions',
+            ],
+            correctIndex: 1,
+            explanation: 'The hidden question is usually about judgment, communication, and accountability.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each item as Surface question or Hidden question.',
+            segments: [
+              { text: 'Tell me about a time you missed a deadline.', correctLabel: 'Surface question' },
+              { text: 'Do you take ownership when things go wrong?', correctLabel: 'Hidden question' },
+              { text: 'Describe a disagreement with a coworker.', correctLabel: 'Surface question' },
+              { text: 'Can you navigate tension without creating bigger problems?', correctLabel: 'Hidden question' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Fill in the missing term.',
+            sentenceWithBlank: 'Strong answers respond to the surface question and the [___] question underneath it.',
+            options: ['hidden', 'easiest', 'shortest', 'loudest'],
+            correctIndex: 0,
+            explanation: 'The hidden question is what the interviewer is actually trying to evaluate.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the prompts that reveal a hidden evaluation of judgment or ownership.',
+            items: [
+              'Can you admit mistakes?',
+              'What is your favorite app?',
+              'Can you stay constructive under pressure?',
+              'Which font do you prefer?',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'These reflect the deeper evaluation behind many behavioral questions.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer is most on-topic for "Tell me about a mistake"?',
+            options: [
+              'I care deeply about excellence and teamwork.',
+              'I once missed an escalation signal, owned it immediately, fixed the alert threshold, and documented the new check so it did not recur.',
+              'My biggest strength is communication.',
+              'Mistakes can happen in any company, and culture matters a lot.',
+            ],
+            correctIndex: 1,
+            explanation: 'It answers the actual question and shows the capability being evaluated.',
+          },
         ],
-        correctIndex: 1,
-        explanation: "Interviewers want to see emotional intelligence and professionalism — not whether conflict happened.",
       },
       {
-        type: 'label_sort',
-        instruction: "For 'Describe a time you failed' — on-topic or off-topic?",
-        segments: [
-          { text: "I missed a deadline because I underestimated the scope. I learned to buffer my estimates.", correctLabel: 'on-topic' },
-          { text: "I'm a perfectionist, so I don't really fail.", correctLabel: 'off-topic' },
-          { text: "I launched a feature with low adoption. I ran user interviews, found the gap, and improved the next version.", correctLabel: 'on-topic' },
-          { text: "I work really hard and always give 100% effort.", correctLabel: 'off-topic' },
-          { text: "I gave a poorly prepared presentation. I got direct feedback, rewrote the deck, and re-presented the next week.", correctLabel: 'on-topic' },
-          { text: "Failure is just a mindset. I prefer to think of them as stepping stones.", correctLabel: 'off-topic' },
+        title: 'Staying Aligned Under Pressure',
+        difficulty: 'medium',
+        teach: {
+          title: 'The trap is answering with your favorite story instead of the relevant one',
+          explanation:
+            'A polished story can still miss if it does not address the hidden evaluation. Before answering, decide what the interviewer is really trying to learn, then choose the example that proves that point.',
+          example: {
+            question: 'Tell me about a time you disagreed with your manager.',
+            badAnswer:
+              'I am generally very collaborative and I care a lot about teamwork. One time I led a successful launch across several teams.',
+            goodAnswer:
+              'The interviewer is testing whether I can disagree professionally and still move work forward. In one role, I pushed back on a rushed launch date because support documentation was not ready. I brought evidence from recent ticket trends, proposed a one-week delay, and we launched with fewer escalations.',
+            breakdown: {
+              Trap: 'A strong story can still be off-topic if it proves the wrong thing.',
+              HiddenQuestion: 'Can you challenge upward with judgment?',
+              BetterChoice: 'Use the example that directly demonstrates the evaluated skill.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What is wrong with this answer to "Tell me about a setback"? "I am usually very proactive, and I love working on ambitious projects."',
+            options: [
+              'It is too specific',
+              'It answers the wrong question',
+              'It uses too many numbers',
+              'It is too short but still fully on-topic',
+            ],
+            correctIndex: 1,
+            explanation: 'It talks about general strengths instead of an actual setback and response.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each statement.',
+            segments: [
+              { text: 'Describe a time you handled ambiguity.', correctLabel: 'Surface question' },
+              { text: 'Can you create structure when instructions are incomplete?', correctLabel: 'Hidden question' },
+              { text: 'Tell me about a conflict with a teammate.', correctLabel: 'Surface question' },
+              { text: 'Can you protect the relationship while solving the issue?', correctLabel: 'Hidden question' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best completion.',
+            sentenceWithBlank: 'Before answering, ask yourself: what are they actually [___] here?',
+            options: ['evaluating', 'selling', 'avoiding', 'celebrating'],
+            correctIndex: 0,
+            explanation: 'That question keeps you aligned with the hidden evaluation.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the responses that directly answer "Tell me about a time you handled failure."',
+            items: [
+              'I missed a client handoff, owned the miss, and changed the checklist.',
+              'I care a lot about quality in everything I do.',
+              'One launch underperformed, so I analyzed adoption data and revised the rollout plan.',
+              'My biggest strength is problem-solving.',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'The correct answers describe an actual failure and what happened next.',
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Fill in the phrase.',
+            sentenceWithBlank: 'A polished story is still weak if it proves the [___] capability.',
+            options: ['wrong', 'highest', 'easiest', 'funniest'],
+            correctIndex: 0,
+            explanation: 'A relevant story matters more than a polished but misaligned one.',
+          },
         ],
       },
       {
-        type: 'multiple_choice',
-        question: "What's your biggest weakness? Which answer actually addresses the question?",
-        options: [
-          "I work too hard and care too much.",
-          "I don't really have major weaknesses.",
-          "I tend to over-communicate on projects. I'm working on being more concise in written updates.",
-          "I'm a perfectionist.",
+        title: 'Handling Tricky Question Variants',
+        difficulty: 'hard',
+        teach: {
+          title: 'Sometimes the hidden question is narrower than the surface wording suggests',
+          explanation:
+            'Edge case: some answers sound related but still miss the exact evaluation. If asked about uncertainty, a story about teamwork might still fail unless it proves decision-making under incomplete information.',
+          example: {
+            question: 'Tell me about a time you had to make a decision with incomplete information.',
+            badAnswer:
+              'I worked closely with many teams during a large project, and communication was really important.',
+            goodAnswer:
+              'The hidden question is whether I can make sound decisions under uncertainty. During a vendor outage, we did not yet know the root cause, but I still had to decide whether to pause customer-facing changes. I froze new releases for 24 hours, set a communication cadence, and reopened the pipeline only after error rates normalized.',
+            breakdown: {
+              EdgeCase: 'A teamwork story may sound related but does not prove judgment under uncertainty.',
+              NarrowEvaluation: 'Decision-making with incomplete information.',
+              GoodFit: 'The answer shows a choice, a rationale, and a controlled response.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer is most on-topic for "Tell me about a time you made a decision with incomplete information"?',
+            options: [
+              'I enjoy collaborating with cross-functional teams.',
+              'During a payment outage, I paused releases, communicated the risk, and resumed only after key indicators stabilized.',
+              'I once led a successful product launch.',
+              'My strength is staying organized under pressure.',
+            ],
+            correctIndex: 1,
+            explanation: 'It directly addresses decision-making under uncertainty instead of drifting to general strengths.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each item.',
+            segments: [
+              { text: 'Tell me about a time priorities changed suddenly.', correctLabel: 'Surface question' },
+              { text: 'Can you adapt without losing focus or ownership?', correctLabel: 'Hidden question' },
+              { text: 'Describe a difficult stakeholder conversation.', correctLabel: 'Surface question' },
+              { text: 'Can you stay clear and constructive in tension?', correctLabel: 'Hidden question' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best word.',
+            sentenceWithBlank: 'If a story sounds related but does not prove the evaluated skill, it is still [___].',
+            options: ['off-topic', 'advanced', 'complete', 'confident'],
+            correctIndex: 0,
+            explanation: 'Partial relevance is not enough if the story misses the actual evaluation.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the answer elements that fit a question about uncertainty.',
+            items: [
+              'The information available at the time',
+              'The decision I made anyway',
+              'A generic summary of my strengths',
+              'How I monitored risk after the decision',
+            ],
+            correctIndices: [0, 1, 3],
+            explanation: 'Those elements fit uncertainty. A generic strength summary does not.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the subtle failure in this answer? "The project had a lot of ambiguity, but I worked well with people and everyone appreciated my communication."',
+            options: [
+              'It is too technical',
+              'It likely answers teamwork, not decision-making under ambiguity',
+              'It includes too much evidence',
+              'It is overly specific',
+            ],
+            correctIndex: 1,
+            explanation: 'The answer sounds relevant, but it proves communication more than judgment under ambiguity.',
+          },
         ],
-        correctIndex: 2,
-        explanation: "Names a real pattern, shows self-awareness, and demonstrates active improvement.",
-      },
-      {
-        type: 'multiple_choice',
-        question: "You're mid-answer and realize you've drifted off-topic. Best move?",
-        options: [
-          "Keep going — they might not notice",
-          "Stop, pause, and say 'Let me refocus — to actually answer your question...'",
-          "Start a completely new story",
-          "Ask the interviewer to repeat the question",
-        ],
-        correctIndex: 1,
-        explanation: "Self-correcting in real time shows meta-awareness and professionalism. Most interviewers respect it.",
-      },
-      {
-        type: 'short_answer',
-        prompt: "Answer this directly: 'Tell me about a time you failed.'",
-        hint: 'Name the specific failure. Own it fully. Say what changed because of it. No deflection, no "I see failures as opportunities" framing.',
-        maxLength: 250,
       },
     ],
   },
   {
     rootCause: 'too_short',
     displayName: 'Depth & Substance',
-    description: "Your answers are too thin. Let's build them into something memorable.",
-    teach: {
-      title: 'The 5-Layer Answer',
-      explanation:
-        "A complete answer has five layers: Claim → Context → Action → Outcome → Reflection. Most people give 1–2 layers and stop. Interviewers want to understand your thinking, not just what happened. Each layer adds a dimension the previous one left out.",
-      example: {
-        question: 'Tell me about a time you led a project.',
-        badAnswer:
-          'I led a project at work and it went really well.',
-        goodAnswer:
-          "I led our team's migration to a new project management tool at my internship. The team was using email threads to track work, which caused things to slip through. I evaluated 3 tools, ran a 2-week pilot with 5 teammates, then rolled it out to the full team of 20. We went from 4 missed handoffs per sprint to zero. I also learned how hard it is to change habits — getting buy-in was harder than the tool itself.",
-        breakdown: {
-          claim: '1 — Claim: "I led a project migration"',
-          context: '2 — Context: email threads causing handoff failures — why it mattered',
-          action: '3 — Action: evaluated 3 tools, ran pilot, rolled out — the what and how',
-          outcome: '4 — Outcome: 4 missed handoffs → zero — measurable change',
-          reflection: '5 — Reflection: "buy-in was harder than the tool" — what you learned',
+    description: "Your answers are too thin. Let's build them out.",
+    lessons: [
+      {
+        title: 'Recognizing the 5-Layer Answer',
+        difficulty: 'easy',
+        teach: {
+          title: 'Build depth with 5 layers',
+          explanation:
+            'The 5-Layer Answer is Claim, Context, Action, Outcome, Reflection. Start with the main point. Add enough context so the answer makes sense. Explain what you did. Show what happened. End with what you learned or how you would apply it again. This creates substance without rambling.',
+          example: {
+            question: 'Tell me about a project you led.',
+            badAnswer:
+              'I led a migration project. It went well, and I learned a lot.',
+            goodAnswer:
+              'I led a billing system migration for a team that was struggling with duplicate invoices. The project mattered because finance was spending hours correcting errors each week. I mapped failure points, set a phased cutover plan, and partnered with engineering on reconciliation checks. After launch, duplicate invoices dropped sharply and monthly close became faster. The experience taught me to front-load risk reviews before any system change touches finance workflows.',
+            breakdown: {
+              Claim: 'I led a billing system migration.',
+              Context: 'Duplicate invoices were creating operational pain for finance.',
+              Action: 'Mapped failure points, planned phased cutover, partnered on checks.',
+              Outcome: 'Errors dropped and monthly close improved.',
+              Reflection: 'Learned to front-load risk reviews on finance-impacting changes.',
+            },
+          },
         },
-      },
-    },
-    exercises: [
-      {
-        type: 'multiple_choice',
-        question: "Which layer do most people skip, making their answer feel incomplete?",
-        options: [
-          'The Claim',
-          'The Context (why it mattered)',
-          'The Action',
-          'Whether they succeeded',
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which layer explains what happened because of your work?',
+            options: ['Claim', 'Context', 'Outcome', 'Reflection'],
+            correctIndex: 2,
+            explanation: 'Outcome is where you show the result or effect of your actions.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment with the correct 5-Layer element.',
+            segments: [
+              { text: 'I led the support queue redesign.', correctLabel: 'Claim' },
+              { text: 'Response times had been slipping for two months.', correctLabel: 'Context' },
+              { text: 'I rewrote routing rules and assigned ownership by ticket type.', correctLabel: 'Action' },
+              { text: 'First-response time fell from 10 hours to 4.', correctLabel: 'Outcome' },
+              { text: 'It taught me to simplify ownership early.', correctLabel: 'Reflection' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the missing layer.',
+            sentenceWithBlank: 'Claim -> Context -> Action -> Outcome -> [___].',
+            options: ['Reflection', 'Greeting', 'Disclaimer', 'Question'],
+            correctIndex: 0,
+            explanation: 'Reflection is the fifth layer that adds maturity and depth.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the elements that make an answer feel complete.',
+            items: ['Claim', 'Action', 'Outcome', 'Reflection', 'Random opinion'],
+            correctIndices: [0, 1, 2, 3],
+            explanation: 'A complete 5-Layer answer includes the first four plus Reflection. Random opinion is not part of the structure.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Why does Reflection matter?',
+            options: [
+              'It proves you can learn and generalize from experience.',
+              'It makes the answer sound dramatic.',
+              'It replaces the need for results.',
+              'It should always be the longest part.',
+            ],
+            correctIndex: 0,
+            explanation: 'Reflection shows judgment and growth, not just activity.',
+          },
         ],
-        correctIndex: 1,
-        explanation: "Without context, the interviewer doesn't know why this story was worth telling.",
       },
       {
-        type: 'label_sort',
-        instruction: 'Thin (1-2 layers) or Substantial (4-5 layers)?',
-        segments: [
-          { text: 'I improved a process.', correctLabel: 'thin' },
-          { text: "I automated our reporting process — it took 4 hours manually, now takes 15 minutes. The team redirected that time to analysis. I learned that automation without documentation creates its own problems.", correctLabel: 'substantial' },
-          { text: 'I helped my team.', correctLabel: 'thin' },
-          { text: "I mentored 2 new analysts who had never written SQL. They shipped their first dashboards in 3 weeks. It changed how I think about knowledge transfer — showing beats explaining.", correctLabel: 'substantial' },
-          { text: 'I gave a presentation.', correctLabel: 'thin' },
-          { text: "I presented our churn analysis to 30 stakeholders. The model pointed to a pricing tier nobody expected. It directly led to a pricing experiment the next quarter.", correctLabel: 'substantial' },
+        title: 'Adding Depth Without Rambling',
+        difficulty: 'medium',
+        teach: {
+          title: 'The missing layer is often Context or Reflection',
+          explanation:
+            'Thin answers usually jump from claim to action with no stakes, or stop after the result with no insight. Add the missing layer that makes the story feel complete, but keep each layer tight.',
+          example: {
+            question: 'Tell me about a time you improved a process.',
+            badAnswer:
+              'I improved the handoff process and it worked better afterward.',
+            goodAnswer:
+              'I improved our handoff process between sales and implementation because key customer details were being lost after close. I added required fields to the CRM handoff, built a kickoff summary template, and reviewed the first ten handoffs with both teams. Implementation started projects with fewer surprises, and I learned that process fixes stick faster when both teams help design the checklist.',
+            breakdown: {
+              MissingContext: 'Why the process mattered becomes clear when you name the pain.',
+              Action: 'The specific intervention gives the answer substance.',
+              Reflection: 'The lesson adds depth without making the answer longer for no reason.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What is most missing from this answer? "I improved onboarding by simplifying forms, and completion rates increased."',
+            options: ['Claim', 'Context', 'Outcome', 'Nothing'],
+            correctIndex: 1,
+            explanation: 'It has a claim, action, and outcome, but no context for why the change mattered.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment of the 5-Layer answer.',
+            segments: [
+              { text: 'I rebuilt the weekly reporting workflow.', correctLabel: 'Claim' },
+              { text: 'Analysts were spending Fridays cleaning inconsistent exports.', correctLabel: 'Context' },
+              { text: 'I standardized the template and added a validation check.', correctLabel: 'Action' },
+              { text: 'Report prep time dropped from 4 hours to 90 minutes.', correctLabel: 'Outcome' },
+              { text: 'I learned that simple guardrails beat heroic cleanup.', correctLabel: 'Reflection' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the strongest completion.',
+            sentenceWithBlank: 'If an answer feels abrupt after the result, add a short [___].',
+            options: ['reflection', 'detour', 'apology', 'greeting'],
+            correctIndex: 0,
+            explanation: 'A concise reflection often gives the answer a more mature finish.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the layers this answer already includes: "I led the migration, fixed the data mapping, and cut errors by 25%."',
+            items: ['Claim', 'Context', 'Action', 'Outcome', 'Reflection'],
+            correctIndices: [0, 2, 3],
+            explanation: 'The answer has a claim, action, and outcome. It lacks context and reflection.',
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Fill in the tip.',
+            sentenceWithBlank: 'Depth comes from covering the right layers, not from making each sentence [___].',
+            options: ['longer', 'softer', 'faster', 'louder'],
+            correctIndex: 0,
+            explanation: 'A deep answer is complete, not wordy.',
+          },
         ],
       },
       {
-        type: 'multiple_choice',
-        question: "Apply the Reflection layer to: 'I led a project that shipped on time.' What fits best?",
-        options: [
-          'I was really happy it worked out.',
-          "Nothing — the outcome is enough.",
-          "I realized scope creep had nearly derailed us. I now define done before we start, every time.",
-          "The team was impressed by my leadership.",
+        title: 'Mastering Concise Depth',
+        difficulty: 'hard',
+        teach: {
+          title: 'A short answer can still be deep if every layer earns its place',
+          explanation:
+            'Edge case: some candidates add depth by stacking details, but the answer still feels thin because it lacks reflection or stakes. The goal is layered substance, not clutter.',
+          example: {
+            question: 'Tell me about a time you took initiative.',
+            badAnswer:
+              'I saw a problem and took initiative to solve it. It went well and everyone appreciated it.',
+            goodAnswer:
+              'I noticed new support agents were answering the same billing question inconsistently, which was frustrating customers and managers alike. I drafted a one-page decision guide, tested it with two senior agents, and rolled it into onboarding. Billing escalations dropped the following month, and it reinforced for me that small documentation fixes can create outsized operational stability.',
+            breakdown: {
+              Stakes: 'The context shows why the issue mattered.',
+              Action: 'The initiative is concrete, not just claimed.',
+              Outcome: 'The result proves the effort worked.',
+              Reflection: 'The final lesson adds substance rather than filler.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer is short but still deep?',
+            options: [
+              'I took initiative and it worked out well.',
+              'I noticed repeated billing errors, created a one-page guide for agents, reduced escalations, and learned that small workflow tools can stabilize operations quickly.',
+              'I like being proactive in general.',
+              'My team values initiative, and I agree with that.',
+            ],
+            correctIndex: 1,
+            explanation: 'It packs in claim, context, action, outcome, and reflection without wasting words.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment.',
+            segments: [
+              { text: 'I redesigned the customer FAQ for our top cancellation reasons.', correctLabel: 'Claim' },
+              { text: 'Support was answering the same questions inconsistently after policy changes.', correctLabel: 'Context' },
+              { text: 'I grouped the issues into five scenarios and rewrote the guidance.', correctLabel: 'Action' },
+              { text: 'Repeat contacts on those cases fell by 17%.', correctLabel: 'Outcome' },
+              { text: 'It reminded me that clarity often scales better than extra effort.', correctLabel: 'Reflection' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best word.',
+            sentenceWithBlank: 'An answer with many details but no lesson often lacks [___].',
+            options: ['reflection', 'context', 'grammar', 'energy'],
+            correctIndex: 0,
+            explanation: 'Reflection is often the subtle missing layer in otherwise detailed answers.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the layers that make this answer feel substantial: "I found a handoff gap, created a new checklist, cut missed details, and now I always design for clear ownership first."',
+            items: ['Claim', 'Context', 'Action', 'Outcome', 'Reflection'],
+            correctIndices: [0, 2, 3, 4],
+            explanation: 'It includes a claim, action, outcome, and reflection. The context is implied but not explicit.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the subtle weakness in this answer? "I led the rollout, created the plan, ran the meetings, and tracked every issue."',
+            options: [
+              'It has too much reflection',
+              'It lacks depth because there is no context or outcome',
+              'It is too specific',
+              'It answers the wrong question in every case',
+            ],
+            correctIndex: 1,
+            explanation: 'It lists actions but gives no stakes and no result, so it still feels thin.',
+          },
         ],
-        correctIndex: 2,
-        explanation: "Reflection shows growth and self-awareness — two things interviewers weight heavily.",
-      },
-      {
-        type: 'multiple_choice',
-        question: "What's the strongest version of the Context layer for: 'I redesigned our onboarding'?",
-        options: [
-          "The previous onboarding was old.",
-          "Our onboarding completion rate was 34% — industry average is 60%+. Users churned before ever seeing the core feature.",
-          "People didn't like the old onboarding.",
-          "The team wanted a better onboarding experience.",
-        ],
-        correctIndex: 1,
-        explanation: "A strong context gives the interviewer stakes — why did this matter?",
-      },
-      {
-        type: 'short_answer',
-        prompt: "Build a 5-layer answer to: 'Tell me about a time you improved something.'",
-        hint: 'Hit all 5: Claim → Context (why it mattered) → Action (what you did) → Outcome (what changed) → Reflection (what you learned).',
-        maxLength: 300,
       },
     ],
   },
 ]
 
-/**
- * Maps a six-area criterion/rootCause to the matching practice bundle.
- * Falls back to poor_structure if no match found.
- */
 export function getBundleForRootCause(rootCause: string): PracticeBundle {
   return (
     PRACTICE_BUNDLES.find((b) => b.rootCause === rootCause) ||
-    PRACTICE_BUNDLES[0] // fallback to poor_structure
+    PRACTICE_BUNDLES[0]
   )
 }
 
-/**
- * Root cause mapping: maps six-area criterion names to root causes.
- * Used when the grading rubric doesn't explicitly tag a rootCause.
- */
 export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
-  // HR Screen criteria
   'Answer Structure and Conciseness': 'poor_structure',
   'Specific Examples and Evidence': 'lack_of_specificity',
   'Pace and Conversation Flow': 'weak_communication',
   'Questions Asked About Role/Company': 'missing_knowledge',
   'Alignment of Career Goals with Position': 'missing_knowledge',
   'Handling Uncertain/Difficult Questions': 'off_topic',
-
-  // Hiring Manager criteria
   'Technical Depth': 'lack_of_specificity',
   'Problem-Solving': 'poor_structure',
   'Experience Storytelling (STAR)': 'poor_structure',
   'Role Competencies': 'missing_knowledge',
   'Critical Thinking': 'off_topic',
-
-  // Culture Fit criteria
   'Teamwork': 'lack_of_specificity',
   'Communication Style': 'weak_communication',
   'Values Alignment': 'missing_knowledge',

@@ -14,7 +14,7 @@ import PurchaseFlow from '@/components/PurchaseFlow'
 import ScoreRevealCard from '@/components/ScoreRevealCard'
 import LockedStageTeasers from '@/components/LockedStageTeasers'
 import InterviewTimeline from '@/components/InterviewTimeline'
-import PracticeLessonFlow from '@/components/PracticeLessonFlow'
+import SubLessonRoadmap from '@/components/SubLessonRoadmap'
 import PreppiWalkthrough from '@/components/PreppiWalkthrough'
 import LessonRoadmap from '@/components/LessonRoadmap'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
@@ -3092,19 +3092,17 @@ export default function InterviewDashboard() {
                 {activePracticeLesson && (
                   <div className="fixed inset-0 z-50 bg-white md:bg-black/50 md:backdrop-blur-sm flex items-start md:items-center justify-center overflow-y-auto">
                     <div className="w-full md:max-w-3xl md:mx-4 md:my-8 md:bg-white md:rounded-2xl md:shadow-2xl md:max-h-[90vh] md:overflow-y-auto">
-                      <PracticeLessonFlow
+                      <SubLessonRoadmap
                         bundle={getBundleForRootCause(activePracticeLesson.rootCause)}
                         criterion={activePracticeLesson.criterion}
                         originalQuestion={activePracticeLesson.question}
                         originalAnswer={activePracticeLesson.answer}
                         sessionId={currentSessionData?.id}
                         currentStage={currentStage}
-                        onComplete={(passed, xpEarned) => {
+                        onAllComplete={(totalXp) => {
                           const criterion = activePracticeLesson.criterion
                           setPracticedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
-                          if (passed) {
-                            setPassedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
-                          }
+                          setPassedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
                           setActivePracticeLesson(null)
                         }}
                         onClose={() => setActivePracticeLesson(null)}

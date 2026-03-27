@@ -117,6 +117,54 @@ export const MOCK_FEEDBACK = {
           },
         ],
       },
+      {
+        criterion: 'Communication Style',
+        feedback:
+          'Your answers were filled with hedge words like "I think," "kind of," and "I guess," which undermine your credibility.',
+        score: 3,
+        rootCause: 'weak_communication',
+        evidence: [
+          {
+            question_id: 'q6',
+            timestamp: '9:30',
+            excerpt:
+              'Said "I think I kind of helped improve the process, I guess" — eight hedge words in one sentence.',
+            question: 'Tell me about a process improvement you led.',
+          },
+        ],
+      },
+      {
+        criterion: 'Role Competencies',
+        feedback:
+          'Your answer about why you want to work here was entirely generic — no evidence of company research.',
+        score: 3,
+        rootCause: 'missing_knowledge',
+        evidence: [
+          {
+            question_id: 'q7',
+            timestamp: '11:00',
+            excerpt:
+              'Said "It seems like a great company with a lot of opportunities to grow" — no specific company detail mentioned.',
+            question: 'Why do you want to work at this company specifically?',
+          },
+        ],
+      },
+      {
+        criterion: 'Feedback/Growth Mindset',
+        feedback:
+          'Your answers were too brief — one or two sentences where three to five were needed. Interviewers need more substance.',
+        score: 3.5,
+        rootCause: 'too_short',
+        evidence: [
+          {
+            question_id: 'q8',
+            timestamp: '13:15',
+            excerpt:
+              'Responded to "Tell me about a time you led a project" with two sentences and no outcome or reflection.',
+            question: 'Tell me about a time you led a project from start to finish.',
+          },
+        ],
+      },
     ],
   },
   full_rubric: {

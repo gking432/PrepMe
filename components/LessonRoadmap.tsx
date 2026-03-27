@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { X, FileText, CheckCircle, RotateCcw } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { X, FileText, CheckCircle, ChevronRight, Lock } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
-import PracticeLessonFlow from '@/components/PracticeLessonFlow'
+import SubLessonRoadmap from '@/components/SubLessonRoadmap'
 import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
 // ── Icons per root cause ──────────────────────────────────────────────────────
@@ -17,6 +17,15 @@ const ROOT_CAUSE_ICONS: Record<string, string> = {
   missing_knowledge: '🔍',
   off_topic: '🧭',
   too_short: '📏',
+}
+
+const ROOT_CAUSE_COLORS: Record<string, { bg: string; border: string; text: string; pill: string }> = {
+  poor_structure:      { bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-700',   pill: 'bg-blue-100 text-blue-700' },
+  lack_of_specificity: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', pill: 'bg-purple-100 text-purple-700' },
+  weak_communication:  { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', pill: 'bg-orange-100 text-orange-700' },
+  missing_knowledge:   { bg: 'bg-cyan-50',   border: 'border-cyan-200',   text: 'text-cyan-700',   pill: 'bg-cyan-100 text-cyan-700' },
+  off_topic:           { bg: 'bg-rose-50',   border: 'border-rose-200',   text: 'text-rose-700',   pill: 'bg-rose-100 text-rose-700' },
+  too_short:           { bg: 'bg-emerald-50',border: 'border-emerald-200',text: 'text-emerald-700',pill: 'bg-emerald-100 text-emerald-700' },
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -33,43 +42,10 @@ interface LessonRoadmapProps {
   weaknesses: WeaknessArea[]
   sessionId?: string
   currentStage?: string
-  /** XP already earned before entering this roadmap (e.g. from walkthrough) */
   priorXp?: number
-  /** Called when every lesson has been completed */
   onAllComplete: (totalXp: number) => void
   onViewReport: () => void
   onClose: () => void
-}
-
-// ── Mini confetti burst ───────────────────────────────────────────────────────
-
-function MiniConfettiBurst({ active }: { active: boolean }) {
-  if (!active) return null
-  const pieces = Array.from({ length: 18 }, (_, i) => ({
-    id: i,
-    color: ['#58CC02', '#FFC800', '#FF4B4B', '#1CB0F6', '#CE82FF'][i % 5],
-    left: `${20 + Math.random() * 60}%`,
-    delay: `${Math.random() * 0.3}s`,
-    width: `${6 + Math.random() * 6}px`,
-    height: `${6 + Math.random() * 6}px`,
-  }))
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {pieces.map(p => (
-        <div
-          key={p.id}
-          className="mini-confetti-piece absolute top-0"
-          style={{
-            backgroundColor: p.color,
-            left: p.left,
-            animationDelay: p.delay,
-            width: p.width,
-            height: p.height,
-          }}
-        />
-      ))}
-    </div>
-  )
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -85,361 +61,172 @@ export default function LessonRoadmap({
 }: LessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
-  // Which lesson is currently open in PracticeLessonFlow
-  const [activeLessonIdx, setActiveLessonIdx] = useState<number | null>(null)
-
-  // Which lessons are done (irrespective of pass/fail)
+  const [activeIdx, setActiveIdx] = useState<number | null>(null)
   const [completedSet, setCompletedSet] = useState<Set<number>>(new Set())
-  // Which lessons were passed (score >= 7 on re-answer)
   const [passedSet, setPassedSet] = useState<Set<number>>(new Set())
-
-  // XP earned inside the roadmap
   const [sessionXp, setSessionXp] = useState(0)
-
-  // Full-screen confetti
   const [showConfetti, setShowConfetti] = useState(false)
 
-  // Which badge just turned green (for animation trigger)
-  const [justCompletedIdx, setJustCompletedIdx] = useState<number | null>(null)
-
-  // Mini burst at a specific badge index
-  const [miniBurstIdx, setMiniBurstIdx] = useState<number | null>(null)
-
-  // Preppi hops to the next unfinished badge
-  const [preppiBadgeIdx, setPreppiBadgeIdx] = useState(0)
-  const [preppiHopping, setPreppiHopping] = useState(false)
-
-  // All lessons done?
   const allDone = completedSet.size === weaknesses.length
 
-  // Next unstarted lesson
-  const nextAvailableIdx = weaknesses.findIndex((_, i) => !completedSet.has(i))
+  const handleLessonComplete = useCallback((passed: boolean, xp: number) => {
+    if (activeIdx === null) return
+    const idx = activeIdx
+    setActiveIdx(null)
+    setCompletedSet(prev => { const n = new Set(prev); n.add(idx); return n })
+    if (passed) setPassedSet(prev => { const n = new Set(prev); n.add(idx); return n })
 
-  // ── Start a lesson ─────────────────────────────────────────────────────────
+    const newXp = sessionXp + xp
+    setSessionXp(newXp)
+    ding()
 
-  const handleStartLesson = useCallback((idx: number) => {
-    setActiveLessonIdx(idx)
-  }, [])
+    const newSize = completedSet.size + 1
+    if (newSize === weaknesses.length) {
+      setShowConfetti(true)
+      setTimeout(() => setShowConfetti(false), 3500)
+      setTimeout(() => onAllComplete(priorXp + newXp), 2800)
+    }
+  }, [activeIdx, completedSet, sessionXp, weaknesses.length, ding, onAllComplete, priorXp])
 
-  // ── Lesson complete callback ───────────────────────────────────────────────
+  // ── Open sub-lesson roadmap ───────────────────────────────────────────────
 
-  const handleLessonComplete = useCallback(
-    (passed: boolean, xp: number) => {
-      if (activeLessonIdx === null) return
-      const idx = activeLessonIdx
-
-      setActiveLessonIdx(null)
-
-      setCompletedSet(prev => {
-        const next = new Set(prev)
-        next.add(idx)
-        return next
-      })
-
-      if (passed) {
-        setPassedSet(prev => {
-          const next = new Set(prev)
-          next.add(idx)
-          return next
-        })
-      }
-
-      const newXp = sessionXp + xp
-      setSessionXp(newXp)
-
-      // Badge animation + mini burst
-      setJustCompletedIdx(idx)
-      setMiniBurstIdx(idx)
-      ding()
-
-      setTimeout(() => setMiniBurstIdx(null), 900)
-      setTimeout(() => {
-        setJustCompletedIdx(null)
-
-        // Preppi hops to next badge
-        const nextIdx = weaknesses.findIndex((_, i) => i > idx && !completedSet.has(i))
-        if (nextIdx !== -1) {
-          setPreppiHopping(true)
-          setTimeout(() => {
-            setPreppiBadgeIdx(nextIdx)
-            setPreppiHopping(false)
-          }, 500)
-        }
-      }, 800)
-
-      // Full confetti if all done
-      const newSize = completedSet.size + 1
-      if (newSize === weaknesses.length) {
-        setShowConfetti(true)
-        setTimeout(() => setShowConfetti(false), 3500)
-        setTimeout(() => onAllComplete(priorXp + newXp), 2800)
-      }
-    },
-    [activeLessonIdx, completedSet, sessionXp, weaknesses, ding, onAllComplete, priorXp],
-  )
-
-  const handleLessonClose = useCallback(() => {
-    setActiveLessonIdx(null)
-  }, [])
-
-  // Init: Preppi starts at first badge
-  useEffect(() => {
-    setPreppiBadgeIdx(0)
-  }, [])
-
-  // ── Render active lesson ───────────────────────────────────────────────────
-
-  if (activeLessonIdx !== null) {
-    const weakness = weaknesses[activeLessonIdx]
+  if (activeIdx !== null) {
+    const weakness = weaknesses[activeIdx]
     const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
     const bundle = getBundleForRootCause(rootCause)
     const evidence = weakness.evidence?.[0]
 
     return (
-      <PracticeLessonFlow
+      <SubLessonRoadmap
         bundle={bundle}
         criterion={weakness.criterion}
         originalQuestion={evidence?.question}
         originalAnswer={evidence?.excerpt}
         sessionId={sessionId}
         currentStage={currentStage}
-        onComplete={handleLessonComplete}
-        onClose={handleLessonClose}
+        priorXp={priorXp + sessionXp}
+        onAllComplete={(totalXp) => handleLessonComplete(true, totalXp - priorXp - sessionXp)}
+        onClose={() => setActiveIdx(null)}
       />
     )
   }
 
-  // ── Preppi message ─────────────────────────────────────────────────────────
-
   const preppiMessage = allDone
     ? "You've completed every skill! You're on fire! 🔥"
     : completedSet.size === 0
-    ? 'Here are the skills to work on. Tap one to begin!'
-    : `Great work! ${weaknesses.length - completedSet.size} skill${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left — keep going!`
-
-  // ── Render roadmap ─────────────────────────────────────────────────────────
+    ? 'Here are your practice areas. Tap one to begin!'
+    : `${weaknesses.length - completedSet.size} area${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left — keep going!`
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
       <Confetti active={showConfetti} />
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b border-gray-100">
-        <button
-          onClick={onClose}
-          className="p-1.5 text-gray-300 hover:text-gray-500 transition-colors"
-          aria-label="Close"
-        >
+        <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 transition-colors">
           <X className="w-5 h-5" />
         </button>
-        <p className="text-xs font-extrabold uppercase tracking-widest text-gray-500">
-          Practice Session
-        </p>
-        {sessionXp > 0 ? (
-          <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
-        ) : (
-          <div className="w-8" />
-        )}
+        <p className="text-xs font-extrabold uppercase tracking-widest text-gray-500">Practice</p>
+        {sessionXp > 0
+          ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
+          : <div className="w-8" />
+        }
       </div>
 
-      {/* ── Scrollable content ── */}
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto bg-[#f0fdf4]">
         <div className="max-w-sm mx-auto px-4 py-8">
 
           {/* Preppi */}
-          <div className="text-center mb-10">
-            <div className="w-24 h-24 mx-auto mb-3 animate-preppi-bounce">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto mb-3 animate-preppi-bounce">
               <PreppiSVG />
             </div>
-            <div className="bg-white border border-[#86efac] rounded-2xl rounded-t-sm px-4 py-3 inline-block max-w-[280px] animate-bubble-pop shadow-sm">
+            <div className="bg-white border border-[#86efac] rounded-2xl rounded-t-sm px-4 py-3 inline-block max-w-[260px] shadow-sm">
               <p className="text-sm font-bold text-gray-800 leading-snug">{preppiMessage}</p>
             </div>
           </div>
 
-          {/* ── Badge path — Duolingo zigzag snake ── */}
-          {(() => {
-            // Layout constants
-            const SLOT_H    = 138  // px per badge slot
-            const BADGE_R   = 48   // badge radius (96px diameter)
-            const W         = 280  // container width
-            const X_LEFT    = 60   // center x for left column
-            const X_RIGHT   = W - 60 // center x for right column
-            const n         = weaknesses.length
-            const totalH    = n * SLOT_H
+          {/* Lesson list */}
+          <div className="space-y-3">
+            {weaknesses.map((weakness, idx) => {
+              const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+              const bundle = getBundleForRootCause(rootCause)
+              const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
+              const colors = ROOT_CAUSE_COLORS[rootCause] || ROOT_CAUSE_COLORS.poor_structure
+              const isCompleted = completedSet.has(idx)
+              const isPassed = passedSet.has(idx)
+              const isLocked = idx > 0 && !completedSet.has(idx - 1)
 
-            // Compute badge center positions
-            const centers = weaknesses.map((_, i) => ({
-              x: i % 2 === 0 ? X_LEFT : X_RIGHT,
-              y: i * SLOT_H + BADGE_R,
-            }))
-
-            // Build SVG path through badge centers (cubic bezier S-curves)
-            let pathD = ''
-            if (centers.length > 1) {
-              pathD = `M ${centers[0].x} ${centers[0].y}`
-              for (let i = 1; i < centers.length; i++) {
-                const { x: x1, y: y1 } = centers[i - 1]
-                const { x: x2, y: y2 } = centers[i]
-                const midY = (y1 + y2) / 2
-                pathD += ` C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`
-              }
-            }
-
-            // Compute path progress (what fraction of the path is "done" in green)
-            // We color each segment green if the earlier badge is completed
-            const buildSegmentPath = (i: number) => {
-              const { x: x1, y: y1 } = centers[i]
-              const { x: x2, y: y2 } = centers[i + 1]
-              const midY = (y1 + y2) / 2
-              return `M ${x1} ${y1} C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`
-            }
-
-            return (
-              <div className="relative mx-auto" style={{ width: W, height: totalH + 60 }}>
-                {/* SVG connector path */}
-                {n > 1 && (
-                  <svg
-                    className="absolute inset-0 pointer-events-none"
-                    width={W}
-                    height={totalH + 60}
-                    style={{ overflow: 'visible' }}
-                  >
-                    {/* Grey base path */}
-                    <path
-                      d={pathD}
-                      stroke="#d1d5db"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    {/* Green overlay per completed segment */}
-                    {weaknesses.slice(0, -1).map((_, i) =>
-                      completedSet.has(i) ? (
-                        <path
-                          key={i}
-                          d={buildSegmentPath(i)}
-                          stroke="#58CC02"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          fill="none"
-                          className="transition-all duration-700"
-                        />
-                      ) : null
-                    )}
-                  </svg>
-                )}
-
-                {/* Badges */}
-                {weaknesses.map((weakness, idx) => {
-                  const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
-                  const bundle    = getBundleForRootCause(rootCause)
-                  const icon      = ROOT_CAUSE_ICONS[rootCause] || '📋'
-                  const isCompleted    = completedSet.has(idx)
-                  const isPassed       = passedSet.has(idx)
-                  const isJustCompleted = justCompletedIdx === idx
-                  const isMini         = miniBurstIdx === idx
-                  const isNext         = idx === nextAvailableIdx && !allDone
-                  const isPreppiHere   = idx === preppiBadgeIdx && !allDone
-                  const cx             = centers[idx].x
-                  const cy             = centers[idx].y
-
-                  return (
-                    <div
-                      key={idx}
-                      className="absolute flex flex-col items-center"
-                      style={{
-                        left: cx - BADGE_R,
-                        top:  cy - BADGE_R,
-                        width: BADGE_R * 2,
-                      }}
+              return (
+                <button
+                  key={idx}
+                  onClick={() => !isLocked && setActiveIdx(idx)}
+                  disabled={isLocked}
+                  className={`
+                    w-full text-left rounded-2xl border-2 p-4 transition-all duration-200
+                    ${isLocked ? 'opacity-50 cursor-default' : 'active:scale-[0.98] cursor-pointer hover:shadow-md'}
+                    ${isCompleted && isPassed
+                      ? 'bg-[#f0fdf4] border-[#86efac]'
+                      : isCompleted
+                      ? 'bg-amber-50 border-amber-200'
+                      : colors.bg + ' ' + colors.border
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-4">
+                    {/* Icon circle */}
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 text-2xl ${
+                      isCompleted && isPassed ? 'bg-[#58CC02]' : isCompleted ? 'bg-amber-400' : 'bg-white border-2 ' + colors.border
+                    }`}
+                      style={isCompleted && isPassed ? { boxShadow: '0 4px 0 #1a5e00' } : isCompleted ? { boxShadow: '0 4px 0 #92400e' } : {}}
                     >
-                      {/* Mini confetti burst */}
-                      <div className="absolute inset-0 pointer-events-none">
-                        <MiniConfettiBurst active={isMini} />
-                      </div>
-
-                      {/* Preppi — appears on the outer side of the badge */}
-                      {isPreppiHere && (
-                        <div
-                          className={`absolute top-2 w-9 h-9 ${
-                            idx % 2 === 0 ? 'right-full -mr-1' : 'left-full -ml-1'
-                          } ${preppiHopping ? 'animate-preppi-hop' : ''}`}
-                        >
-                          <PreppiSVG />
-                        </div>
-                      )}
-
-                      {/* The badge — 3D coin */}
-                      <button
-                        onClick={() => handleStartLesson(idx)}
-                        className={`
-                          w-24 h-24 rounded-full border-[5px] flex items-center justify-center
-                          transition-all duration-500 relative overflow-hidden active:translate-y-1
-                          ${
-                            isCompleted && isPassed
-                              ? `bg-[#58CC02] border-[#2d8f00] ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
-                              : isCompleted
-                              ? 'bg-amber-400 border-amber-600'
-                              : isNext
-                              ? 'bg-white border-[#58CC02] animate-badge-pulse'
-                              : 'bg-[#e5e5e5] border-[#c0c0c0]'
-                          }
-                        `}
-                        style={{
-                          boxShadow:
-                            isCompleted && isPassed
-                              ? '0 6px 0 #1a5e00, inset 0 2px 0 rgba(255,255,255,0.3)'
-                              : isCompleted
-                              ? '0 5px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.2)'
-                              : isNext
-                              ? '0 6px 0 #46a302'
-                              : '0 4px 0 #a0a0a0, inset 0 1px 0 rgba(255,255,255,0.5)',
-                        }}
-                      >
-                        {isCompleted && isPassed ? (
-                          <CheckCircle className="w-10 h-10 text-white drop-shadow-sm" />
-                        ) : isCompleted ? (
-                          <div className="flex flex-col items-center">
-                            <RotateCcw className="w-5 h-5 text-amber-800" />
-                            <span className="text-[9px] font-extrabold text-amber-800 mt-0.5">retry</span>
-                          </div>
-                        ) : (
-                          <span className="text-4xl">{icon}</span>
-                        )}
-                      </button>
-
-                      {/* Label below badge */}
-                      <p
-                        className={`text-[11px] font-extrabold mt-2 text-center leading-tight ${
-                          isCompleted && isPassed
-                            ? 'text-green-600'
-                            : isCompleted
-                            ? 'text-amber-600'
-                            : isNext
-                            ? 'text-gray-800'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        {bundle.displayName}
-                      </p>
-                      {weakness.score != null && (
-                        <p className={`text-[10px] font-semibold tabular-nums ${
-                          isCompleted && isPassed ? 'text-green-500' : 'text-gray-400'
-                        }`}>
-                          {isCompleted && isPassed ? '✓ Done' : `Score ${weakness.score}/10`}
-                        </p>
-                      )}
+                      {isCompleted && isPassed
+                        ? <CheckCircle className="w-7 h-7 text-white" />
+                        : <span>{icon}</span>
+                      }
                     </div>
-                  )
-                })}
-              </div>
-            )
-          })()}
 
-          {/* ── Bottom actions ── */}
-          <div className="mt-10 space-y-3 bg-white rounded-2xl p-4 shadow-sm border border-[#d1fae5]">
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className={`text-sm font-extrabold leading-tight ${
+                          isCompleted && isPassed ? 'text-[#2a7a00]' : isCompleted ? 'text-amber-800' : 'text-gray-900'
+                        }`}>
+                          {bundle.displayName}
+                        </p>
+                        {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
+                      </div>
+                      <p className="text-xs text-gray-500 leading-snug line-clamp-2">{weakness.criterion}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${colors.pill}`}>
+                          3 lessons + final
+                        </span>
+                        {weakness.score != null && (
+                          <span className="text-[10px] text-gray-400 font-semibold">Score {weakness.score}/10</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    {!isLocked && !isCompleted && (
+                      <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
+                    )}
+                    {isCompleted && (
+                      <span className={`text-[10px] font-extrabold shrink-0 ${isPassed ? 'text-[#2a7a00]' : 'text-amber-700'}`}>
+                        {isPassed ? 'Done ✓' : 'Retry'}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Bottom actions */}
+          <div className="mt-8">
             {allDone && (
-              <div className="text-center mb-2 animate-slide-up">
+              <div className="text-center mb-4 animate-slide-up">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
                   <CheckCircle className="w-4 h-4 text-green-600" />
                   <span className="text-sm font-bold text-green-700">All skills completed!</span>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useCallback, useMemo } from 'react'
-import type { ReactNode } from 'react'
 import {
   X,
   Zap,
@@ -165,45 +164,6 @@ function MiniStepBurst({ active }: { active: boolean }) {
   )
 }
 
-// ── Step badge (task-level progress) ──────────────────────────────────────────
-
-interface StepBadgeProps {
-  label: string
-  icon: ReactNode
-  state: 'done' | 'active' | 'upcoming'
-  justCompleted?: boolean
-}
-
-function StepBadge({ label, icon, state, justCompleted }: StepBadgeProps) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div
-        className={`
-          w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-500
-          ${state === 'done'
-            ? `bg-[#58CC02] border-[#46a302] shadow-sm shadow-green-200 ${justCompleted ? 'animate-task-badge-complete' : ''}`
-            : state === 'active'
-            ? 'bg-white border-[#58CC02] shadow-sm shadow-green-100 animate-badge-pulse'
-            : 'bg-gray-100 border-gray-200'
-          }
-        `}
-      >
-        {state === 'done' ? (
-          <CheckCircle className="w-5 h-5 text-white" />
-        ) : (
-          <span className={state === 'active' ? 'text-[#58CC02]' : 'text-gray-300'}>
-            {icon}
-          </span>
-        )}
-      </div>
-      <span className={`text-[9px] font-bold uppercase tracking-wide ${
-        state === 'done' ? 'text-[#46a302]' : state === 'active' ? 'text-[#58CC02]' : 'text-gray-300'
-      }`}>
-        {label}
-      </span>
-    </div>
-  )
-}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -411,75 +371,66 @@ export default function PracticeLessonFlow({
 
   const finalPassed = reanswerResult?.passed ?? false
 
-  // ── Badge progress bar ────────────────────────────────────────────────────────
+  // ── Duolingo-style horizontal progress bar ────────────────────────────────────
 
   const renderBadgeProgress = () => {
-    const steps = Array.from({ length: totalSteps }, (_, i) => {
-      const isTeach    = i === 0
-      const isReanswer = i === totalSteps - 1
-      let label = isTeach ? 'Learn' : isReanswer ? 'Apply' : `Q${i}`
-      let icon: ReactNode = isTeach
-        ? <BookOpen className="w-4 h-4" />
-        : isReanswer
-        ? <Mic className="w-4 h-4" />
-        : <span className="text-xs font-bold">{i}</span>
-
-      const isDone   = i < currentStepIndex
-      const isActive = i === currentStepIndex
-      const state: 'done' | 'active' | 'upcoming' = isDone ? 'done' : isActive ? 'active' : 'upcoming'
-
-      return (
-        <div key={i} className="flex items-center">
-          <StepBadge
-            label={label}
-            icon={icon}
-            state={state}
-            justCompleted={justCompletedStep === i}
-          />
-          {i < totalSteps - 1 && (
-            <div className={`h-0.5 w-4 md:w-6 transition-colors duration-500 ${isDone ? 'bg-green-300' : 'bg-gray-200'}`} />
-          )}
-        </div>
-      )
-    })
+    // -1 means pre-lesson intro; complete means 100%
+    const pct = flowState === 'complete'
+      ? 100
+      : currentStepIndex < 0
+      ? 0
+      : Math.round((currentStepIndex / totalSteps) * 100)
 
     return (
-      <div className="flex items-start justify-center gap-0 overflow-x-auto pb-1">
-        {steps}
+      <div className="flex items-center gap-3 w-full">
+        <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-500 ease-out"
+            style={{
+              width: `${pct}%`,
+              background: pct > 0
+                ? 'linear-gradient(90deg, #58CC02 0%, #7ade1a 100%)'
+                : 'transparent',
+              boxShadow: pct > 0 ? 'inset 0 -3px 0 rgba(0,0,0,0.15)' : 'none',
+            }}
+          />
+        </div>
+        {/* XP counter inline */}
+        {xp > 0 && (
+          <div className="relative flex items-center gap-1 shrink-0">
+            <Zap className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-extrabold text-amber-600 tabular-nums">{xp}</span>
+            {lastXpGain > 0 && (
+              <span
+                key={xpKey}
+                className="absolute -top-4 right-0 text-xs font-extrabold text-amber-500 animate-fly-up pointer-events-none"
+              >
+                +{lastXpGain}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     )
   }
 
-  const renderXpCounter = () => (
-    <div className="relative flex items-center gap-1.5">
-      <Zap className="w-4 h-4 text-amber-500" />
-      <span className="text-sm font-bold text-amber-600 tabular-nums">{xp} XP</span>
-      {lastXpGain > 0 && (
-        <span
-          key={xpKey}
-          className="absolute -top-4 right-0 text-xs font-extrabold text-amber-500 animate-fly-up pointer-events-none"
-        >
-          +{lastXpGain}
-        </span>
-      )}
-    </div>
-  )
-
   const renderHeader = () => (
-    <div className="flex items-center justify-between gap-4 mb-4">
-      <div className="flex-1 min-w-0">
-        {flowState !== 'intro' && flowState !== 'complete' && renderBadgeProgress()}
-      </div>
-      <div className="flex items-center gap-3 shrink-0">
-        {xp > 0 && renderXpCounter()}
-        <button
-          onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          aria-label="Close lesson"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <div className="flex items-center gap-3 mb-4">
+      {/* X button — far left, like Duolingo */}
+      <button
+        onClick={onClose}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+        aria-label="Close lesson"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      {/* Progress bar fills remaining space, XP counter inline at right */}
+      {flowState !== 'intro' && flowState !== 'complete' && (
+        <div className="flex-1 min-w-0">
+          {renderBadgeProgress()}
+        </div>
+      )}
     </div>
   )
 

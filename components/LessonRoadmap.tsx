@@ -244,7 +244,7 @@ export default function LessonRoadmap({
 
       {/* ── Scrollable content ── */}
       <div className="flex-1 overflow-y-auto bg-[#f0fdf4]">
-        <div className="max-w-xs mx-auto px-4 py-8">
+        <div className="max-w-sm mx-auto px-4 py-8">
 
           {/* Preppi */}
           <div className="text-center mb-10">
@@ -256,120 +256,185 @@ export default function LessonRoadmap({
             </div>
           </div>
 
-          {/* ── Badge path ── */}
-          <div className="flex flex-col items-center">
-            {weaknesses.map((weakness, idx) => {
-              const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
-              const bundle = getBundleForRootCause(rootCause)
-              const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
-              const isCompleted = completedSet.has(idx)
-              const isPassed = passedSet.has(idx)
-              const isJustCompleted = justCompletedIdx === idx
-              const isMini = miniBurstIdx === idx
-              const isNext = idx === nextAvailableIdx && !allDone
-              const isPreppiHere = idx === preppiBadgeIdx && !allDone
-              const isLast = idx === weaknesses.length - 1
-              const canStart = true // all available
+          {/* ── Badge path — Duolingo zigzag snake ── */}
+          {(() => {
+            // Layout constants
+            const SLOT_H    = 138  // px per badge slot
+            const BADGE_R   = 48   // badge radius (96px diameter)
+            const W         = 280  // container width
+            const X_LEFT    = 60   // center x for left column
+            const X_RIGHT   = W - 60 // center x for right column
+            const n         = weaknesses.length
+            const totalH    = n * SLOT_H
 
-              return (
-                <div key={idx} className="flex flex-col items-center w-full">
-                  {/* Badge row */}
-                  <div className="relative flex items-center justify-center">
-                    {/* Mini confetti burst */}
-                    <div className="absolute inset-0">
-                      <MiniConfettiBurst active={isMini} />
-                    </div>
+            // Compute badge center positions
+            const centers = weaknesses.map((_, i) => ({
+              x: i % 2 === 0 ? X_LEFT : X_RIGHT,
+              y: i * SLOT_H + BADGE_R,
+            }))
 
-                    {/* Preppi hops here */}
-                    {isPreppiHere && (
-                      <div
-                        className={`absolute right-full mr-4 w-10 h-10 ${
-                          preppiHopping ? 'animate-preppi-hop' : ''
-                        }`}
-                      >
-                        <PreppiSVG />
-                      </div>
+            // Build SVG path through badge centers (cubic bezier S-curves)
+            let pathD = ''
+            if (centers.length > 1) {
+              pathD = `M ${centers[0].x} ${centers[0].y}`
+              for (let i = 1; i < centers.length; i++) {
+                const { x: x1, y: y1 } = centers[i - 1]
+                const { x: x2, y: y2 } = centers[i]
+                const midY = (y1 + y2) / 2
+                pathD += ` C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`
+              }
+            }
+
+            // Compute path progress (what fraction of the path is "done" in green)
+            // We color each segment green if the earlier badge is completed
+            const buildSegmentPath = (i: number) => {
+              const { x: x1, y: y1 } = centers[i]
+              const { x: x2, y: y2 } = centers[i + 1]
+              const midY = (y1 + y2) / 2
+              return `M ${x1} ${y1} C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`
+            }
+
+            return (
+              <div className="relative mx-auto" style={{ width: W, height: totalH + 60 }}>
+                {/* SVG connector path */}
+                {n > 1 && (
+                  <svg
+                    className="absolute inset-0 pointer-events-none"
+                    width={W}
+                    height={totalH + 60}
+                    style={{ overflow: 'visible' }}
+                  >
+                    {/* Grey base path */}
+                    <path
+                      d={pathD}
+                      stroke="#d1d5db"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    {/* Green overlay per completed segment */}
+                    {weaknesses.slice(0, -1).map((_, i) =>
+                      completedSet.has(i) ? (
+                        <path
+                          key={i}
+                          d={buildSegmentPath(i)}
+                          stroke="#58CC02"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          fill="none"
+                          className="transition-all duration-700"
+                        />
+                      ) : null
                     )}
+                  </svg>
+                )}
 
-                    {/* The badge — 3D coin style */}
-                    <button
-                      onClick={() => canStart && handleStartLesson(idx)}
-                      disabled={!canStart}
-                      className={`
-                        w-24 h-24 rounded-full border-[5px] flex items-center justify-center
-                        transition-all duration-500 relative overflow-hidden active:translate-y-1
-                        ${
-                          isCompleted && isPassed
-                            ? `bg-[#58CC02] border-[#2d8f00] ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
-                            : isCompleted
-                            ? 'bg-amber-400 border-amber-600'
-                            : isNext
-                            ? 'bg-white border-[#58CC02] animate-badge-pulse'
-                            : 'bg-[#e5e5e5] border-[#c0c0c0]'
-                        }
-                      `}
+                {/* Badges */}
+                {weaknesses.map((weakness, idx) => {
+                  const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+                  const bundle    = getBundleForRootCause(rootCause)
+                  const icon      = ROOT_CAUSE_ICONS[rootCause] || '📋'
+                  const isCompleted    = completedSet.has(idx)
+                  const isPassed       = passedSet.has(idx)
+                  const isJustCompleted = justCompletedIdx === idx
+                  const isMini         = miniBurstIdx === idx
+                  const isNext         = idx === nextAvailableIdx && !allDone
+                  const isPreppiHere   = idx === preppiBadgeIdx && !allDone
+                  const cx             = centers[idx].x
+                  const cy             = centers[idx].y
+
+                  return (
+                    <div
+                      key={idx}
+                      className="absolute flex flex-col items-center"
                       style={{
-                        boxShadow:
-                          isCompleted && isPassed
-                            ? '0 6px 0 #1a5e00, inset 0 2px 0 rgba(255,255,255,0.3)'
-                            : isCompleted
-                            ? '0 5px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.2)'
-                            : isNext
-                            ? '0 6px 0 #46a302'
-                            : '0 4px 0 #a0a0a0, inset 0 1px 0 rgba(255,255,255,0.5)',
+                        left: cx - BADGE_R,
+                        top:  cy - BADGE_R,
+                        width: BADGE_R * 2,
                       }}
                     >
-                      {isCompleted && isPassed ? (
-                        <CheckCircle className="w-10 h-10 text-white drop-shadow-sm" />
-                      ) : isCompleted ? (
-                        <div className="flex flex-col items-center">
-                          <RotateCcw className="w-5 h-5 text-amber-800" />
-                          <span className="text-[9px] font-extrabold text-amber-800 mt-0.5">retry</span>
+                      {/* Mini confetti burst */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <MiniConfettiBurst active={isMini} />
+                      </div>
+
+                      {/* Preppi — appears on the outer side of the badge */}
+                      {isPreppiHere && (
+                        <div
+                          className={`absolute top-2 w-9 h-9 ${
+                            idx % 2 === 0 ? 'right-full -mr-1' : 'left-full -ml-1'
+                          } ${preppiHopping ? 'animate-preppi-hop' : ''}`}
+                        >
+                          <PreppiSVG />
                         </div>
-                      ) : (
-                        <span className="text-4xl">{icon}</span>
                       )}
-                    </button>
-                  </div>
 
-                  {/* Label */}
-                  <p
-                    className={`text-xs font-extrabold mt-2 text-center ${
-                      isCompleted && isPassed
-                        ? 'text-green-600'
-                        : isCompleted
-                        ? 'text-amber-600'
-                        : isNext
-                        ? 'text-gray-800'
-                        : 'text-gray-500'
-                    }`}
-                  >
-                    {bundle.displayName}
-                  </p>
-                  {weakness.score != null && (
-                    <p
-                      className={`text-[11px] font-semibold mt-0.5 tabular-nums ${
-                        isCompleted && isPassed
-                          ? 'text-green-500'
-                          : 'text-gray-400'
-                      }`}
-                    >
-                      {isCompleted && isPassed ? '✓ Passed' : `${weakness.score}/10`}
-                    </p>
-                  )}
+                      {/* The badge — 3D coin */}
+                      <button
+                        onClick={() => handleStartLesson(idx)}
+                        className={`
+                          w-24 h-24 rounded-full border-[5px] flex items-center justify-center
+                          transition-all duration-500 relative overflow-hidden active:translate-y-1
+                          ${
+                            isCompleted && isPassed
+                              ? `bg-[#58CC02] border-[#2d8f00] ${isJustCompleted ? 'animate-badge-fill-green' : ''}`
+                              : isCompleted
+                              ? 'bg-amber-400 border-amber-600'
+                              : isNext
+                              ? 'bg-white border-[#58CC02] animate-badge-pulse'
+                              : 'bg-[#e5e5e5] border-[#c0c0c0]'
+                          }
+                        `}
+                        style={{
+                          boxShadow:
+                            isCompleted && isPassed
+                              ? '0 6px 0 #1a5e00, inset 0 2px 0 rgba(255,255,255,0.3)'
+                              : isCompleted
+                              ? '0 5px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.2)'
+                              : isNext
+                              ? '0 6px 0 #46a302'
+                              : '0 4px 0 #a0a0a0, inset 0 1px 0 rgba(255,255,255,0.5)',
+                        }}
+                      >
+                        {isCompleted && isPassed ? (
+                          <CheckCircle className="w-10 h-10 text-white drop-shadow-sm" />
+                        ) : isCompleted ? (
+                          <div className="flex flex-col items-center">
+                            <RotateCcw className="w-5 h-5 text-amber-800" />
+                            <span className="text-[9px] font-extrabold text-amber-800 mt-0.5">retry</span>
+                          </div>
+                        ) : (
+                          <span className="text-4xl">{icon}</span>
+                        )}
+                      </button>
 
-                  {/* Connector line */}
-                  {!isLast && (
-                    <div
-                      className={`w-1.5 h-14 my-1 rounded-full transition-colors duration-700 ${
-                        isCompleted ? 'bg-[#58CC02]/40' : 'bg-[#c0c0c0]/60'
-                      }`}
-                    />
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                      {/* Label below badge */}
+                      <p
+                        className={`text-[11px] font-extrabold mt-2 text-center leading-tight ${
+                          isCompleted && isPassed
+                            ? 'text-green-600'
+                            : isCompleted
+                            ? 'text-amber-600'
+                            : isNext
+                            ? 'text-gray-800'
+                            : 'text-gray-500'
+                        }`}
+                      >
+                        {bundle.displayName}
+                      </p>
+                      {weakness.score != null && (
+                        <p className={`text-[10px] font-semibold tabular-nums ${
+                          isCompleted && isPassed ? 'text-green-500' : 'text-gray-400'
+                        }`}>
+                          {isCompleted && isPassed ? '✓ Done' : `Score ${weakness.score}/10`}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
 
           {/* ── Bottom actions ── */}
           <div className="mt-10 space-y-3 bg-white rounded-2xl p-4 shadow-sm border border-[#d1fae5]">

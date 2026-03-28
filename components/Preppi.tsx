@@ -42,11 +42,11 @@ export default function Preppi({ message, size = 'md', animate = true, className
 
       {/* Speech bubble */}
       {message && (
-        <div className="relative bg-white border-2 border-[#86efac] rounded-2xl rounded-bl-sm px-4 py-3.5 shadow-md max-w-xs">
-          <p className="text-sm font-bold text-gray-800 leading-snug">{message}</p>
+        <div className="relative max-w-xs rounded-[1.4rem] rounded-bl-sm border border-emerald-200/80 bg-white/96 px-4 py-3.5 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
+          <p className="text-sm font-bold leading-snug text-slate-800">{message}</p>
           {/* Tail */}
           <div className="absolute -left-2 bottom-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-white border-b-[6px] border-b-transparent" />
-          <div className="absolute -left-[11px] bottom-[10px] w-0 h-0 border-t-[7px] border-t-transparent border-r-[10px] border-r-[#86efac] border-b-[7px] border-b-transparent" />
+          <div className="absolute -left-[11px] bottom-[10px] w-0 h-0 border-b-[7px] border-r-[10px] border-t-[7px] border-b-transparent border-r-emerald-200 border-t-transparent" />
         </div>
       )}
     </div>
@@ -55,43 +55,30 @@ export default function Preppi({ message, size = 'md', animate = true, className
 
 export function PreppiSVG() {
   return (
-    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-sm">
-      {/* Body */}
-      <ellipse cx="40" cy="50" rx="18" ry="22" fill="#7C3AED" />
-      {/* Wing left */}
-      <ellipse cx="24" cy="52" rx="9" ry="14" fill="#6D28D9" transform="rotate(-15 24 52)" />
-      {/* Wing right */}
-      <ellipse cx="56" cy="52" rx="9" ry="14" fill="#6D28D9" transform="rotate(15 56 52)" />
-      {/* Belly */}
-      <ellipse cx="40" cy="54" rx="10" ry="14" fill="#DDD6FE" />
-      {/* Tail feathers */}
-      <path d="M32 68 Q28 78 24 76 Q30 70 32 68Z" fill="#5B21B6" />
-      <path d="M40 70 Q38 82 34 80 Q38 72 40 70Z" fill="#6D28D9" />
-      <path d="M48 68 Q52 78 56 76 Q50 70 48 68Z" fill="#5B21B6" />
-      {/* Head */}
-      <circle cx="40" cy="28" r="16" fill="#7C3AED" />
-      {/* Head crest */}
-      <path d="M36 14 Q38 6 40 8 Q42 6 44 14" stroke="#5B21B6" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-      <circle cx="40" cy="7" r="3" fill="#FDE68A" />
-      {/* Face patch */}
-      <ellipse cx="40" cy="30" rx="9" ry="8" fill="#EDE9FE" />
-      {/* Eyes — oversized, expressive */}
-      <circle cx="35" cy="24" r="6" fill="white" />
-      <circle cx="45" cy="24" r="6" fill="white" />
-      <circle cx="36" cy="25" r="3" fill="#1A1A2E" />
-      <circle cx="46" cy="25" r="3" fill="#1A1A2E" />
-      {/* Eye shine */}
-      <circle cx="37.5" cy="23.5" r="1.2" fill="white" />
-      <circle cx="47.5" cy="23.5" r="1.2" fill="white" />
-      {/* Beak */}
-      <path d="M37 31 Q40 36 43 31 Q40 29 37 31Z" fill="#F97316" />
-      {/* Feet */}
-      <line x1="35" y1="71" x2="33" y2="76" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <line x1="33" y1="76" x2="30" y2="78" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <line x1="33" y1="76" x2="31" y2="79" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <line x1="45" y1="71" x2="47" y2="76" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <line x1="47" y1="76" x2="50" y2="78" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
-      <line x1="47" y1="76" x2="49" y2="79" stroke="#F97316" strokeWidth="2" strokeLinecap="round" />
+    <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full drop-shadow-[0_8px_18px_rgba(15,23,42,0.14)]">
+      <path d="M30 76C24 84 18 85 16 82C14 79 20 72 28 68L30 76Z" fill="#0E7C31" />
+      <path d="M42 79C40 89 34 91 31 88C29 86 32 78 39 72L42 79Z" fill="#2E9E44" />
+      <path d="M57 79C60 89 66 91 69 88C71 86 68 78 61 72L57 79Z" fill="#0E7C31" />
+      <ellipse cx="48" cy="58" rx="24" ry="22" fill="#58CC02" />
+      <ellipse cx="28" cy="58" rx="11" ry="16" transform="rotate(-18 28 58)" fill="#37A700" />
+      <ellipse cx="68" cy="58" rx="11" ry="16" transform="rotate(18 68 58)" fill="#37A700" />
+      <ellipse cx="48" cy="61" rx="13" ry="16" fill="#F3FFF0" />
+      <circle cx="48" cy="32" r="19" fill="#58CC02" />
+      <path d="M41 16C43 8 47 7 49 13C52 7 56 9 57 18" stroke="#148A0C" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="49" cy="10" r="3.5" fill="#FFD84D" />
+      <ellipse cx="42" cy="31" rx="7" ry="8" fill="white" />
+      <ellipse cx="56" cy="31" rx="7" ry="8" fill="white" />
+      <circle cx="44" cy="32" r="3.6" fill="#172133" />
+      <circle cx="58" cy="32" r="3.6" fill="#172133" />
+      <circle cx="45.4" cy="30.6" r="1.1" fill="white" />
+      <circle cx="59.4" cy="30.6" r="1.1" fill="white" />
+      <path d="M47 38C48.5 41 50.2 42.5 53 38.8C49.8 37.5 48.3 37.4 47 38Z" fill="#FF9A3C" />
+      <path d="M40 24C41.7 22.2 44.2 21 46.3 21" stroke="#148A0C" strokeWidth="2" strokeLinecap="round" />
+      <path d="M53 21.3C55 21.1 57.7 22 59.7 24" stroke="#148A0C" strokeWidth="2" strokeLinecap="round" />
+      <line x1="41" y1="79" x2="38" y2="85" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="38" y1="85" x2="35" y2="87" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="55" y1="79" x2="58" y2="85" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />
+      <line x1="58" y1="85" x2="61" y2="87" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   )
 }

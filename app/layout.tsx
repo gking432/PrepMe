@@ -10,8 +10,8 @@ const nunito = Nunito({
 })
 
 export const metadata: Metadata = {
-  title: 'PrepMe - Interview Simulation',
-  description: 'Practice job interviews with AI-powered voice simulations',
+  title: 'PrepMe',
+  description: 'AI interview practice that feels like a real hiring process, with premium coaching after every round.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

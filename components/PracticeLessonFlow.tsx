@@ -60,7 +60,7 @@ function CorrectSheet({ xpGained, onContinue }: { xpGained: number; onContinue: 
   return (
     <>
       <div className="fixed inset-0 z-50" onClick={onContinue} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl px-5 pt-6 pb-10 bg-[#d7f5b1] animate-sheet-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-[#dff6c4] px-5 pb-10 pt-6 animate-sheet-slide-up">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-4 mb-5">
             <div className="w-14 h-14 rounded-full bg-[#58CC02] flex items-center justify-center shrink-0">
@@ -73,7 +73,7 @@ function CorrectSheet({ xpGained, onContinue }: { xpGained: number; onContinue: 
           </div>
           <button
             onClick={onContinue}
-            className="w-full py-4 rounded-2xl font-extrabold text-white text-base bg-[#58CC02] border-b-4 border-[#46a302] active:border-b-0 active:translate-y-[3px] transition-transform"
+            className="btn-coach-primary w-full py-4 text-base"
           >
             Continue
           </button>
@@ -261,8 +261,8 @@ export default function PracticeLessonFlow({
   // ── Screens ───────────────────────────────────────────────────────────────────
 
   const renderIntro = () => (
-    <div className="flex flex-col items-center justify-center text-center px-6 py-12 min-h-[60vh] md:min-h-0">
-      <div className="w-16 h-16 bg-[#d7f5b1] rounded-full flex items-center justify-center mb-5 animate-slide-up">
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center md:min-h-0">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[1.3rem] bg-[#d7f5b1] animate-slide-up">
         <span className="text-2xl font-extrabold text-[#2a7a00]">{lessonNumber}</span>
       </div>
       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
@@ -271,7 +271,7 @@ export default function PracticeLessonFlow({
       <h2 className="text-2xl font-extrabold text-gray-900 mb-2 animate-slide-up">{subLesson.title}</h2>
       <p className="text-sm text-gray-400 mb-8 capitalize">{subLesson.difficulty} level</p>
 
-      <div className="w-full max-w-sm bg-gray-50 rounded-2xl p-5 mb-8 text-left space-y-3 animate-slide-up">
+      <div className="premium-card mb-8 w-full max-w-sm space-y-3 p-5 text-left animate-slide-up">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 bg-[#d7f5b1] rounded-full flex items-center justify-center shrink-0">
             <BookOpen className="w-3.5 h-3.5 text-[#58CC02]" />
@@ -296,7 +296,7 @@ export default function PracticeLessonFlow({
         <Preppi message="Let's do this! Read the lesson, then ace the exercises." size="md" />
       </div>
 
-      <button onClick={() => { setFlowState('teach') }} className="btn-duo-green flex items-center gap-2 px-8 py-4">
+      <button onClick={() => { setFlowState('teach') }} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
         Start <ArrowRight className="w-5 h-5" />
       </button>
     </div>
@@ -335,7 +335,7 @@ export default function PracticeLessonFlow({
   }
 
   const renderComplete = () => (
-    <div className="flex flex-col items-center justify-center text-center px-6 py-12 min-h-[60vh] md:min-h-0 animate-slide-up">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
       <div className="w-20 h-20 rounded-full bg-[#58CC02] border-[5px] border-[#2d8f00] flex items-center justify-center mb-5 animate-badge-reveal"
         style={{ boxShadow: '0 6px 0 #1a5e00' }}>
         <CheckCircle className="w-10 h-10 text-white" />
@@ -357,7 +357,7 @@ export default function PracticeLessonFlow({
       </div>
       <button
         onClick={() => onComplete(true, xp)}
-        className="w-full max-w-xs btn-duo-green flex items-center justify-center gap-2 px-8 py-4"
+        className="btn-coach-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4"
       >
         {lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
         <ArrowRight className="w-5 h-5" />
@@ -379,14 +379,14 @@ export default function PracticeLessonFlow({
       <MiniStepBurst active={stepBurst} />
 
       {/* Mobile */}
-      <div className="md:hidden fixed inset-0 z-40 bg-white flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#fbfdff_0%,#f1f7ff_100%)] md:hidden">
         <div className="px-4 pt-4 pb-2 shrink-0">{renderHeader()}</div>
         <div className="flex-1 overflow-y-auto px-4 pb-8">{renderStep()}</div>
       </div>
 
       {/* Desktop */}
       <div className="hidden md:flex fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden">
           <div className="px-6 pt-5 pb-3 shrink-0 border-b border-gray-100">{renderHeader()}</div>
           <div className="flex-1 overflow-y-auto px-6 py-6">{renderStep()}</div>
         </div>

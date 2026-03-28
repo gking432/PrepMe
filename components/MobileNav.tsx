@@ -14,22 +14,22 @@ export default function MobileNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/90 backdrop-blur-xl"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="flex">
+      <div className="mx-auto flex max-w-lg px-3 pb-1 pt-2">
         {tabs.map(({ href, icon: Icon, label }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors active:bg-gray-50 ${
-                active ? 'text-primary-600' : 'text-gray-400'
+              className={`flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors ${
+                active ? 'bg-primary-50 text-primary-700' : 'text-slate-400'
               }`}
             >
-              <Icon className={`w-6 h-6 ${active ? 'stroke-[2.5]' : 'stroke-2'}`} />
-              <span className={`text-[10px] font-medium ${active ? 'font-semibold' : ''}`}>{label}</span>
+              <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : 'stroke-2'}`} />
+              <span className={`text-[10px] ${active ? 'font-extrabold' : 'font-semibold'}`}>{label}</span>
             </Link>
           )
         })}

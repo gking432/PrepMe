@@ -166,50 +166,52 @@ export default function SubLessonRoadmap({
   const slotDifficulties = ['Easy', 'Medium', 'Hard', '🎤 Voice']
 
   const preppiMessage = allDone
-    ? 'All done! You crushed it! 🔥'
+    ? 'All four steps complete. You are ready to try it again.'
     : completedSet.size === 0
-    ? `Three lessons, then the real thing. Start with Lesson 1!`
-    : `Keep going — ${totalSlots - completedSet.size} left!`
+    ? 'Three focused drills, then one voice retry on the real question.'
+    : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#eef5ff_100%)]">
       <Confetti active={showConfetti} />
 
       {/* Top bar */}
-      <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b border-gray-100">
-        <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 transition-colors">
+      <div className="shrink-0 border-b border-slate-100 bg-white/82 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+        <button onClick={onClose} className="p-1.5 text-gray-300 transition-colors hover:text-gray-500">
           <X className="w-5 h-5" />
         </button>
-        <p className="text-xs font-extrabold uppercase tracking-widest text-gray-500">
+        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">
           {bundle.displayName}
         </p>
         {sessionXp > 0
           ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
           : <div className="w-8" />
         }
+        </div>
       </div>
 
       {/* Scrollable badge path */}
-      <div className="flex-1 overflow-y-auto bg-[#f0fdf4]">
-        <div className="max-w-sm mx-auto px-4 py-8">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-sm px-4 py-8">
 
           {/* Preppi */}
-          <div className="text-center mb-10">
-            <div className="w-20 h-20 mx-auto mb-3 animate-preppi-bounce">
+          <div className="mb-10 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-white/90 shadow-[0_18px_34px_rgba(15,23,42,0.08)] animate-preppi-bounce">
               <PreppiSVG />
             </div>
-            <div className="bg-white border border-[#86efac] rounded-2xl rounded-t-sm px-4 py-3 inline-block max-w-[260px] animate-bubble-pop shadow-sm">
-              <p className="text-sm font-bold text-gray-800 leading-snug">{preppiMessage}</p>
+            <div className="inline-block max-w-[270px] rounded-[1.6rem] rounded-t-[0.45rem] border border-emerald-200/80 bg-white/96 px-4 py-3 shadow-[0_18px_34px_rgba(15,23,42,0.08)] animate-bubble-pop">
+              <p className="text-sm font-bold leading-snug text-slate-800">{preppiMessage}</p>
             </div>
           </div>
 
           {/* Badge path */}
           <div className="relative mx-auto" style={{ width: W, height: 4 * SLOT_H + 60 }}>
             <svg className="absolute inset-0 pointer-events-none" width={W} height={4 * SLOT_H + 60} style={{ overflow: 'visible' }}>
-              <path d={pathD} stroke="#d1d5db" strokeWidth="8" strokeLinecap="round" fill="none" />
+              <path d={pathD} stroke="#d8e1ec" strokeWidth="8" strokeLinecap="round" fill="none" />
               {[0, 1, 2].map(i =>
                 completedSet.has(i) ? (
-                  <path key={i} d={buildSeg(i)} stroke="#58CC02" strokeWidth="8" strokeLinecap="round" fill="none" className="transition-all duration-700" />
+                  <path key={i} d={buildSeg(i)} stroke="#2f7d32" strokeWidth="8" strokeLinecap="round" fill="none" className="transition-all duration-700" />
                 ) : null
               )}
             </svg>
@@ -249,26 +251,26 @@ export default function SubLessonRoadmap({
                       transition-all duration-500 relative overflow-hidden
                       ${!isLocked ? 'active:translate-y-1' : 'cursor-default'}
                       ${isCompleted && isPassed
-                        ? 'bg-[#58CC02] border-[#2d8f00]'
+                        ? 'bg-[#3f9a2b] border-[#26651c]'
                         : isCompleted
                         ? 'bg-amber-400 border-amber-600'
                         : isFinal && isNext
-                        ? 'bg-amber-50 border-amber-400 animate-badge-pulse'
+                        ? 'bg-amber-50 border-amber-400 shadow-[0_18px_28px_rgba(245,158,11,0.14)] animate-badge-pulse'
                         : isNext
-                        ? 'bg-white border-[#58CC02] animate-badge-pulse'
+                        ? 'bg-white border-[#3f9a2b] shadow-[0_18px_28px_rgba(63,154,43,0.12)] animate-badge-pulse'
                         : isLocked
-                        ? 'bg-[#e5e5e5] border-[#c0c0c0] opacity-50'
-                        : 'bg-[#e5e5e5] border-[#c0c0c0]'
+                        ? 'bg-slate-200 border-slate-300 opacity-50'
+                        : 'bg-white border-slate-300 hover:border-slate-400 hover:shadow-[0_14px_24px_rgba(15,23,42,0.08)]'
                       }
                     `}
                     style={{
                       boxShadow: isCompleted && isPassed
-                        ? '0 6px 0 #1a5e00, inset 0 2px 0 rgba(255,255,255,0.3)'
+                        ? '0 6px 0 #174616, inset 0 2px 0 rgba(255,255,255,0.3)'
                         : isCompleted
                         ? '0 5px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.2)'
                         : isNext
-                        ? '0 6px 0 #46a302'
-                        : '0 4px 0 #a0a0a0, inset 0 1px 0 rgba(255,255,255,0.5)',
+                        ? '0 6px 0 #24561e'
+                        : '0 4px 0 #94a3b8, inset 0 1px 0 rgba(255,255,255,0.55)',
                     }}
                   >
                     {isCompleted && isPassed ? (
@@ -281,19 +283,19 @@ export default function SubLessonRoadmap({
                     ) : isFinal ? (
                       <Trophy className="w-10 h-10 text-amber-600" />
                     ) : (
-                      <span className="text-2xl font-extrabold text-gray-600">{idx + 1}</span>
+                      <span className="text-2xl font-extrabold text-slate-600">{idx + 1}</span>
                     )}
                   </button>
 
-                  <p className={`text-[11px] font-extrabold mt-2 text-center leading-tight ${
-                    isCompleted && isPassed ? 'text-green-600'
-                    : isCompleted ? 'text-amber-600'
-                    : isNext ? 'text-gray-800'
-                    : 'text-gray-400'
+                  <p className={`mt-2 text-center text-[11px] font-extrabold leading-tight ${
+                    isCompleted && isPassed ? 'text-emerald-700'
+                    : isCompleted ? 'text-amber-700'
+                    : isNext ? 'text-slate-800'
+                    : 'text-slate-400'
                   }`}>
                     {slotLabels[idx]}
                   </p>
-                  <p className="text-[10px] text-gray-400 font-semibold">
+                  <p className="text-[10px] font-semibold text-slate-400">
                     {isCompleted && isPassed ? '✓ Done' : slotDifficulties[idx]}
                   </p>
                 </div>

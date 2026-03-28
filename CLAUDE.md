@@ -84,6 +84,49 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 - Don't use "executive presence" — use "professional presence" or "composure"
 - Don't have text input for re-answers — voice only
 - Preppi has no voice — only sounds (like Duolingo owl) and text bubbles
+- Don't gamify the live interview itself — interview mode should stay formal and realistic
+- Don't show a live transcript during interviews
+
+### Product Positioning Clarification
+- The correct feel is **premium coach with game structure underneath**, not a silly gamified app
+- The interview itself should feel as close to a real interview as possible
+- Duolingo influence belongs mainly in review/practice flow, progression clarity, and motivation
+- The app should feel more serious as the user moves deeper into the interview process
+
+### Interview Process Model
+- Stage order: **HR Screen → Hiring Manager → optional Culture Fit → Executive/Final**
+- Culture Fit is optional because not every company runs it
+- Pricing is pay-per-use: users can buy stage-by-stage or buy a bundle, with or without Culture Fit
+- Product goal: users use PrepMe for a real interview process, perform well, and ideally do not need PrepMe again
+
+### Stage Philosophy
+- **HR Screen**: broader diagnosis, clearer teaching, confidence-building
+- **Hiring Manager**: deeper probing, stronger evidence demands, more "what exactly did you do?"
+- **Culture Fit**: nuance, interpersonal judgment, self-awareness, conflict handling, credibility
+- **Executive/Final**: pressure, ambiguity, strategic thinking, concise executive-style answers, gap exposure
+
+### Practice Philosophy
+- Keep the current 3 sublessons + 1 final voice re-answer structure
+- Later rounds should keep the structure but intensify the content and scoring
+- Sometimes the final voice challenge can use an elevated variant of the original weak question, especially in later rounds
+- Practice can remain optional before retakes; do not hard-gate retakes behind practice
+
+### Feedback Philosophy
+- Call out **all** meaningful issues an interviewer would care about; don't hide failures just because there are many
+- Prioritization is acceptable, omission is not
+- Later rounds should grade what that interviewer actually cares about, but recurring issues from earlier rounds should still be surfaced if they remain limiting
+- If role/industry knowledge depth is lacking, call it out fairly using the job description and the candidate's answer as evidence
+- We are interview practice, not industry/job training
+
+### Desktop vs Mobile / Preppi
+- Preppi can be more visible on mobile, more restrained on desktop
+- Preppi presence should decrease and tone should become more serious in later rounds, especially final/executive stages
+- Interview mode should remain formal regardless of device
+
+### Future Ideas to Preserve
+- Long-term direction: mock Zoom-style interview surface
+- Possible future enhancement: AI avatar interviewer for more realistic executive/final-round simulation
+- Possible future enhancement: role/industry-specific content packs (out of scope for now)
 
 ---
 
@@ -175,3 +218,17 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 - Confirmed mock data structure (`what_needs_improve` with criterion/score/rootCause/evidence) matches `WeaknessArea` interface in LessonRoadmap
 
 **Next session should**: Test on `?preview=mock`, wire HM/CF/FR stages into LessonRoadmap (currently only `sixAreas?.what_needs_improve` wired for HR screen), get custom Preppi SVG from user.
+
+### 2026-03-27 (Session 4)
+- Reviewed project against the intended Duolingo-like redesign and identified that the new direction is concentrated mostly in post-interview feedback/practice, while onboarding/dashboard/interview flows still reflect the older app
+- Clarified product direction with user:
+  - Interview mode must stay formal, realistic, and non-gamified
+  - No live transcript during interview
+  - Correct positioning is "premium coach with game structure underneath"
+  - Culture Fit is an optional stage in both product flow and pricing
+  - Practice should intensify across rounds while keeping the 3-sublesson + 1 final voice structure
+  - Recurring issues should be surfaced across rounds, but each round must still reflect what that interviewer actually cares about
+  - If knowledge depth is lacking, feedback should cite the JD and candidate response rather than trying to teach the job
+  - Future idea logged: Zoom-like interview UI and eventual AI avatar interviewer
+
+**Next session should**: Turn the clarified direction into a concrete product spec covering stage-specific feedback/practice, progression memory, UI boundaries, and implementation priorities before major code changes.

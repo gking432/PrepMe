@@ -404,9 +404,9 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="app-shell flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-500"></div>
           <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -416,18 +416,19 @@ export default function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="app-shell">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="page-container max-w-7xl py-8">
         {/* Profile Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="premium-panel flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_100%)] shadow-[0_16px_28px_rgba(37,99,235,0.22)]">
                 <User className="w-8 h-8 text-white" />
               </div>
               <div>
+                <div className="eyebrow mb-2 w-fit">Your Interview Process</div>
                 <h1 className="text-3xl font-bold text-gray-900">
                   {user.user_metadata?.full_name || 'My Profile'}
                 </h1>
@@ -437,7 +438,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <Link href="/dashboard" className="flex items-center space-x-1 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
+            <Link href="/dashboard" className="btn-coach-primary inline-flex items-center space-x-1 px-5 py-3">
               <span className="text-lg">+</span>
               <span>New Interview</span>
             </Link>
@@ -445,8 +446,8 @@ export default function ProfilePage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="flex space-x-8">
+        <div className="mb-8 border-b border-slate-200/80">
+          <nav className="flex space-x-6">
             {[
               { key: 'interviews', label: 'Interviews', icon: Briefcase },
               { key: 'resumes', label: 'Resumes', icon: FileText },
@@ -455,10 +456,10 @@ export default function ProfilePage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`flex items-center space-x-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
                   activeTab === tab.key
                     ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -472,12 +473,12 @@ export default function ProfilePage() {
         {activeTab === 'interviews' && (
           <>
             {interviewGroups.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="premium-panel overflow-hidden">
                 <div className="p-12 text-center">
                   <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No interviews yet</h3>
                   <p className="text-gray-600 mb-6">Complete your first round to see how you stack up.</p>
-                  <Link href="/dashboard" className="inline-flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all">
+                  <Link href="/dashboard" className="btn-coach-primary inline-flex items-center space-x-2 px-6 py-3">
                     <span>Get Started</span>
                     <ArrowRight className="w-5 h-5" />
                   </Link>
@@ -499,11 +500,11 @@ export default function ProfilePage() {
 
                   if (!isOnlyGroup && !isExpanded) {
                     return (
-                      <div key={groupKey} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                      <div key={groupKey} className="premium-panel overflow-hidden border border-slate-200/80">
                         <button
                           type="button"
                           onClick={() => setExpandedGroupKeys(prev => new Set(prev).add(groupKey))}
-                          className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                          className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50/80"
                         >
                           <div>
                             <h2 className="text-lg font-bold text-gray-900">{groupTitle}</h2>
@@ -516,8 +517,8 @@ export default function ProfilePage() {
                   }
 
                   return (
-                    <div key={groupKey} className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                      <div className="p-6 border-b border-gray-200">
+                    <div key={groupKey} className="premium-panel overflow-hidden">
+                      <div className="border-b border-slate-200/80 p-6">
                         <div className="flex items-center justify-between mb-6">
                           <div>
                             <h2 className="text-2xl font-bold text-gray-900">{groupTitle}</h2>
@@ -531,7 +532,7 @@ export default function ProfilePage() {
                                 next.has(groupKey) ? next.delete(groupKey) : next.add(groupKey)
                                 return next
                               })}
-                              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg shrink-0"
+                            className="shrink-0 rounded-xl p-2 text-gray-500 transition-colors hover:bg-slate-100 hover:text-gray-700"
                             >
                               <ChevronUp className="w-5 h-5" />
                             </button>
@@ -539,9 +540,9 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-6">
+                        <div className="mb-6 h-3 w-full overflow-hidden rounded-full bg-slate-200">
                           <div
-                            className="bg-primary-500 h-full rounded-full transition-all duration-500 ease-out"
+                            className="h-full rounded-full bg-[linear-gradient(90deg,#2563eb_0%,#1d4ed8_100%)] transition-all duration-500 ease-out"
                             style={{ width: `${progressPercentage}%` }}
                           />
                         </div>
@@ -560,12 +561,12 @@ export default function ProfilePage() {
                             return (
                               <div
                                 key={stageKey}
-                                className={`rounded-xl border-2 p-4 text-center transition-all ${
+                                className={`rounded-[1.2rem] border p-4 text-center transition-all ${
                                   isCompleted
-                                    ? 'border-green-200 bg-green-50 cursor-pointer hover:border-green-300 hover:shadow-md'
+                                    ? 'cursor-pointer border-emerald-200 bg-emerald-50 hover:border-emerald-300 hover:shadow-md'
                                     : isNextStep
-                                    ? 'border-primary-200 bg-primary-50'
-                                    : 'border-gray-200 bg-gray-50 opacity-60'
+                                    ? 'border-primary-200 bg-primary-50 shadow-[0_12px_24px_rgba(37,99,235,0.08)]'
+                                    : 'border-slate-200 bg-slate-50 opacity-60'
                                 }`}
                                 onClick={() => {
                                   if (isCompleted && latestSession) {
@@ -574,10 +575,10 @@ export default function ProfilePage() {
                                 }}
                               >
                                 <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full mb-2 ${
-                                  isCompleted ? 'bg-green-100' : isNextStep ? 'bg-primary-100' : 'bg-gray-100'
+                                  isCompleted ? 'bg-emerald-100' : isNextStep ? 'bg-primary-100' : 'bg-slate-100'
                                 }`}>
                                   <StageIcon className={`w-5 h-5 ${
-                                    isCompleted ? 'text-green-600' : isNextStep ? 'text-primary-600' : 'text-gray-400'
+                                    isCompleted ? 'text-emerald-600' : isNextStep ? 'text-primary-600' : 'text-gray-400'
                                   }`} />
                                 </div>
                                 <h3 className="text-sm font-semibold text-gray-900 mb-1">
@@ -586,7 +587,7 @@ export default function ProfilePage() {
 
                                 {isCompleted && (
                                   <>
-                                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold mb-2">
+                                    <span className="mb-2 inline-flex items-center space-x-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                                       <CheckCircle className="w-3 h-3" />
                                       <span>Done</span>
                                     </span>
@@ -600,7 +601,7 @@ export default function ProfilePage() {
                                 {!isCompleted && isNextStep && (
                                   <Link
                                     href={`/interview?stage=${stageKey}`}
-                                    className="inline-flex items-center space-x-1 px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-semibold hover:bg-primary-700 mt-2"
+                                    className="btn-coach-primary mt-2 inline-flex items-center space-x-1 px-3 py-1.5 text-xs"
                                     onClick={e => e.stopPropagation()}
                                   >
                                     <span>Start</span>
@@ -628,7 +629,7 @@ export default function ProfilePage() {
         {activeTab === 'resumes' && (
           <div className="space-y-6">
             {/* Upload Button */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="premium-panel p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">My Resumes</h2>
@@ -637,7 +638,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingResume}
-                  className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                  className="btn-coach-primary flex items-center space-x-2 px-4 py-2 disabled:opacity-50"
                 >
                   <Upload className="w-4 h-4" />
                   <span>{uploadingResume ? 'Uploading...' : 'Upload Resume'}</span>
@@ -652,7 +653,7 @@ export default function ProfilePage() {
               </div>
 
               {resumes.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-xl">
+                <div className="rounded-[1.4rem] border-2 border-dashed border-slate-300 py-8 text-center">
                   <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-600 mb-2">No resumes saved yet</p>
                   <p className="text-sm text-gray-400">Upload a PDF or text file to get started</p>
@@ -782,10 +783,10 @@ export default function ProfilePage() {
         {activeTab === 'account' && (
           <div className="space-y-6">
             {/* Current Plan */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="premium-panel p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Current Plan</h2>
               {subscription?.active ? (
-                <div className="flex items-center justify-between p-4 bg-primary-50 rounded-xl border border-primary-200">
+                <div className="flex items-center justify-between rounded-[1.2rem] border border-primary-200 bg-primary-50 p-4">
                   <div>
                     <p className="font-semibold text-primary-900">Monthly Subscription</p>
                     <p className="text-sm text-primary-700">
@@ -798,7 +799,7 @@ export default function ProfilePage() {
                   <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">Active</span>
                 </div>
               ) : (
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-4">
                   <p className="font-semibold text-gray-900">Free Tier</p>
                   <p className="text-sm text-gray-600 mt-1">HR Screen interviews are free. Purchase access to advanced stages individually or as a bundle.</p>
                 </div>
@@ -831,7 +832,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Payment History */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="premium-panel p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Payment History</h2>
               {paymentHistory.length === 0 ? (
                 <p className="text-gray-500 text-sm">No payments yet</p>
@@ -860,7 +861,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Account Actions */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="premium-panel p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Account</h2>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2">

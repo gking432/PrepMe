@@ -1475,34 +1475,35 @@ export default function InterviewPage() {
 
   if (interviewComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Interview Complete!</h2>
-          <p className="text-gray-600 mb-4">Redirecting to feedback...</p>
+      <div className="app-shell-interview flex min-h-screen items-center justify-center px-4">
+        <div className="interview-card w-full max-w-md p-8 text-center">
+          <h2 className="mb-3 text-2xl font-black">Interview complete</h2>
+          <p className="text-sm text-slate-300">Saving the round and preparing your feedback...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="app-shell-interview flex min-h-screen flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
+      <div className="border-b border-white/10 bg-black/18 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
         <button
           onClick={() => {
             cleanupAllResources()
             router.push('/dashboard')
           }}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-sm font-semibold text-slate-400 transition-colors hover:text-white"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Exit</span>
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-300">{STAGE_NAMES[stage]}</span>
+          <span className="text-sm font-bold text-slate-200">{STAGE_NAMES[stage]}</span>
           {isListening && (
-            <span className="text-xs text-gray-500 font-mono">{formatTime(elapsedTime)}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono text-slate-400">{formatTime(elapsedTime)}</span>
           )}
         </div>
 
@@ -1516,20 +1517,21 @@ export default function InterviewPage() {
                 }
                 setShowQuestion(!showQuestion)
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 hover:text-white border border-gray-700 rounded-lg hover:border-gray-600 transition-colors"
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-400 transition-colors hover:border-white/20 hover:text-white"
             >
               {showQuestion ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               <span>{showQuestion ? 'Hide' : 'View'} Question</span>
             </button>
           )}
         </div>
+        </div>
       </div>
 
       {/* Warning banner for viewing question */}
       {showQuestionWarning && showQuestion && (
-        <div className="mx-4 mt-3 flex items-center gap-2 px-4 py-2.5 bg-amber-900/30 border border-amber-700/40 rounded-lg">
+        <div className="mx-auto mt-4 flex w-[calc(100%-2rem)] max-w-5xl items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3">
           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-          <p className="text-xs text-amber-300">
+          <p className="text-xs text-amber-100/85">
             In a real interview you won't see the question. Practice without viewing for the best results and feedback.
           </p>
         </div>
@@ -1537,7 +1539,7 @@ export default function InterviewPage() {
 
       {/* Error display */}
       {error && (
-        <div className="mx-4 mt-3 px-4 py-3 bg-red-900/30 border border-red-700/40 rounded-lg">
+        <div className="mx-auto mt-4 w-[calc(100%-2rem)] max-w-5xl rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3">
           <p className="text-sm text-red-300">{error}</p>
           <button
             onClick={() => { setError(null); router.push('/dashboard') }}
@@ -1549,23 +1551,26 @@ export default function InterviewPage() {
       )}
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4">
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
         {/* Pre-interview: Ready to start */}
         {!isListening && !currentMessage && !error && (
-          <div className="text-center max-w-md">
-            <div className="w-20 h-20 rounded-full bg-primary-500/10 border-2 border-primary-500/30 flex items-center justify-center mx-auto mb-6">
-              <Phone className="w-8 h-8 text-primary-400" />
+          <div className="interview-card w-full max-w-xl p-8 text-center sm:p-10">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[1.6rem] border border-white/10 bg-white/5">
+              <Phone className="h-8 w-8 text-sky-300" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <div className="mx-auto mb-4 w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">
+              Formal interview mode
+            </div>
+            <h2 className="mb-2 text-3xl font-black text-white">
               {STAGE_NAMES[stage]}
             </h2>
-            <p className="text-gray-400 mb-8 text-sm">
-              Your interviewer is ready. Click begin when you are.
+            <p className="mx-auto mb-8 max-w-md text-sm leading-7 text-slate-300">
+              Your interviewer is ready. This round is designed to feel as close to the real thing as possible. Start when you are settled.
             </p>
             <button
               onClick={startInterview}
               disabled={isLoading}
-              className="px-8 py-3.5 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 disabled:opacity-50 transition-colors text-lg"
+              className="btn-interview-primary px-8 py-3.5 text-lg disabled:opacity-50"
             >
               {isLoading ? 'Connecting...' : 'Begin Interview'}
             </button>
@@ -1574,7 +1579,7 @@ export default function InterviewPage() {
 
         {/* Active interview */}
         {(isListening || currentMessage) && (
-          <div className="w-full max-w-lg text-center">
+          <div className="w-full max-w-3xl text-center">
             {/* Visualizer */}
             <div className="mb-8">
               <AudioVisualizer isActive={isPlayingAudio || isRecording} color="white" />
@@ -1584,33 +1589,33 @@ export default function InterviewPage() {
             <div className="mb-6">
               {isPlayingAudio ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
-                  <span className="text-sm text-gray-400">Interviewer is speaking...</span>
+                  <div className="h-2 w-2 rounded-full bg-sky-300 animate-pulse" />
+                  <span className="text-sm text-slate-300">Interviewer is speaking...</span>
                 </div>
               ) : isRecording ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-                  <span className="text-sm text-gray-400">Listening...</span>
+                  <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                  <span className="text-sm text-slate-300">Listening...</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-gray-600" />
-                  <span className="text-sm text-gray-500">Ready</span>
+                  <div className="h-2 w-2 rounded-full bg-slate-600" />
+                  <span className="text-sm text-slate-500">Ready</span>
                 </div>
               )}
             </div>
 
             {/* Question text (hidden by default) */}
             {showQuestion && currentMessage && (
-              <div className="mb-8 px-6 py-4 bg-gray-900/60 border border-gray-800 rounded-xl">
-                <p className="text-gray-300 text-sm leading-relaxed">{currentMessage}</p>
+              <div className="interview-card mx-auto mb-8 max-w-2xl px-6 py-4">
+                <p className="text-sm leading-7 text-slate-200">{currentMessage}</p>
               </div>
             )}
 
             {/* Text input */}
             {isListening && (
               <div className="mt-6">
-                <div className="flex gap-2">
+                <div className="mx-auto flex max-w-2xl gap-2">
                   <input
                     type="text"
                     onKeyPress={(e) => {
@@ -1619,7 +1624,7 @@ export default function InterviewPage() {
                         e.currentTarget.value = ''
                       }
                     }}
-                    className="flex-1 px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none"
                     placeholder="Type response instead..."
                   />
                   <button
@@ -1630,7 +1635,7 @@ export default function InterviewPage() {
                         input.value = ''
                       }
                     }}
-                    className="px-4 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+                    className="rounded-2xl border border-sky-400/30 bg-sky-500/20 px-4 py-3 text-sm font-bold text-sky-100 hover:bg-sky-500/30"
                   >
                     Send
                   </button>
@@ -1643,11 +1648,11 @@ export default function InterviewPage() {
 
       {/* Bottom bar */}
       {isListening && (
-        <div className="px-4 py-4 bg-gray-900/80 backdrop-blur-sm border-t border-gray-800">
-          <div className="max-w-lg mx-auto flex items-center justify-center">
+        <div className="border-t border-white/10 bg-black/18 px-4 py-4 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-center">
             <button
               onClick={endInterview}
-              className="flex items-center gap-2 px-6 py-2.5 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 hover:text-red-300 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/12 px-6 py-2.5 text-sm font-bold text-red-300 transition-colors hover:bg-red-500/18"
             >
               <Phone className="w-4 h-4" />
               End Interview

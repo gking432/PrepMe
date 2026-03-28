@@ -20,10 +20,10 @@ const STAGE_CONFIG: Record<InterviewStage, {
   name: string; subtitle: string; emoji: string; price?: string
   bg: string; activeBorder: string
 }> = {
-  hr_screen:      { name: 'HR Screen',       subtitle: 'Phone screening with a recruiter',   emoji: '📱', bg: 'bg-emerald-500', activeBorder: 'border-emerald-700' },
-  hiring_manager: { name: 'Hiring Manager',  subtitle: 'Deep-dive with your future boss',    emoji: '💼', price: '$4.99', bg: 'bg-blue-500',    activeBorder: 'border-blue-700'    },
-  culture_fit:    { name: 'Culture Fit',     subtitle: 'Team & values alignment',            emoji: '🤝', price: '$3.99', bg: 'bg-accent-500',  activeBorder: 'border-accent-700'  },
-  final:          { name: 'Final Round',     subtitle: 'Executive-level evaluation',          emoji: '🏆', price: '$5.99', bg: 'bg-amber-500',   activeBorder: 'border-amber-700'   },
+  hr_screen:      { name: 'HR Screen',       subtitle: 'Phone screening with a recruiter',   emoji: '📱', bg: 'bg-[#58CC02]', activeBorder: 'border-[#3b9400]' },
+  hiring_manager: { name: 'Hiring Manager',  subtitle: 'Deep-dive with your future boss',    emoji: '💼', price: '$4.99', bg: 'bg-primary-600', activeBorder: 'border-primary-800' },
+  culture_fit:    { name: 'Culture Fit',     subtitle: 'Team & values alignment',            emoji: '🤝', price: '$3.99', bg: 'bg-accent-600', activeBorder: 'border-accent-800' },
+  final:          { name: 'Final Round',     subtitle: 'Executive-level evaluation',          emoji: '🏆', price: '$5.99', bg: 'bg-slate-800', activeBorder: 'border-slate-950' },
 }
 
 const PAID_STAGES: InterviewStage[] = ['hiring_manager', 'culture_fit', 'final']
@@ -285,28 +285,28 @@ export default function DashboardPage() {
 
   // ─── Job posting panel (reused in both job step and stage step) ──────────────
   const JobPostingPanel = ({ accent = false }: { accent?: boolean }) => (
-    <div className={`rounded-2xl border-2 overflow-hidden ${accent ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+    <div className={`overflow-hidden rounded-[1.6rem] border ${accent ? 'border-amber-200/80 bg-amber-50/90 shadow-[0_12px_28px_rgba(245,158,11,0.08)]' : 'border-slate-200/80 bg-white/90 shadow-[0_16px_36px_rgba(15,23,42,0.06)]'}`}>
       <details className="group">
-        <summary className={`flex items-center justify-between px-4 py-3.5 cursor-pointer list-none ${accent ? 'text-amber-700' : 'text-primary-600'}`}>
+        <summary className={`flex cursor-pointer list-none items-center justify-between px-4 py-4 ${accent ? 'text-amber-800' : 'text-primary-700'}`}>
           <span className="text-sm font-semibold">
             {hasJobDesc ? '✓ Job posting added' : 'Add job posting (recommended)'}
           </span>
           <ChevronDown className={`w-4 h-4 group-open:rotate-180 transition-transform ${accent ? 'text-amber-500' : 'text-primary-400'}`} />
         </summary>
-        <div className={`px-4 pb-4 space-y-2 border-t ${accent ? 'border-amber-100' : 'border-gray-100'}`}>
+        <div className={`space-y-2 border-t px-4 pb-4 ${accent ? 'border-amber-100' : 'border-slate-100'}`}>
           <div className="flex gap-2 mt-3">
             <input
               type="url"
               value={interviewData.jobDescriptionUrl}
               onChange={(e) => { setInterviewData(prev => ({ ...prev, jobDescriptionUrl: e.target.value })); setFetchError(null) }}
               onKeyPress={(e) => { if (e.key === 'Enter') handleFetchJobDescription() }}
-              className={`flex-1 px-4 py-3 text-sm border-2 rounded-xl focus:outline-none bg-white transition-colors ${accent ? 'border-amber-200 focus:border-amber-400' : 'border-gray-200 focus:border-primary-400'}`}
+              className={`field-shell flex-1 text-sm ${accent ? 'border-amber-200 focus:border-amber-400 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.12)]' : ''}`}
               placeholder="Paste job posting URL..."
             />
             <button
               onClick={handleFetchJobDescription}
               disabled={!interviewData.jobDescriptionUrl || fetchingJobDescription}
-              className={`px-4 py-3 text-sm text-white rounded-xl disabled:opacity-50 font-semibold shrink-0 active:scale-95 transition-all ${accent ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary-500 hover:bg-primary-600'}`}
+              className={`shrink-0 rounded-xl px-4 py-3 text-sm font-bold text-white disabled:opacity-50 ${accent ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary-600 hover:bg-primary-700'}`}
             >
               {fetchingJobDescription ? '…' : 'Fetch'}
             </button>
@@ -318,7 +318,7 @@ export default function DashboardPage() {
                 value={interviewData.jobDescriptionText}
                 onChange={(e) => setInterviewData(prev => ({ ...prev, jobDescriptionText: e.target.value }))}
                 rows={4}
-                className={`w-full px-4 py-3 text-sm border-2 rounded-xl focus:outline-none resize-none bg-white transition-colors ${accent ? 'border-amber-200 focus:border-amber-400' : 'border-gray-200 focus:border-primary-400'}`}
+                className={`field-shell w-full resize-none text-sm ${accent ? 'border-amber-200 focus:border-amber-400 focus:shadow-[0_0_0_4px_rgba(245,158,11,0.12)]' : ''}`}
                 placeholder="Or paste the job description…"
               />
           }
@@ -339,30 +339,31 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="app-shell">
       <Header />
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
-      <main className="max-w-lg mx-auto px-5 pt-6 pb-36">
+      <main className="mx-auto max-w-xl px-5 pb-36 pt-6">
 
         {/* ── WELCOME ─────────────────────────────────────────────────── */}
         {onboardStep === 'welcome' && (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-140px)] text-center gap-8 animate-slide-up">
+          <div className="flex min-h-[calc(100vh-140px)] flex-col items-center justify-center gap-8 text-center animate-slide-up">
             <div className="relative">
               <Preppi size="xl" animate />
             </div>
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900 mb-3 leading-tight">
+              <div className="eyebrow eyebrow-coach mx-auto mb-4 w-fit">Interview prep, round by round</div>
+              <h1 className="mb-3 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
                 Ace your next interview.
               </h1>
-              <p className="text-gray-400 text-base leading-relaxed max-w-xs mx-auto">
-                I'm Preppi. Give me the job, share your resume — I'll coach you through every round.
+              <p className="mx-auto max-w-sm text-base leading-relaxed text-slate-500">
+                I&apos;m Preppi. Give me the role, show me your background, and I&apos;ll coach you through the process with pressure where it counts.
               </p>
             </div>
             <div className="w-full space-y-3">
               <button
                 onClick={() => setOnboardStep('job')}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xl rounded-2xl border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg shadow-emerald-100"
+                className="btn-coach-primary w-full py-4 text-xl"
               >
                 LET'S GO
               </button>
@@ -393,14 +394,14 @@ export default function DashboardPage() {
                 type="text"
                 value={interviewData.companyName}
                 onChange={(e) => setInterviewData(prev => ({ ...prev, companyName: e.target.value }))}
-                className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-accent-400 font-medium placeholder-gray-300 transition-colors"
+                className="field-shell"
                 placeholder="Company"
               />
               <input
                 type="text"
                 value={interviewData.positionTitle}
                 onChange={(e) => setInterviewData(prev => ({ ...prev, positionTitle: e.target.value }))}
-                className="w-full px-5 py-4 text-base border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-accent-400 font-medium placeholder-gray-300 transition-colors"
+                className="field-shell"
                 placeholder="Role / position title"
               />
             </div>
@@ -439,7 +440,7 @@ export default function DashboardPage() {
                       setExtractedUserInfo({ email: null, name: null, phone: null })
                     }
                   }}
-                  className="w-full px-4 py-3.5 text-sm border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-accent-400 bg-white font-medium transition-colors"
+                  className="field-shell text-sm"
                 >
                   <option value="">Use a saved resume…</option>
                   {savedResumes.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
@@ -473,9 +474,9 @@ export default function DashboardPage() {
               />
 
               {!interviewData.resumeFile && !selectedResumeId && (
-                <div className="rounded-2xl border-2 border-gray-200 overflow-hidden">
+                <div className="overflow-hidden rounded-[1.6rem] border border-slate-200/80 bg-white/92 shadow-[0_16px_36px_rgba(15,23,42,0.06)]">
                   <details className="group">
-                    <summary className="flex items-center justify-between px-4 py-3.5 cursor-pointer list-none text-primary-600">
+                    <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-4 text-primary-700">
                       <span className="text-sm font-semibold">Or paste resume text</span>
                       <ChevronDown className="w-4 h-4 text-primary-400 group-open:rotate-180 transition-transform" />
                     </summary>
@@ -487,7 +488,7 @@ export default function DashboardPage() {
                         extractUserInfoFromResume(e.target.value)
                       }}
                       rows={7}
-                      className="w-full px-4 py-3 text-sm border-t-2 border-gray-100 focus:outline-none resize-none"
+                      className="w-full resize-none border-t border-slate-100 bg-transparent px-4 py-3 text-sm focus:outline-none"
                       placeholder="Paste your resume here…"
                     />
                   </details>
@@ -541,12 +542,12 @@ export default function DashboardPage() {
                       if (isLocked) { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }
                       else setSelectedStage(stage)
                     }}
-                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-b-4 text-left transition-all active:scale-[0.97] active:border-b-0 active:translate-y-[2px] ${
+                    className={`flex w-full items-center gap-4 rounded-[1.45rem] px-5 py-4 text-left transition-all active:scale-[0.985] ${
                       isLocked
-                        ? 'bg-gray-100 border-gray-200'
+                        ? 'border border-slate-200 bg-slate-100/80 shadow-none'
                         : isSelected
-                        ? `${config.bg} ${config.activeBorder} shadow-lg`
-                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                        ? `${config.bg} ${config.activeBorder} border-b-4 shadow-[0_18px_34px_rgba(15,23,42,0.14)]`
+                        : 'border border-slate-200/80 bg-white/95 shadow-[0_14px_30px_rgba(15,23,42,0.06)] hover:border-slate-300'
                     }`}
                   >
                     <span className="text-3xl shrink-0">{config.emoji}</span>
@@ -559,7 +560,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     {stage === 'hr_screen' && (
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 ${isSelected ? 'bg-white text-emerald-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${isSelected ? 'bg-white text-[#3b9400]' : 'bg-emerald-100 text-emerald-700'}`}>
                         FREE
                       </span>
                     )}
@@ -593,11 +594,11 @@ export default function DashboardPage() {
 
       {/* ── STICKY BOTTOM CTA (Duolingo-style) ──────────────────────── */}
       {onboardStep !== 'welcome' && (
-        <div className="fixed bottom-0 left-0 right-0 px-5 pb-7 pt-4 bg-gradient-to-t from-white via-white to-transparent">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#f4f7fb] via-[#f4f7fb]/96 to-transparent px-5 pb-7 pt-4">
           {onboardStep === 'job' && (
             <button
               onClick={() => setOnboardStep('resume')}
-              className="w-full py-4 bg-accent-600 hover:bg-accent-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-accent-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg shadow-accent-100"
+              className="btn-coach-secondary w-full py-4 text-lg text-primary-700"
             >
               CONTINUE →
             </button>
@@ -607,7 +608,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setOnboardStep('stage')}
               disabled={!hasResume}
-              className="w-full py-4 bg-accent-600 hover:bg-accent-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-accent-800 active:border-b-0 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-accent-100"
+              className="btn-coach-secondary w-full py-4 text-lg text-primary-700 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {hasResume ? 'CONTINUE →' : 'Add your resume to continue'}
             </button>
@@ -617,7 +618,7 @@ export default function DashboardPage() {
             user && isStageLockedFn(selectedStage) ? (
               <button
                 onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
-                className="w-full py-4 bg-primary-600 hover:bg-primary-500 text-white font-extrabold text-lg rounded-2xl border-b-4 border-primary-800 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+                className="btn-coach-secondary w-full py-4 text-lg text-primary-700"
               >
                 <Lock className="inline w-5 h-5 mr-2" />
                 Unlock {STAGE_CONFIG[selectedStage].name} · {STAGE_CONFIG[selectedStage].price}
@@ -626,7 +627,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleStartInterview(selectedStage)}
                 disabled={!canStartInterview() || saving}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-lg rounded-2xl border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-100"
+                className="btn-coach-primary w-full py-4 text-lg disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {canStartInterview()
                   ? `START ${STAGE_CONFIG[selectedStage].name.toUpperCase()} →`

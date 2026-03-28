@@ -78,14 +78,14 @@ function getInterviewerGender(sessionId?: string): 'male' | 'female' {
 }
 
 const PREPPI_MESSAGES = {
-  intro: "Hey! I've got your results! Let's see how you did!",
-  scoreHigh: "Wow, great job! You really showed up for this one!",
-  scoreMid:  "Nice work! A few areas to sharpen and you'll be crushing it!",
-  scoreLow:  "This is exactly what practice is for. I've got you covered!",
-  strength:  (criterion: string) => `You nailed ${criterion}! Keep that energy!`,
-  weakness:  "Don't worry — I have the perfect practice for this!",
-  fork:      "I'd recommend jumping into practice while it's fresh! Your detailed report is always saved.",
-  complete:  "Look at you go! You've leveled up big time!",
+  intro: "Your interview results are ready. Let's walk through what mattered.",
+  scoreHigh: "Strong showing. A few refinements will make this more repeatable.",
+  scoreMid:  "Good foundation. There are a few areas worth tightening right away.",
+  scoreLow:  "This is useful signal. We can target the gaps and improve the next round.",
+  strength:  (criterion: string) => `This held up well: ${criterion}.`,
+  weakness:  "This is the right place to practice before you try it again.",
+  fork:      "Practice is the fastest way to improve while the interview is still fresh. The full report stays available.",
+  complete:  "You finished the coaching path. Let's carry that into the next attempt.",
 }
 
 // ── Badge definitions ────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ function TranscriptOverlay({ question, excerpt, gender, onClose }: TranscriptOve
             }`}>
               Interviewer
             </p>
-            <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-lg">
+            <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-3 shadow-lg">
               <p className="text-sm text-gray-800 font-medium leading-relaxed">{question}</p>
             </div>
           </div>
@@ -151,7 +151,7 @@ function TranscriptOverlay({ question, excerpt, gender, onClose }: TranscriptOve
             <p className="text-xs font-bold uppercase tracking-wide mb-1 text-right text-gray-400">
               You said
             </p>
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl rounded-tr-sm px-4 py-3 shadow-md">
+            <div className="rounded-2xl rounded-tr-sm border border-amber-200 bg-amber-50 px-4 py-3 shadow-md">
               <p className="text-sm text-gray-700 italic leading-relaxed">
                 &ldquo;{excerpt.length > 200 ? excerpt.substring(0, 200) + '…' : excerpt}&rdquo;
               </p>
@@ -162,10 +162,10 @@ function TranscriptOverlay({ question, excerpt, gender, onClose }: TranscriptOve
         {/* Got it button */}
         <button
           onClick={onClose}
-          className="w-full btn-duo-green py-4 text-base animate-slide-up"
+          className="btn-coach-primary w-full py-4 text-base animate-slide-up"
           style={{ animationDelay: '0.5s' }}
         >
-          Got it — back to review
+          Back to review
         </button>
       </div>
     </div>
@@ -380,7 +380,7 @@ export default function PreppiWalkthrough({
   // ── Main render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#fbfdff_0%,#f1f7ff_100%)]">
       <Confetti active={confettiActive} />
 
       {/* Transcript overlay */}
@@ -394,7 +394,8 @@ export default function PreppiWalkthrough({
       )}
 
       {/* ── Top Bar ── */}
-      <div className="shrink-0 px-4 py-3 flex items-center gap-3 border-b border-gray-100">
+      <div className="shrink-0 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-3">
         <button
           onClick={onSkipToResults}
           className="text-gray-300 hover:text-gray-500 transition-colors p-1"
@@ -423,6 +424,7 @@ export default function PreppiWalkthrough({
             </span>
           )}
         </div>
+        </div>
       </div>
 
       {/* ── Main Content ── */}
@@ -430,12 +432,12 @@ export default function PreppiWalkthrough({
         <div className="flex min-h-full">
 
           {/* Desktop sidebar */}
-          <div className="hidden md:flex flex-col items-center justify-center w-48 lg:w-56 shrink-0 bg-gradient-to-b from-accent-50 to-white border-r border-accent-100 p-6">
+          <div className="hidden w-48 shrink-0 flex-col items-center justify-center border-r border-slate-100 bg-[linear-gradient(180deg,#f5f9ff_0%,#ffffff_100%)] p-6 md:flex lg:w-56">
             <div className="w-24 h-24 lg:w-32 lg:h-32 animate-preppi-bounce">
               <PreppiSVG />
             </div>
-            <div className="mt-4 bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm animate-bubble-pop max-w-[180px]">
-              <p className="text-xs text-gray-700 leading-snug">{preppiMessage}</p>
+            <div className="mt-4 max-w-[180px] rounded-2xl rounded-bl-sm border border-slate-200 bg-white/96 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)] animate-bubble-pop">
+              <p className="text-xs leading-snug text-slate-700">{preppiMessage}</p>
             </div>
           </div>
 

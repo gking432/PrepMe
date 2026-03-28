@@ -118,11 +118,12 @@ export default function LessonRoadmap({
     : `${weaknesses.length - completedSet.size} area${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left — keep going!`
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#fbfdff_0%,#f1f7ff_100%)]">
       <Confetti active={showConfetti} />
 
       {/* Top bar */}
-      <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b border-gray-100">
+      <div className="shrink-0 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
         <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 transition-colors">
           <X className="w-5 h-5" />
         </button>
@@ -131,10 +132,11 @@ export default function LessonRoadmap({
           ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
           : <div className="w-8" />
         }
+        </div>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto bg-[#f0fdf4]">
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-sm mx-auto px-4 py-8">
 
           {/* Preppi */}
@@ -142,7 +144,7 @@ export default function LessonRoadmap({
             <div className="w-20 h-20 mx-auto mb-3 animate-preppi-bounce">
               <PreppiSVG />
             </div>
-            <div className="bg-white border border-[#86efac] rounded-2xl rounded-t-sm px-4 py-3 inline-block max-w-[260px] shadow-sm">
+            <div className="inline-block max-w-[260px] rounded-2xl rounded-t-sm border border-emerald-200 bg-white/96 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
               <p className="text-sm font-bold text-gray-800 leading-snug">{preppiMessage}</p>
             </div>
           </div>
@@ -164,7 +166,7 @@ export default function LessonRoadmap({
                   onClick={() => !isLocked && setActiveIdx(idx)}
                   disabled={isLocked}
                   className={`
-                    w-full text-left rounded-2xl border-2 p-4 transition-all duration-200
+                    w-full rounded-[1.4rem] border p-4 text-left transition-all duration-200
                     ${isLocked ? 'opacity-50 cursor-default' : 'active:scale-[0.98] cursor-pointer hover:shadow-md'}
                     ${isCompleted && isPassed
                       ? 'bg-[#f0fdf4] border-[#86efac]'
@@ -235,7 +237,7 @@ export default function LessonRoadmap({
             )}
             <button
               onClick={onViewReport}
-              className="w-full btn-duo-white flex items-center justify-center gap-2 py-3.5 text-sm"
+              className="btn-coach-secondary flex w-full items-center justify-center gap-2 py-3.5 text-sm"
             >
               <FileText className="w-4 h-4" />
               View Detailed Report

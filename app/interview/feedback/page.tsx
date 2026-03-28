@@ -1914,7 +1914,7 @@ export default function InterviewDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="app-shell">
       <Header />
 
       {/* Interview Process Timeline */}
@@ -1926,13 +1926,13 @@ export default function InterviewDashboard() {
 
       {/* Contextual action bar */}
       {(!loading && ((!hasFeedback && hasTranscript) || !isPremium)) && (
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-2">
-          <div className="max-w-7xl mx-auto flex items-center justify-end gap-3">
+        <div className="border-b border-slate-200/80 bg-white/82 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl items-center justify-end gap-3">
             {!hasFeedback && hasTranscript && (
               <button
                 onClick={regenerateFeedback}
                 disabled={regeneratingFeedback || feedbackGenerating}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${regeneratingFeedback ? 'animate-spin' : ''}`} />
                 <span>{regeneratingFeedback ? 'Regenerating...' : 'Regenerate Feedback'}</span>
@@ -1941,7 +1941,7 @@ export default function InterviewDashboard() {
             {!isPremium && (
               <button
                 onClick={() => setShowPurchaseFlow(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-all"
+                className="btn-coach-primary inline-flex items-center gap-1.5 px-4 py-2 text-sm"
               >
                 <Crown className="w-3.5 h-3.5" />
                 <span>Unlock All Interviews</span>
@@ -1954,7 +1954,7 @@ export default function InterviewDashboard() {
       {/* Account Creation Prompt for Anonymous Users */}
       {showAccountPrompt && isAnonymous && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+          <div className="premium-panel relative w-full max-w-md p-8">
             <button
               onClick={() => {
                 setShowAccountPrompt(false)
@@ -1965,8 +1965,9 @@ export default function InterviewDashboard() {
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Free Account</h3>
-            <p className="text-gray-600 mb-6">
+            <div className="eyebrow eyebrow-coach mb-3 w-fit">Save Your Progress</div>
+            <h3 className="mb-2 text-2xl font-bold text-gray-900">Create Your Free Account</h3>
+            <p className="mb-6 text-gray-600">
               Save your results, track progress, and unlock more interview stages
             </p>
             <div className="space-y-3">
@@ -1983,7 +1984,7 @@ export default function InterviewDashboard() {
                         type="text"
                         defaultValue={extractedName}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        className="field-shell w-full bg-slate-50 text-gray-700"
                       />
                     </div>
                     <div>
@@ -1992,7 +1993,7 @@ export default function InterviewDashboard() {
                         type="email"
                         defaultValue={extractedEmail}
                         readOnly
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        className="field-shell w-full bg-slate-50 text-gray-700"
                       />
                     </div>
                     <button
@@ -2003,7 +2004,7 @@ export default function InterviewDashboard() {
                         const query = params.toString()
                         router.push(`/auth/signup${query ? `?${query}` : ''}`)
                       }}
-                      className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-all shadow-lg"
+                      className="btn-coach-primary w-full py-3"
                     >
                       Create Account
                     </button>
@@ -2014,7 +2015,7 @@ export default function InterviewDashboard() {
                 onClick={() => {
                   window.location.href = '/auth/signup?provider=google'
                 }}
-                className="w-full px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
+                className="flex w-full items-center justify-center space-x-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 font-semibold text-gray-700 transition-all hover:bg-slate-50"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -2029,7 +2030,7 @@ export default function InterviewDashboard() {
                   setShowAccountPrompt(false)
                   setAccountPromptDismissed(true)
                 }}
-                className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all"
+                className="btn-coach-secondary w-full py-3 text-gray-700"
               >
                 Maybe Later
               </button>
@@ -2047,13 +2048,13 @@ export default function InterviewDashboard() {
       {/* Persistent signup banner for anonymous users who dismissed the modal */}
       {isAnonymous && !showAccountPrompt && accountPromptDismissed && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="bg-primary-50 border border-primary-200 rounded-lg px-4 py-3 flex items-center justify-between">
-            <p className="text-sm text-primary-800 font-medium">
+          <div className="flex items-center justify-between rounded-[1.4rem] border border-primary-200/80 bg-primary-50/90 px-4 py-3 shadow-[0_12px_30px_rgba(37,99,235,0.08)]">
+            <p className="text-sm font-medium text-primary-800">
               Create an account to save your results and continue to the Hiring Manager round →
             </p>
             <button
               onClick={() => router.push('/auth/signup')}
-              className="ml-4 px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors whitespace-nowrap"
+              className="btn-coach-primary ml-4 whitespace-nowrap px-4 py-2 text-sm"
             >
               Sign Up
             </button>
@@ -2087,7 +2088,7 @@ export default function InterviewDashboard() {
                     }
                     setWalkthroughActive(true)
                   }}
-                  className="text-xs text-accent-500 hover:text-accent-700 font-semibold flex items-center gap-1 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100"
                 >
                   <RefreshCw className="w-3 h-3" />
                   Replay Walkthrough
@@ -2104,7 +2105,7 @@ export default function InterviewDashboard() {
                 weaknesses={feedback?.weaknesses || []}
               />
             ) : (
-              <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+              <div className="premium-panel p-12 text-center">
                 <Phone className="w-20 h-20 text-gray-300 mx-auto mb-6" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">No Interview Completed Yet</h2>
                 <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -2112,7 +2113,7 @@ export default function InterviewDashboard() {
                 </p>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center space-x-2 px-8 py-4 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-all shadow-lg"
+                  className="btn-coach-primary inline-flex items-center space-x-2 px-8 py-4"
                 >
                   <span>Start an Interview</span>
                   <ArrowRight className="w-5 h-5" />
@@ -2128,7 +2129,7 @@ export default function InterviewDashboard() {
 
                 {/* All-criteria breakdown */}
                 {sixAreas && (wentWellAreas.length > 0 || needsImproveAreas.length > 0) && (
-                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="premium-panel overflow-hidden">
                     <div className="px-6 py-5 border-b border-gray-100">
                       <div className="flex items-center justify-between">
                         <div>
@@ -2161,7 +2162,7 @@ export default function InterviewDashboard() {
                       {/* Strengths */}
                       {wentWellAreas.map((area: any) => (
                         <div key={area.criterion} className="px-6 py-4 flex items-start gap-4">
-                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
                             <CheckCircle className="w-4 h-4 text-emerald-600" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -2189,7 +2190,7 @@ export default function InterviewDashboard() {
 
                         return (
                           <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/40">
-                            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
                               <AlertTriangle className="w-4 h-4 text-amber-600" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -2201,7 +2202,7 @@ export default function InterviewDashboard() {
                                   )}
                                   <button
                                     onClick={() => setShowLessonRoadmap(true)}
-                                    className={`text-xs font-bold px-3 py-1 rounded-full border transition-all ${
+                                    className={`rounded-full border px-3 py-1 text-xs font-bold transition-all ${
                                       isPassed
                                         ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                         : 'bg-accent-50 border-accent-200 text-accent-700 hover:bg-accent-100'
@@ -2233,10 +2234,7 @@ export default function InterviewDashboard() {
 
                 {/* Practice CTA */}
                 {needsImproveAreas.length > 0 && (
-                  <button
-                    onClick={() => setShowLessonRoadmap(true)}
-                    className="w-full btn-duo-green py-4 text-base flex items-center justify-center gap-2"
-                  >
+                  <button onClick={() => setShowLessonRoadmap(true)} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-4 text-base">
                     <Zap className="w-5 h-5" />
                     Practice Weak Areas
                   </button>
@@ -2245,7 +2243,7 @@ export default function InterviewDashboard() {
                 {/* View Full Report */}
                 <button
                   onClick={() => setShowRubricModal(true)}
-                  className="w-full bg-white rounded-2xl shadow-lg p-5 text-left flex items-center justify-between hover:shadow-xl transition-all group border border-gray-100"
+                  className="premium-card group flex w-full items-center justify-between p-5 text-left"
                 >
                   <div>
                     <h3 className="text-base font-bold text-gray-900">View Full Performance Report</h3>
@@ -2262,7 +2260,7 @@ export default function InterviewDashboard() {
                   (structuredTranscript.messages && structuredTranscript.messages.length > 0) ||
                   (structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0)
                 ) && (
-                  <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <div className="premium-panel p-8">
                     <button
                       type="button"
                       onClick={() => setShowTranscript((prev) => !prev)}
@@ -2425,7 +2423,7 @@ export default function InterviewDashboard() {
 
             {/* Detailed Performance Breakdown - HR Phone Screen Criteria */}
             {(hrCriteria || (areaScores && areaScores.length > 0)) && (
-              <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="premium-panel p-8">
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">
                     Detailed Performance Breakdown
@@ -2437,7 +2435,7 @@ export default function InterviewDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowRubricModal(true)}
-                  className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-accent-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                  className="btn-coach-primary mt-6 flex w-full items-center justify-center space-x-2 px-6 py-3"
                 >
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
@@ -2490,9 +2488,9 @@ export default function InterviewDashboard() {
                   
                   {/* Modal Container */}
                   <div className="relative min-h-screen flex items-start justify-center p-4 pt-8 pb-8 print:min-h-0 print:p-0">
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col my-auto print:max-h-none print:overflow-visible print:shadow-none print:rounded-none print:my-0">
+                    <div className="relative my-auto flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[1.8rem] border border-slate-200/80 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.2)] print:my-0 print:max-h-none print:overflow-visible print:rounded-none print:shadow-none">
                     {/* Modal Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-primary-50 print:border-b-2">
+                    <div className="flex items-center justify-between border-b border-slate-200 bg-[linear-gradient(180deg,#eff6ff_0%,#ffffff_100%)] p-6 print:border-b-2">
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900">
                           Detailed Performance Report
@@ -2506,7 +2504,7 @@ export default function InterviewDashboard() {
                         <button
                           type="button"
                           onClick={() => window.print()}
-                          className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all"
+                          className="btn-coach-secondary px-4 py-2 text-sm text-gray-700"
                           title="Print or save as PDF"
                         >
                           Print / Save PDF
@@ -2514,7 +2512,7 @@ export default function InterviewDashboard() {
                         <button
                           type="button"
                           onClick={() => setShowRubricModal(false)}
-                          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                          className="rounded-xl p-2 text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700"
                           aria-label="Close"
                         >
                           <X className="w-6 h-6" />
@@ -2972,7 +2970,7 @@ export default function InterviewDashboard() {
 
             {/* Combined CTA - Preparing for Hiring Manager Round */}
             {hasFeedback && likelihood === 'likely' && (feedback as any)?.next_steps_preparation && (
-              <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-primary-500">
+              <div className="premium-panel border-t-4 border-primary-500 p-8">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-6">
                   <Briefcase className="w-8 h-8 text-primary-600" />
@@ -2983,7 +2981,7 @@ export default function InterviewDashboard() {
                 </div>
 
                 {/* Readiness Assessment */}
-                <div className="bg-primary-50 rounded-xl p-6 mb-6 border border-primary-100">
+                <div className="mb-6 rounded-[1.4rem] border border-primary-100 bg-primary-50 p-6">
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
                       <svg className="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
@@ -2997,11 +2995,11 @@ export default function InterviewDashboard() {
                     </div>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-primary-200">
+                    <div className="rounded-xl border border-primary-200 bg-white p-4">
                       <div className="text-sm text-gray-600 mb-1">Ready for Next Round?</div>
                       <div className="text-2xl font-bold text-primary-600">{(feedback as any).next_steps_preparation.ready_for_hiring_manager ? 'Yes' : 'Not Yet'}</div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-primary-200">
+                    <div className="rounded-xl border border-primary-200 bg-white p-4">
                       <div className="text-sm text-gray-600 mb-1">Confidence Level</div>
                       <div className="text-2xl font-bold text-primary-600 capitalize">{(feedback as any).next_steps_preparation.confidence_level}</div>
                     </div>
@@ -3113,7 +3111,7 @@ export default function InterviewDashboard() {
 
                 {/* ─── SECTION 5: Readiness + Organic Upgrade CTA ─── */}
                 {!isPremium && (
-                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="premium-panel overflow-hidden">
                     <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-5 text-white">
                       <h3 className="text-lg font-bold">Ready for the next round?</h3>
                       <p className="text-primary-100 text-sm mt-1">
@@ -3126,7 +3124,7 @@ export default function InterviewDashboard() {
                       </p>
                       <button
                         onClick={() => setShowPurchaseFlow(true)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold hover:bg-primary-600 transition-all shadow-lg"
+                        className="btn-coach-primary flex w-full items-center justify-center gap-2 px-6 py-3 sm:w-auto"
                       >
                         <Crown className="w-4 h-4" />
                         Continue Your Interview Process
@@ -4730,7 +4728,7 @@ export default function InterviewDashboard() {
         {/* Combined Full Report Tab */}
         {activeTab === 'combined-report' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div className="premium-panel border border-slate-200/80 p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">Full Interview Loop Report</h2>
@@ -4739,7 +4737,7 @@ export default function InterviewDashboard() {
                 <button
                   onClick={loadCombinedReport}
                   disabled={combinedReportLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-all disabled:opacity-50"
+                  className="btn-coach-primary flex items-center gap-2 px-5 py-2.5 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${combinedReportLoading ? 'animate-spin' : ''}`} />
                   {combinedReport ? 'Regenerate' : 'Generate Report'}
@@ -4902,7 +4900,7 @@ export default function InterviewDashboard() {
             // TODO: Open feedback chat interface
             console.log('Feedback chat clicked')
           }}
-          className="w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+          className="group flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl"
           aria-label="Ask about feedback"
         >
           <MessageCircle className="w-6 h-6" />

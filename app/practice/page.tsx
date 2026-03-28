@@ -335,20 +335,20 @@ export default function PracticeDrillPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="app-shell flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
       </div>
     )
   }
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="app-shell">
         <Header />
-        <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="page-container max-w-lg py-16 text-center">
           <Preppi message="Nothing to drill right now — that's actually a good sign." size="lg" />
           <p className="mt-6 text-gray-500 text-sm">Complete an interview first, and we'll build your drill session from the feedback.</p>
-          <button onClick={() => router.push('/dashboard')} className="mt-6 px-6 py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 transition-colors">
+          <button onClick={() => router.push('/dashboard')} className="btn-coach-primary mt-6 px-6 py-3">
             Go to Dashboard
           </button>
         </div>
@@ -357,7 +357,7 @@ export default function PracticeDrillPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="app-shell">
       <Header />
 
       {/* CORRECT! flash overlay */}
@@ -372,7 +372,7 @@ export default function PracticeDrillPage() {
       {/* Confetti */}
       <Confetti active={confettiActive} />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="page-container max-w-2xl py-8">
 
         {/* XP bar — always visible during drill */}
         {phase !== 'intro' && phase !== 'summary' && (
@@ -381,9 +381,9 @@ export default function PracticeDrillPage() {
               <span>Question {currentIndex + 1} of {questions.length}</span>
               <span>{questions.length - currentIndex - 1} remaining</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+            <div className="mb-3 h-2 w-full rounded-full bg-slate-200">
               <div
-                className="h-2 bg-primary-500 rounded-full transition-all duration-500"
+                className="h-2 rounded-full bg-[linear-gradient(90deg,#2563eb_0%,#1d4ed8_100%)] transition-all duration-500"
                 style={{ width: `${((currentIndex) / questions.length) * 100}%` }}
               />
             </div>
@@ -415,7 +415,7 @@ export default function PracticeDrillPage() {
             </div>
             <button
               onClick={startDrill}
-              className="px-8 py-4 bg-primary-500 text-white rounded-2xl font-bold text-lg hover:bg-primary-600 active:scale-95 transition-all shadow-lg shadow-primary-200"
+              className="btn-coach-primary px-8 py-4 text-lg"
             >
               Start Drilling
             </button>
@@ -425,9 +425,9 @@ export default function PracticeDrillPage() {
         {/* Question screen */}
         {phase === 'question' && currentQuestion && (
           <div className="animate-slide-up">
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4">
+            <div className="premium-panel mb-4 overflow-hidden border border-slate-200/80">
               <div className="px-5 pt-5 pb-3">
-                <span className="inline-block px-2.5 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-semibold uppercase tracking-wide">
+                <span className="inline-block rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700">
                   {currentQuestion.criterion.replace(/_/g, ' ')}
                 </span>
               </div>
@@ -446,23 +446,23 @@ export default function PracticeDrillPage() {
               )}
             </div>
 
-            <div className="flex rounded-xl border border-gray-200 overflow-hidden mb-4 bg-white">
+            <div className="mb-4 flex overflow-hidden rounded-2xl border border-slate-200 bg-white">
               <button
                 onClick={() => setInputMode('text')}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${inputMode === 'text' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${inputMode === 'text' ? 'bg-primary-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
               >
                 Type answer
               </button>
               <button
                 onClick={() => setInputMode('voice')}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${inputMode === 'voice' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${inputMode === 'voice' ? 'bg-primary-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
               >
                 Voice answer
               </button>
             </div>
 
             {inputMode === 'text' && (
-              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+              <div className="premium-panel overflow-hidden border border-slate-200/80">
                 <textarea
                   value={textAnswer}
                   onChange={e => setTextAnswer(e.target.value)}
@@ -474,7 +474,7 @@ export default function PracticeDrillPage() {
                   <button
                     onClick={submitTextAnswer}
                     disabled={!textAnswer.trim() || submitting}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-xl font-semibold text-sm disabled:opacity-40 hover:bg-primary-600 active:scale-95 transition-all"
+                    className="btn-coach-primary flex items-center gap-2 px-5 py-2.5 text-sm disabled:opacity-40"
                   >
                     {submitting ? (
                       <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Scoring...</>
@@ -487,7 +487,7 @@ export default function PracticeDrillPage() {
             )}
 
             {inputMode === 'voice' && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
+              <div className="premium-panel border border-slate-200/80 p-8 text-center">
                 {submitting ? (
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
@@ -510,7 +510,7 @@ export default function PracticeDrillPage() {
                   <div className="flex flex-col items-center gap-4">
                     <button
                       onClick={startRecording}
-                      className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center hover:bg-primary-100 active:scale-95 transition-all"
+                      className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 transition-all hover:bg-primary-100 active:scale-95"
                     >
                       <Mic className="w-7 h-7 text-primary-500" />
                     </button>
@@ -525,7 +525,7 @@ export default function PracticeDrillPage() {
         {/* Result screen */}
         {phase === 'result' && result && (
           <div className="animate-slide-up">
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4">
+            <div className="premium-panel mb-4 overflow-hidden border border-slate-200/80">
               <ScoreAnimation score={result.score} passed={result.passed} />
               {result.feedbackSummary && (
                 <div className="px-5 pb-5 border-t border-gray-100">
@@ -544,7 +544,7 @@ export default function PracticeDrillPage() {
               </button>
               <button
                 onClick={nextQuestion}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-500 text-white rounded-xl text-sm font-semibold hover:bg-primary-600 active:scale-95 transition-all"
+                className="btn-coach-primary flex-1 justify-center gap-2 py-3 text-sm"
               >
                 {currentIndex + 1 >= questions.length ? 'See results' : 'Next question'}
                 <ChevronRight className="w-4 h-4" />
@@ -569,7 +569,7 @@ export default function PracticeDrillPage() {
               />
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+            <div className="premium-panel mb-6 border border-slate-200/80 p-6">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <Trophy className="w-6 h-6 text-amber-500" />
                 <span className="text-3xl font-extrabold text-amber-500 tabular-nums animate-pop-in">{xp} XP</span>
@@ -620,7 +620,7 @@ export default function PracticeDrillPage() {
               </button>
               <button
                 onClick={() => router.push(sessionId ? `/interview/feedback?sessionId=${sessionId}` : '/dashboard')}
-                className="flex items-center justify-center gap-2 py-3 bg-primary-500 text-white rounded-xl text-sm font-semibold hover:bg-primary-600 active:scale-95 transition-all"
+                className="btn-coach-primary flex items-center justify-center gap-2 py-3 text-sm"
               >
                 Back to report
                 <ChevronRight className="w-4 h-4" />

@@ -67,9 +67,9 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
   if (!likelihood && score === 0) return null
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="premium-panel overflow-hidden">
       {/* Preppi reaction header — mobile only */}
-      <div className="md:hidden px-6 pt-6 pb-4 bg-gray-50 border-b border-gray-100">
+      <div className="border-b border-slate-100 bg-slate-50/80 px-6 pb-4 pt-6 md:hidden">
         <Preppi
           message={getPreppiMessage(score, likelihood)}
           size="md"
@@ -78,10 +78,10 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
       </div>
 
       {/* Score reveal */}
-      <div className="px-6 py-8">
+      <div className="px-6 py-8 sm:px-8">
         <div className="flex flex-col sm:flex-row items-center gap-8">
           {/* Circular score */}
-          <div className="relative shrink-0">
+          <div className="relative shrink-0 rounded-[1.75rem] border border-slate-100 bg-white px-4 py-4 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
             <svg width="120" height="120" className="-rotate-90">
               {/* Background ring */}
               <circle
@@ -113,14 +113,15 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
 
           {/* Label + likelihood */}
           <div className="flex-1 text-center sm:text-left">
-            <h3 className={`text-2xl font-bold mb-1 ${colors.fill}`}>{getScoreLabel(score)}</h3>
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${colors.bg} ${colors.text} mb-4`}>
+            <div className="eyebrow mb-3">Round outcome</div>
+            <h3 className={`mb-1 text-3xl font-black ${colors.fill}`}>{getScoreLabel(score)}</h3>
+            <div className={`mb-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold ${colors.bg} ${colors.text}`}>
               {likelihood === 'likely'
                 ? <><CheckCircle className="w-4 h-4" />Likely to advance</>
                 : <><AlertCircle className="w-4 h-4" />Needs improvement to advance</>
               }
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm leading-7 text-slate-500">
               {likelihood === 'likely'
                 ? 'You cleared the HR Screen. Review your report and start the Hiring Manager interview.'
                 : 'Use the practice drill below to tighten your answers. Retakes are quick.'}
@@ -130,12 +131,12 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
 
         {/* Strengths & weaknesses */}
         {showDetails && (strengths.length > 0 || weaknesses.length > 0) && (
-          <div className={`mt-6 grid sm:grid-cols-2 gap-4 transition-all duration-300`}>
+          <div className="mt-6 grid gap-4 transition-all duration-300 sm:grid-cols-2">
             {strengths.length > 0 && (
-              <div className="bg-emerald-50 rounded-xl p-4">
+              <div className="rounded-[1.35rem] border border-emerald-100 bg-emerald-50/90 p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  <span className="text-sm font-semibold text-emerald-700">What went well</span>
+                  <span className="text-sm font-black text-emerald-700">What went well</span>
                 </div>
                 <ul className="space-y-1.5">
                   {strengths.slice(0, 3).map((s, i) => (
@@ -148,10 +149,10 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
               </div>
             )}
             {weaknesses.length > 0 && (
-              <div className="bg-amber-50 rounded-xl p-4">
+              <div className="rounded-[1.35rem] border border-amber-100 bg-amber-50/90 p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <AlertCircle className="w-4 h-4 text-amber-600" />
-                  <span className="text-sm font-semibold text-amber-700">Where to sharpen</span>
+                  <span className="text-sm font-black text-amber-700">Where to sharpen</span>
                 </div>
                 <ul className="space-y-1.5">
                   {weaknesses.slice(0, 3).map((w, i) => (

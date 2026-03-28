@@ -39,9 +39,9 @@ export default function InterviewTimeline({ currentStage, completedStages, isPre
   })
 
   return (
-    <div className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-3 overflow-x-auto">
+    <div className="border-b border-white/40 bg-white/66 backdrop-blur-xl">
+      <div className="page-container">
+        <div className="flex items-center justify-between gap-3 overflow-x-auto py-4">
           {stages.map((stage, i) => {
             const Icon = stage.icon
             const isLast = i === stages.length - 1
@@ -51,14 +51,14 @@ export default function InterviewTimeline({ currentStage, completedStages, isPre
                 {/* Stage node */}
                 <div className="flex items-center gap-2 shrink-0">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-2xl border transition-all ${
                       stage.status === 'completed'
-                        ? 'bg-emerald-500 text-white'
+                        ? 'border-emerald-300 bg-emerald-500 text-white'
                         : stage.status === 'current'
-                          ? 'bg-primary-500 text-white ring-4 ring-primary-100'
+                          ? 'border-primary-300 bg-primary-600 text-white ring-4 ring-primary-100'
                           : stage.status === 'locked'
-                            ? 'bg-gray-100 text-gray-400'
-                            : 'bg-gray-100 text-gray-500'
+                            ? 'border-slate-200 bg-slate-100 text-slate-400'
+                            : 'border-slate-200 bg-white text-slate-500'
                     }`}
                   >
                     {stage.status === 'completed' ? (
@@ -74,8 +74,8 @@ export default function InterviewTimeline({ currentStage, completedStages, isPre
                       stage.status === 'completed'
                         ? 'text-emerald-700'
                         : stage.status === 'current'
-                          ? 'text-primary-700 font-bold'
-                          : 'text-gray-400'
+                          ? 'font-bold text-primary-700'
+                          : 'text-slate-400'
                     }`}
                   >
                     {stage.label}
@@ -85,8 +85,8 @@ export default function InterviewTimeline({ currentStage, completedStages, isPre
                       stage.status === 'completed'
                         ? 'text-emerald-700'
                         : stage.status === 'current'
-                          ? 'text-primary-700 font-bold'
-                          : 'text-gray-400'
+                          ? 'font-bold text-primary-700'
+                          : 'text-slate-400'
                     }`}
                   >
                     {stage.shortLabel}
@@ -98,7 +98,7 @@ export default function InterviewTimeline({ currentStage, completedStages, isPre
                   <div className="flex-1 mx-2 sm:mx-3">
                     <div
                       className={`h-0.5 rounded-full ${
-                        stage.status === 'completed' ? 'bg-emerald-400' : 'bg-gray-200'
+                        stage.status === 'completed' ? 'bg-emerald-400' : 'bg-slate-200'
                       }`}
                     />
                   </div>

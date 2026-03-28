@@ -11,6 +11,14 @@ const config: Config = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        surface: 'var(--surface)',
+        panel: 'var(--panel)',
+        muted: 'var(--muted)',
+        border: 'var(--border)',
+        interview: 'var(--interview)',
+        coach: 'var(--coach)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
         // Slate-Indigo — primary brand color
         primary: {
           50:  '#ECEEF8',
@@ -43,4 +51,3 @@ const config: Config = {
   plugins: [],
 }
 export default config
-

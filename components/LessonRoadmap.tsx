@@ -19,15 +19,6 @@ const ROOT_CAUSE_ICONS: Record<string, string> = {
   too_short: '📏',
 }
 
-const ROOT_CAUSE_COLORS: Record<string, { bg: string; border: string; text: string; pill: string }> = {
-  poor_structure:      { bg: 'bg-blue-50',   border: 'border-blue-200',   text: 'text-blue-700',   pill: 'bg-blue-100 text-blue-700' },
-  lack_of_specificity: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', pill: 'bg-purple-100 text-purple-700' },
-  weak_communication:  { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', pill: 'bg-orange-100 text-orange-700' },
-  missing_knowledge:   { bg: 'bg-cyan-50',   border: 'border-cyan-200',   text: 'text-cyan-700',   pill: 'bg-cyan-100 text-cyan-700' },
-  off_topic:           { bg: 'bg-rose-50',   border: 'border-rose-200',   text: 'text-rose-700',   pill: 'bg-rose-100 text-rose-700' },
-  too_short:           { bg: 'bg-emerald-50',border: 'border-emerald-200',text: 'text-emerald-700',pill: 'bg-emerald-100 text-emerald-700' },
-}
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface WeaknessArea {
@@ -68,6 +59,9 @@ export default function LessonRoadmap({
   const [showConfetti, setShowConfetti] = useState(false)
 
   const allDone = completedSet.size === weaknesses.length
+  const nextIdx = weaknesses.findIndex((_, idx) => !completedSet.has(idx))
+  const activeWeakness = nextIdx >= 0 ? weaknesses[nextIdx] : null
+  const remainingLater = Math.max(0, weaknesses.length - completedSet.size - (allDone ? 0 : 1))
 
   const handleLessonComplete = useCallback((passed: boolean, xp: number) => {
     if (activeIdx === null) return
@@ -149,82 +143,83 @@ export default function LessonRoadmap({
             </div>
           </div>
 
-          {/* Lesson list */}
-          <div className="space-y-4">
-            {weaknesses.map((weakness, idx) => {
-              const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
-              const bundle = getBundleForRootCause(rootCause)
-              const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
-              const colors = ROOT_CAUSE_COLORS[rootCause] || ROOT_CAUSE_COLORS.poor_structure
-              const isCompleted = completedSet.has(idx)
-              const isPassed = passedSet.has(idx)
-              const isLocked = idx > 0 && !completedSet.has(idx - 1)
-
-              return (
-                <button
-                  key={idx}
-                  onClick={() => !isLocked && setActiveIdx(idx)}
-                  disabled={isLocked}
-                  className={`w-full rounded-[1.55rem] border p-5 text-left transition-all duration-200 ${
-                    isLocked ? 'cursor-default opacity-50' : 'cursor-pointer active:scale-[0.99] hover:shadow-[0_18px_30px_rgba(15,23,42,0.08)]'
-                  } ${
-                    isCompleted && isPassed
-                      ? 'border-emerald-200 bg-emerald-50/80'
-                      : isCompleted
-                      ? 'border-amber-200 bg-amber-50'
-                      : 'border-slate-200/80 bg-white/96'
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Icon circle */}
-                    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] text-2xl ${
-                      isCompleted && isPassed
-                        ? 'bg-emerald-500'
-                        : isCompleted
-                        ? 'bg-amber-400'
-                        : 'border border-violet-200 bg-violet-50 text-violet-700'
-                    }`} style={isCompleted && isPassed ? { boxShadow: '0 4px 0 #166534' } : isCompleted ? { boxShadow: '0 4px 0 #92400e' } : {}}>
-                      {isCompleted && isPassed
-                        ? <CheckCircle className="w-7 h-7 text-white" />
-                        : <span>{icon}</span>
-                      }
-                    </div>
-
-                    {/* Text */}
-                    <div className="flex-1 min-w-0">
-                      <div className="mb-1 flex items-center gap-2">
-                        <p className={`text-sm font-extrabold leading-tight ${
-                          isCompleted && isPassed ? 'text-emerald-700' : isCompleted ? 'text-amber-800' : 'text-slate-900'
-                        }`}>
-                          {bundle.displayName}
-                        </p>
-                        {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400" />}
-                      </div>
-                      <p className="text-xs text-gray-500 leading-snug line-clamp-2">{weakness.criterion}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold text-violet-700">
-                          4-step coaching path
-                        </span>
-                        {weakness.score != null && (
-                          <span className="text-[10px] text-gray-400 font-semibold">Score {weakness.score}/10</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Arrow */}
-                    {!isLocked && !isCompleted && (
-                      <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
-                    )}
-                    {isCompleted && (
-                      <span className={`shrink-0 text-[10px] font-extrabold ${isPassed ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {isPassed ? 'Done ✓' : 'Retry'}
-                      </span>
-                    )}
+          {/* Recommended first step */}
+          {activeWeakness && (() => {
+            const rootCause = getRootCauseForCriterion(activeWeakness.criterion, activeWeakness.rootCause)
+            const bundle = getBundleForRootCause(rootCause)
+            const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
+            return (
+              <button
+                onClick={() => setActiveIdx(nextIdx)}
+                className="w-full rounded-[1.6rem] border border-slate-200/80 bg-white/98 p-5 text-left shadow-[0_18px_30px_rgba(15,23,42,0.08)] transition-all hover:shadow-[0_24px_38px_rgba(15,23,42,0.1)] active:scale-[0.99]"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="rounded-full bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-violet-700">
+                    Recommended First
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-slate-400" />
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] border border-violet-200 bg-violet-50 text-2xl text-violet-700">
+                    <span>{icon}</span>
                   </div>
-                </button>
-              )
-            })}
-          </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-lg font-black text-slate-900">{bundle.displayName}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{activeWeakness.criterion}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold text-violet-700">
+                        4-step coaching path
+                      </span>
+                      {activeWeakness.score != null && (
+                        <span className="text-[10px] font-semibold text-gray-400">Score {activeWeakness.score}/10</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            )
+          })()}
+
+          {!allDone && remainingLater > 0 && (
+            <div className="mt-4 rounded-[1.4rem] border border-slate-200 bg-white/80 px-4 py-4">
+              <p className="text-sm font-semibold text-slate-700">
+                {remainingLater} more area{remainingLater === 1 ? '' : 's'} will appear after this one.
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Focus on one fix at a time. The full report still contains everything.
+              </p>
+            </div>
+          )}
+
+          {completedSet.size > 0 && (
+            <div className="mt-5">
+              <p className="mb-3 text-xs font-black uppercase tracking-[0.22em] text-slate-400">Completed So Far</p>
+              <div className="space-y-3">
+                {weaknesses.map((weakness, idx) => {
+                  if (!completedSet.has(idx)) return null
+                  const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+                  const bundle = getBundleForRootCause(rootCause)
+                  const isPassed = passedSet.has(idx)
+                  return (
+                    <div key={idx} className={`flex items-center gap-3 rounded-[1.2rem] border px-4 py-3 ${
+                      isPassed ? 'border-emerald-200 bg-emerald-50/80' : 'border-amber-200 bg-amber-50'
+                    }`}>
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${isPassed ? 'bg-emerald-500' : 'bg-amber-400'}`}>
+                        {isPassed ? <CheckCircle className="h-4 w-4 text-white" /> : <Lock className="h-4 w-4 text-amber-900" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-900">{bundle.displayName}</p>
+                        <p className="text-xs text-slate-500 line-clamp-1">{weakness.criterion}</p>
+                      </div>
+                      <span className={`text-xs font-bold ${isPassed ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {isPassed ? 'Done' : 'Retry'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Bottom actions */}
           <div className="mt-8">

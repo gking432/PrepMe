@@ -12,7 +12,6 @@ import {
   FileText,
   RotateCcw,
   Crown,
-  Flame,
   MessageSquare,
 } from 'lucide-react'
 import Confetti from '@/components/Confetti'
@@ -40,8 +39,7 @@ interface PreppiWalkthroughProps {
 type WalkthroughState =
   | 'intro'
   | 'score_reveal'
-  | 'strength_card'
-  | 'weakness_card'
+  | 'summary_card'
   | 'fork'
   | 'lesson_roadmap'
   | 'complete'
@@ -87,22 +85,6 @@ const PREPPI_MESSAGES = {
   fork:      "Practice is the fastest way to improve while the interview is still fresh. The full report stays available.",
   complete:  "You finished the coaching path. Let's carry that into the next attempt.",
 }
-
-// ── Badge definitions ────────────────────────────────────────────────────────
-
-interface Badge {
-  id: string
-  name: string
-  icon: string
-  description: string
-}
-
-const BADGES: Badge[] = [
-  { id: 'first_steps',   name: 'First Steps',   icon: '🎯', description: 'Completed your first walkthrough' },
-  { id: 'quick_learner', name: 'Quick Learner', icon: '⚡', description: 'Passed a practice on first try' },
-  { id: 'perfect_run',   name: 'Perfect Run',   icon: '🌟', description: 'All exercises correct in a lesson' },
-  { id: 'comeback_kid',  name: 'Comeback Kid',  icon: '🔥', description: 'Improved a weak area' },
-]
 
 // ── Transcript Overlay ────────────────────────────────────────────────────────
 
@@ -190,17 +172,11 @@ export default function PreppiWalkthrough({
 
   // Flow state
   const [state, setState]                   = useState<WalkthroughState>('intro')
-  const [strengthIndex, setStrengthIndex]   = useState(0)
-  const [weaknessIndex, setWeaknessIndex]   = useState(0)
   const [animKey, setAnimKey]               = useState(0)
 
   // Score reveal
   const [scoreRevealed, setScoreRevealed]   = useState(false)
   const [displayScore, setDisplayScore]     = useState(0)
-
-  // XP
-  const [xp, setXp]                         = useState(0)
-  const [xpDelta, setXpDelta]               = useState<number | null>(null)
 
   // Confetti
   const [confettiActive, setConfettiActive] = useState(false)
@@ -211,29 +187,29 @@ export default function PreppiWalkthrough({
   // Practice tracking (used in complete screen)
   const [passedAreas, setPassedAreas]       = useState<string[]>([])
   const [practicedCount, setPracticedCount] = useState(0)
-  const [earnedBadges, setEarnedBadges]     = useState<Badge[]>([])
-  const [totalXpFromPractice, setTotalXpFromPractice] = useState(0)
 
   // Data
   const sixAreas      = useMemo(() => getSixAreas(feedback, currentStage), [feedback, currentStage])
-  const strengths     = useMemo(() => sixAreas?.what_went_well   || [], [sixAreas])
+  const strengths     = useMemo(() => sixAreas?.what_went_well || [], [sixAreas])
   const weaknesses    = useMemo(() => sixAreas?.what_needs_improve || [], [sixAreas])
   const overallScore  = feedback?.overall_score || 0
   const scoreColors   = getScoreColor(overallScore)
   const interviewerGender = useMemo(() => getInterviewerGender(sessionId), [sessionId])
+  const primaryStrength = strengths[0]
+  const primaryWeakness = weaknesses[0]
+  const additionalWeaknessCount = Math.max(0, weaknesses.length - 1)
 
   // Progress (only for the report walkthrough, not the practice phase)
-  const totalSteps    = 1 + 1 + strengths.length + weaknesses.length + 1
+  const totalSteps    = 4
   const currentStep   = useMemo(() => {
     switch (state) {
       case 'intro':          return 0
       case 'score_reveal':   return 1
-      case 'strength_card':  return 2 + strengthIndex
-      case 'weakness_card':  return 2 + strengths.length + weaknessIndex
-      case 'fork':           return totalSteps - 1
+      case 'summary_card':   return 2
+      case 'fork':           return 3
       default:               return totalSteps
     }
-  }, [state, strengthIndex, weaknessIndex, strengths.length, totalSteps])
+  }, [state, totalSteps])
 
   const progressPercent = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0
 
@@ -266,13 +242,6 @@ export default function PreppiWalkthrough({
     return () => clearTimeout(t)
   }, [state, overallScore, ding])
 
-  // Award XP with animation
-  const awardXp = useCallback((amount: number) => {
-    setXp(prev => prev + amount)
-    setXpDelta(amount)
-    setTimeout(() => setXpDelta(null), 1100)
-  }, [])
-
   const markSeen = useCallback(() => {
     if (sessionId) localStorage.setItem(`walkthrough_seen_${sessionId}`, 'true')
   }, [sessionId])
@@ -285,52 +254,25 @@ export default function PreppiWalkthrough({
         setState('score_reveal')
         break
       case 'score_reveal':
-        awardXp(10)
-        if (strengths.length > 0) {
-          setState('strength_card'); setStrengthIndex(0)
-        } else if (weaknesses.length > 0) {
-          setState('weakness_card'); setWeaknessIndex(0)
-        } else {
-          setState('fork')
-        }
+        setState('summary_card')
         break
-      case 'strength_card':
-        awardXp(5)
-        if (strengthIndex < strengths.length - 1) {
-          setStrengthIndex(i => i + 1)
-        } else if (weaknesses.length > 0) {
-          setState('weakness_card'); setWeaknessIndex(0)
-        } else {
-          setState('fork')
-        }
-        break
-      case 'weakness_card':
-        awardXp(5)
-        if (weaknessIndex < weaknesses.length - 1) {
-          setWeaknessIndex(i => i + 1)
-        } else {
-          setState('fork'); markSeen()
-        }
+      case 'summary_card':
+        setState('fork')
         break
       case 'fork':
         break
     }
-  }, [state, strengthIndex, weaknessIndex, strengths.length, weaknesses.length, awardXp, markSeen])
+  }, [state])
 
   // When LessonRoadmap completes all practice
   const handleAllPracticeComplete = useCallback((totalXp: number) => {
-    setTotalXpFromPractice(totalXp - xp)
     setConfettiActive(true)
     setTimeout(() => setConfettiActive(false), 3500)
     ding()
-    setEarnedBadges(prev => {
-      const next = [...prev]
-      if (!next.find(b => b.id === 'first_steps')) next.push(BADGES.find(b => b.id === 'first_steps')!)
-      return next
-    })
+    setPassedAreas([primaryWeakness?.criterion || 'Recommended path'])
+    setPracticedCount(1)
     setState('complete')
-    awardXp(totalXp - xp > 0 ? totalXp - xp : 0)
-  }, [xp, ding, awardXp])
+  }, [ding, primaryWeakness])
 
   // Preppi message
   const preppiMessage = useMemo(() => {
@@ -341,13 +283,12 @@ export default function PreppiWalkthrough({
         if (overallScore >= 7) return PREPPI_MESSAGES.scoreHigh
         if (overallScore >= 5) return PREPPI_MESSAGES.scoreMid
         return PREPPI_MESSAGES.scoreLow
-      case 'strength_card': return PREPPI_MESSAGES.strength(strengths[strengthIndex]?.criterion || 'this area')
-      case 'weakness_card': return PREPPI_MESSAGES.weakness
+      case 'summary_card': return primaryWeakness ? PREPPI_MESSAGES.weakness : PREPPI_MESSAGES.fork
       case 'fork':          return PREPPI_MESSAGES.fork
       case 'complete':      return PREPPI_MESSAGES.complete
       default:              return ''
     }
-  }, [state, scoreRevealed, overallScore, strengthIndex, strengths])
+  }, [state, scoreRevealed, overallScore, primaryWeakness])
 
   // ── Lesson Roadmap takeover ────────────────────────────────────────────────
 
@@ -357,7 +298,7 @@ export default function PreppiWalkthrough({
         weaknesses={weaknesses}
         sessionId={sessionId}
         currentStage={currentStage}
-        priorXp={xp}
+        priorXp={0}
         onAllComplete={handleAllPracticeComplete}
         onViewReport={() => { markSeen(); onOpenDetailedReport() }}
         onClose={() => setState('fork')}
@@ -372,7 +313,7 @@ export default function PreppiWalkthrough({
 
   // ── Current weakness for transcript ───────────────────────────────────────
 
-  const currentWeakness     = weaknesses[weaknessIndex]
+  const currentWeakness     = primaryWeakness
   const transcriptQuestion  = currentWeakness?.evidence?.[0]?.question || ''
   const transcriptExcerpt   = currentWeakness?.evidence?.[0]?.excerpt  || ''
   const hasTranscriptData   = !!(transcriptQuestion && transcriptExcerpt)
@@ -380,7 +321,7 @@ export default function PreppiWalkthrough({
   // ── Main render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#fbfdff_0%,#f1f7ff_100%)]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]">
       <Confetti active={confettiActive} />
 
       {/* Transcript overlay */}
@@ -395,7 +336,7 @@ export default function PreppiWalkthrough({
 
       {/* ── Top Bar ── */}
       <div className="shrink-0 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-6xl items-center gap-3">
+        <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
         <button
           onClick={onSkipToResults}
           className="text-gray-300 hover:text-gray-500 transition-colors p-1"
@@ -412,56 +353,27 @@ export default function PreppiWalkthrough({
           />
         </div>
 
-        {/* XP counter */}
-        <div className="relative flex items-center gap-1.5 shrink-0">
-          <Flame className="w-5 h-5 text-orange-400" />
-          <span className={`text-sm font-extrabold text-orange-500 tabular-nums ${xpDelta ? 'animate-xp-glow' : ''}`}>
-            {xp}
-          </span>
-          {xpDelta && (
-            <span className="animate-fly-up text-xs font-bold text-orange-400 absolute ml-8 pointer-events-none">
-              +{xpDelta}
-            </span>
-          )}
-        </div>
+        <div className="w-6 shrink-0" />
         </div>
       </div>
 
       {/* ── Main Content ── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="flex min-h-full">
-
-          {/* Desktop sidebar */}
-          <div className="hidden w-48 shrink-0 flex-col items-center justify-center border-r border-slate-100 bg-[linear-gradient(180deg,#f5f9ff_0%,#ffffff_100%)] p-6 md:flex lg:w-56">
-            <div className="w-24 h-24 lg:w-32 lg:h-32 animate-preppi-bounce">
-              <PreppiSVG />
-            </div>
-            <div className="mt-4 max-w-[180px] rounded-2xl rounded-bl-sm border border-slate-200 bg-white/96 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)] animate-bubble-pop">
-              <p className="text-xs leading-snug text-slate-700">{preppiMessage}</p>
-            </div>
-          </div>
-
-          {/* Content column */}
-          <div className="flex-1 flex flex-col items-center justify-center px-5 py-8 md:px-12 md:py-12">
+        <div className="flex min-h-full flex-col items-center justify-center px-5 py-8 md:px-12 md:py-12">
 
             {/* Mobile Preppi */}
-            <div className="md:hidden mb-6" key={`preppi-${animKey}`}>
-              <Preppi message={preppiMessage} size="lg" showOnDesktop={false} className="animate-preppi-bounce" />
+            <div className="mb-6" key={`preppi-${animKey}`}>
+              <Preppi message={preppiMessage} size="lg" showOnDesktop className="animate-preppi-bounce justify-center" />
             </div>
 
             {/* ── INTRO ── */}
             {state === 'intro' && (
               <div className="w-full max-w-md text-center animate-slide-up" key={`intro-${animKey}`}>
-                <div className="w-32 h-32 mx-auto mb-6 hidden md:block">
-                  <div className="w-full h-full bg-accent-100 rounded-full flex items-center justify-center">
-                    <span className="text-5xl">👋</span>
-                  </div>
-                </div>
                 <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
                   Your Results Are In!
                 </h1>
                 <p className="text-gray-500 text-sm md:text-base mb-2">
-                  Let&apos;s walk through how you did and get you ready for the next round.
+                  A quick review of what landed well, what needs work, and what to do next.
                 </p>
               </div>
             )}
@@ -499,106 +411,59 @@ export default function PreppiWalkthrough({
               </div>
             )}
 
-            {/* ── STRENGTH CARD ── */}
-            {state === 'strength_card' && strengths[strengthIndex] && (
-              <div className="w-full max-w-md animate-slide-in-right" key={`str-${strengthIndex}-${animKey}`}>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-emerald-600" />
+            {/* ── SUMMARY CARD ── */}
+            {state === 'summary_card' && (
+              <div className="w-full max-w-2xl animate-slide-in-right" key={`summary-${animKey}`}>
+                <div className="premium-panel p-6 md:p-7">
+                  <div className="mb-5">
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">What mattered most</p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">Here is the fastest path to a better next round.</h3>
                   </div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-500">
-                    Strength {strengthIndex + 1} of {strengths.length}
-                  </p>
-                </div>
-                <div className="bg-white border-2 border-emerald-200 rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-extrabold text-gray-900 mb-2">
-                    {strengths[strengthIndex].criterion}
-                  </h3>
-                  {strengths[strengthIndex].score != null && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 rounded-full transition-all duration-700"
-                          style={{ width: `${strengths[strengthIndex].score * 10}%` }}
-                        />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50/80 p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
+                          <CheckCircle className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <p className="text-xs font-black uppercase tracking-wide text-emerald-600">What helped</p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-600 tabular-nums">
-                        {strengths[strengthIndex].score}/10
-                      </span>
+                      <h4 className="text-base font-black text-slate-900">{primaryStrength?.criterion || 'You had at least one solid area.'}</h4>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {primaryStrength?.feedback || 'The interview showed some credible signal. Keep that part stable while you improve the weaker answer.'}
+                      </p>
                     </div>
-                  )}
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {strengths[strengthIndex].feedback}
-                  </p>
-                  {strengths[strengthIndex].evidence?.[0]?.excerpt && (
-                    <div className="mt-4 bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-                      <p className="text-xs text-emerald-600 font-semibold mb-1">What you said</p>
-                      <p className="text-xs text-emerald-800 italic leading-relaxed">
-                        &ldquo;{strengths[strengthIndex].evidence[0].excerpt.substring(0, 150)}…&rdquo;
+
+                    <div className="rounded-[1.4rem] border border-amber-200 bg-amber-50/80 p-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
+                          <AlertTriangle className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <p className="text-xs font-black uppercase tracking-wide text-amber-600">Fix first</p>
+                      </div>
+                      <h4 className="text-base font-black text-slate-900">{currentWeakness?.criterion || 'No major practice area surfaced.'}</h4>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {currentWeakness?.feedback || 'If there is no major weakness here, move to the full report and review the details.'}
+                      </p>
+                      {hasTranscriptData && (
+                        <button
+                          onClick={() => setShowTranscript(true)}
+                          className="mt-3 flex items-center gap-2 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-800"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          See what you said
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {additionalWeaknessCount > 0 && (
+                    <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-sm text-slate-600">
+                        There {additionalWeaknessCount === 1 ? 'is' : 'are'} also {additionalWeaknessCount} more area{additionalWeaknessCount === 1 ? '' : 's'} in the full report. Practice will start with the highest-priority one.
                       </p>
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* ── WEAKNESS CARD ── */}
-            {state === 'weakness_card' && currentWeakness && (
-              <div className="w-full max-w-md animate-slide-in-right" key={`weak-${weaknessIndex}-${animKey}`}>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-amber-500">
-                    Area to Improve {weaknessIndex + 1} of {weaknesses.length}
-                  </p>
-                </div>
-
-                <div className="bg-white border-2 border-amber-200 rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-extrabold text-gray-900 mb-2">
-                    {currentWeakness.criterion}
-                  </h3>
-
-                  {currentWeakness.score != null && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${
-                            currentWeakness.score >= 5 ? 'bg-amber-400' : 'bg-orange-400'
-                          }`}
-                          style={{ width: `${currentWeakness.score * 10}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-amber-600 tabular-nums">
-                        {currentWeakness.score}/10
-                      </span>
-                    </div>
-                  )}
-
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                    {currentWeakness.feedback}
-                  </p>
-
-                  {/* View Transcript button */}
-                  {hasTranscriptData && (
-                    <button
-                      onClick={() => setShowTranscript(true)}
-                      className="mb-4 flex items-center gap-2 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-800"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      See what you said
-                    </button>
-                  )}
-
-                  {/* Practice teaser */}
-                  <div className="rounded-xl border border-violet-200 bg-violet-50 p-3">
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-violet-700" />
-                      <p className="text-xs font-semibold text-violet-700">
-                        Practice lesson ready for this skill!
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -610,10 +475,10 @@ export default function PreppiWalkthrough({
                   <Star className="w-10 h-10 text-violet-700" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-2">
-                  Review Complete!
+                  Choose the next step.
                 </h2>
                 <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">
-                  Your detailed report is saved. Ready to level up your weak areas?
+                  Start with one recommended coaching path now, or open the full report.
                 </p>
 
                 {weaknesses.length > 0 && (
@@ -622,7 +487,7 @@ export default function PreppiWalkthrough({
                     className="btn-coach-primary mb-3 flex w-full items-center justify-center gap-2 py-4 text-base"
                   >
                     <Zap className="w-5 h-5" />
-                    Let&apos;s Start Practicing!
+                    Start Recommended Practice
                   </button>
                 )}
 
@@ -656,49 +521,23 @@ export default function PreppiWalkthrough({
                   Session Complete!
                 </h2>
                 <p className="text-sm text-gray-500 mb-6">
-                  You&apos;ve reviewed your feedback and practiced your weak areas.
+                  You finished the recommended coaching path for this round.
                 </p>
 
                 {/* Stats */}
-                <div className="flex items-center justify-center gap-6 mb-6">
-                  <div className="text-center">
-                    <p className="text-2xl font-extrabold text-orange-500">{xp}</p>
-                    <p className="text-xs text-gray-400 font-semibold">Total XP</p>
-                  </div>
-                  <div className="w-px h-10 bg-gray-200" />
+                <div className="mb-6 flex items-center justify-center gap-6">
                   <div className="text-center">
                     <p className="text-2xl font-extrabold text-emerald-600">
-                      {passedAreas.length}/{weaknesses.length}
+                      {Math.max(passedAreas.length, 1)}
                     </p>
-                    <p className="text-xs text-gray-400 font-semibold">Skills Passed</p>
+                    <p className="text-xs font-semibold text-gray-400">Path Completed</p>
                   </div>
-                  <div className="w-px h-10 bg-gray-200" />
+                  <div className="h-10 w-px bg-gray-200" />
                   <div className="text-center">
-                    <p className="text-2xl font-extrabold text-violet-700">{practicedCount || weaknesses.length}</p>
-                    <p className="text-xs text-gray-400 font-semibold">Practiced</p>
+                    <p className="text-2xl font-extrabold text-violet-700">{practicedCount || 1}</p>
+                    <p className="text-xs font-semibold text-gray-400">Area Practiced</p>
                   </div>
                 </div>
-
-                {/* Badges */}
-                {earnedBadges.length > 0 && (
-                  <div className="mb-6">
-                    <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Badges Earned</p>
-                    <div className="flex items-center justify-center gap-3">
-                      {earnedBadges.map((badge, i) => (
-                        <div
-                          key={badge.id}
-                          className="flex flex-col items-center animate-badge-reveal"
-                          style={{ animationDelay: `${i * 200}ms` }}
-                        >
-                          <div className="w-14 h-14 bg-amber-50 border-2 border-amber-200 rounded-full flex items-center justify-center text-2xl shadow-sm">
-                            {badge.icon}
-                          </div>
-                          <span className="text-[10px] font-bold text-gray-500 mt-1">{badge.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Actions */}
                 <div className="space-y-3">
@@ -719,7 +558,7 @@ export default function PreppiWalkthrough({
                   {!isPremium && (
                     <button
                       onClick={onUnlockNextStage}
-                      className="w-full btn-duo-white py-3.5 text-sm flex items-center justify-center gap-2"
+                      className="btn-coach-secondary w-full py-3.5 text-sm flex items-center justify-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
                       Unlock Next Stage
@@ -729,7 +568,6 @@ export default function PreppiWalkthrough({
               </div>
             )}
           </div>
-        </div>
       </div>
 
       {/* ── Bottom-anchored Continue Button ── */}

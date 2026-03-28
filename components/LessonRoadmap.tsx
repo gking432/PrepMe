@@ -134,9 +134,9 @@ export default function LessonRoadmap({
   }
 
   const preppiMessage = allDone
-    ? 'Every coaching path is complete. Review your report or retake the round.'
+    ? 'Every coaching path is complete. Review your feedback or retake the round.'
     : completedSet.size === 0
-    ? 'Pick a module and work through it. You can always come back to this map.'
+    ? 'Start with the highlighted module. You can come back here any time.'
     : `${weaknesses.length - completedSet.size} coaching path${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left.`
 
   return (
@@ -164,8 +164,8 @@ export default function LessonRoadmap({
         <div className="mx-auto flex h-full max-w-6xl flex-col px-4 py-6">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Habitat</p>
-              <h2 className="mt-2 text-3xl font-black text-slate-900">Choose a coaching module and start rebuilding signal.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>
+              <h2 className="mt-2 text-3xl font-black text-slate-900">Pick a module and fix what held this round back.</h2>
             </div>
             <div className="rounded-[1.4rem] border border-violet-200 bg-white/80 px-5 py-3 shadow-[0_14px_28px_rgba(76,29,149,0.08)]">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Progress</p>
@@ -231,7 +231,7 @@ export default function LessonRoadmap({
                             ? 'bg-violet-100 text-violet-700'
                             : 'bg-slate-100 text-slate-500'
                         }`}>
-                          {isCompleted ? (isPassed ? 'Mastered' : 'Retry') : isRecommended ? 'Start Here' : 'Module'}
+                          {isCompleted ? (isPassed ? 'Mastered' : 'Retry') : isRecommended ? 'Recommended' : 'Module'}
                         </span>
                       </div>
                       <p className="text-base font-black text-slate-900">{bundle.displayName}</p>
@@ -248,10 +248,30 @@ export default function LessonRoadmap({
 
             <div className="flex flex-col gap-4">
               <div className="rounded-[1.7rem] border border-violet-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(76,29,149,0.08)]">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">How This Works</p>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Start Here</p>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Each module drills one interview weakness three different ways, then makes you answer the original question again out loud.
+                  The highlighted module is the fastest way to improve this round. Finish it first, then come back here for the rest.
                 </p>
+                <div className="mt-4 rounded-[1.2rem] border border-violet-200 bg-violet-50 px-4 py-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-violet-600">Recommended Module</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">
+                    {nextIdx >= 0 ? getBundleForRootCause(getRootCauseForCriterion(weaknesses[nextIdx]?.criterion, weaknesses[nextIdx]?.rootCause)).displayName : 'All modules complete'}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-[1.7rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">How Practice Works</p>
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
+                    1. Learn the pattern
+                  </div>
+                  <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
+                    2. Drill it three different ways
+                  </div>
+                  <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
+                    3. Re-answer the original question out loud
+                  </div>
+                </div>
               </div>
               <div className="rounded-[1.7rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Readiness</p>

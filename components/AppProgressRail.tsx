@@ -15,6 +15,11 @@ interface RailCard {
 interface AppProgressRailProps {
   cards: RailCard[]
   theme?: 'dark' | 'light'
+  header?: {
+    eyebrow?: string
+    title: string
+    subtitle?: string
+  }
 }
 
 function progressBarClass(tone: RailItem['tone']) {
@@ -30,7 +35,7 @@ function progressBarClass(tone: RailItem['tone']) {
   }
 }
 
-export default function AppProgressRail({ cards, theme = 'dark' }: AppProgressRailProps) {
+export default function AppProgressRail({ cards, theme = 'dark', header }: AppProgressRailProps) {
   const isLight = theme === 'light'
   return (
     <aside className={`hidden lg:order-3 lg:block ${
@@ -39,6 +44,25 @@ export default function AppProgressRail({ cards, theme = 'dark' }: AppProgressRa
         : 'border-l border-white/8 bg-[#101720]'
     }`}>
       <div className="sticky top-0 flex min-h-screen w-[320px] flex-col gap-5 px-5 py-6">
+        {header && (
+          <div
+            className={`rounded-[1.9rem] border p-5 ${
+              isLight
+                ? 'border-violet-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f7f2ff_100%)] shadow-[0_14px_28px_rgba(76,29,149,0.08)]'
+                : 'border-white/8 bg-white/[0.04]'
+            }`}
+          >
+            {header.eyebrow && (
+              <p className={`text-[11px] font-black uppercase tracking-[0.24em] ${isLight ? 'text-violet-500' : 'text-violet-300'}`}>
+                {header.eyebrow}
+              </p>
+            )}
+            <h2 className={`mt-2 text-xl font-black leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>{header.title}</h2>
+            {header.subtitle && (
+              <p className={`mt-2 text-sm leading-6 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{header.subtitle}</p>
+            )}
+          </div>
+        )}
         {cards.map((card) => (
           <div
             key={card.title}

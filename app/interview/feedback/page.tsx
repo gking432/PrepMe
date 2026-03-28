@@ -1909,6 +1909,11 @@ export default function InterviewDashboard() {
       tone: stage.status === 'complete' ? 'success' as const : stage.status === 'current' ? 'brand' as const : 'default' as const,
     })),
   }
+  const processHeader = {
+    eyebrow: 'Interview Process',
+    title: currentSessionData?.job_title || 'Target Role',
+    subtitle: currentSessionData?.company_name ? `at ${currentSessionData.company_name}` : 'Current interview track',
+  }
   const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]"
   const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]"
   const prepareRailCards = [
@@ -2118,7 +2123,7 @@ export default function InterviewDashboard() {
             footerText="Review everything first. Practice starts after the full walkthrough."
           />
         </div>
-        <AppProgressRail cards={prepareRailCards} theme="light" />
+        <AppProgressRail cards={prepareRailCards} theme="light" header={processHeader} />
         <div className="lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
           <PreppiWalkthrough
             embeddedDesktop
@@ -2166,7 +2171,7 @@ export default function InterviewDashboard() {
           navItemsOverride={feedbackNavItems}
           footerText="Prepare is the full report workspace. Practice stays separate."
         />
-        <AppProgressRail cards={reportRailCards} theme="light" />
+        <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
         <div className={shellCenterClasses}>
           <CoachReportWorkspace
             feedback={feedback}
@@ -2201,7 +2206,7 @@ export default function InterviewDashboard() {
           navItemsOverride={feedbackNavItems}
           footerText="Use this as the practice home base. Finish a module, then come back up for air."
         />
-        <AppProgressRail cards={practiceRailCards} theme="light" />
+        <AppProgressRail cards={practiceRailCards} theme="light" header={processHeader} />
         <div className={shellCenterClasses}>
           <LessonRoadmap
             embeddedDesktop

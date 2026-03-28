@@ -32,6 +32,7 @@ interface PreppiWalkthroughProps {
   onRetakeInterview: () => void
   onUnlockNextStage: () => void
   onSkipToResults: () => void
+  embeddedDesktop?: boolean
 }
 
 // ── Flow states ──────────────────────────────────────────────────────────────
@@ -167,6 +168,7 @@ export default function PreppiWalkthrough({
   onRetakeInterview,
   onUnlockNextStage,
   onSkipToResults,
+  embeddedDesktop = false,
 }: PreppiWalkthroughProps) {
   const { ding } = useGameFeedback()
 
@@ -321,7 +323,9 @@ export default function PreppiWalkthrough({
   // ── Main render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]">
+    <div className={`fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] ${
+      embeddedDesktop ? 'lg:relative lg:inset-auto lg:min-h-full' : ''
+    }`}>
       <Confetti active={confettiActive} />
 
       {/* Transcript overlay */}

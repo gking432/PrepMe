@@ -1893,6 +1893,8 @@ export default function InterviewDashboard() {
       ],
     },
   ]
+  const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]"
+  const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]"
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
@@ -1900,29 +1902,39 @@ export default function InterviewDashboard() {
   // ── Preppi Walkthrough: takes over the entire screen on first visit ──
   if (hasFeedback && walkthroughActive) {
     return (
-      <PreppiWalkthrough
-        feedback={feedback}
-        structuredTranscript={structuredTranscript}
-        currentSessionData={currentSessionData}
-        currentStage={currentStage}
-        isPremium={isPremium}
-        sessionId={currentSessionData?.id}
-        onOpenDetailedReport={() => {
-          setWalkthroughActive(false)
-          setShowRubricModal(true)
-        }}
-        onRetakeInterview={() => {
-          setWalkthroughActive(false)
-          router.push('/dashboard')
-        }}
-        onUnlockNextStage={() => {
-          setWalkthroughActive(false)
-          setShowPurchaseFlow(true)
-        }}
-        onSkipToResults={() => {
-          setWalkthroughActive(false)
-        }}
-      />
+      <div className={shellClasses}>
+        <div className="lg:hidden">
+          <Header />
+        </div>
+        <AppSidebar activeSection="practice" processStages={processStages} />
+        <AppProgressRail cards={railCards} />
+        <div className={shellCenterClasses}>
+          <PreppiWalkthrough
+            embeddedDesktop
+            feedback={feedback}
+            structuredTranscript={structuredTranscript}
+            currentSessionData={currentSessionData}
+            currentStage={currentStage}
+            isPremium={isPremium}
+            sessionId={currentSessionData?.id}
+            onOpenDetailedReport={() => {
+              setWalkthroughActive(false)
+              setShowRubricModal(true)
+            }}
+            onRetakeInterview={() => {
+              setWalkthroughActive(false)
+              router.push('/dashboard')
+            }}
+            onUnlockNextStage={() => {
+              setWalkthroughActive(false)
+              setShowPurchaseFlow(true)
+            }}
+            onSkipToResults={() => {
+              setWalkthroughActive(false)
+            }}
+          />
+        </div>
+      </div>
     )
   }
 
@@ -1930,28 +1942,38 @@ export default function InterviewDashboard() {
   if (showLessonRoadmap && hasFeedback) {
     const weaknesses = sixAreas?.what_needs_improve || []
     return (
-      <LessonRoadmap
-        weaknesses={weaknesses}
-        sessionId={currentSessionData?.id}
-        currentStage={currentStage}
-        onAllComplete={() => setShowLessonRoadmap(false)}
-        onViewReport={() => {
-          setShowLessonRoadmap(false)
-          setShowRubricModal(true)
-        }}
-        onClose={() => setShowLessonRoadmap(false)}
-      />
+      <div className={shellClasses}>
+        <div className="lg:hidden">
+          <Header />
+        </div>
+        <AppSidebar activeSection="practice" processStages={processStages} />
+        <AppProgressRail cards={railCards} />
+        <div className={shellCenterClasses}>
+          <LessonRoadmap
+            embeddedDesktop
+            weaknesses={weaknesses}
+            sessionId={currentSessionData?.id}
+            currentStage={currentStage}
+            onAllComplete={() => setShowLessonRoadmap(false)}
+            onViewReport={() => {
+              setShowLessonRoadmap(false)
+              setShowRubricModal(true)
+            }}
+            onClose={() => setShowLessonRoadmap(false)}
+          />
+        </div>
+      </div>
     )
   }
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+    <div className={shellClasses}>
       <div className="lg:hidden">
         <Header />
       </div>
       <AppSidebar activeSection="practice" processStages={processStages} />
       <AppProgressRail cards={railCards} />
-      <div className="lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
+      <div className={shellCenterClasses}>
 
       {/* Interview Process Timeline */}
       <div className="lg:hidden">

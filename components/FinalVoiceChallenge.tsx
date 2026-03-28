@@ -14,6 +14,7 @@ interface FinalVoiceChallengeProps {
   criterion: string
   onComplete: (passed: boolean, xpEarned: number) => void
   onClose: () => void
+  embeddedDesktop?: boolean
 }
 
 const PASS_THRESHOLD = 7
@@ -34,6 +35,7 @@ export default function FinalVoiceChallenge({
   criterion,
   onComplete,
   onClose,
+  embeddedDesktop = false,
 }: FinalVoiceChallengeProps) {
   const { ding } = useGameFeedback()
   const [recording, setRecording] = useState(false)
@@ -141,8 +143,8 @@ export default function FinalVoiceChallenge({
       </div>
 
       {/* Desktop: modal */}
-      <div className="hidden md:flex fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:min-h-[720px] md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
+        <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:max-h-none">
           <div className="px-6 pt-5 pb-3 shrink-0 border-b border-gray-100 flex items-center gap-3">
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 shrink-0">✕</button>
             <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">

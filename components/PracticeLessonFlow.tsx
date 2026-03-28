@@ -18,6 +18,7 @@ interface PracticeLessonFlowProps {
   totalLessons: number   // always 3
   onComplete: (passed: boolean, xpEarned: number) => void
   onClose: () => void
+  embeddedDesktop?: boolean
 }
 
 // ── Flow state ─────────────────────────────────────────────────────────────────
@@ -91,6 +92,7 @@ export default function PracticeLessonFlow({
   totalLessons,
   onComplete,
   onClose,
+  embeddedDesktop = false,
 }: PracticeLessonFlowProps) {
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [xp, setXp] = useState(0)
@@ -385,8 +387,8 @@ export default function PracticeLessonFlow({
       </div>
 
       {/* Desktop */}
-      <div className="hidden md:flex fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden">
+      <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:min-h-[720px] md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
+        <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none">
           <div className="px-6 pt-5 pb-3 shrink-0 border-b border-gray-100">{renderHeader()}</div>
           <div className="flex-1 overflow-y-auto px-6 py-6">{renderStep()}</div>
         </div>

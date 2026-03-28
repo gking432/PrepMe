@@ -45,6 +45,7 @@ interface SubLessonRoadmapProps {
   priorXp?: number
   onAllComplete: (totalXp: number) => void
   onClose: () => void
+  embeddedDesktop?: boolean
 }
 
 // 0,1,2 = sub-lessons; 3 = final voice
@@ -62,6 +63,7 @@ export default function SubLessonRoadmap({
   priorXp = 0,
   onAllComplete,
   onClose,
+  embeddedDesktop = false,
 }: SubLessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
@@ -107,6 +109,7 @@ export default function SubLessonRoadmap({
         totalLessons={3}
         onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
         onClose={() => setActiveSlot(null)}
+        embeddedDesktop={embeddedDesktop}
       />
     )
   }
@@ -121,6 +124,7 @@ export default function SubLessonRoadmap({
         criterion={criterion}
         onComplete={(passed, xp) => handleSlotComplete(3, passed, xp)}
         onClose={() => setActiveSlot(null)}
+        embeddedDesktop={embeddedDesktop}
       />
     )
   }
@@ -135,7 +139,9 @@ export default function SubLessonRoadmap({
     : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]">
+    <div className={`fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] ${
+      embeddedDesktop ? 'lg:relative lg:inset-auto lg:min-h-full' : ''
+    }`}>
       <Confetti active={showConfetti} />
 
       {/* Top bar */}

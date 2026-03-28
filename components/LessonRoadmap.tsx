@@ -37,6 +37,7 @@ interface LessonRoadmapProps {
   onAllComplete: (totalXp: number) => void
   onViewReport: () => void
   onClose: () => void
+  embeddedDesktop?: boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ export default function LessonRoadmap({
   onAllComplete,
   onViewReport,
   onClose,
+  embeddedDesktop = false,
 }: LessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
@@ -112,7 +114,9 @@ export default function LessonRoadmap({
     : `${weaknesses.length - completedSet.size} coaching path${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left.`
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]">
+    <div className={`fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] ${
+      embeddedDesktop ? 'lg:relative lg:inset-auto lg:min-h-full' : ''
+    }`}>
       <Confetti active={showConfetti} />
 
       {/* Top bar */}

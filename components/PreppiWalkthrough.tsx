@@ -408,7 +408,7 @@ export default function PreppiWalkthrough({
         <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out animate-progress-fill"
-            style={{ width: `${progressPercent}%`, backgroundColor: '#58CC02' }}
+            style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg,#8b5cf6 0%,#6d28d9 100%)' }}
           />
         </div>
 
@@ -583,7 +583,7 @@ export default function PreppiWalkthrough({
                   {hasTranscriptData && (
                     <button
                       onClick={() => setShowTranscript(true)}
-                      className="flex items-center gap-2 text-xs font-semibold text-[#58CC02] hover:text-[#46a302] mb-4 transition-colors"
+                      className="mb-4 flex items-center gap-2 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-800"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       See what you said
@@ -591,10 +591,10 @@ export default function PreppiWalkthrough({
                   )}
 
                   {/* Practice teaser */}
-                  <div className="bg-[#d7f5b1] rounded-xl p-3 border border-[#a8e06a]">
+                  <div className="rounded-xl border border-violet-200 bg-violet-50 p-3">
                     <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-[#46a302]" />
-                      <p className="text-xs text-[#2a7a00] font-semibold">
+                      <Zap className="w-4 h-4 text-violet-700" />
+                      <p className="text-xs font-semibold text-violet-700">
                         Practice lesson ready for this skill!
                       </p>
                     </div>
@@ -606,8 +606,8 @@ export default function PreppiWalkthrough({
             {/* ── FORK ── */}
             {state === 'fork' && (
               <div className="w-full max-w-md text-center animate-slide-up" key={`fork-${animKey}`}>
-                <div className="w-20 h-20 mx-auto mb-5 bg-[#d7f5b1] rounded-full flex items-center justify-center">
-                  <Star className="w-10 h-10 text-[#58CC02]" />
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100">
+                  <Star className="w-10 h-10 text-violet-700" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-2">
                   Review Complete!
@@ -619,7 +619,7 @@ export default function PreppiWalkthrough({
                 {weaknesses.length > 0 && (
                   <button
                     onClick={() => { markSeen(); setState('lesson_roadmap') }}
-                    className="w-full btn-duo-green py-4 text-base mb-3 flex items-center justify-center gap-2"
+                    className="btn-coach-primary mb-3 flex w-full items-center justify-center gap-2 py-4 text-base"
                   >
                     <Zap className="w-5 h-5" />
                     Let&apos;s Start Practicing!
@@ -674,7 +674,7 @@ export default function PreppiWalkthrough({
                   </div>
                   <div className="w-px h-10 bg-gray-200" />
                   <div className="text-center">
-                    <p className="text-2xl font-extrabold text-[#58CC02]">{practicedCount || weaknesses.length}</p>
+                    <p className="text-2xl font-extrabold text-violet-700">{practicedCount || weaknesses.length}</p>
                     <p className="text-xs text-gray-400 font-semibold">Practiced</p>
                   </div>
                 </div>
@@ -704,7 +704,7 @@ export default function PreppiWalkthrough({
                 <div className="space-y-3">
                   <button
                     onClick={() => { markSeen(); onOpenDetailedReport() }}
-                    className="w-full btn-duo-green py-4 text-base flex items-center justify-center gap-2"
+                    className="btn-coach-primary flex w-full items-center justify-center gap-2 py-4 text-base"
                   >
                     <FileText className="w-5 h-5" />
                     View Detailed Report
@@ -738,7 +738,7 @@ export default function PreppiWalkthrough({
           <div className="max-w-md mx-auto">
             <button
               onClick={advance}
-              className="w-full btn-duo-green py-4 text-base flex items-center justify-center gap-2"
+              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-4 text-base"
             >
               {state === 'intro' ? "Let's Go!" : 'Continue'}
               <ArrowRight className="w-5 h-5" />

@@ -42,11 +42,11 @@ export default function Preppi({ message, size = 'md', animate = true, className
 
       {/* Speech bubble */}
       {message && (
-        <div className="relative max-w-xs rounded-[1.4rem] rounded-bl-sm border border-emerald-200/80 bg-white/96 px-4 py-3.5 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
+        <div className="relative max-w-xs rounded-[1.4rem] rounded-bl-sm border border-violet-200/80 bg-white/96 px-4 py-3.5 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
           <p className="text-sm font-bold leading-snug text-slate-800">{message}</p>
           {/* Tail */}
           <div className="absolute -left-2 bottom-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-white border-b-[6px] border-b-transparent" />
-          <div className="absolute -left-[11px] bottom-[10px] w-0 h-0 border-b-[7px] border-r-[10px] border-t-[7px] border-b-transparent border-r-emerald-200 border-t-transparent" />
+          <div className="absolute -left-[11px] bottom-[10px] h-0 w-0 border-b-[7px] border-r-[10px] border-t-[7px] border-b-transparent border-r-violet-200 border-t-transparent" />
         </div>
       )}
     </div>
@@ -56,15 +56,15 @@ export default function Preppi({ message, size = 'md', animate = true, className
 export function PreppiSVG() {
   return (
     <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-full w-full drop-shadow-[0_8px_18px_rgba(15,23,42,0.14)]">
-      <path d="M30 76C24 84 18 85 16 82C14 79 20 72 28 68L30 76Z" fill="#0E7C31" />
-      <path d="M42 79C40 89 34 91 31 88C29 86 32 78 39 72L42 79Z" fill="#2E9E44" />
-      <path d="M57 79C60 89 66 91 69 88C71 86 68 78 61 72L57 79Z" fill="#0E7C31" />
-      <ellipse cx="48" cy="58" rx="24" ry="22" fill="#58CC02" />
-      <ellipse cx="28" cy="58" rx="11" ry="16" transform="rotate(-18 28 58)" fill="#37A700" />
-      <ellipse cx="68" cy="58" rx="11" ry="16" transform="rotate(18 68 58)" fill="#37A700" />
-      <ellipse cx="48" cy="61" rx="13" ry="16" fill="#F3FFF0" />
-      <circle cx="48" cy="32" r="19" fill="#58CC02" />
-      <path d="M41 16C43 8 47 7 49 13C52 7 56 9 57 18" stroke="#148A0C" strokeWidth="3" strokeLinecap="round" />
+      <path d="M30 76C24 84 18 85 16 82C14 79 20 72 28 68L30 76Z" fill="#4C1D95" />
+      <path d="M42 79C40 89 34 91 31 88C29 86 32 78 39 72L42 79Z" fill="#7C3AED" />
+      <path d="M57 79C60 89 66 91 69 88C71 86 68 78 61 72L57 79Z" fill="#4C1D95" />
+      <ellipse cx="48" cy="58" rx="24" ry="22" fill="#7C3AED" />
+      <ellipse cx="28" cy="58" rx="11" ry="16" transform="rotate(-18 28 58)" fill="#6D28D9" />
+      <ellipse cx="68" cy="58" rx="11" ry="16" transform="rotate(18 68 58)" fill="#6D28D9" />
+      <ellipse cx="48" cy="61" rx="13" ry="16" fill="#F6F0FF" />
+      <circle cx="48" cy="32" r="19" fill="#8B5CF6" />
+      <path d="M41 16C43 8 47 7 49 13C52 7 56 9 57 18" stroke="#5B21B6" strokeWidth="3" strokeLinecap="round" />
       <circle cx="49" cy="10" r="3.5" fill="#FFD84D" />
       <ellipse cx="42" cy="31" rx="7" ry="8" fill="white" />
       <ellipse cx="56" cy="31" rx="7" ry="8" fill="white" />
@@ -73,8 +73,8 @@ export function PreppiSVG() {
       <circle cx="45.4" cy="30.6" r="1.1" fill="white" />
       <circle cx="59.4" cy="30.6" r="1.1" fill="white" />
       <path d="M47 38C48.5 41 50.2 42.5 53 38.8C49.8 37.5 48.3 37.4 47 38Z" fill="#FF9A3C" />
-      <path d="M40 24C41.7 22.2 44.2 21 46.3 21" stroke="#148A0C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M53 21.3C55 21.1 57.7 22 59.7 24" stroke="#148A0C" strokeWidth="2" strokeLinecap="round" />
+      <path d="M40 24C41.7 22.2 44.2 21 46.3 21" stroke="#5B21B6" strokeWidth="2" strokeLinecap="round" />
+      <path d="M53 21.3C55 21.1 57.7 22 59.7 24" stroke="#5B21B6" strokeWidth="2" strokeLinecap="round" />
       <line x1="41" y1="79" x2="38" y2="85" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />
       <line x1="38" y1="85" x2="35" y2="87" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />
       <line x1="55" y1="79" x2="58" y2="85" stroke="#FF9A3C" strokeWidth="2.5" strokeLinecap="round" />

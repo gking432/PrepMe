@@ -60,7 +60,7 @@ function CorrectSheet({ xpGained, onContinue }: { xpGained: number; onContinue: 
   return (
     <>
       <div className="fixed inset-0 z-50" onClick={onContinue} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-[#dff6c4] px-5 pb-10 pt-6 animate-sheet-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-emerald-200 bg-emerald-50 px-5 pb-10 pt-6 animate-sheet-slide-up">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-4 mb-5">
             <div className="w-14 h-14 rounded-full bg-[#58CC02] flex items-center justify-center shrink-0">
@@ -166,12 +166,12 @@ export default function PracticeLessonFlow({
 
     return (
       <div className="flex items-center gap-3 w-full">
-        <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+        <div className="flex-1 h-4 overflow-hidden rounded-full bg-slate-100">
           <div
             className="h-full rounded-full transition-all duration-500 ease-out"
             style={{
               width: `${pct}%`,
-              background: pct > 0 ? 'linear-gradient(90deg,#58CC02 0%,#7ade1a 100%)' : 'transparent',
+              background: pct > 0 ? 'linear-gradient(90deg,#8b5cf6 0%,#6d28d9 100%)' : 'transparent',
               boxShadow: pct > 0 ? 'inset 0 -3px 0 rgba(0,0,0,0.15)' : 'none',
             }}
           />
@@ -262,8 +262,8 @@ export default function PracticeLessonFlow({
 
   const renderIntro = () => (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center md:min-h-0">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[1.3rem] bg-[#d7f5b1] animate-slide-up">
-        <span className="text-2xl font-extrabold text-[#2a7a00]">{lessonNumber}</span>
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[1.3rem] bg-violet-100 animate-slide-up">
+        <span className="text-2xl font-extrabold text-violet-700">{lessonNumber}</span>
       </div>
       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
         Lesson {lessonNumber} of {totalLessons}
@@ -271,10 +271,10 @@ export default function PracticeLessonFlow({
       <h2 className="text-2xl font-extrabold text-gray-900 mb-2 animate-slide-up">{subLesson.title}</h2>
       <p className="text-sm text-gray-400 mb-8 capitalize">{subLesson.difficulty} level</p>
 
-      <div className="premium-card mb-8 w-full max-w-sm space-y-3 p-5 text-left animate-slide-up">
+      <div className="coach-card mb-8 w-full max-w-sm space-y-3 p-5 text-left animate-slide-up">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-[#d7f5b1] rounded-full flex items-center justify-center shrink-0">
-            <BookOpen className="w-3.5 h-3.5 text-[#58CC02]" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 shrink-0">
+            <BookOpen className="w-3.5 h-3.5 text-violet-700" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">Technique card</p>
@@ -282,18 +282,18 @@ export default function PracticeLessonFlow({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 bg-[#dbeafe] rounded-full flex items-center justify-center shrink-0">
-            <Sparkles className="w-3.5 h-3.5 text-[#1CB0F6]" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">{exerciseCount} exercises</p>
-            <p className="text-xs text-gray-400">Multiple choice, sorting, word bank & more</p>
+            <p className="text-xs text-gray-400">Repeated drills designed to reinforce one improvement pattern</p>
           </div>
         </div>
       </div>
 
       <div className="mb-6">
-        <Preppi message="Let's do this! Read the lesson, then ace the exercises." size="md" />
+        <Preppi message="Read the method first, then work through the drills." size="md" />
       </div>
 
       <button onClick={() => { setFlowState('teach') }} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
@@ -305,7 +305,7 @@ export default function PracticeLessonFlow({
   const renderTeach = () => (
     <div className="animate-slide-up">
       <div className="mb-4">
-        <Preppi message="Read through this carefully — the exercises are based on it!" size="sm" />
+        <Preppi message="Read this carefully. The next drills will test the same idea from different angles." size="sm" />
       </div>
       <TeachCard
         title={subLesson.teach.title}
@@ -327,7 +327,7 @@ export default function PracticeLessonFlow({
           </p>
         </div>
         <div className="mb-4">
-          <Preppi message="You've got this! Take your time." size="sm" />
+          <Preppi message="Take your time. Accuracy matters more than speed here." size="sm" />
         </div>
         {renderExercise(exercise, index)}
       </div>
@@ -336,7 +336,7 @@ export default function PracticeLessonFlow({
 
   const renderComplete = () => (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
-      <div className="w-20 h-20 rounded-full bg-[#58CC02] border-[5px] border-[#2d8f00] flex items-center justify-center mb-5 animate-badge-reveal"
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#166534] bg-[#22c55e] animate-badge-reveal"
         style={{ boxShadow: '0 6px 0 #1a5e00' }}>
         <CheckCircle className="w-10 h-10 text-white" />
       </div>
@@ -348,12 +348,12 @@ export default function PracticeLessonFlow({
         </div>
         <div className="w-px h-10 bg-gray-200" />
         <div className="text-center">
-          <p className="text-2xl font-extrabold text-[#1CB0F6]">{correctCount}/{exerciseCount}</p>
+          <p className="text-2xl font-extrabold text-violet-700">{correctCount}/{exerciseCount}</p>
           <p className="text-xs text-gray-400 font-semibold">Correct</p>
         </div>
       </div>
       <div className="mb-6">
-        <Preppi message={lessonNumber < totalLessons ? "Great work! Next lesson is waiting." : "That's all 3 lessons! Time for the final challenge."} size="lg" />
+        <Preppi message={lessonNumber < totalLessons ? 'Good. Move to the next coaching step.' : 'The drills are done. Next is the voice re-answer.'} size="lg" />
       </div>
       <button
         onClick={() => onComplete(true, xp)}
@@ -379,7 +379,7 @@ export default function PracticeLessonFlow({
       <MiniStepBurst active={stepBurst} />
 
       {/* Mobile */}
-      <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#fbfdff_0%,#f1f7ff_100%)] md:hidden">
+      <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] md:hidden">
         <div className="px-4 pt-4 pb-2 shrink-0">{renderHeader()}</div>
         <div className="flex-1 overflow-y-auto px-4 pb-8">{renderStep()}</div>
       </div>

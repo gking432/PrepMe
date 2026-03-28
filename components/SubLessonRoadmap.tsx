@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { X, Star, CheckCircle, RotateCcw, Trophy } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { X, CheckCircle, RotateCcw, Trophy, ChevronRight, Mic } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
@@ -71,14 +71,10 @@ export default function SubLessonRoadmap({
   const [sessionXp, setSessionXp] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
   const [miniBurstIdx, setMiniBurstIdx] = useState<number | null>(null)
-  const [preppiBadgeIdx, setPreppiBadgeIdx] = useState(0)
-
   const totalSlots = 4 // 3 sub-lessons + 1 final
   const allDone = completedSet.size === totalSlots
 
   const nextAvailable = [0, 1, 2, 3].find(i => !completedSet.has(i)) ?? null
-
-  useEffect(() => { setPreppiBadgeIdx(0) }, [])
 
   const handleSlotComplete = useCallback((slotIdx: number, passed: boolean, xp: number) => {
     setActiveSlot(null)
@@ -91,11 +87,6 @@ export default function SubLessonRoadmap({
     setMiniBurstIdx(slotIdx)
     ding()
     setTimeout(() => setMiniBurstIdx(null), 900)
-
-    const nextIdx = [0, 1, 2, 3].find(i => i > slotIdx && !completedSet.has(i))
-    if (nextIdx !== undefined) {
-      setTimeout(() => setPreppiBadgeIdx(nextIdx), 500)
-    }
 
     const newSize = completedSet.size + 1
     if (newSize === totalSlots) {
@@ -134,36 +125,8 @@ export default function SubLessonRoadmap({
     )
   }
 
-  // ── Badge map ──────────────────────────────────────────────────────────────
-
-  const SLOT_H = 138
-  const BADGE_R = 48
-  const W = 280
-  const X_LEFT = 60
-  const X_RIGHT = W - 60
-
-  const centers = [0, 1, 2, 3].map(i => ({
-    x: i % 2 === 0 ? X_LEFT : X_RIGHT,
-    y: i * SLOT_H + BADGE_R,
-  }))
-
-  let pathD = `M ${centers[0].x} ${centers[0].y}`
-  for (let i = 1; i < 4; i++) {
-    const { x: x1, y: y1 } = centers[i - 1]
-    const { x: x2, y: y2 } = centers[i]
-    const midY = (y1 + y2) / 2
-    pathD += ` C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`
-  }
-
-  const buildSeg = (i: number) => {
-    const { x: x1, y: y1 } = centers[i]
-    const { x: x2, y: y2 } = centers[i + 1]
-    const midY = (y1 + y2) / 2
-    return `M ${x1} ${y1} C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`
-  }
-
-  const slotLabels = bundle.lessons.map(l => l.title).concat(['Final Challenge'])
-  const slotDifficulties = ['Easy', 'Medium', 'Hard', '🎤 Voice']
+  const slotLabels = bundle.lessons.map(l => l.title).concat(['Voice Re-Answer'])
+  const slotDifficulties = ['Lesson 1', 'Lesson 2', 'Lesson 3', 'Final']
 
   const preppiMessage = allDone
     ? 'All four steps complete. You are ready to try it again.'
@@ -172,7 +135,7 @@ export default function SubLessonRoadmap({
     : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#eef5ff_100%)]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]">
       <Confetti active={showConfetti} />
 
       {/* Top bar */}
@@ -191,116 +154,125 @@ export default function SubLessonRoadmap({
         </div>
       </div>
 
-      {/* Scrollable badge path */}
+      {/* Scrollable coaching path */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-sm px-4 py-8">
+        <div className="mx-auto max-w-2xl px-4 py-8">
 
           {/* Preppi */}
-          <div className="mb-10 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-white/90 shadow-[0_18px_34px_rgba(15,23,42,0.08)] animate-preppi-bounce">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-white/92 shadow-[0_18px_34px_rgba(76,29,149,0.08)] animate-preppi-bounce">
               <PreppiSVG />
             </div>
-            <div className="inline-block max-w-[270px] rounded-[1.6rem] rounded-t-[0.45rem] border border-emerald-200/80 bg-white/96 px-4 py-3 shadow-[0_18px_34px_rgba(15,23,42,0.08)] animate-bubble-pop">
+            <div className="inline-block max-w-[320px] rounded-[1.6rem] rounded-t-[0.45rem] border border-violet-200/80 bg-white/96 px-4 py-3 shadow-[0_18px_34px_rgba(76,29,149,0.08)] animate-bubble-pop">
               <p className="text-sm font-bold leading-snug text-slate-800">{preppiMessage}</p>
             </div>
           </div>
 
-          {/* Badge path */}
-          <div className="relative mx-auto" style={{ width: W, height: 4 * SLOT_H + 60 }}>
-            <svg className="absolute inset-0 pointer-events-none" width={W} height={4 * SLOT_H + 60} style={{ overflow: 'visible' }}>
-              <path d={pathD} stroke="#d8e1ec" strokeWidth="8" strokeLinecap="round" fill="none" />
-              {[0, 1, 2].map(i =>
-                completedSet.has(i) ? (
-                  <path key={i} d={buildSeg(i)} stroke="#2f7d32" strokeWidth="8" strokeLinecap="round" fill="none" className="transition-all duration-700" />
-                ) : null
-              )}
-            </svg>
+          <div className="premium-panel overflow-hidden p-5 sm:p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>
+                <h3 className="mt-1 text-xl font-black text-slate-900">{criterion}</h3>
+              </div>
+              <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                4 steps
+              </div>
+            </div>
 
-            {[0, 1, 2, 3].map(idx => {
-              const isFinal = idx === 3
-              const isCompleted = completedSet.has(idx)
-              const isPassed = passedSet.has(idx)
-              const isNext = idx === nextAvailable && !allDone
-              const isMini = miniBurstIdx === idx
-              const isPreppiHere = idx === preppiBadgeIdx && !allDone
-              const cx = centers[idx].x
-              const cy = centers[idx].y
-              const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isNext
+            <div className="space-y-4">
+              {[0, 1, 2, 3].map(idx => {
+                const isFinal = idx === 3
+                const isCompleted = completedSet.has(idx)
+                const isPassed = passedSet.has(idx)
+                const isNext = idx === nextAvailable && !allDone
+                const isMini = miniBurstIdx === idx
+                const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isNext
 
-              return (
-                <div
-                  key={idx}
-                  className="absolute flex flex-col items-center"
-                  style={{ left: cx - BADGE_R, top: cy - BADGE_R, width: BADGE_R * 2 }}
-                >
-                  <div className="absolute inset-0 pointer-events-none">
-                    <MiniConfettiBurst active={isMini} />
-                  </div>
-
-                  {isPreppiHere && (
-                    <div className={`absolute top-2 w-9 h-9 ${idx % 2 === 0 ? 'right-full -mr-1' : 'left-full -ml-1'}`}>
-                      <PreppiSVG />
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => !isLocked && setActiveSlot(idx as ActiveSlot)}
-                    disabled={isLocked}
-                    className={`
-                      w-24 h-24 rounded-full border-[5px] flex items-center justify-center
-                      transition-all duration-500 relative overflow-hidden
-                      ${!isLocked ? 'active:translate-y-1' : 'cursor-default'}
-                      ${isCompleted && isPassed
-                        ? 'bg-[#3f9a2b] border-[#26651c]'
-                        : isCompleted
-                        ? 'bg-amber-400 border-amber-600'
-                        : isFinal && isNext
-                        ? 'bg-amber-50 border-amber-400 shadow-[0_18px_28px_rgba(245,158,11,0.14)] animate-badge-pulse'
-                        : isNext
-                        ? 'bg-white border-[#3f9a2b] shadow-[0_18px_28px_rgba(63,154,43,0.12)] animate-badge-pulse'
-                        : isLocked
-                        ? 'bg-slate-200 border-slate-300 opacity-50'
-                        : 'bg-white border-slate-300 hover:border-slate-400 hover:shadow-[0_14px_24px_rgba(15,23,42,0.08)]'
-                      }
-                    `}
-                    style={{
-                      boxShadow: isCompleted && isPassed
-                        ? '0 6px 0 #174616, inset 0 2px 0 rgba(255,255,255,0.3)'
-                        : isCompleted
-                        ? '0 5px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.2)'
-                        : isNext
-                        ? '0 6px 0 #24561e'
-                        : '0 4px 0 #94a3b8, inset 0 1px 0 rgba(255,255,255,0.55)',
-                    }}
-                  >
-                    {isCompleted && isPassed ? (
-                      <CheckCircle className="w-10 h-10 text-white drop-shadow-sm" />
-                    ) : isCompleted ? (
-                      <div className="flex flex-col items-center">
-                        <RotateCcw className="w-5 h-5 text-amber-800" />
-                        <span className="text-[9px] font-extrabold text-amber-800 mt-0.5">retry</span>
-                      </div>
-                    ) : isFinal ? (
-                      <Trophy className="w-10 h-10 text-amber-600" />
-                    ) : (
-                      <span className="text-2xl font-extrabold text-slate-600">{idx + 1}</span>
+                return (
+                  <div key={idx} className="relative">
+                    {idx < 3 && (
+                      <div className={`absolute left-6 top-14 h-[calc(100%+0.75rem)] w-[2px] ${
+                        completedSet.has(idx) ? 'bg-emerald-400' : 'bg-slate-200'
+                      }`} />
                     )}
-                  </button>
 
-                  <p className={`mt-2 text-center text-[11px] font-extrabold leading-tight ${
-                    isCompleted && isPassed ? 'text-emerald-700'
-                    : isCompleted ? 'text-amber-700'
-                    : isNext ? 'text-slate-800'
-                    : 'text-slate-400'
-                  }`}>
-                    {slotLabels[idx]}
-                  </p>
-                  <p className="text-[10px] font-semibold text-slate-400">
-                    {isCompleted && isPassed ? '✓ Done' : slotDifficulties[idx]}
-                  </p>
+                    <div className="absolute inset-0 pointer-events-none">
+                      <MiniConfettiBurst active={isMini} />
+                    </div>
+
+                    <button
+                      onClick={() => !isLocked && setActiveSlot(idx as ActiveSlot)}
+                      disabled={isLocked}
+                      className={`flex w-full items-start gap-4 rounded-[1.5rem] border p-4 text-left transition-all ${
+                        isLocked ? 'cursor-default opacity-55' : 'cursor-pointer active:scale-[0.99] hover:shadow-[0_18px_30px_rgba(15,23,42,0.08)]'
+                      } ${
+                        isCompleted && isPassed
+                          ? 'border-emerald-200 bg-emerald-50/90'
+                          : isCompleted
+                          ? 'border-amber-200 bg-amber-50'
+                          : isNext
+                          ? 'border-violet-200 bg-violet-50/85 shadow-[0_16px_28px_rgba(109,40,217,0.08)]'
+                          : 'border-slate-200/80 bg-white/96'
+                      }`}
+                    >
+                      <div className={`relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${
+                        isCompleted && isPassed
+                          ? 'bg-emerald-500 text-white'
+                          : isCompleted
+                          ? 'bg-amber-400 text-amber-900'
+                          : isFinal
+                          ? 'bg-violet-100 text-violet-700'
+                          : 'bg-white text-violet-700 ring-1 ring-violet-200'
+                      }`}>
+                        {isCompleted && isPassed ? (
+                          <CheckCircle className="h-6 w-6" />
+                        ) : isCompleted ? (
+                          <RotateCcw className="h-5 w-5" />
+                        ) : isFinal ? (
+                          <Mic className="h-5 w-5" />
+                        ) : (
+                          <span className="text-sm font-black">{idx + 1}</span>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-black text-slate-900">{slotLabels[idx]}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            isCompleted && isPassed
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : isCompleted
+                              ? 'bg-amber-100 text-amber-700'
+                              : isFinal
+                              ? 'bg-violet-100 text-violet-700'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {isCompleted && isPassed ? 'Passed' : slotDifficulties[idx]}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {idx < 3
+                            ? 'Learn the tactic, drill it, then move to the next coaching step.'
+                            : 'Answer the original flagged question again with the new approach.'}
+                        </p>
+                      </div>
+
+                      {!isLocked && !isCompleted && <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400" />}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+
+            {allDone && (
+              <div className="mt-6 rounded-[1.4rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-center">
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
+                  <Trophy className="h-3.5 w-3.5" />
+                  Practice complete
                 </div>
-              )
-            })}
+                <p className="text-sm font-semibold text-emerald-800">You have completed all four coaching steps for this skill.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

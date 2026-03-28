@@ -17,11 +17,6 @@ interface AppSidebarProps {
   activeSection: ActiveSection
   processStages?: ProcessStage[]
   theme?: 'dark' | 'light'
-  workspaceTabs?: Array<{
-    label: string
-    active: boolean
-    onClick: () => void
-  }>
   contextTitle?: string
   contextItems?: Array<{
     label: string
@@ -48,7 +43,6 @@ export default function AppSidebar({
   activeSection,
   processStages = [],
   theme = 'dark',
-  workspaceTabs = [],
   contextTitle,
   contextItems = [],
   footerText = 'One primary surface, one next step, one place to return to.',
@@ -98,26 +92,6 @@ export default function AppSidebar({
             )
           })}
         </nav>
-
-        {workspaceTabs.length > 0 && (
-          <div className="mt-6 rounded-[1.35rem] border border-slate-200/80 bg-white/70 p-1.5 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
-            <div className="grid grid-cols-2 gap-1">
-              {workspaceTabs.map((tab) => (
-                <button
-                  key={tab.label}
-                  onClick={tab.onClick}
-                  className={`rounded-[1rem] px-3 py-2 text-sm font-bold transition-all ${
-                    tab.active
-                      ? 'bg-violet-600 text-white shadow-[0_10px_18px_rgba(109,40,217,0.22)]'
-                      : 'text-slate-500 hover:bg-white hover:text-slate-900'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {processStages.length > 0 && (
           <div className="mt-8">

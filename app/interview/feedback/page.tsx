@@ -1901,15 +1901,23 @@ export default function InterviewDashboard() {
   ]
   const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]"
   const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]"
-  const workspaceTabs = [
-    { label: 'Prepare', active: !showLessonRoadmap, onClick: () => setShowLessonRoadmap(false) },
-    { label: 'Practice', active: showLessonRoadmap, onClick: () => setShowLessonRoadmap(true) },
-  ]
-  const prepareSidebarItems = [
-    { label: 'Score Overview', status: 'current' as const, meta: `${overallScore}/10` },
-    { label: `${wentWellAreas.length || 0} strengths surfaced`, status: 'upcoming' as const },
-    { label: `${needsImproveAreas.length || 0} areas to improve`, status: needsImproveAreas.length ? 'upcoming' as const : 'complete' as const },
-    { label: 'Detailed report available', status: 'upcoming' as const },
+  const prepareRailCards = [
+    {
+      title: 'Review Progress',
+      items: [
+        { label: 'Round scored', value: hasFeedback ? 'Done' : 'Pending', progress: hasFeedback ? 100 : 0, tone: 'brand' as const },
+        { label: 'Strengths found', value: `${wentWellAreas.length || 0}`, progress: Math.min((wentWellAreas.length || 0) * 20, 100), tone: 'success' as const },
+        { label: 'Issues reviewed', value: `${needsImproveAreas.length || 0}`, progress: needsImproveAreas.length ? 100 : 0, tone: 'warning' as const },
+      ],
+    },
+    {
+      title: 'Round Snapshot',
+      items: [
+        { label: 'Overall score', value: `${overallScore}/10`, progress: overallScore * 10, tone: overallScore >= 7 ? 'success' as const : overallScore >= 5 ? 'warning' as const : 'brand' as const },
+        { label: 'Strong areas', value: `${wentWellAreas.length || 0}` },
+        { label: 'Needs work', value: `${needsImproveAreas.length || 0}` },
+      ],
+    },
   ]
   const practiceRailCards = [
     {
@@ -1934,15 +1942,12 @@ export default function InterviewDashboard() {
           <Header />
         </div>
         <AppSidebar
-          activeSection="practice"
+          activeSection="learn"
           processStages={processStages}
           theme="light"
-          workspaceTabs={workspaceTabs}
-          contextTitle="Prepare"
-          contextItems={prepareSidebarItems}
-          footerText="Review the interview first, then move into targeted practice."
+          footerText="Review everything first. Practice starts after the full walkthrough."
         />
-        <AppProgressRail cards={railCards} theme="light" />
+        <AppProgressRail cards={prepareRailCards} theme="light" />
         <div className={shellCenterClasses}>
           <PreppiWalkthrough
             embeddedDesktop
@@ -1989,7 +1994,6 @@ export default function InterviewDashboard() {
           activeSection="practice"
           processStages={processStages}
           theme="light"
-          workspaceTabs={workspaceTabs}
           contextTitle={practiceSidebarTitle}
           contextItems={practiceSidebarItems}
           footerText="Use this as the practice home base. Finish a module, then come back up for air."
@@ -2025,15 +2029,12 @@ export default function InterviewDashboard() {
         <Header />
       </div>
       <AppSidebar
-        activeSection="practice"
+        activeSection="learn"
         processStages={processStages}
         theme="light"
-        workspaceTabs={workspaceTabs}
-        contextTitle="Prepare"
-        contextItems={prepareSidebarItems}
         footerText="Review the interview first, then move into targeted practice."
       />
-      <AppProgressRail cards={railCards} theme="light" />
+      <AppProgressRail cards={prepareRailCards} theme="light" />
       <div className={shellCenterClasses}>
 
       {/* Interview Process Timeline */}

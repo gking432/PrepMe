@@ -39,7 +39,7 @@ interface PreppiWalkthroughProps {
 type WalkthroughState =
   | 'intro'
   | 'score_reveal'
-  | 'summary_card'
+  | 'review_all'
   | 'fork'
   | 'complete'
 
@@ -198,7 +198,6 @@ export default function PreppiWalkthrough({
   const interviewerGender = useMemo(() => getInterviewerGender(sessionId), [sessionId])
   const primaryStrength = strengths[0]
   const primaryWeakness = weaknesses[0]
-  const additionalWeaknessCount = Math.max(0, weaknesses.length - 1)
 
   // Progress (only for the report walkthrough, not the practice phase)
   const totalSteps    = 4
@@ -206,7 +205,7 @@ export default function PreppiWalkthrough({
     switch (state) {
       case 'intro':          return 0
       case 'score_reveal':   return 1
-      case 'summary_card':   return 2
+      case 'review_all':     return 2
       case 'fork':           return 3
       default:               return totalSteps
     }
@@ -255,9 +254,9 @@ export default function PreppiWalkthrough({
         setState('score_reveal')
         break
       case 'score_reveal':
-        setState('summary_card')
+        setState('review_all')
         break
-      case 'summary_card':
+      case 'review_all':
         setState('fork')
         break
       case 'fork':
@@ -275,7 +274,7 @@ export default function PreppiWalkthrough({
         if (overallScore >= 7) return PREPPI_MESSAGES.scoreHigh
         if (overallScore >= 5) return PREPPI_MESSAGES.scoreMid
         return PREPPI_MESSAGES.scoreLow
-      case 'summary_card': return primaryWeakness ? PREPPI_MESSAGES.weakness : PREPPI_MESSAGES.fork
+      case 'review_all': return primaryWeakness ? 'Here is the full review before you move into practice.' : PREPPI_MESSAGES.fork
       case 'fork':          return PREPPI_MESSAGES.fork
       case 'complete':      return PREPPI_MESSAGES.complete
       default:              return ''
@@ -389,59 +388,87 @@ export default function PreppiWalkthrough({
               </div>
             )}
 
-            {/* ── SUMMARY CARD ── */}
-            {state === 'summary_card' && (
-              <div className="w-full max-w-2xl animate-slide-in-right" key={`summary-${animKey}`}>
+            {/* ── FULL REVIEW ── */}
+            {state === 'review_all' && (
+              <div className="w-full max-w-4xl animate-slide-in-right" key={`review-${animKey}`}>
                 <div className="premium-panel p-6 md:p-7">
-                  <div className="mb-5">
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">What mattered most</p>
-                    <h3 className="mt-2 text-2xl font-black text-slate-900">Here is the fastest path to a better next round.</h3>
+                  <div className="mb-6">
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Full Review</p>
+                    <h3 className="mt-2 text-2xl font-black text-slate-900">Everything surfaced in this round before you start practice.</h3>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                      Review all strong signals and all flagged issues now. Practice comes after this, not during it.
+                    </p>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50/80 p-5">
-                      <div className="mb-3 flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50/75 p-5">
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
                           <CheckCircle className="h-5 w-5 text-emerald-600" />
                         </div>
-                        <p className="text-xs font-black uppercase tracking-wide text-emerald-600">What helped</p>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wide text-emerald-600">What Helped</p>
+                          <p className="text-sm font-semibold text-emerald-900">{strengths.length || 0} areas held up well</p>
+                        </div>
                       </div>
-                      <h4 className="text-base font-black text-slate-900">{primaryStrength?.criterion || 'You had at least one solid area.'}</h4>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        {primaryStrength?.feedback || 'The interview showed some credible signal. Keep that part stable while you improve the weaker answer.'}
-                      </p>
+
+                      <div className="space-y-3">
+                        {strengths.length > 0 ? strengths.map((item: any, idx: number) => (
+                          <div key={`${item.criterion}-${idx}`} className="rounded-[1.15rem] border border-emerald-200/80 bg-white/75 p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="text-sm font-black text-slate-900">{item.criterion}</p>
+                              {item.score != null && <span className="text-xs font-black text-emerald-700">{item.score}/10</span>}
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-slate-600">{item.feedback}</p>
+                          </div>
+                        )) : (
+                          <div className="rounded-[1.15rem] border border-emerald-200/80 bg-white/75 p-4 text-sm text-slate-600">
+                            No major strengths were highlighted in this round.
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="rounded-[1.4rem] border border-amber-200 bg-amber-50/80 p-5">
-                      <div className="mb-3 flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
+                    <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/80 p-5">
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100">
                           <AlertTriangle className="h-5 w-5 text-amber-600" />
                         </div>
-                        <p className="text-xs font-black uppercase tracking-wide text-amber-600">Fix first</p>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-wide text-amber-600">Needs Work</p>
+                          <p className="text-sm font-semibold text-amber-900">{weaknesses.length || 0} areas were flagged</p>
+                        </div>
                       </div>
-                      <h4 className="text-base font-black text-slate-900">{currentWeakness?.criterion || 'No major practice area surfaced.'}</h4>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        {currentWeakness?.feedback || 'If there is no major weakness here, move to the full report and review the details.'}
-                      </p>
-                      {hasTranscriptData && (
-                        <button
-                          onClick={() => setShowTranscript(true)}
-                          className="mt-3 flex items-center gap-2 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-800"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          See what you said
-                        </button>
-                      )}
+
+                      <div className="space-y-3">
+                        {weaknesses.length > 0 ? weaknesses.map((item: any, idx: number) => {
+                          const canPeekTranscript = idx === 0 && hasTranscriptData
+                          return (
+                            <div key={`${item.criterion}-${idx}`} className="rounded-[1.15rem] border border-amber-200/80 bg-white/78 p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="text-sm font-black text-slate-900">{item.criterion}</p>
+                                {item.score != null && <span className="text-xs font-black text-amber-700">{item.score}/10</span>}
+                              </div>
+                              <p className="mt-2 text-sm leading-6 text-slate-600">{item.feedback}</p>
+                              {canPeekTranscript && (
+                                <button
+                                  onClick={() => setShowTranscript(true)}
+                                  className="mt-3 flex items-center gap-2 text-xs font-semibold text-violet-700 transition-colors hover:text-violet-800"
+                                >
+                                  <MessageSquare className="h-3.5 w-3.5" />
+                                  See what you said here
+                                </button>
+                              )}
+                            </div>
+                          )
+                        }) : (
+                          <div className="rounded-[1.15rem] border border-emerald-200/80 bg-white/75 p-4 text-sm text-slate-600">
+                            No immediate practice areas were flagged.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  {additionalWeaknessCount > 0 && (
-                    <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3">
-                      <p className="text-sm text-slate-600">
-                        There {additionalWeaknessCount === 1 ? 'is' : 'are'} also {additionalWeaknessCount} more area{additionalWeaknessCount === 1 ? '' : 's'} in the full report. Practice will start with the highest-priority one.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}

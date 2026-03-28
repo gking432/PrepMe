@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { User, Calendar, Clock, Target, ArrowRight, LogOut, Settings, Briefcase, Phone, Users, Crown, CheckCircle, ChevronDown, ChevronUp, ChevronRight, FileText, CreditCard, Upload, Trash2, Star, Shield, Pencil, X } from 'lucide-react'
+import AppSidebar from '@/components/AppSidebar'
+import AppProgressRail from '@/components/AppProgressRail'
 
 const STAGE_NAMES: Record<string, string> = {
   hr_screen: 'HR Screen',
@@ -401,6 +403,29 @@ export default function ProfilePage() {
   const getCompletedCount = (group: InterviewGroup) => {
     return ALL_STAGES.filter(stage => group.stages[stage]?.hasFeedback).length
   }
+  const processStages = ALL_STAGES.map((stage) => ({
+    key: stage as 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final',
+    label: STAGE_NAMES[stage],
+    status: interviewGroups.some((group) => group.stages[stage]?.hasFeedback) ? 'complete' as const : activeTab === 'interviews' && stage === 'hr_screen' ? 'current' as const : 'upcoming' as const,
+  }))
+  const railCards = [
+    {
+      title: 'Account Snapshot',
+      items: [
+        { label: 'Interview Processes', value: `${interviewGroups.length}`, progress: interviewGroups.length ? 100 : 0, tone: 'brand' as const },
+        { label: 'Saved Resumes', value: `${resumes.length}`, progress: resumes.length ? 100 : 0, tone: 'brand' as const },
+        { label: 'Active Tab', value: activeTab },
+      ],
+    },
+    {
+      title: 'Access',
+      items: [
+        { label: 'HR Screen', value: 'Free', progress: 100, tone: 'success' as const },
+        { label: 'Premium Stages', value: stageAccess ? Object.values(stageAccess).filter((entry: any) => entry?.hasAccess).length.toString() : '0' },
+        { label: 'Payments', value: `${paymentHistory.length}` },
+      ],
+    },
+  ]
 
   if (loading) {
     return (
@@ -416,10 +441,14 @@ export default function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="app-shell">
-      <Header />
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+      <div className="lg:hidden">
+        <Header />
+      </div>
+      <AppSidebar activeSection="profile" processStages={processStages} />
+      <AppProgressRail cards={railCards} />
 
-      <main className="page-container max-w-7xl py-8">
+      <main className="page-container max-w-7xl py-8 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:py-8">
         {/* Profile Header */}
         <div className="mb-8">
           <div className="premium-panel flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">

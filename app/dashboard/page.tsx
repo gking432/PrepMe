@@ -12,6 +12,8 @@ import { CheckCircle2, Lock, Crown, ChevronDown } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
+import AppSidebar from '@/components/AppSidebar'
+import AppProgressRail from '@/components/AppProgressRail'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type OnboardStep = 'welcome' | 'job' | 'resume' | 'stage'
@@ -228,6 +230,29 @@ export default function DashboardPage() {
   const hasResume = interviewData.resumeText.length > 0 || !!interviewData.resumeFile
   const hasJobDesc = interviewData.jobDescriptionText.length > 0
   const canStartInterview = () => hasResume && hasJobDesc
+  const processStages = (['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => ({
+    key: stage,
+    label: STAGE_CONFIG[stage].name,
+    status: selectedStage === stage ? 'current' as const : stage === 'hr_screen' || !isStageLockedFn(stage) ? 'complete' as const : 'upcoming' as const,
+  }))
+  const railCards = [
+    {
+      title: 'Setup Progress',
+      items: [
+        { label: 'Resume', value: hasResume ? 'Added' : 'Missing', progress: hasResume ? 100 : 12, tone: hasResume ? 'success' as const : 'default' as const },
+        { label: 'Job Posting', value: hasJobDesc ? 'Added' : 'Missing', progress: hasJobDesc ? 100 : 12, tone: hasJobDesc ? 'success' as const : 'default' as const },
+        { label: 'Current Step', value: onboardStep.replace('_', ' '), progress: onboardStep === 'stage' ? 100 : onboardStep === 'resume' ? 66 : onboardStep === 'job' ? 33 : 10, tone: 'brand' as const },
+      ],
+    },
+    {
+      title: 'Selected Round',
+      items: [
+        { label: STAGE_CONFIG[selectedStage].name, value: STAGE_CONFIG[selectedStage].price || 'Free', progress: 100, tone: stageAccess?.[selectedStage]?.hasAccess || selectedStage === 'hr_screen' ? 'success' as const : 'warning' as const },
+        { label: 'Company', value: interviewData.companyName || 'Not set' },
+        { label: 'Role', value: interviewData.positionTitle || 'Not set' },
+      ],
+    },
+  ]
 
   const getPreppiMessage = () => {
     if (onboardStep === 'stage') {
@@ -339,11 +364,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="app-shell">
-      <Header />
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+      <div className="lg:hidden">
+        <Header />
+      </div>
+      <AppSidebar activeSection="learn" processStages={processStages} />
+      <AppProgressRail cards={railCards} />
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-xl px-5 pb-36 pt-6">
+      <main className="mx-auto max-w-xl px-5 pb-36 pt-6 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:pb-12 lg:pt-8">
 
         {/* ── WELCOME ─────────────────────────────────────────────────── */}
         {onboardStep === 'welcome' && (
@@ -645,7 +674,9 @@ export default function DashboardPage() {
         />
       )}
 
-      <MobileNav />
+      <div className="lg:hidden">
+        <MobileNav />
+      </div>
     </div>
   )
 }

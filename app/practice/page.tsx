@@ -10,6 +10,8 @@ import Preppi from '@/components/Preppi'
 import Confetti from '@/components/Confetti'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import { Mic, MicOff, Send, ChevronRight, RotateCcw, Trophy, Zap, CheckCircle, X } from 'lucide-react'
+import AppSidebar from '@/components/AppSidebar'
+import AppProgressRail from '@/components/AppProgressRail'
 
 interface DrillQuestion {
   id: string
@@ -121,6 +123,24 @@ export default function PracticeDrillPage() {
   const sessionId = searchParams?.get('sessionId') || ''
   const currentQuestion = questions[currentIndex]
   const totalXp = questions.length * XP_PER_PASS
+  const practiceCards = [
+    {
+      title: 'Drill Progress',
+      items: [
+        { label: 'Questions', value: `${Math.max(currentIndex + 1, 0)}/${questions.length || 0}`, progress: questions.length ? ((Math.max(currentIndex, 0)) / questions.length) * 100 : 0, tone: 'brand' as const },
+        { label: 'XP Earned', value: `${xp}`, progress: totalXp ? (xp / totalXp) * 100 : 0, tone: 'warning' as const },
+        { label: 'Mode', value: inputMode === 'voice' ? 'Voice' : 'Text' },
+      ],
+    },
+    {
+      title: 'Session',
+      items: [
+        { label: 'Current Phase', value: phase },
+        { label: 'Passed', value: `${sessionResults.filter(r => r.passed).length}` },
+        { label: 'Remaining', value: `${Math.max(questions.length - Math.max(currentIndex + (phase === 'result' ? 1 : 0), 0), 0)}` },
+      ],
+    },
+  ]
 
   useEffect(() => {
     if (sessionId) loadDrillQuestions()
@@ -343,8 +363,12 @@ export default function PracticeDrillPage() {
 
   if (questions.length === 0) {
     return (
-      <div className="app-shell">
-        <Header />
+      <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+        <div className="lg:hidden">
+          <Header />
+        </div>
+        <AppSidebar activeSection="practice" />
+        <AppProgressRail cards={practiceCards} />
         <div className="page-container max-w-lg py-16 text-center">
           <Preppi message="Nothing to drill right now — that's actually a good sign." size="lg" />
           <p className="mt-6 text-gray-500 text-sm">Complete an interview first, and we'll build your drill session from the feedback.</p>
@@ -357,8 +381,12 @@ export default function PracticeDrillPage() {
   }
 
   return (
-    <div className="app-shell">
-      <Header />
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+      <div className="lg:hidden">
+        <Header />
+      </div>
+      <AppSidebar activeSection="practice" />
+      <AppProgressRail cards={practiceCards} />
 
       {/* CORRECT! flash overlay */}
       {showCorrectFlash && (
@@ -372,7 +400,7 @@ export default function PracticeDrillPage() {
       {/* Confetti */}
       <Confetti active={confettiActive} />
 
-      <div className="page-container max-w-2xl py-8">
+      <div className="page-container max-w-2xl py-8 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:py-8">
 
         {/* XP bar — always visible during drill */}
         {phase !== 'intro' && phase !== 'summary' && (

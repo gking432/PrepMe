@@ -17,6 +17,8 @@ import InterviewTimeline from '@/components/InterviewTimeline'
 import SubLessonRoadmap from '@/components/SubLessonRoadmap'
 import PreppiWalkthrough from '@/components/PreppiWalkthrough'
 import LessonRoadmap from '@/components/LessonRoadmap'
+import AppSidebar from '@/components/AppSidebar'
+import AppProgressRail from '@/components/AppProgressRail'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
@@ -1862,6 +1864,35 @@ export default function InterviewDashboard() {
     ...(hasCfFeedback ? ['culture_fit'] : []),
     ...(hasFrFeedback ? ['final'] : []),
   ]
+  const currentStageKey = (currentStage === 'final_round' ? 'final' : currentStage) as 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
+  const processStages = ([
+    ['hr_screen', 'HR Screen'],
+    ['hiring_manager', 'Hiring Manager'],
+    ['culture_fit', 'Culture Fit'],
+    ['final', 'Final Round'],
+  ] as const).map(([key, label]) => ({
+    key,
+    label,
+    status: currentStageKey === key ? 'current' as const : completedStages.includes(key) ? 'complete' as const : 'upcoming' as const,
+  }))
+  const railCards = [
+    {
+      title: 'This Round',
+      items: [
+        { label: 'Score', value: hasFeedback ? `${overallScore}/10` : 'Pending', progress: hasFeedback ? overallScore * 10 : 0, tone: overallScore >= 7 ? 'success' as const : overallScore >= 5 ? 'warning' as const : 'brand' as const },
+        { label: 'Strong Areas', value: `${wentWellAreas.length || 0}` },
+        { label: 'Needs Work', value: `${needsImproveAreas.length || 0}` },
+      ],
+    },
+    {
+      title: 'Practice',
+      items: [
+        { label: 'Completed', value: `${passedCriteria.length}`, progress: needsImproveAreas.length ? (passedCriteria.length / needsImproveAreas.length) * 100 : 0, tone: 'success' as const },
+        { label: 'Remaining', value: `${Math.max(needsImproveAreas.length - passedCriteria.length, 0)}` },
+        { label: 'Stage', value: currentStageKey.replace('_', ' ') },
+      ],
+    },
+  ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
@@ -1914,15 +1945,22 @@ export default function InterviewDashboard() {
   }
 
   return (
-    <div className="app-shell">
-      <Header />
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+      <div className="lg:hidden">
+        <Header />
+      </div>
+      <AppSidebar activeSection="practice" processStages={processStages} />
+      <AppProgressRail cards={railCards} />
+      <div className="lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
 
       {/* Interview Process Timeline */}
-      <InterviewTimeline
-        currentStage={currentStage}
-        completedStages={completedStages}
-        isPremium={isPremium}
-      />
+      <div className="lg:hidden">
+        <InterviewTimeline
+          currentStage={currentStage}
+          completedStages={completedStages}
+          isPremium={isPremium}
+        />
+      </div>
 
       {/* Contextual action bar */}
       {(!loading && ((!hasFeedback && hasTranscript) || !isPremium)) && (
@@ -4914,7 +4952,7 @@ export default function InterviewDashboard() {
           highlightStage={purchaseHighlightStage}
         />
       )}
-
+      </div>
     </div>
   )
 }

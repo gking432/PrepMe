@@ -161,133 +161,125 @@ export default function LessonRoadmap({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-hidden">
-        <div className="mx-auto h-full max-w-4xl px-4 py-8">
-
-          {/* Preppi */}
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-white/90 shadow-[0_16px_30px_rgba(76,29,149,0.08)] animate-preppi-bounce">
-              <PreppiSVG />
+        <div className="mx-auto flex h-full max-w-6xl flex-col px-4 py-6">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Habitat</p>
+              <h2 className="mt-2 text-3xl font-black text-slate-900">Choose a coaching module and start rebuilding signal.</h2>
             </div>
-            <div className="inline-block max-w-[280px] rounded-[1.6rem] rounded-t-[0.45rem] border border-violet-200/80 bg-white/96 px-4 py-3 shadow-[0_16px_30px_rgba(76,29,149,0.08)]">
-              <p className="text-sm font-bold text-gray-800 leading-snug">{preppiMessage}</p>
+            <div className="rounded-[1.4rem] border border-violet-200 bg-white/80 px-5 py-3 shadow-[0_14px_28px_rgba(76,29,149,0.08)]">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Progress</p>
+              <p className="mt-1 text-sm font-bold text-slate-900">{completedSet.size} / {weaknesses.length} complete</p>
             </div>
           </div>
 
-          <div className="mb-5 rounded-[1.5rem] border border-violet-200/70 bg-white/78 p-4 shadow-[0_16px_30px_rgba(76,29,149,0.08)]">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Home Base</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Every flagged area lives here as its own module. Start with the recommended one, but you can return to this map anytime.
-            </p>
-          </div>
-
-          {weaknesses.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2">
-              {weaknesses.map((weakness, idx) => {
-                const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
-                const bundle = getBundleForRootCause(rootCause)
-                const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
-                const isCompleted = completedSet.has(idx)
-                const isPassed = passedSet.has(idx)
-                const isRecommended = idx === nextIdx && !allDone
-
-                return (
-                  <button
-                    key={`${weakness.criterion}-${idx}`}
-                    onClick={() => setActiveIdx(idx)}
-                    className={`w-full rounded-[1.6rem] border p-5 text-left shadow-[0_18px_30px_rgba(15,23,42,0.08)] transition-all hover:shadow-[0_24px_38px_rgba(15,23,42,0.1)] active:scale-[0.99] ${
-                      isCompleted && isPassed
-                        ? 'border-emerald-200 bg-emerald-50/90'
-                        : isCompleted
-                        ? 'border-amber-200 bg-amber-50/90'
-                        : isRecommended
-                        ? 'border-violet-300 bg-white/98 ring-2 ring-violet-200/70'
-                        : 'border-slate-200/80 bg-white/96'
-                    }`}
-                  >
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
-                        isCompleted && isPassed
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : isCompleted
-                          ? 'bg-amber-100 text-amber-700'
-                          : isRecommended
-                          ? 'bg-violet-100 text-violet-700'
-                          : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {isCompleted ? (isPassed ? 'Completed' : 'Retry') : isRecommended ? 'Recommended First' : 'Module'}
-                      </span>
-                      <ChevronRight className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] border border-violet-200 bg-violet-50 text-2xl text-violet-700">
-                        <span>{icon}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-lg font-black text-slate-900">{bundle.displayName}</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">{weakness.criterion}</p>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold text-violet-700">
-                            4-step coaching path
-                          </span>
-                          {weakness.score != null && (
-                            <span className="text-[10px] font-semibold text-gray-400">Score {weakness.score}/10</span>
-                          )}
+          <div className="grid flex-1 gap-5 lg:grid-cols-[1fr_320px]">
+            <div className="relative rounded-[2rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f0ff_38%,#eef4fb_100%)] p-6 shadow-[0_18px_36px_rgba(76,29,149,0.08)]">
+              <div className="absolute inset-x-8 top-10 h-40 rounded-full bg-[radial-gradient(circle,#e9d8fd_0%,transparent_70%)] opacity-60" />
+              <div className="relative grid h-full grid-cols-3 grid-rows-3 gap-4">
+                {[0, 1, 2, 3, 4, 5].map((slot) => {
+                  const weakness = weaknesses[slot]
+                  if (!weakness) {
+                    if (slot === 4) {
+                      return (
+                        <div key="preppi-hub" className="col-start-2 row-start-2 flex items-center justify-center">
+                          <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full border border-violet-200 bg-white/86 shadow-[0_20px_34px_rgba(76,29,149,0.12)]">
+                            <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-violet-50">
+                              <PreppiSVG />
+                            </div>
+                            <p className="max-w-[11rem] text-center text-sm font-bold leading-6 text-slate-700">{preppiMessage}</p>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+                      )
+                    }
+                    return <div key={`empty-${slot}`} />
+                  }
 
-          {completedSet.size > 0 && (
-            <div className="mt-5">
-              <p className="mb-3 text-xs font-black uppercase tracking-[0.22em] text-slate-400">Completed So Far</p>
-              <div className="space-y-3">
-                {weaknesses.map((weakness, idx) => {
-                  if (!completedSet.has(idx)) return null
+                  const idx = slot
                   const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
                   const bundle = getBundleForRootCause(rootCause)
+                  const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
+                  const isCompleted = completedSet.has(idx)
                   const isPassed = passedSet.has(idx)
+                  const isRecommended = idx === nextIdx && !allDone
+                  const slotClasses = ['col-start-1 row-start-1', 'col-start-3 row-start-1', 'col-start-1 row-start-2', 'col-start-3 row-start-2', 'col-start-1 row-start-3', 'col-start-3 row-start-3']
+
                   return (
-                    <div key={idx} className={`flex items-center gap-3 rounded-[1.2rem] border px-4 py-3 ${
-                      isPassed ? 'border-emerald-200 bg-emerald-50/80' : 'border-amber-200 bg-amber-50'
-                    }`}>
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${isPassed ? 'bg-emerald-500' : 'bg-amber-400'}`}>
-                        {isPassed ? <CheckCircle className="h-4 w-4 text-white" /> : <Lock className="h-4 w-4 text-amber-900" />}
+                    <button
+                      key={`${weakness.criterion}-${idx}`}
+                      onClick={() => setActiveIdx(idx)}
+                      className={`${slotClasses[slot]} relative rounded-[1.7rem] border p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_24px_38px_rgba(15,23,42,0.12)] ${
+                        isCompleted && isPassed
+                          ? 'border-emerald-200 bg-emerald-50/92'
+                          : isCompleted
+                          ? 'border-amber-200 bg-amber-50/92'
+                          : isRecommended
+                          ? 'border-violet-300 bg-white ring-2 ring-violet-200/70 shadow-[0_20px_34px_rgba(109,40,217,0.12)]'
+                          : 'border-slate-200/80 bg-white/92'
+                      }`}
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] border border-violet-200 bg-violet-50 text-2xl text-violet-700">
+                          <span>{icon}</span>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
+                          isCompleted && isPassed
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : isCompleted
+                            ? 'bg-amber-100 text-amber-700'
+                            : isRecommended
+                            ? 'bg-violet-100 text-violet-700'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {isCompleted ? (isPassed ? 'Mastered' : 'Retry') : isRecommended ? 'Start Here' : 'Module'}
+                        </span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900">{bundle.displayName}</p>
-                        <p className="text-xs text-slate-500 line-clamp-1">{weakness.criterion}</p>
+                      <p className="text-base font-black text-slate-900">{bundle.displayName}</p>
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{weakness.criterion}</p>
+                      <div className="mt-4 flex items-center justify-between">
+                        {weakness.score != null && <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{weakness.score}/10</span>}
+                        <ChevronRight className="h-5 w-5 text-slate-400" />
                       </div>
-                      <span className={`text-xs font-bold ${isPassed ? 'text-emerald-700' : 'text-amber-700'}`}>
-                        {isPassed ? 'Done' : 'Retry'}
-                      </span>
-                    </div>
+                    </button>
                   )
                 })}
               </div>
             </div>
-          )}
 
-          {/* Bottom actions */}
-          <div className="mt-8">
-            {allDone && (
-              <div className="text-center mb-4 animate-slide-up">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-bold text-green-700">All skills completed!</span>
-                </div>
+            <div className="flex flex-col gap-4">
+              <div className="rounded-[1.7rem] border border-violet-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(76,29,149,0.08)]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">How This Works</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Each module drills one interview weakness three different ways, then makes you answer the original question again out loud.
+                </p>
               </div>
-            )}
-            <button
-              onClick={onViewReport}
-              className="btn-coach-secondary flex w-full items-center justify-center gap-2 py-3.5 text-sm"
-            >
-              <FileText className="w-4 h-4" />
-              View Detailed Report
-            </button>
+              <div className="rounded-[1.7rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Readiness</p>
+                <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
+                    style={{ width: `${weaknesses.length ? (completedSet.size / weaknesses.length) * 100 : 0}%` }}
+                  />
+                </div>
+                <p className="mt-3 text-sm font-semibold text-slate-700">
+                  {allDone ? 'Every module is complete.' : `${Math.max(weaknesses.length - completedSet.size, 0)} modules still available.`}
+                </p>
+              </div>
+              <div className="mt-auto space-y-3">
+                <button
+                  onClick={onViewReport}
+                  className="btn-coach-secondary flex w-full items-center justify-center gap-2 py-3.5 text-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  Back to Feedback
+                </button>
+                {allDone && (
+                  <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+                    All modules completed. You are ready for a retake or the next round.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

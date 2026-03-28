@@ -1964,11 +1964,11 @@ export default function InterviewDashboard() {
   const feedbackNavItems = [
     {
       key: 'learn' as const,
-      label: 'Prepare',
+      label: 'Feedback',
       icon: FileText,
       onClick: () => {
-        setShowLessonRoadmap(false)
         setWalkthroughActive(false)
+        setShowLessonRoadmap(false)
         setShowRubricModal(true)
       },
     },
@@ -1978,6 +1978,7 @@ export default function InterviewDashboard() {
       icon: Target,
       onClick: () => {
         setWalkthroughActive(false)
+        setShowRubricModal(false)
         setShowLessonRoadmap(true)
       },
     },
@@ -2152,7 +2153,7 @@ export default function InterviewDashboard() {
     )
   }
 
-  if (showRubricModal && hasFeedback) {
+  if (hasFeedback && !walkthroughActive && !showLessonRoadmap) {
     return (
       <div className={shellClasses}>
         <div className="lg:hidden">
@@ -2171,6 +2172,8 @@ export default function InterviewDashboard() {
             feedback={feedback}
             currentSessionData={currentSessionData}
             currentStage={currentStage}
+            onRetakeInterview={() => router.push('/dashboard')}
+            onUnlockNextStage={() => setShowPurchaseFlow(true)}
             artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
             onPrintArtifact={() => window.print()}
             onStartPractice={() => {

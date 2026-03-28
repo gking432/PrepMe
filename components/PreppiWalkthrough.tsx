@@ -335,8 +335,8 @@ export default function PreppiWalkthrough({
       </div>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex min-h-full flex-col items-center justify-center px-5 py-8 md:px-12 md:py-12">
+      <div className="flex-1 overflow-hidden">
+        <div className="flex h-full flex-col items-center justify-center px-5 py-8 md:px-12 md:py-12">
 
             {/* Mobile Preppi */}
             <div className="mb-6" key={`preppi-${animKey}`}>

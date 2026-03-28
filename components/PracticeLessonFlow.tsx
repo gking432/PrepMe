@@ -383,14 +383,14 @@ export default function PracticeLessonFlow({
       {/* Mobile */}
       <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] md:hidden">
         <div className="px-4 pt-4 pb-2 shrink-0">{renderHeader()}</div>
-        <div className="flex-1 overflow-y-auto px-4 pb-8">{renderStep()}</div>
+        <div className="flex-1 overflow-hidden px-4 pb-8">{renderStep()}</div>
       </div>
 
       {/* Desktop */}
       <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:min-h-[720px] md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
         <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none">
           <div className="px-6 pt-5 pb-3 shrink-0 border-b border-gray-100">{renderHeader()}</div>
-          <div className="flex-1 overflow-y-auto px-6 py-6">{renderStep()}</div>
+          <div className="flex-1 overflow-hidden px-6 py-6">{renderStep()}</div>
         </div>
       </div>
 

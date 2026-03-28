@@ -77,7 +77,7 @@ export default function InterviewDashboard() {
   const [combinedReport, setCombinedReport] = useState<any>(null)
   const [combinedReportLoading, setCombinedReportLoading] = useState(false)
   const [combinedReportError, setCombinedReportError] = useState<string | null>(null)
-  const [practiceSidebarTitle, setPracticeSidebarTitle] = useState('Practice Modules')
+  const [practiceSidebarTitle, setPracticeSidebarTitle] = useState('')
   const [practiceSidebarItems, setPracticeSidebarItems] = useState<Array<{
     label: string
     status?: 'current' | 'complete' | 'upcoming' | 'locked'
@@ -1930,6 +1930,33 @@ export default function InterviewDashboard() {
     },
     railCards[0],
   ]
+  const feedbackNavItems = [
+    {
+      key: 'learn' as const,
+      label: 'Prepare',
+      icon: FileText,
+      onClick: () => {
+        setShowLessonRoadmap(false)
+        setWalkthroughActive(false)
+        setShowRubricModal(true)
+      },
+    },
+    {
+      key: 'practice' as const,
+      label: 'Practice',
+      icon: Target,
+      onClick: () => {
+        setWalkthroughActive(false)
+        setShowLessonRoadmap(true)
+      },
+    },
+    {
+      key: 'profile' as const,
+      label: 'Profile',
+      icon: User,
+      href: '/profile',
+    },
+  ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
@@ -1937,18 +1964,12 @@ export default function InterviewDashboard() {
   // ── Preppi Walkthrough: takes over the entire screen on first visit ──
   if (hasFeedback && walkthroughActive) {
     return (
-      <div className={shellClasses}>
+      <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]">
         <div className="lg:hidden">
           <Header />
         </div>
-        <AppSidebar
-          activeSection="learn"
-          processStages={processStages}
-          theme="light"
-          footerText="Review everything first. Practice starts after the full walkthrough."
-        />
         <AppProgressRail cards={prepareRailCards} theme="light" />
-        <div className={shellCenterClasses}>
+        <div className="lg:order-1 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
           <PreppiWalkthrough
             embeddedDesktop
             feedback={feedback}
@@ -1994,8 +2015,7 @@ export default function InterviewDashboard() {
           activeSection="practice"
           processStages={processStages}
           theme="light"
-          contextTitle={practiceSidebarTitle}
-          contextItems={practiceSidebarItems}
+          navItemsOverride={feedbackNavItems}
           footerText="Use this as the practice home base. Finish a module, then come back up for air."
         />
         <AppProgressRail cards={practiceRailCards} theme="light" />
@@ -2032,6 +2052,7 @@ export default function InterviewDashboard() {
         activeSection="learn"
         processStages={processStages}
         theme="light"
+        navItemsOverride={feedbackNavItems}
         footerText="Review the interview first, then move into targeted practice."
       />
       <AppProgressRail cards={prepareRailCards} theme="light" />

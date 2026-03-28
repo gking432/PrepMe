@@ -17,6 +17,13 @@ interface AppSidebarProps {
   activeSection: ActiveSection
   processStages?: ProcessStage[]
   theme?: 'dark' | 'light'
+  navItemsOverride?: Array<{
+    key: ActiveSection
+    label: string
+    href?: string
+    onClick?: () => void
+    icon: any
+  }>
   contextTitle?: string
   contextItems?: Array<{
     label: string
@@ -43,6 +50,7 @@ export default function AppSidebar({
   activeSection,
   processStages = [],
   theme = 'dark',
+  navItemsOverride,
   contextTitle,
   contextItems = [],
   footerText = 'One primary surface, one next step, one place to return to.',
@@ -63,6 +71,7 @@ export default function AppSidebar({
   const navIdleIconClass = isLight ? 'text-slate-400' : 'text-slate-500'
   const labelClass = isLight ? 'text-slate-400' : 'text-slate-500'
   const footerClass = isLight ? 'border-slate-200/80 bg-white/65 text-slate-700' : 'border-white/8 bg-white/4 text-slate-200'
+  const navItemsToRender = navItemsOverride || navItems
 
   return (
     <aside className={shellClass}>
@@ -76,18 +85,38 @@ export default function AppSidebar({
         </Link>
 
         <nav className="space-y-2">
-          {navItems.map(({ key, label, href, icon: Icon }) => {
+          {navItemsToRender.map(({ key, label, href, onClick, icon: Icon }) => {
             const isActive = activeSection === key || pathname === href
+            const className = `flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
+              isActive ? navActiveClass : navIdleClass
+            }`
+            const content = (
+              <>
+                <Icon className={`h-4 w-4 ${isActive ? navActiveIconClass : navIdleIconClass}`} />
+                <span>{label}</span>
+              </>
+            )
+
+            if (onClick) {
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={onClick}
+                  className={className}
+                >
+                  {content}
+                </button>
+              )
+            }
+
             return (
               <Link
                 key={key}
-                href={href}
-                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
-                  isActive ? navActiveClass : navIdleClass
-                }`}
+                href={href || '/'}
+                className={className}
               >
-                <Icon className={`h-4 w-4 ${isActive ? navActiveIconClass : navIdleIconClass}`} />
-                <span>{label}</span>
+                {content}
               </Link>
             )
           })}

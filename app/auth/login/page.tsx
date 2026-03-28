@@ -29,7 +29,8 @@ export default function LoginPage() {
       if (error) throw error
 
       if (data.user) {
-        router.push('/profile')
+        router.replace('/profile')
+        router.refresh()
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login')
@@ -170,4 +171,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

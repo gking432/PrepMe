@@ -187,8 +187,8 @@ export default function SubLessonRoadmap({
       </div>
 
       {/* Scrollable coaching path */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="flex-1 overflow-hidden">
+        <div className="mx-auto h-full max-w-2xl px-4 py-8">
 
           {/* Preppi */}
           <div className="mb-8 text-center">

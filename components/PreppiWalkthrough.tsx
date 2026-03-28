@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   X,
-  Zap,
   Trophy,
   Star,
   ArrowRight,
@@ -17,7 +16,6 @@ import {
 import Confetti from '@/components/Confetti'
 import Preppi, { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
-import LessonRoadmap from '@/components/LessonRoadmap'
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +30,7 @@ interface PreppiWalkthroughProps {
   onRetakeInterview: () => void
   onUnlockNextStage: () => void
   onSkipToResults: () => void
+  onStartPractice: () => void
   embeddedDesktop?: boolean
 }
 
@@ -42,7 +41,6 @@ type WalkthroughState =
   | 'score_reveal'
   | 'summary_card'
   | 'fork'
-  | 'lesson_roadmap'
   | 'complete'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -168,6 +166,7 @@ export default function PreppiWalkthrough({
   onRetakeInterview,
   onUnlockNextStage,
   onSkipToResults,
+  onStartPractice,
   embeddedDesktop = false,
 }: PreppiWalkthroughProps) {
   const { ding } = useGameFeedback()
@@ -267,15 +266,6 @@ export default function PreppiWalkthrough({
   }, [state])
 
   // When LessonRoadmap completes all practice
-  const handleAllPracticeComplete = useCallback((totalXp: number) => {
-    setConfettiActive(true)
-    setTimeout(() => setConfettiActive(false), 3500)
-    ding()
-    setPassedAreas([primaryWeakness?.criterion || 'Recommended path'])
-    setPracticedCount(1)
-    setState('complete')
-  }, [ding, primaryWeakness])
-
   // Preppi message
   const preppiMessage = useMemo(() => {
     switch (state) {
@@ -291,22 +281,6 @@ export default function PreppiWalkthrough({
       default:              return ''
     }
   }, [state, scoreRevealed, overallScore, primaryWeakness])
-
-  // ── Lesson Roadmap takeover ────────────────────────────────────────────────
-
-  if (state === 'lesson_roadmap') {
-    return (
-      <LessonRoadmap
-        weaknesses={weaknesses}
-        sessionId={sessionId}
-        currentStage={currentStage}
-        priorXp={0}
-        onAllComplete={handleAllPracticeComplete}
-        onViewReport={() => { markSeen(); onOpenDetailedReport() }}
-        onClose={() => setState('fork')}
-      />
-    )
-  }
 
   // ── Score ring math ────────────────────────────────────────────────────────
 
@@ -487,11 +461,13 @@ export default function PreppiWalkthrough({
 
                 {weaknesses.length > 0 && (
                   <button
-                    onClick={() => { markSeen(); setState('lesson_roadmap') }}
+                    onClick={() => {
+                      markSeen()
+                      onStartPractice()
+                    }}
                     className="btn-coach-primary mb-3 flex w-full items-center justify-center gap-2 py-4 text-base"
                   >
-                    <Zap className="w-5 h-5" />
-                    Start Recommended Practice
+                    Start Practice
                   </button>
                 )}
 

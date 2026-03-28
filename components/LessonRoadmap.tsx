@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { X, FileText, CheckCircle, ChevronRight, Lock } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
@@ -38,6 +38,14 @@ interface LessonRoadmapProps {
   onViewReport: () => void
   onClose: () => void
   embeddedDesktop?: boolean
+  onContextChange?: (context: {
+    title: string
+    items: Array<{
+      label: string
+      status?: 'current' | 'complete' | 'upcoming' | 'locked'
+      meta?: string
+    }>
+  }) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -51,6 +59,7 @@ export default function LessonRoadmap({
   onViewReport,
   onClose,
   embeddedDesktop = false,
+  onContextChange,
 }: LessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
@@ -62,8 +71,6 @@ export default function LessonRoadmap({
 
   const allDone = completedSet.size === weaknesses.length
   const nextIdx = weaknesses.findIndex((_, idx) => !completedSet.has(idx))
-  const activeWeakness = nextIdx >= 0 ? weaknesses[nextIdx] : null
-  const remainingLater = Math.max(0, weaknesses.length - completedSet.size - (allDone ? 0 : 1))
 
   const handleLessonComplete = useCallback((passed: boolean, xp: number) => {
     if (activeIdx === null) return
@@ -84,6 +91,24 @@ export default function LessonRoadmap({
     }
   }, [activeIdx, completedSet, sessionXp, weaknesses.length, ding, onAllComplete, priorXp])
 
+  useEffect(() => {
+    if (!onContextChange) return
+    onContextChange({
+      title: 'Practice Modules',
+      items: weaknesses.map((weakness, idx) => {
+        const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+        const bundle = getBundleForRootCause(rootCause)
+        const isCompleted = completedSet.has(idx)
+        const isCurrent = idx === nextIdx && !allDone
+        return {
+          label: bundle.displayName,
+          status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : 'upcoming' as const,
+          meta: weakness.score != null ? `${weakness.score}/10` : undefined,
+        }
+      }),
+    })
+  }, [allDone, completedSet, nextIdx, onContextChange, weaknesses])
+
   // ── Open sub-lesson roadmap ───────────────────────────────────────────────
 
   if (activeIdx !== null) {
@@ -103,6 +128,7 @@ export default function LessonRoadmap({
         priorXp={priorXp + sessionXp}
         onAllComplete={(totalXp) => handleLessonComplete(true, totalXp - priorXp - sessionXp)}
         onClose={() => setActiveIdx(null)}
+        onContextChange={onContextChange}
       />
     )
   }
@@ -110,7 +136,7 @@ export default function LessonRoadmap({
   const preppiMessage = allDone
     ? 'Every coaching path is complete. Review your report or retake the round.'
     : completedSet.size === 0
-    ? 'Choose one flagged area to rebuild first. We will take it step by step.'
+    ? 'Pick a module and work through it. You can always come back to this map.'
     : `${weaknesses.length - completedSet.size} coaching path${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left.`
 
   return (
@@ -135,7 +161,7 @@ export default function LessonRoadmap({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-sm mx-auto px-4 py-8">
+        <div className="mx-auto max-w-4xl px-4 py-8">
 
           {/* Preppi */}
           <div className="mb-8 text-center">
@@ -147,51 +173,71 @@ export default function LessonRoadmap({
             </div>
           </div>
 
-          {/* Recommended first step */}
-          {activeWeakness && (() => {
-            const rootCause = getRootCauseForCriterion(activeWeakness.criterion, activeWeakness.rootCause)
-            const bundle = getBundleForRootCause(rootCause)
-            const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
-            return (
-              <button
-                onClick={() => setActiveIdx(nextIdx)}
-                className="w-full rounded-[1.6rem] border border-slate-200/80 bg-white/98 p-5 text-left shadow-[0_18px_30px_rgba(15,23,42,0.08)] transition-all hover:shadow-[0_24px_38px_rgba(15,23,42,0.1)] active:scale-[0.99]"
-              >
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="rounded-full bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-violet-700">
-                    Recommended First
-                  </span>
-                  <ChevronRight className="h-5 w-5 text-slate-400" />
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] border border-violet-200 bg-violet-50 text-2xl text-violet-700">
-                    <span>{icon}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-lg font-black text-slate-900">{bundle.displayName}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{activeWeakness.criterion}</p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold text-violet-700">
-                        4-step coaching path
-                      </span>
-                      {activeWeakness.score != null && (
-                        <span className="text-[10px] font-semibold text-gray-400">Score {activeWeakness.score}/10</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            )
-          })()}
+          <div className="mb-5 rounded-[1.5rem] border border-violet-200/70 bg-white/78 p-4 shadow-[0_16px_30px_rgba(76,29,149,0.08)]">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Home Base</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Every flagged area lives here as its own module. Start with the recommended one, but you can return to this map anytime.
+            </p>
+          </div>
 
-          {!allDone && remainingLater > 0 && (
-            <div className="mt-4 rounded-[1.4rem] border border-slate-200 bg-white/80 px-4 py-4">
-              <p className="text-sm font-semibold text-slate-700">
-                {remainingLater} more area{remainingLater === 1 ? '' : 's'} will appear after this one.
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Focus on one fix at a time. The full report still contains everything.
-              </p>
+          {weaknesses.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {weaknesses.map((weakness, idx) => {
+                const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+                const bundle = getBundleForRootCause(rootCause)
+                const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
+                const isCompleted = completedSet.has(idx)
+                const isPassed = passedSet.has(idx)
+                const isRecommended = idx === nextIdx && !allDone
+
+                return (
+                  <button
+                    key={`${weakness.criterion}-${idx}`}
+                    onClick={() => setActiveIdx(idx)}
+                    className={`w-full rounded-[1.6rem] border p-5 text-left shadow-[0_18px_30px_rgba(15,23,42,0.08)] transition-all hover:shadow-[0_24px_38px_rgba(15,23,42,0.1)] active:scale-[0.99] ${
+                      isCompleted && isPassed
+                        ? 'border-emerald-200 bg-emerald-50/90'
+                        : isCompleted
+                        ? 'border-amber-200 bg-amber-50/90'
+                        : isRecommended
+                        ? 'border-violet-300 bg-white/98 ring-2 ring-violet-200/70'
+                        : 'border-slate-200/80 bg-white/96'
+                    }`}
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
+                        isCompleted && isPassed
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : isCompleted
+                          ? 'bg-amber-100 text-amber-700'
+                          : isRecommended
+                          ? 'bg-violet-100 text-violet-700'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {isCompleted ? (isPassed ? 'Completed' : 'Retry') : isRecommended ? 'Recommended First' : 'Module'}
+                      </span>
+                      <ChevronRight className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] border border-violet-200 bg-violet-50 text-2xl text-violet-700">
+                        <span>{icon}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-lg font-black text-slate-900">{bundle.displayName}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">{weakness.criterion}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold text-violet-700">
+                            4-step coaching path
+                          </span>
+                          {weakness.score != null && (
+                            <span className="text-[10px] font-semibold text-gray-400">Score {weakness.score}/10</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
 

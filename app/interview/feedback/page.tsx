@@ -77,6 +77,12 @@ export default function InterviewDashboard() {
   const [combinedReport, setCombinedReport] = useState<any>(null)
   const [combinedReportLoading, setCombinedReportLoading] = useState(false)
   const [combinedReportError, setCombinedReportError] = useState<string | null>(null)
+  const [practiceSidebarTitle, setPracticeSidebarTitle] = useState('Practice Modules')
+  const [practiceSidebarItems, setPracticeSidebarItems] = useState<Array<{
+    label: string
+    status?: 'current' | 'complete' | 'upcoming' | 'locked'
+    meta?: string
+  }>>([])
   const mediaRecorderRefs = useRef<Record<string, MediaRecorder>>({})
   const audioChunksRefs = useRef<Record<string, Blob[]>>({})
   const router = useRouter()
@@ -1893,8 +1899,29 @@ export default function InterviewDashboard() {
       ],
     },
   ]
-  const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]"
+  const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]"
   const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]"
+  const workspaceTabs = [
+    { label: 'Prepare', active: !showLessonRoadmap, onClick: () => setShowLessonRoadmap(false) },
+    { label: 'Practice', active: showLessonRoadmap, onClick: () => setShowLessonRoadmap(true) },
+  ]
+  const prepareSidebarItems = [
+    { label: 'Score Overview', status: 'current' as const, meta: `${overallScore}/10` },
+    { label: `${wentWellAreas.length || 0} strengths surfaced`, status: 'upcoming' as const },
+    { label: `${needsImproveAreas.length || 0} areas to improve`, status: needsImproveAreas.length ? 'upcoming' as const : 'complete' as const },
+    { label: 'Detailed report available', status: 'upcoming' as const },
+  ]
+  const practiceRailCards = [
+    {
+      title: 'Practice Hub',
+      items: [
+        { label: 'Modules', value: `${needsImproveAreas.length || 0}` },
+        { label: 'Completed', value: `${passedCriteria.length}`, progress: needsImproveAreas.length ? (passedCriteria.length / needsImproveAreas.length) * 100 : 0, tone: 'success' as const },
+        { label: 'Focus', value: practiceSidebarItems.find(item => item.status === 'current')?.label || 'Pick a module' },
+      ],
+    },
+    railCards[0],
+  ]
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
@@ -1906,8 +1933,16 @@ export default function InterviewDashboard() {
         <div className="lg:hidden">
           <Header />
         </div>
-        <AppSidebar activeSection="practice" processStages={processStages} />
-        <AppProgressRail cards={railCards} />
+        <AppSidebar
+          activeSection="practice"
+          processStages={processStages}
+          theme="light"
+          workspaceTabs={workspaceTabs}
+          contextTitle="Prepare"
+          contextItems={prepareSidebarItems}
+          footerText="Review the interview first, then move into targeted practice."
+        />
+        <AppProgressRail cards={railCards} theme="light" />
         <div className={shellCenterClasses}>
           <PreppiWalkthrough
             embeddedDesktop
@@ -1929,6 +1964,10 @@ export default function InterviewDashboard() {
               setWalkthroughActive(false)
               setShowPurchaseFlow(true)
             }}
+            onStartPractice={() => {
+              setWalkthroughActive(false)
+              setShowLessonRoadmap(true)
+            }}
             onSkipToResults={() => {
               setWalkthroughActive(false)
             }}
@@ -1946,15 +1985,29 @@ export default function InterviewDashboard() {
         <div className="lg:hidden">
           <Header />
         </div>
-        <AppSidebar activeSection="practice" processStages={processStages} />
-        <AppProgressRail cards={railCards} />
+        <AppSidebar
+          activeSection="practice"
+          processStages={processStages}
+          theme="light"
+          workspaceTabs={workspaceTabs}
+          contextTitle={practiceSidebarTitle}
+          contextItems={practiceSidebarItems}
+          footerText="Use this as the practice home base. Finish a module, then come back up for air."
+        />
+        <AppProgressRail cards={practiceRailCards} theme="light" />
         <div className={shellCenterClasses}>
           <LessonRoadmap
             embeddedDesktop
             weaknesses={weaknesses}
             sessionId={currentSessionData?.id}
             currentStage={currentStage}
-            onAllComplete={() => setShowLessonRoadmap(false)}
+            onContextChange={({ title, items }) => {
+              setPracticeSidebarTitle(title)
+              setPracticeSidebarItems(items)
+            }}
+            onAllComplete={() => {
+              setPracticeSidebarTitle('Practice Complete')
+            }}
             onViewReport={() => {
               setShowLessonRoadmap(false)
               setShowRubricModal(true)
@@ -1971,8 +2024,16 @@ export default function InterviewDashboard() {
       <div className="lg:hidden">
         <Header />
       </div>
-      <AppSidebar activeSection="practice" processStages={processStages} />
-      <AppProgressRail cards={railCards} />
+      <AppSidebar
+        activeSection="practice"
+        processStages={processStages}
+        theme="light"
+        workspaceTabs={workspaceTabs}
+        contextTitle="Prepare"
+        contextItems={prepareSidebarItems}
+        footerText="Review the interview first, then move into targeted practice."
+      />
+      <AppProgressRail cards={railCards} theme="light" />
       <div className={shellCenterClasses}>
 
       {/* Interview Process Timeline */}

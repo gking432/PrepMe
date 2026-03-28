@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { X, CheckCircle, RotateCcw, Trophy, ChevronRight, Mic } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
@@ -46,10 +46,20 @@ interface SubLessonRoadmapProps {
   onAllComplete: (totalXp: number) => void
   onClose: () => void
   embeddedDesktop?: boolean
+  onContextChange?: (context: {
+    title: string
+    items: Array<{
+      label: string
+      status?: 'current' | 'complete' | 'upcoming' | 'locked'
+      meta?: string
+    }>
+  }) => void
 }
 
 // 0,1,2 = sub-lessons; 3 = final voice
 type ActiveSlot = 0 | 1 | 2 | 3 | null
+
+const SLOT_DIFFICULTIES = ['Lesson 1', 'Lesson 2', 'Lesson 3', 'Final'] as const
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -64,6 +74,7 @@ export default function SubLessonRoadmap({
   onAllComplete,
   onClose,
   embeddedDesktop = false,
+  onContextChange,
 }: SubLessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
@@ -77,6 +88,7 @@ export default function SubLessonRoadmap({
   const allDone = completedSet.size === totalSlots
 
   const nextAvailable = [0, 1, 2, 3].find(i => !completedSet.has(i)) ?? null
+  const slotLabels = bundle.lessons.map(l => l.title).concat(['Voice Re-Answer'])
 
   const handleSlotComplete = useCallback((slotIdx: number, passed: boolean, xp: number) => {
     setActiveSlot(null)
@@ -97,6 +109,23 @@ export default function SubLessonRoadmap({
       setTimeout(() => onAllComplete(priorXp + newXp), 2800)
     }
   }, [sessionXp, completedSet, totalSlots, ding, onAllComplete, priorXp])
+
+  useEffect(() => {
+    if (!onContextChange) return
+    onContextChange({
+      title: bundle.displayName,
+      items: [0, 1, 2, 3].map((idx) => {
+        const isCompleted = completedSet.has(idx)
+        const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextAvailable && !allDone)
+        const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isCurrent
+        return {
+          label: slotLabels[idx],
+          status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : isLocked ? 'locked' as const : 'upcoming' as const,
+          meta: SLOT_DIFFICULTIES[idx],
+        }
+      }),
+    })
+  }, [activeSlot, allDone, bundle.displayName, completedSet, nextAvailable, onContextChange, slotLabels])
 
   // ── Render active lesson or voice challenge ────────────────────────────────
 
@@ -128,9 +157,6 @@ export default function SubLessonRoadmap({
       />
     )
   }
-
-  const slotLabels = bundle.lessons.map(l => l.title).concat(['Voice Re-Answer'])
-  const slotDifficulties = ['Lesson 1', 'Lesson 2', 'Lesson 3', 'Final']
 
   const preppiMessage = allDone
     ? 'All four steps complete. You are ready to try it again.'
@@ -253,7 +279,7 @@ export default function SubLessonRoadmap({
                               ? 'bg-violet-100 text-violet-700'
                               : 'bg-slate-100 text-slate-500'
                           }`}>
-                            {isCompleted && isPassed ? 'Passed' : slotDifficulties[idx]}
+                            {isCompleted && isPassed ? 'Passed' : SLOT_DIFFICULTIES[idx]}
                           </span>
                         </div>
                         <p className="mt-1 text-sm leading-6 text-slate-600">

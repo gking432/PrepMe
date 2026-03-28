@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Sparkles, ArrowRight, ShieldCheck, BriefcaseBusiness, Mic, Target, Trophy, Waves } from 'lucide-react'
+import { Sparkles, ArrowRight, ShieldCheck, Briefcase, Mic, Target, Trophy, Waves } from 'lucide-react'
 
 const pillars = [
   {
@@ -121,7 +121,7 @@ export default function HomePage() {
         <section className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="premium-card p-7">
             <div className="eyebrow mb-4">
-              <BriefcaseBusiness className="h-3.5 w-3.5" />
+              <Briefcase className="h-3.5 w-3.5" />
               How the product earns trust
             </div>
             <h2 className="text-2xl font-black text-slate-950">We give away the HR screen because the serious value comes after.</h2>

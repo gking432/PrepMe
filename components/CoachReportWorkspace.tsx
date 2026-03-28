@@ -1,15 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { ArrowRight, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Target, Trophy, FileText } from 'lucide-react'
+import { ReactNode, useMemo, useState } from 'react'
+import { ArrowRight, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Target, Trophy, FileText, Award, Download } from 'lucide-react'
 
-type ReportSection = 'overview' | 'strengths' | 'issues' | 'criteria' | 'next_steps'
+type ReportSection = 'overview' | 'strengths' | 'issues' | 'criteria' | 'next_steps' | 'artifact'
 
 interface ReportWorkspaceProps {
   feedback: any
   currentSessionData: any
   currentStage: string
   onStartPractice: () => void
+  artifactContent?: ReactNode
+  onPrintArtifact?: () => void
 }
 
 const SECTION_CONFIG: Array<{ key: ReportSection; label: string }> = [
@@ -18,6 +20,7 @@ const SECTION_CONFIG: Array<{ key: ReportSection; label: string }> = [
   { key: 'issues', label: 'Issues' },
   { key: 'criteria', label: 'Criteria' },
   { key: 'next_steps', label: 'Next Steps' },
+  { key: 'artifact', label: 'Artifact' },
 ]
 
 const STAGE_LABELS: Record<string, string> = {
@@ -88,6 +91,8 @@ export default function CoachReportWorkspace({
   currentSessionData,
   currentStage,
   onStartPractice,
+  artifactContent,
+  onPrintArtifact,
 }: ReportWorkspaceProps) {
   const [section, setSection] = useState<ReportSection>('overview')
   const [issueIndex, setIssueIndex] = useState(0)
@@ -131,6 +136,20 @@ export default function CoachReportWorkspace({
             <p className="mt-6 max-w-3xl text-sm leading-7 text-slate-600">
               {overallAssessment?.summary || overallAssessment?.executive_summary || feedback?.detailed_feedback}
             </p>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <div className="rounded-[1.2rem] border border-violet-200 bg-violet-50 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-violet-600">Achievement</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">Report Unlocked</p>
+              </div>
+              <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-600">Progress</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{strengths.length} strengths found</p>
+              </div>
+              <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600">Focus</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{issues.length} modules available</p>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-5">
@@ -339,6 +358,58 @@ export default function CoachReportWorkspace({
       </div>
     )
   }
+
+    if (section === 'artifact') {
+      return (
+        <div className="flex h-full flex-col rounded-[1.8rem] border border-slate-200 bg-white/92 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Performance Artifact</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-900">Detailed performance rubric</h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+                Saved to profile
+              </div>
+              <button
+                type="button"
+                onClick={onPrintArtifact}
+                className="btn-coach-primary flex items-center gap-2 px-4 py-2.5 text-sm"
+              >
+                <Download className="h-4 w-4" />
+                Print / Save PDF
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-[260px_minmax(0,1fr)] gap-5 p-5">
+            <div className="rounded-[1.4rem] border border-violet-200 bg-violet-50/80 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100">
+                  <Award className="h-5 w-5 text-violet-700" />
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Artifact Quality</p>
+                  <p className="text-sm font-bold text-slate-900">Formal hiring packet</p>
+                </div>
+              </div>
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                <p>This is the saved, downloadable coaching artifact for this interview round.</p>
+                <p>Use it as the permanent record of performance, rubric breakdown, and next-step prep.</p>
+              </div>
+            </div>
+            <div className="min-h-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100">
+              <div className="h-[calc(100vh-21rem)] overflow-y-auto bg-white p-4">
+                {artifactContent || (
+                  <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                    Detailed artifact unavailable for this round.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
   return (
     <div className="flex h-full flex-col px-6 py-6 lg:px-8 lg:py-8">

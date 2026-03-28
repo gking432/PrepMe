@@ -1900,6 +1900,15 @@ export default function InterviewDashboard() {
       ],
     },
   ]
+  const processRailCard = {
+    title: 'Interview Process',
+    items: processStages.map((stage) => ({
+      label: stage.label,
+      value: stage.status === 'current' ? 'Current' : stage.status === 'complete' ? 'Done' : 'Up next',
+      progress: stage.status === 'complete' ? 100 : stage.status === 'current' ? 60 : 0,
+      tone: stage.status === 'complete' ? 'success' as const : stage.status === 'current' ? 'brand' as const : 'default' as const,
+    })),
+  }
   const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]"
   const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]"
   const prepareRailCards = [
@@ -1919,6 +1928,7 @@ export default function InterviewDashboard() {
         { label: 'Needs work', value: `${needsImproveAreas.length || 0}` },
       ],
     },
+    processRailCard,
   ]
   const practiceRailCards = [
     {
@@ -1930,6 +1940,7 @@ export default function InterviewDashboard() {
       ],
     },
     railCards[0],
+    processRailCard,
   ]
   const reportRailCards = [
     {
@@ -1948,6 +1959,7 @@ export default function InterviewDashboard() {
         { label: 'Likelihood', value: likelihood },
       ],
     },
+    processRailCard,
   ]
   const feedbackNavItems = [
     {
@@ -1976,6 +1988,115 @@ export default function InterviewDashboard() {
       href: '/profile',
     },
   ]
+
+  const buildHrArtifactData = () => {
+    const fullRubric = (feedback as any)?.full_rubric
+    if (!fullRubric) return null
+
+    const criteria = fullRubric.traditional_hr_criteria || {}
+    const communication = criteria.communication_skills || {}
+    const professionalism = criteria.professionalism || {}
+    const qualifications = criteria.basic_qualifications_match || criteria.basic_qualifications || {}
+    const interest = criteria.interest_and_enthusiasm || criteria.interest_enthusiasm || {}
+    const cultureFit = criteria.culture_fit_indicators || criteria.culture_fit || {}
+    const responseQuality = criteria.response_quality || {}
+    const strengths = wentWellAreas.slice(0, 3).map((item: any) => ({ title: item.criterion, description: item.feedback }))
+    const weaknesses = needsImproveAreas.slice(0, 3).map((item: any) => ({ title: item.criterion, description: item.feedback }))
+
+    return {
+      rubric_version: fullRubric.rubric_version || '1.0',
+      interview_type: 'hr_screen',
+      session_metadata: fullRubric.session_metadata || {
+        session_id: currentSessionData?.id || feedback?.interview_session_id || 'unknown',
+        candidate_name: currentSessionData?.candidate_name || 'Candidate',
+        position: currentSessionData?.job_title || 'Position',
+        company: currentSessionData?.company_name || 'Company',
+        interview_date: currentSessionData?.created_at || feedback?.created_at || new Date().toISOString(),
+        interview_duration_seconds: currentSessionData?.duration_seconds || 0,
+      },
+      overall_assessment: {
+        overall_score: Math.round((overallScore || 0) * 10),
+        likelihood_to_advance: fullRubric.overall_assessment?.likelihood_to_advance || likelihood || 'marginal',
+        key_strengths: fullRubric.overall_assessment?.key_strengths || strengths,
+        key_weaknesses: fullRubric.overall_assessment?.key_weaknesses || weaknesses,
+        executive_summary: fullRubric.overall_assessment?.executive_summary || fullRubric.overall_assessment?.summary || feedback?.detailed_feedback || 'Detailed summary unavailable.',
+      },
+      traditional_hr_criteria: {
+        communication_skills: {
+          score: communication.score || 3,
+          scale: communication.scale || '1-5',
+          components: communication.components || {},
+          feedback: communication.feedback || 'Communication assessment unavailable.',
+        },
+        professionalism: {
+          score: professionalism.score || (professionalism.passed ? 'pass' : 'fail') || 'pass',
+          scale: professionalism.scale || 'pass/fail',
+          components: professionalism.components || {},
+          feedback: professionalism.feedback || 'Professionalism assessment unavailable.',
+          issues_detected: professionalism.issues_detected || [],
+        },
+        basic_qualifications_match: {
+          score: qualifications.score || 0,
+          scale: qualifications.scale || '1-10',
+          components: qualifications.components || {},
+          feedback: qualifications.feedback || 'Qualifications assessment unavailable.',
+          alignment_details: qualifications.alignment_details || qualifications.alignment || {
+            job_requirements_met: qualifications.alignment?.met || [],
+            job_requirements_missing: qualifications.alignment?.missing || [],
+            transferable_skills_identified: qualifications.alignment?.transferable || [],
+          },
+        },
+        interest_and_enthusiasm: {
+          score: interest.score || 0,
+          scale: interest.scale || '1-5',
+          components: interest.components || {},
+          feedback: interest.feedback || 'Interest assessment unavailable.',
+          enthusiasm_indicators: interest.enthusiasm_indicators || interest.indicators || {},
+        },
+        culture_fit_indicators: {
+          score: cultureFit.score || (cultureFit.passed ? 'pass' : 'fail') || 'pass',
+          scale: cultureFit.scale || 'pass/fail',
+          components: cultureFit.components || {},
+          feedback: cultureFit.feedback || 'Culture fit assessment unavailable.',
+          notes: cultureFit.notes || '',
+        },
+        response_quality: {
+          score: responseQuality.score || 0,
+          scale: responseQuality.scale || '1-5',
+          components: responseQuality.components || {},
+          feedback: responseQuality.feedback || 'Response quality assessment unavailable.',
+          quality_metrics: responseQuality.quality_metrics || {},
+        },
+        red_flags: criteria.red_flags || { present: false, scale: 'present/absent', detected_flags: [], feedback: 'No major red flags surfaced.' },
+      },
+      time_management_analysis: fullRubric.time_management_analysis || {
+        total_interview_duration: currentSessionData?.duration_seconds ? `${Math.floor((currentSessionData.duration_seconds || 0) / 60)}:${String((currentSessionData.duration_seconds || 0) % 60).padStart(2, '0')}` : 'N/A',
+        target_duration: 'N/A',
+        variance: 'N/A',
+        questions_asked: 0,
+        time_per_question: [],
+        pacing_feedback: 'Pacing analysis unavailable.',
+      },
+      observer_notes: fullRubric.observer_notes,
+      next_steps_preparation: fullRubric.next_steps_preparation || {
+        ready_for_hiring_manager: likelihood === 'likely',
+        confidence_level: 'Moderate',
+        areas_to_study: [],
+        predicted_hiring_manager_questions: [],
+        skills_to_highlight_more: [],
+      },
+      comparative_analysis: fullRubric.comparative_analysis || {
+        percentile_estimate: 50,
+        standout_qualities: [],
+        common_weaknesses_avoided: [],
+      },
+      grading_metadata: fullRubric.grading_metadata || {
+        graded_by_agent: 'Claude Sonnet 4',
+        grading_timestamp: feedback?.created_at || new Date().toISOString(),
+        confidence_in_assessment: 'High',
+      },
+    }
+  }
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
@@ -2050,6 +2171,8 @@ export default function InterviewDashboard() {
             feedback={feedback}
             currentSessionData={currentSessionData}
             currentStage={currentStage}
+            artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
+            onPrintArtifact={() => window.print()}
             onStartPractice={() => {
               setShowRubricModal(false)
               setShowLessonRoadmap(true)

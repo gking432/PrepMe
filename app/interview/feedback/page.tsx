@@ -19,6 +19,7 @@ import PreppiWalkthrough from '@/components/PreppiWalkthrough'
 import LessonRoadmap from '@/components/LessonRoadmap'
 import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
+import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
@@ -1930,6 +1931,24 @@ export default function InterviewDashboard() {
     },
     railCards[0],
   ]
+  const reportRailCards = [
+    {
+      title: 'Report Progress',
+      items: [
+        { label: 'Overall score', value: `${overallScore}/10`, progress: overallScore * 10, tone: overallScore >= 7 ? 'success' as const : overallScore >= 5 ? 'warning' as const : 'brand' as const },
+        { label: 'Strong signals', value: `${wentWellAreas.length || 0}`, progress: Math.min((wentWellAreas.length || 0) * 20, 100), tone: 'success' as const },
+        { label: 'Flagged issues', value: `${needsImproveAreas.length || 0}`, progress: needsImproveAreas.length ? 100 : 0, tone: 'warning' as const },
+      ],
+    },
+    {
+      title: 'Next Move',
+      items: [
+        { label: 'Best path', value: needsImproveAreas.length ? 'Practice modules' : 'Review complete' },
+        { label: 'Current stage', value: currentStageKey.replace('_', ' ') },
+        { label: 'Likelihood', value: likelihood },
+      ],
+    },
+  ]
   const feedbackNavItems = [
     {
       key: 'learn' as const,
@@ -1964,12 +1983,21 @@ export default function InterviewDashboard() {
   // ── Preppi Walkthrough: takes over the entire screen on first visit ──
   if (hasFeedback && walkthroughActive) {
     return (
-      <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]">
+      <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]">
         <div className="lg:hidden">
           <Header />
         </div>
+        <div className="hidden lg:block">
+          <AppSidebar
+            activeSection="learn"
+            processStages={processStages}
+            theme="light"
+            navItemsOverride={feedbackNavItems}
+            footerText="Review everything first. Practice starts after the full walkthrough."
+          />
+        </div>
         <AppProgressRail cards={prepareRailCards} theme="light" />
-        <div className="lg:order-1 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
+        <div className="lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
           <PreppiWalkthrough
             embeddedDesktop
             feedback={feedback}
@@ -1996,6 +2024,35 @@ export default function InterviewDashboard() {
             }}
             onSkipToResults={() => {
               setWalkthroughActive(false)
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (showRubricModal && hasFeedback) {
+    return (
+      <div className={shellClasses}>
+        <div className="lg:hidden">
+          <Header />
+        </div>
+        <AppSidebar
+          activeSection="learn"
+          processStages={processStages}
+          theme="light"
+          navItemsOverride={feedbackNavItems}
+          footerText="Prepare is the full report workspace. Practice stays separate."
+        />
+        <AppProgressRail cards={reportRailCards} theme="light" />
+        <div className={shellCenterClasses}>
+          <CoachReportWorkspace
+            feedback={feedback}
+            currentSessionData={currentSessionData}
+            currentStage={currentStage}
+            onStartPractice={() => {
+              setShowRubricModal(false)
+              setShowLessonRoadmap(true)
             }}
           />
         </div>

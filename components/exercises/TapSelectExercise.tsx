@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle, XCircle, ArrowRight } from 'lucide-react'
 
 interface TapSelectExerciseProps {
@@ -33,16 +33,20 @@ export default function TapSelectExercise({
     })
   }
 
-  const handleCheck = () => {
-    if (selected.size === 0) return
-    setChecked(true)
-  }
-
   const allCorrect =
     correctIndices.every(i => selected.has(i)) &&
     [...selected].every(i => correctSet.has(i))
 
   const handleContinue = () => onComplete(allCorrect)
+
+  useEffect(() => {
+    if (checked) return
+    if (selected.size === 0) return
+    if (selected.size !== correctIndices.length) return
+
+    const timer = setTimeout(() => setChecked(true), 180)
+    return () => clearTimeout(timer)
+  }, [checked, correctIndices.length, selected])
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-5">
@@ -85,7 +89,7 @@ export default function TapSelectExercise({
         })}
       </div>
 
-      <p className="text-xs text-gray-400">Tap all that apply, then hit Check.</p>
+      <p className="text-xs text-gray-400">Tap all that apply.</p>
 
       {/* Post-check feedback */}
       {checked && (
@@ -109,13 +113,6 @@ export default function TapSelectExercise({
             </p>
           </div>
         </div>
-      )}
-
-      {/* Action buttons */}
-      {!checked && selected.size > 0 && (
-        <button onClick={handleCheck} className="w-full btn-coach-primary py-3">
-          Check
-        </button>
       )}
 
       {checked && (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CheckCircle, XCircle, ArrowRight, Tag } from 'lucide-react'
 
 interface Segment {
@@ -59,9 +59,13 @@ export default function LabelSortExercise({
     setSelections((prev) => ({ ...prev, [segmentIndex]: label }))
   }
 
-  const handleCheck = () => {
-    setChecked(true)
-  }
+  useEffect(() => {
+    if (checked) return
+    if (!allLabeled) return
+
+    const timer = setTimeout(() => setChecked(true), 180)
+    return () => clearTimeout(timer)
+  }, [allLabeled, checked])
 
   const correctCount = checked
     ? shuffledSegments.filter((seg, i) => selections[i] === seg.correctLabel).length
@@ -196,16 +200,6 @@ export default function LabelSortExercise({
             {passed ? ' — Great job!' : ' — We will revisit the misses at the end.'}
           </p>
         </div>
-      )}
-
-      {/* Check / Continue buttons */}
-      {!checked && allLabeled && (
-        <button
-          onClick={handleCheck}
-          className="w-full btn-coach-primary py-3"
-        >
-          Check Answers
-        </button>
       )}
 
       {checked && (

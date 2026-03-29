@@ -21,19 +21,13 @@ export default function WordBankExercise({
   onComplete,
 }: WordBankExerciseProps) {
   const [selected, setSelected] = useState<number | null>(null)
-  const [checked, setChecked] = useState(false)
 
   const parts = sentenceWithBlank.split('[___]')
   const correct = selected === correctIndex
 
   const handleSelect = (i: number) => {
-    if (checked) return
+    if (selected !== null) return
     setSelected(i)
-  }
-
-  const handleCheck = () => {
-    if (selected === null) return
-    setChecked(true)
   }
 
   const handleContinue = () => {
@@ -49,7 +43,7 @@ export default function WordBankExercise({
         {parts[0]}
         <span
           className={`inline-flex items-center justify-center min-w-[80px] mx-1 px-3 py-0.5 rounded-lg border-b-4 text-sm font-extrabold transition-all duration-200 ${
-            checked
+            selected !== null
               ? correct
                 ? 'bg-[#d7f5b1] border-[#46a302] text-[#2a7a00]'
                 : 'bg-[#ffdfe0] border-[#cc3c3c] text-[#9b1c1c]'
@@ -70,7 +64,7 @@ export default function WordBankExercise({
           {options.map((word, i) => {
             let cls =
               'px-4 py-2.5 rounded-xl border-2 border-b-4 text-sm font-bold transition-all duration-150 active:translate-y-[2px] active:border-b-2'
-            if (checked) {
+            if (selected !== null) {
               if (i === correctIndex) {
                 cls += ' bg-[#d7f5b1] border-[#46a302] text-[#2a7a00]'
               } else if (i === selected) {
@@ -88,7 +82,7 @@ export default function WordBankExercise({
               <button
                 key={i}
                 onClick={() => handleSelect(i)}
-                disabled={checked}
+                disabled={selected !== null}
                 className={cls}
               >
                 {word}
@@ -99,7 +93,7 @@ export default function WordBankExercise({
       </div>
 
       {/* Post-check feedback */}
-      {checked && (
+      {selected !== null && (
         <div
           className={`rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
             correct ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
@@ -122,14 +116,7 @@ export default function WordBankExercise({
         </div>
       )}
 
-      {/* Action buttons */}
-      {!checked && selected !== null && (
-        <button onClick={handleCheck} className="w-full btn-coach-primary py-3">
-          Check
-        </button>
-      )}
-
-      {checked && (
+      {selected !== null && (
         <button
           onClick={handleContinue}
           className="w-full btn-coach-primary flex items-center justify-center gap-2 py-3"

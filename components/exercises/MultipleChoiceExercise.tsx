@@ -19,17 +19,11 @@ export default function MultipleChoiceExercise({
   onComplete,
 }: MultipleChoiceExerciseProps) {
   const [selected, setSelected] = useState<number | null>(null)
-  const [checked, setChecked] = useState(false)
-  const answered = checked
+  const answered = selected !== null
 
   const handleSelect = (index: number) => {
     if (answered) return
     setSelected(index)
-  }
-
-  const handleCheck = () => {
-    if (selected === null) return
-    setChecked(true)
   }
 
   const correct = selected === correctIndex
@@ -94,7 +88,7 @@ export default function MultipleChoiceExercise({
         })}
       </div>
 
-      {checked && selected !== null && (
+      {selected !== null && (
         <div
           className={`rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
             correct ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
@@ -117,13 +111,7 @@ export default function MultipleChoiceExercise({
         </div>
       )}
 
-      {!checked && selected !== null && (
-        <button onClick={handleCheck} className="w-full btn-coach-primary py-3">
-          Check
-        </button>
-      )}
-
-      {checked && selected !== null && (
+      {selected !== null && (
         <button
           onClick={() => onComplete(correct)}
           className="w-full btn-coach-primary py-3"

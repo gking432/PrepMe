@@ -44,11 +44,6 @@ export default function TapSelectExercise({
 
   const handleContinue = () => onComplete(allCorrect)
 
-  const handleRetry = () => {
-    setSelected(new Set())
-    setChecked(false)
-  }
-
   return (
     <div className="w-full max-w-lg mx-auto space-y-5">
       <p className="text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
@@ -110,7 +105,7 @@ export default function TapSelectExercise({
               </p>
             )}
             <p className={`text-xs leading-relaxed ${allCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-              {explanation}
+              {allCorrect ? explanation : `${explanation} We&apos;ll bring this one back at the end.`}
             </p>
           </div>
         </div>
@@ -118,26 +113,17 @@ export default function TapSelectExercise({
 
       {/* Action buttons */}
       {!checked && selected.size > 0 && (
-        <button onClick={handleCheck} className="w-full btn-duo-green py-3">
+        <button onClick={handleCheck} className="w-full btn-coach-primary py-3">
           Check
         </button>
       )}
 
-      {checked && allCorrect && (
+      {checked && (
         <button
           onClick={handleContinue}
-          className="w-full btn-duo-green flex items-center justify-center gap-2 py-3"
+          className="w-full btn-coach-primary flex items-center justify-center gap-2 py-3"
         >
           Continue <ArrowRight className="w-4 h-4" />
-        </button>
-      )}
-
-      {checked && !allCorrect && (
-        <button
-          onClick={handleRetry}
-          className="w-full py-3 rounded-2xl font-extrabold text-white text-base bg-[#FF4B4B] border-b-4 border-[#cc3c3c] active:border-b-0 active:translate-y-[3px] transition-transform"
-        >
-          Try Again
         </button>
       )}
     </div>

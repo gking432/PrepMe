@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import Preppi from '@/components/Preppi'
 
@@ -39,96 +40,139 @@ export default function TeachCard({
   example,
   onContinue,
 }: TeachCardProps) {
-  return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      {/* Preppi encouragement — mobile only */}
-      <Preppi message="Let me teach you something useful!" size="sm" />
+  const [step, setStep] = useState(0)
 
-      {/* Title */}
-      <div>
-        <h2 className="text-xl font-extrabold text-gray-900 md:text-2xl">
-          {title}
-        </h2>
-        <p className="mt-2 text-sm text-gray-600 leading-relaxed md:text-base">
+  const cards = useMemo(() => ([
+    {
+      eyebrow: 'Technique',
+      title,
+      preppi: 'Start with the pattern. Then we will compare weak and strong answers.',
+      content: (
+        <p className="text-base leading-relaxed text-slate-700 md:text-lg">
           {explanation}
         </p>
-      </div>
-
-      {/* Example question */}
-      <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-        <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-1">
-          Interview question
-        </p>
-        <p className="text-sm font-semibold text-gray-900 leading-snug">
-          {example.question}
-        </p>
-      </div>
-
-      {/* Bad answer */}
-      <div className="rounded-2xl border-2 border-red-200 bg-red-50/60 overflow-hidden shadow-lg">
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-100/80 border-b border-red-200">
-          <ThumbsDown className="w-4 h-4 text-red-500" />
-          <span className="text-xs font-bold text-red-600 uppercase tracking-wide">
-            Weak answer
-          </span>
+      ),
+    },
+    {
+      eyebrow: 'Interview Question',
+      title: example.question,
+      preppi: 'First, notice what a weak version sounds like.',
+      content: (
+        <div className="overflow-hidden rounded-2xl border-2 border-rose-200 bg-rose-50/70 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+            <ThumbsDown className="h-4 w-4 text-rose-500" />
+            <span className="text-xs font-bold uppercase tracking-wide text-rose-600">
+              Weak answer
+            </span>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-base italic leading-relaxed text-rose-900">
+              &ldquo;{example.badAnswer}&rdquo;
+            </p>
+          </div>
         </div>
-        <div className="px-4 py-3">
-          <p className="text-sm text-red-800 leading-relaxed italic">
-            &ldquo;{example.badAnswer}&rdquo;
-          </p>
+      ),
+    },
+    {
+      eyebrow: 'Stronger Version',
+      title: 'Here is the same idea answered well',
+      preppi: 'Now compare it with a stronger version that actually proves what happened.',
+      content: (
+        <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
+            <ThumbsUp className="h-4 w-4 text-emerald-500" />
+            <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
+              Strong answer
+            </span>
+          </div>
+          <div className="px-4 py-4">
+            <p className="text-base leading-relaxed text-emerald-900">
+              &ldquo;{example.goodAnswer}&rdquo;
+            </p>
+          </div>
         </div>
-      </div>
-
-      {/* Good answer */}
-      <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 overflow-hidden shadow-lg">
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-100/80 border-b border-emerald-200">
-          <ThumbsUp className="w-4 h-4 text-emerald-500" />
-          <span className="text-xs font-bold text-emerald-600 uppercase tracking-wide">
-            Strong answer
-          </span>
-        </div>
-        <div className="px-4 py-3">
-          <p className="text-sm text-emerald-800 leading-relaxed">
-            &ldquo;{example.goodAnswer}&rdquo;
-          </p>
-        </div>
-      </div>
-
-      {/* Breakdown */}
-      <div className="space-y-2">
-        <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-          Breakdown
-        </p>
-        <div className="space-y-2">
+      ),
+    },
+    {
+      eyebrow: 'Breakdown',
+      title: 'Why the stronger answer works',
+      preppi: 'Last step. See how each part earns its place before you try it yourself.',
+      content: (
+        <div className="space-y-3">
           {Object.entries(example.breakdown).map(([key, value], index) => (
             <div
               key={key}
-              className="flex items-start gap-3 rounded-xl bg-white border border-gray-100 px-4 py-3 shadow-sm"
+              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
             >
-              <span className="shrink-0 w-8 h-8 rounded-full bg-[#d7f5b1] flex items-center justify-center text-xs font-extrabold text-[#2a7a00]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
                 {formatBreakdownKey(key, index)}
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-[#58CC02] uppercase tracking-wide">
+                <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
                   {breakdownKeyLabel(key)}
                 </p>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-base">
                   {value}
                 </p>
               </div>
             </div>
           ))}
         </div>
+      ),
+    },
+  ]), [example, explanation, title])
+
+  const currentCard = cards[step]
+  const isLastStep = step === cards.length - 1
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-6">
+      <Preppi message={currentCard.preppi} size="sm" />
+
+      <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+        <span>{currentCard.eyebrow}</span>
+        <span>{step + 1} / {cards.length}</span>
       </div>
 
-      {/* Continue button */}
-      <button
-        onClick={onContinue}
-        className="w-full btn-duo-green flex items-center justify-center gap-2 py-4"
-      >
-        Got it — Let&apos;s practice
-        <ArrowRight className="w-4 h-4" />
-      </button>
+      <div className="rounded-[2rem] border border-violet-100 bg-white/95 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)] md:p-7">
+        <h2 className="text-xl font-extrabold text-slate-900 md:text-2xl">
+          {currentCard.title}
+        </h2>
+        {(step === 1 || step === 2) && (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+              Interview question
+            </p>
+            <p className="mt-1 text-sm font-semibold leading-snug text-slate-900 md:text-base">
+              {example.question}
+            </p>
+          </div>
+        )}
+        <div className="mt-5">{currentCard.content}</div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <button
+          onClick={() => setStep(prev => Math.max(0, prev - 1))}
+          disabled={step === 0}
+          className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-extrabold text-slate-500 transition hover:border-slate-300 hover:text-slate-700 disabled:cursor-default disabled:opacity-40"
+        >
+          Back
+        </button>
+        <button
+          onClick={() => {
+            if (isLastStep) {
+              onContinue()
+              return
+            }
+            setStep(prev => prev + 1)
+          }}
+          className="btn-coach-primary flex items-center justify-center gap-2 px-6 py-3.5"
+        >
+          {isLastStep ? 'Start practice' : 'Next'}
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }

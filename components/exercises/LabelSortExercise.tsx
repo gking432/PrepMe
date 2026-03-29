@@ -21,20 +21,38 @@ export default function LabelSortExercise({
   labels: labelsProp,
   onComplete,
 }: LabelSortExerciseProps) {
+  const shuffledSegments = useMemo(() => {
+    const clone = [...segments]
+    for (let i = clone.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[clone[i], clone[j]] = [clone[j], clone[i]]
+    }
+    return clone
+  }, [segments])
+
   // Derive unique labels from segments if not provided
   const labels = useMemo(() => {
     if (labelsProp && labelsProp.length > 0) return labelsProp
     const unique: string[] = []
-    segments.forEach((s) => {
+    shuffledSegments.forEach((s) => {
       if (!unique.includes(s.correctLabel)) unique.push(s.correctLabel)
     })
     return unique
-  }, [labelsProp, segments])
+  }, [labelsProp, shuffledSegments])
+
+  const shuffledLabels = useMemo(() => {
+    const clone = [...labels]
+    for (let i = clone.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[clone[i], clone[j]] = [clone[j], clone[i]]
+    }
+    return clone
+  }, [labels])
 
   const [selections, setSelections] = useState<Record<number, string>>({})
   const [checked, setChecked] = useState(false)
 
-  const allLabeled = segments.every((_, i) => selections[i] !== undefined)
+  const allLabeled = shuffledSegments.every((_, i) => selections[i] !== undefined)
 
   const handleLabel = (segmentIndex: number, label: string) => {
     if (checked) return
@@ -46,9 +64,9 @@ export default function LabelSortExercise({
   }
 
   const correctCount = checked
-    ? segments.filter((seg, i) => selections[i] === seg.correctLabel).length
+    ? shuffledSegments.filter((seg, i) => selections[i] === seg.correctLabel).length
     : 0
-  const score = correctCount / segments.length
+  const score = correctCount / shuffledSegments.length
   const passed = score >= 0.8
 
   // Label color palette for visual distinction
@@ -62,11 +80,11 @@ export default function LabelSortExercise({
       { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600', activeBg: 'bg-emerald-500', activeBorder: 'border-emerald-500', activeText: 'text-white' },
     ]
     const map: Record<string, typeof palettes[0]> = {}
-    labels.forEach((label, i) => {
+    shuffledLabels.forEach((label, i) => {
       map[label] = palettes[i % palettes.length]
     })
     return map
-  }, [labels])
+  }, [shuffledLabels])
 
   return (
     <div className="w-full max-w-lg mx-auto space-y-5">
@@ -77,7 +95,7 @@ export default function LabelSortExercise({
 
       {/* Legend */}
       <div className="flex flex-wrap gap-2">
-        {labels.map((label) => {
+        {shuffledLabels.map((label) => {
           const c = labelColorMap[label]
           return (
             <span
@@ -93,7 +111,7 @@ export default function LabelSortExercise({
 
       {/* Segment cards */}
       <div className="space-y-4">
-        {segments.map((segment, i) => {
+        {shuffledSegments.map((segment, i) => {
           const selected = selections[i]
           const isCorrect = checked && selected === segment.correctLabel
           const isWrong = checked && selected !== segment.correctLabel
@@ -120,7 +138,7 @@ export default function LabelSortExercise({
 
               {/* Label buttons */}
               <div className="flex flex-wrap gap-2">
-                {labels.map((label) => {
+                {shuffledLabels.map((label) => {
                   const c = labelColorMap[label]
                   const isSelected = selected === label
                   const isThisCorrect = checked && label === segment.correctLabel
@@ -174,8 +192,8 @@ export default function LabelSortExercise({
           }`}
         >
           <p className={`text-sm font-bold ${passed ? 'text-emerald-700' : 'text-amber-700'}`}>
-            {correctCount} of {segments.length} correct
-            {passed ? ' — Great job!' : ' — Keep practicing!'}
+            {correctCount} of {shuffledSegments.length} correct
+            {passed ? ' — Great job!' : ' — We will revisit the misses at the end.'}
           </p>
         </div>
       )}
@@ -184,7 +202,7 @@ export default function LabelSortExercise({
       {!checked && allLabeled && (
         <button
           onClick={handleCheck}
-          className="w-full btn-duo-green py-3"
+          className="w-full btn-coach-primary py-3"
         >
           Check Answers
         </button>
@@ -193,7 +211,7 @@ export default function LabelSortExercise({
       {checked && (
         <button
           onClick={() => onComplete(passed)}
-          className="w-full btn-duo-green flex items-center justify-center gap-2 py-3"
+          className="w-full btn-coach-primary flex items-center justify-center gap-2 py-3"
         >
           Continue
           <ArrowRight className="w-4 h-4" />

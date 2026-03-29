@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { X, Zap, CheckCircle, BookOpen, Sparkles, ArrowRight } from 'lucide-react'
+import { X, Zap, CheckCircle, BookOpen, Sparkles, ArrowRight, RotateCcw } from 'lucide-react'
 import Preppi from '@/components/Preppi'
 import TeachCard from '@/components/exercises/TeachCard'
 import MultipleChoiceExercise from '@/components/exercises/MultipleChoiceExercise'
@@ -10,28 +10,20 @@ import WordBankExercise from '@/components/exercises/WordBankExercise'
 import TapSelectExercise from '@/components/exercises/TapSelectExercise'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
-// ── Props ──────────────────────────────────────────────────────────────────────
-
 interface PracticeLessonFlowProps {
   subLesson: SubLesson
-  lessonNumber: number   // 1, 2, or 3
-  totalLessons: number   // always 3
+  lessonNumber: number
+  totalLessons: number
   onComplete: (passed: boolean, xpEarned: number) => void
   onClose: () => void
   embeddedDesktop?: boolean
 }
 
-// ── Flow state ─────────────────────────────────────────────────────────────────
-
-type FlowState = 'intro' | 'teach' | `exercise_${number}` | 'complete'
-
-// ── XP constants ───────────────────────────────────────────────────────────────
+type FlowState = 'intro' | 'teach' | 'retry_intro' | `exercise_${number}` | 'complete'
 
 const XP_TEACH = 5
 const XP_CORRECT = 10
 const XP_ATTEMPT = 2
-
-// ── Mini confetti burst ────────────────────────────────────────────────────────
 
 function MiniStepBurst({ active }: { active: boolean }) {
   if (!active) return null
@@ -43,48 +35,78 @@ function MiniStepBurst({ active }: { active: boolean }) {
     size: `${5 + Math.random() * 5}px`,
   }))
   return (
-    <div className="fixed inset-x-0 top-0 pointer-events-none overflow-hidden h-32 z-50">
-      {pieces.map(p => (
+    <div className="fixed inset-x-0 top-0 h-32 pointer-events-none overflow-hidden z-50">
+      {pieces.map(piece => (
         <div
-          key={p.id}
+          key={piece.id}
           className="mini-confetti-piece absolute"
-          style={{ backgroundColor: p.color, left: p.left, top: '10%', animationDelay: p.delay, width: p.size, height: p.size }}
+          style={{
+            backgroundColor: piece.color,
+            left: piece.left,
+            top: '10%',
+            animationDelay: piece.delay,
+            width: piece.size,
+            height: piece.size,
+          }}
         />
       ))}
     </div>
   )
 }
 
-// ── Feedback bottom sheet ─────────────────────────────────────────────────────
-
-function CorrectSheet({ xpGained, onContinue }: { xpGained: number; onContinue: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 z-50" onClick={onContinue} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-emerald-200 bg-emerald-50 px-5 pb-10 pt-6 animate-sheet-slide-up">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-14 h-14 rounded-full bg-[#58CC02] flex items-center justify-center shrink-0">
-              <CheckCircle className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-[#2a7a00]">Correct!</p>
-              <p className="text-sm font-bold text-[#2a7a00] opacity-80">+{xpGained} XP</p>
-            </div>
-          </div>
-          <button
-            onClick={onContinue}
-            className="btn-coach-primary w-full py-4 text-base"
-          >
-            Continue
-          </button>
-        </div>
-      </div>
-    </>
-  )
+function shuffle<T>(items: T[]) {
+  const clone = [...items]
+  for (let i = clone.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[clone[i], clone[j]] = [clone[j], clone[i]]
+  }
+  return clone
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
+function neutralizeSegmentText(text: string) {
+  return text.trim().replace(/[.!?]+$/g, '').toLowerCase()
+}
+
+function randomizeExercise(exercise: Exercise): Exercise {
+  switch (exercise.type) {
+    case 'multiple_choice': {
+      const optionEntries = shuffle(exercise.options.map((option, index) => ({ option, index })))
+      return {
+        ...exercise,
+        options: optionEntries.map(entry => entry.option),
+        correctIndex: optionEntries.findIndex(entry => entry.index === exercise.correctIndex),
+      }
+    }
+    case 'word_bank': {
+      const optionEntries = shuffle(exercise.options.map((option, index) => ({ option, index })))
+      return {
+        ...exercise,
+        options: optionEntries.map(entry => entry.option),
+        correctIndex: optionEntries.findIndex(entry => entry.index === exercise.correctIndex),
+      }
+    }
+    case 'tap_select': {
+      const itemEntries = shuffle(exercise.items.map((item, index) => ({ item, index })))
+      return {
+        ...exercise,
+        items: itemEntries.map(entry => entry.item),
+        correctIndices: itemEntries
+          .map((entry, index) => (exercise.correctIndices.includes(entry.index) ? index : -1))
+          .filter(index => index >= 0),
+      }
+    }
+    case 'label_sort':
+      return {
+        ...exercise,
+        segments: exercise.segments.map(segment => ({
+          ...segment,
+          text: neutralizeSegmentText(segment.text),
+        })),
+      }
+    default:
+      return exercise
+  }
+}
 
 export default function PracticeLessonFlow({
   subLesson,
@@ -94,29 +116,41 @@ export default function PracticeLessonFlow({
   onClose,
   embeddedDesktop = false,
 }: PracticeLessonFlowProps) {
+  const randomizedExercises = useMemo(
+    () => subLesson.exercises.map(randomizeExercise),
+    [subLesson.exercises]
+  )
+
+  const exerciseCount = randomizedExercises.length
+
   const [flowState, setFlowState] = useState<FlowState>('intro')
+  const [round, setRound] = useState<'main' | 'retry'>('main')
   const [xp, setXp] = useState(0)
   const [lastXpGain, setLastXpGain] = useState(0)
   const [xpKey, setXpKey] = useState(0)
-  const [correctCount, setCorrectCount] = useState(0)
   const [stepBurst, setStepBurst] = useState(false)
-  const [retryKey, setRetryKey] = useState(0) // forces exercise remount on retry
-  const [correctSheet, setCorrectSheet] = useState<{ xpGained: number; onContinue: () => void } | null>(null)
+  const [solvedExerciseIndices, setSolvedExerciseIndices] = useState<number[]>([])
+  const [retryExerciseIndices, setRetryExerciseIndices] = useState<number[]>([])
 
-  const exerciseCount = subLesson.exercises.length
+  const activeExerciseIndices = round === 'retry'
+    ? retryExerciseIndices
+    : randomizedExercises.map((_, index) => index)
 
   const currentStepIndex = useMemo(() => {
     if (flowState === 'intro') return -1
     if (flowState === 'teach') return 0
-    if (flowState === 'complete') return 1 + exerciseCount
-    const m = flowState.match(/^exercise_(\d+)$/)
-    return m ? 1 + parseInt(m[1], 10) : 0
-  }, [flowState, exerciseCount])
+    if (flowState === 'retry_intro') return 1 + exerciseCount
+    if (flowState === 'complete') return 1 + exerciseCount + (retryExerciseIndices.length > 0 ? retryExerciseIndices.length + 1 : 0)
+    const match = flowState.match(/^exercise_(\d+)$/)
+    if (!match) return 0
+    const stepWithinRound = parseInt(match[1], 10)
+    return round === 'retry' ? 2 + exerciseCount + stepWithinRound : 1 + stepWithinRound
+  }, [exerciseCount, flowState, retryExerciseIndices.length, round])
 
   const addXp = useCallback((amount: number) => {
     setXp(prev => prev + amount)
     setLastXpGain(amount)
-    setXpKey(k => k + 1)
+    setXpKey(prev => prev + 1)
   }, [])
 
   const triggerBurst = useCallback(() => {
@@ -127,48 +161,65 @@ export default function PracticeLessonFlow({
   const advanceFromTeach = useCallback(() => {
     addXp(XP_TEACH)
     triggerBurst()
+    setRound('main')
     setFlowState('exercise_0')
   }, [addXp, triggerBurst])
 
-  const advanceFromExercise = useCallback((index: number, correct: boolean) => {
-    if (!correct) {
-      // Wrong: force exercise remount so user retries — no sheet shown here,
-      // the exercise component itself shows red feedback + Try Again
+  const advanceFromExercise = useCallback((queuePosition: number, correct: boolean) => {
+    const queue = round === 'retry'
+      ? retryExerciseIndices
+      : randomizedExercises.map((_, index) => index)
+    const exerciseIndex = queue[queuePosition]
+
+    if (correct) {
+      addXp(XP_CORRECT)
+      triggerBurst()
+      setSolvedExerciseIndices(prev => (prev.includes(exerciseIndex) ? prev : [...prev, exerciseIndex]))
+    } else {
       addXp(XP_ATTEMPT)
-      setRetryKey(k => k + 1)
+      if (round === 'main') {
+        setRetryExerciseIndices(prev => (prev.includes(exerciseIndex) ? prev : [...prev, exerciseIndex]))
+      }
+    }
+
+    if (queuePosition + 1 < queue.length) {
+      setFlowState(`exercise_${queuePosition + 1}`)
       return
     }
 
-    // Correct
-    addXp(XP_CORRECT)
-    setCorrectCount(prev => prev + 1)
-    triggerBurst()
-
-    const doAdvance = () => {
-      setCorrectSheet(null)
-      if (index + 1 < exerciseCount) {
-        setFlowState(`exercise_${index + 1}`)
-        setRetryKey(k => k + 1)
-      } else {
-        setFlowState('complete')
+    if (round === 'main') {
+      const pendingRetryCount = retryExerciseIndices.length + (correct ? 0 : 1)
+      if (pendingRetryCount > 0) {
+        setFlowState('retry_intro')
+        return
       }
     }
-    setCorrectSheet({ xpGained: XP_CORRECT, onContinue: doAdvance })
-  }, [addXp, exerciseCount, triggerBurst])
 
-  // ── Progress bar ─────────────────────────────────────────────────────────────
+    setFlowState('complete')
+  }, [addXp, randomizedExercises, retryExerciseIndices, round, triggerBurst])
+
+  const startRetryRound = useCallback(() => {
+    if (retryExerciseIndices.length === 0) {
+      setFlowState('complete')
+      return
+    }
+    setRound('retry')
+    setFlowState('exercise_0')
+  }, [retryExerciseIndices.length])
+
+  const correctCount = solvedExerciseIndices.length
 
   const renderProgress = () => {
-    const totalSteps = 1 + exerciseCount
+    const totalSteps = 1 + exerciseCount + (retryExerciseIndices.length > 0 ? retryExerciseIndices.length + 1 : 0)
     const pct = flowState === 'complete'
       ? 100
       : currentStepIndex < 0
-      ? 0
-      : Math.round((currentStepIndex / totalSteps) * 100)
+        ? 0
+        : Math.round((currentStepIndex / totalSteps) * 100)
 
     return (
-      <div className="flex items-center gap-3 w-full">
-        <div className="flex-1 h-4 overflow-hidden rounded-full bg-slate-100">
+      <div className="flex w-full items-center gap-3">
+        <div className="h-4 flex-1 overflow-hidden rounded-full bg-slate-100">
           <div
             className="h-full rounded-full transition-all duration-500 ease-out"
             style={{
@@ -179,11 +230,11 @@ export default function PracticeLessonFlow({
           />
         </div>
         {xp > 0 && (
-          <div className="relative flex items-center gap-1 shrink-0">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-extrabold text-amber-600 tabular-nums">{xp}</span>
+          <div className="relative flex shrink-0 items-center gap-1">
+            <Zap className="h-4 w-4 text-amber-500" />
+            <span className="tabular-nums text-sm font-extrabold text-amber-600">{xp}</span>
             {lastXpGain > 0 && (
-              <span key={xpKey} className="absolute -top-4 right-0 text-xs font-extrabold text-amber-500 animate-fly-up pointer-events-none">
+              <span key={xpKey} className="pointer-events-none absolute -top-4 right-0 animate-fly-up text-xs font-extrabold text-amber-500">
                 +{lastXpGain}
               </span>
             )}
@@ -194,23 +245,23 @@ export default function PracticeLessonFlow({
   }
 
   const renderHeader = () => (
-    <div className="flex items-center gap-3 mb-4">
+    <div className="mb-4 flex items-center gap-3">
       <button
         onClick={onClose}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
       >
-        <X className="w-5 h-5" />
+        <X className="h-5 w-5" />
       </button>
       {flowState !== 'intro' && flowState !== 'complete' && (
-        <div className="flex-1 min-w-0">{renderProgress()}</div>
+        <div className="min-w-0 flex-1">{renderProgress()}</div>
       )}
     </div>
   )
 
-  // ── Exercise renderer ─────────────────────────────────────────────────────────
+  const renderExercise = (exercise: Exercise, queuePosition: number) => {
+    const exerciseIndex = activeExerciseIndices[queuePosition]
+    const key = `${round}-${queuePosition}-${exerciseIndex}`
 
-  const renderExercise = (exercise: Exercise, index: number) => {
-    const key = `${index}-${retryKey}`
     switch (exercise.type) {
       case 'multiple_choice':
         return (
@@ -220,7 +271,7 @@ export default function PracticeLessonFlow({
             options={exercise.options}
             correctIndex={exercise.correctIndex}
             explanation={exercise.explanation}
-            onComplete={(correct) => advanceFromExercise(index, correct)}
+            onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )
       case 'label_sort':
@@ -229,7 +280,7 @@ export default function PracticeLessonFlow({
             key={key}
             instruction={exercise.instruction}
             segments={exercise.segments}
-            onComplete={(correct) => advanceFromExercise(index, correct)}
+            onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )
       case 'word_bank':
@@ -241,7 +292,7 @@ export default function PracticeLessonFlow({
             options={exercise.options}
             correctIndex={exercise.correctIndex}
             explanation={exercise.explanation}
-            onComplete={(correct) => advanceFromExercise(index, correct)}
+            onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )
       case 'tap_select':
@@ -252,7 +303,7 @@ export default function PracticeLessonFlow({
             items={exercise.items}
             correctIndices={exercise.correctIndices}
             explanation={exercise.explanation}
-            onComplete={(correct) => advanceFromExercise(index, correct)}
+            onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )
       default:
@@ -260,55 +311,50 @@ export default function PracticeLessonFlow({
     }
   }
 
-  // ── Screens ───────────────────────────────────────────────────────────────────
-
   const renderIntro = () => (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center md:min-h-0">
       <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[1.3rem] bg-violet-100 animate-slide-up">
         <span className="text-2xl font-extrabold text-violet-700">{lessonNumber}</span>
       </div>
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+      <p className="mb-1 text-xs font-bold uppercase tracking-widest text-gray-400">
         Lesson {lessonNumber} of {totalLessons}
       </p>
-      <h2 className="text-2xl font-extrabold text-gray-900 mb-2 animate-slide-up">{subLesson.title}</h2>
-      <p className="text-sm text-gray-400 mb-8 capitalize">{subLesson.difficulty} level</p>
+      <h2 className="mb-2 animate-slide-up text-2xl font-extrabold text-gray-900">{subLesson.title}</h2>
+      <p className="mb-8 text-sm capitalize text-gray-400">{subLesson.difficulty} level</p>
 
       <div className="coach-card mb-8 w-full max-w-sm space-y-3 p-5 text-left animate-slide-up">
         <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 shrink-0">
-            <BookOpen className="w-3.5 h-3.5 text-violet-700" />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100">
+            <BookOpen className="h-3.5 w-3.5 text-violet-700" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">Technique card</p>
-            <p className="text-xs text-gray-400">Learn the method</p>
+            <p className="text-sm font-semibold text-gray-800">4-step walkthrough</p>
+            <p className="text-xs text-gray-400">Learn the pattern before you answer anything</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 shrink-0">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+            <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">{exerciseCount} exercises</p>
-            <p className="text-xs text-gray-400">Repeated drills designed to reinforce one improvement pattern</p>
+            <p className="text-sm font-semibold text-gray-800">{exerciseCount} drills + a retry round</p>
+            <p className="text-xs text-gray-400">Misses come back after the full set, not immediately</p>
           </div>
         </div>
       </div>
 
       <div className="mb-6">
-        <Preppi message="Read the method first, then work through the drills." size="md" />
+        <Preppi message="We will learn the pattern first, then do the full round, then come back to anything you missed." size="md" />
       </div>
 
-      <button onClick={() => { setFlowState('teach') }} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
-        Start <ArrowRight className="w-5 h-5" />
+      <button onClick={() => setFlowState('teach')} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
+        Start <ArrowRight className="h-5 w-5" />
       </button>
     </div>
   )
 
   const renderTeach = () => (
     <div className="animate-slide-up">
-      <div className="mb-4">
-        <Preppi message="Read this carefully. The next drills will test the same idea from different angles." size="sm" />
-      </div>
       <TeachCard
         title={subLesson.teach.title}
         explanation={subLesson.teach.explanation}
@@ -318,40 +364,81 @@ export default function PracticeLessonFlow({
     </div>
   )
 
-  const renderExerciseStep = (index: number) => {
-    const exercise = subLesson.exercises[index]
+  const renderRetryIntro = () => (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100">
+        <RotateCcw className="h-10 w-10 text-violet-700" />
+      </div>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+        Review round
+      </p>
+      <h2 className="mt-2 text-2xl font-extrabold text-slate-900">
+        Let&apos;s try those again
+      </h2>
+      <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500 md:text-base">
+        You made it through the full set. Now we&apos;ll bring back the {retryExerciseIndices.length} question{retryExerciseIndices.length === 1 ? '' : 's'} that still need work.
+      </p>
+
+      <div className="mb-8 mt-8">
+        <Preppi
+          message="This is the Duolingo rhythm. Keep moving through the round first, then revisit the misses with a clearer pattern in mind."
+          size="md"
+        />
+      </div>
+
+      <button
+        onClick={startRetryRound}
+        className="btn-coach-primary flex items-center gap-2 px-8 py-4"
+      >
+        Retry missed questions
+        <ArrowRight className="h-5 w-5" />
+      </button>
+    </div>
+  )
+
+  const renderExerciseStep = (queuePosition: number) => {
+    const exerciseIndex = activeExerciseIndices[queuePosition]
+    const exercise = randomizedExercises[exerciseIndex]
     if (!exercise) return null
+
     return (
       <div className="animate-slide-up">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-            Question {index + 1} of {exerciseCount}
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            {round === 'retry' ? 'Retry' : 'Question'} {queuePosition + 1} of {activeExerciseIndices.length}
           </p>
         </div>
         <div className="mb-4">
-          <Preppi message="Take your time. Accuracy matters more than speed here." size="sm" />
+          <Preppi
+            message={round === 'retry'
+              ? 'You have seen this once already. Read carefully and give it another shot.'
+              : 'Take your time. Accuracy matters more than speed here.'}
+            size="sm"
+          />
         </div>
-        {renderExercise(exercise, index)}
+        {renderExercise(exercise, queuePosition)}
       </div>
     )
   }
 
   const renderComplete = () => (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#166534] bg-[#22c55e] animate-badge-reveal"
-        style={{ boxShadow: '0 6px 0 #1a5e00' }}>
-        <CheckCircle className="w-10 h-10 text-white" />
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
+      <div
+        className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#166534] bg-[#22c55e] animate-badge-reveal"
+        style={{ boxShadow: '0 6px 0 #1a5e00' }}
+      >
+        <CheckCircle className="h-10 w-10 text-white" />
       </div>
-      <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Lesson {lessonNumber} Complete!</h2>
-      <div className="flex items-center gap-6 mb-8">
+      <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Lesson {lessonNumber} Complete!</h2>
+      <div className="mb-8 flex items-center gap-6">
         <div className="text-center">
           <p className="text-2xl font-extrabold text-amber-600">{xp}</p>
-          <p className="text-xs text-gray-400 font-semibold">XP Earned</p>
+          <p className="text-xs font-semibold text-gray-400">XP Earned</p>
         </div>
-        <div className="w-px h-10 bg-gray-200" />
+        <div className="h-10 w-px bg-gray-200" />
         <div className="text-center">
           <p className="text-2xl font-extrabold text-violet-700">{correctCount}/{exerciseCount}</p>
-          <p className="text-xs text-gray-400 font-semibold">Correct</p>
+          <p className="text-xs font-semibold text-gray-400">Solved</p>
         </div>
       </div>
       <div className="mb-6">
@@ -362,7 +449,7 @@ export default function PracticeLessonFlow({
         className="btn-coach-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4"
       >
         {lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
-        <ArrowRight className="w-5 h-5" />
+        <ArrowRight className="h-5 w-5" />
       </button>
     </div>
   )
@@ -370,9 +457,10 @@ export default function PracticeLessonFlow({
   const renderStep = () => {
     if (flowState === 'intro') return renderIntro()
     if (flowState === 'teach') return renderTeach()
+    if (flowState === 'retry_intro') return renderRetryIntro()
     if (flowState === 'complete') return renderComplete()
-    const m = flowState.match(/^exercise_(\d+)$/)
-    if (m) return renderExerciseStep(parseInt(m[1], 10))
+    const match = flowState.match(/^exercise_(\d+)$/)
+    if (match) return renderExerciseStep(parseInt(match[1], 10))
     return null
   }
 
@@ -380,23 +468,17 @@ export default function PracticeLessonFlow({
     <>
       <MiniStepBurst active={stepBurst} />
 
-      {/* Mobile */}
       <div className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] md:hidden">
-        <div className="px-4 pt-4 pb-2 shrink-0">{renderHeader()}</div>
+        <div className="shrink-0 px-4 pb-2 pt-4">{renderHeader()}</div>
         <div className="flex-1 overflow-hidden px-4 pb-8">{renderStep()}</div>
       </div>
 
-      {/* Desktop */}
       <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:min-h-[720px] md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
         <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none">
-          <div className="px-6 pt-5 pb-3 shrink-0 border-b border-gray-100">{renderHeader()}</div>
+          <div className="shrink-0 border-b border-gray-100 px-6 pb-3 pt-5">{renderHeader()}</div>
           <div className="flex-1 overflow-hidden px-6 py-6">{renderStep()}</div>
         </div>
       </div>
-
-      {correctSheet && (
-        <CorrectSheet xpGained={correctSheet.xpGained} onContinue={correctSheet.onContinue} />
-      )}
     </>
   )
 }

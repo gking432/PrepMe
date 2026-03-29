@@ -19,18 +19,23 @@ export default function MultipleChoiceExercise({
   onComplete,
 }: MultipleChoiceExerciseProps) {
   const [selected, setSelected] = useState<number | null>(null)
-  const answered = selected !== null
+  const [checked, setChecked] = useState(false)
+  const answered = checked
 
   const handleSelect = (index: number) => {
     if (answered) return
     setSelected(index)
-    const correct = index === correctIndex
-    // Brief pause so user sees correct/wrong highlight, then bottom sheet appears
-    setTimeout(() => onComplete(correct), 900)
   }
 
+  const handleCheck = () => {
+    if (selected === null) return
+    setChecked(true)
+  }
+
+  const correct = selected === correctIndex
+
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto space-y-5">
       {/* Question */}
       <p className="text-base font-bold text-gray-900 leading-snug md:text-lg mb-5">
         {question}
@@ -88,6 +93,44 @@ export default function MultipleChoiceExercise({
           )
         })}
       </div>
+
+      {checked && selected !== null && (
+        <div
+          className={`rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
+            correct ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+          }`}
+        >
+          {correct
+            ? <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            : <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          }
+          <div>
+            {!correct && (
+              <p className="text-xs font-bold text-red-700 mb-0.5">
+                Correct answer: <span className="font-extrabold">{options[correctIndex]}</span>
+              </p>
+            )}
+            <p className={`text-xs leading-relaxed ${correct ? 'text-emerald-700' : 'text-red-700'}`}>
+              {correct ? explanation : `${explanation} We&apos;ll bring this one back at the end.`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!checked && selected !== null && (
+        <button onClick={handleCheck} className="w-full btn-coach-primary py-3">
+          Check
+        </button>
+      )}
+
+      {checked && selected !== null && (
+        <button
+          onClick={() => onComplete(correct)}
+          className="w-full btn-coach-primary py-3"
+        >
+          Continue
+        </button>
+      )}
     </div>
   )
 }

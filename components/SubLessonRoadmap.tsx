@@ -164,7 +164,7 @@ export default function SubLessonRoadmap({
             </div>
           </div>
         )}
-        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1' : ''}`}>
+        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/80 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <PracticeLessonFlow
             subLesson={subLesson}
             lessonNumber={activeSlot + 1}
@@ -221,7 +221,7 @@ export default function SubLessonRoadmap({
             </div>
           </div>
         )}
-        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1' : ''}`}>
+        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/80 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <FinalVoiceChallenge
             question={originalQuestion || 'Tell me about a challenge you overcame.'}
             originalAnswer={originalAnswer}

@@ -140,28 +140,26 @@ export default function LessonRoadmap({
     : `${weaknesses.length - completedSet.size} coaching path${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left.`
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] ${
-      embeddedDesktop ? 'lg:relative lg:inset-auto lg:min-h-full' : ''
-    }`}>
+    <div className={`${embeddedDesktop ? 'flex h-full flex-col bg-transparent' : 'fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]'}`}>
       <Confetti active={showConfetti} />
 
-      {/* Top bar */}
-      <div className="shrink-0 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
-        <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 transition-colors">
-          <X className="w-5 h-5" />
-        </button>
-        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">Practice</p>
-        {sessionXp > 0
-          ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
-          : <div className="w-8" />
-        }
+      {!embeddedDesktop && (
+        <div className="shrink-0 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-xl">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+            <button onClick={onClose} className="p-1.5 text-gray-300 hover:text-gray-500 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">Practice</p>
+            {sessionXp > 0
+              ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
+              : <div className="w-8" />
+            }
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-hidden">
-        <div className="mx-auto flex h-full max-w-6xl flex-col px-4 py-6">
+      <div className={`flex-1 ${embeddedDesktop ? 'overflow-hidden' : 'overflow-hidden'}`}>
+        <div className={`mx-auto flex h-full max-w-6xl flex-col px-4 ${embeddedDesktop ? 'py-0 lg:px-8' : 'py-6'}`}>
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>
@@ -286,13 +284,15 @@ export default function LessonRoadmap({
                 </p>
               </div>
               <div className="mt-auto space-y-3">
-                <button
-                  onClick={onViewReport}
-                  className="btn-coach-secondary flex w-full items-center justify-center gap-2 py-3.5 text-sm"
-                >
-                  <FileText className="w-4 h-4" />
-                  Back to Feedback
-                </button>
+                {!embeddedDesktop && (
+                  <button
+                    onClick={onViewReport}
+                    className="btn-coach-secondary flex w-full items-center justify-center gap-2 py-3.5 text-sm"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Back to Feedback
+                  </button>
+                )}
                 {allDone && (
                   <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
                     All modules completed. You are ready for a retake or the next round.

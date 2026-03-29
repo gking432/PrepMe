@@ -144,14 +144,22 @@ export default function FinalVoiceChallenge({
 
       {/* Desktop: modal */}
       <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:min-h-[720px] md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
-        <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:max-h-none">
-          <div className="px-6 pt-5 pb-3 shrink-0 border-b border-gray-100 flex items-center gap-3">
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 shrink-0">✕</button>
-            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg,#58CC02,#7ade1a)', boxShadow: 'inset 0 -3px 0 rgba(0,0,0,0.15)' }} />
-            </div>
+        <div className={`${embeddedDesktop ? 'flex h-full w-full flex-col overflow-hidden bg-transparent' : 'flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl md:max-h-none'}`}>
+          <div className={`${embeddedDesktop ? 'pb-3' : 'flex items-center gap-3 border-b border-gray-100 px-6 pb-3 pt-5 shrink-0'}`}>
+            {embeddedDesktop ? (
+              <div className="h-4 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg,#58CC02,#7ade1a)', boxShadow: 'inset 0 -3px 0 rgba(0,0,0,0.15)' }} />
+              </div>
+            ) : (
+              <>
+                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 shrink-0">✕</button>
+                <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg,#58CC02,#7ade1a)', boxShadow: 'inset 0 -3px 0 rgba(0,0,0,0.15)' }} />
+                </div>
+              </>
+            )}
           </div>
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className={`${embeddedDesktop ? 'flex-1 overflow-y-auto px-0 py-0' : 'flex-1 overflow-y-auto px-6 py-6'}`}>
             <Inner
               question={question}
               originalAnswer={originalAnswer}

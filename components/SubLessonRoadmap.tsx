@@ -165,30 +165,28 @@ export default function SubLessonRoadmap({
     : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)] ${
-      embeddedDesktop ? 'lg:relative lg:inset-auto lg:min-h-full' : ''
-    }`}>
+    <div className={`${embeddedDesktop ? 'flex h-full flex-col bg-transparent' : 'fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]'}`}>
       <Confetti active={showConfetti} />
 
-      {/* Top bar */}
-      <div className="shrink-0 border-b border-slate-100 bg-white/82 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
-        <button onClick={onClose} className="p-1.5 text-gray-300 transition-colors hover:text-gray-500">
-          <X className="w-5 h-5" />
-        </button>
-        <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">
-          {bundle.displayName}
-        </p>
-        {sessionXp > 0
-          ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
-          : <div className="w-8" />
-        }
+      {!embeddedDesktop && (
+        <div className="shrink-0 border-b border-slate-100 bg-white/82 px-4 py-3 backdrop-blur-xl">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+            <button onClick={onClose} className="p-1.5 text-gray-300 transition-colors hover:text-gray-500">
+              <X className="w-5 h-5" />
+            </button>
+            <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">
+              {bundle.displayName}
+            </p>
+            {sessionXp > 0
+              ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
+              : <div className="w-8" />
+            }
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Scrollable coaching path */}
       <div className="flex-1 overflow-hidden">
-        <div className="mx-auto h-full max-w-2xl px-4 py-8">
+        <div className={`mx-auto h-full max-w-2xl px-4 ${embeddedDesktop ? 'py-0 lg:px-8' : 'py-8'}`}>
 
           {/* Preppi */}
           <div className="mb-8 text-center">
@@ -200,7 +198,7 @@ export default function SubLessonRoadmap({
             </div>
           </div>
 
-          <div className="premium-panel overflow-hidden p-5 sm:p-6">
+          <div className="premium-panel h-full overflow-hidden p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>

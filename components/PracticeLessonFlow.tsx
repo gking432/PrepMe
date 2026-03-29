@@ -246,12 +246,14 @@ export default function PracticeLessonFlow({
 
   const renderHeader = () => (
     <div className="mb-4 flex items-center gap-3">
-      <button
-        onClick={onClose}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-      >
-        <X className="h-5 w-5" />
-      </button>
+      {!embeddedDesktop && (
+        <button
+          onClick={onClose}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      )}
       {flowState !== 'intro' && flowState !== 'complete' && (
         <div className="min-w-0 flex-1">{renderProgress()}</div>
       )}
@@ -473,10 +475,10 @@ export default function PracticeLessonFlow({
         <div className="flex-1 overflow-hidden px-4 pb-8">{renderStep()}</div>
       </div>
 
-      <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:min-h-[720px] md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
-        <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none">
-          <div className="shrink-0 border-b border-gray-100 px-6 pb-3 pt-5">{renderHeader()}</div>
-          <div className="flex-1 overflow-hidden px-6 py-6">{renderStep()}</div>
+      <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:h-full md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
+        <div className={`${embeddedDesktop ? 'flex h-full w-full flex-col overflow-hidden bg-transparent' : 'premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none'}`}>
+          <div className={`${embeddedDesktop ? 'px-0 pb-3 pt-0' : 'shrink-0 border-b border-gray-100 px-6 pb-3 pt-5'}`}>{renderHeader()}</div>
+          <div className={`${embeddedDesktop ? 'flex-1 overflow-hidden px-0 py-0' : 'flex-1 overflow-hidden px-6 py-6'}`}>{renderStep()}</div>
         </div>
       </div>
     </>

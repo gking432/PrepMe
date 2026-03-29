@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { X, CheckCircle, RotateCcw, Trophy, ChevronRight, Mic, ArrowLeft, ChevronRight as CrumbChevron } from 'lucide-react'
 import Confetti from '@/components/Confetti'
-import { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import PracticeLessonFlow from '@/components/PracticeLessonFlow'
 import FinalVoiceChallenge from '@/components/FinalVoiceChallenge'
@@ -237,8 +236,8 @@ export default function SubLessonRoadmap({
     )
   }
 
-  const preppiMessage = allDone
-    ? 'All four steps complete. You are ready to try it again.'
+  const pathSummary = allDone
+    ? 'All four steps complete. You are ready to try the answer again.'
     : completedSet.size === 0
     ? 'Three focused drills, then one voice retry on the real question.'
     : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
@@ -266,17 +265,49 @@ export default function SubLessonRoadmap({
 
       <div className="flex-1 overflow-hidden">
         <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
-          <div className={`text-center ${embeddedDesktop ? 'mb-6 px-1 pt-1' : 'mb-8'}`}>
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-white/92 shadow-[0_18px_34px_rgba(76,29,149,0.08)] animate-preppi-bounce">
-              <PreppiSVG />
+          {embeddedDesktop && (
+            <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
+                    <span>{criterion}</span>
+                    <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
+                    <span>{bundle.displayName}</span>
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{bundle.displayName}</h2>
+                    <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
+                      4 steps
+                    </span>
+                  </div>
+                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
+                    {pathSummary}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Back to Practice
+                </button>
+              </div>
+              <div className="mt-6 flex items-center gap-4">
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
+                    style={{ width: `${(completedSet.size / totalSlots) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                  {completedSet.size} / {totalSlots} complete
+                </span>
+              </div>
             </div>
-            <div className="inline-block max-w-[320px] rounded-[1.6rem] rounded-t-[0.45rem] border border-violet-200/80 bg-white/96 px-4 py-3 shadow-[0_18px_34px_rgba(76,29,149,0.08)] animate-bubble-pop">
-              <p className="text-sm font-bold leading-snug text-slate-800">{preppiMessage}</p>
-            </div>
-          </div>
+          )}
 
-          <div className={`${embeddedDesktop ? 'overflow-hidden px-1 pb-1' : 'premium-panel overflow-hidden p-5 sm:p-6'}`}>
-            <div className={`${embeddedDesktop ? 'rounded-[1.8rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:p-6' : ''}`}>
+          <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/80 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : 'premium-panel overflow-hidden p-5 sm:p-6'}`}>
+            <div className={`${embeddedDesktop ? '' : ''}`}>
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>

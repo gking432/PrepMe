@@ -441,7 +441,7 @@ export default function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(48px,1fr)] lg:bg-[#0d141d]">
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(24px,0.5fr)] lg:bg-[#0d141d]">
       <div className="lg:hidden">
         <Header />
       </div>

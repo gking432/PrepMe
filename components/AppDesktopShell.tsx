@@ -39,7 +39,7 @@ export default function AppDesktopShell({
   children,
 }: AppDesktopShellProps) {
   return (
-    <div className="hidden min-h-screen bg-[#0d141d] lg:grid lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(48px,1fr)]">
+    <div className="hidden min-h-screen bg-[#0d141d] lg:grid lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(24px,0.5fr)]">
       <AppSidebar activeSection={activeSection} processStages={processStages} />
       <main className="min-w-0 bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
         <div className="min-h-screen px-8 py-8">{children}</div>

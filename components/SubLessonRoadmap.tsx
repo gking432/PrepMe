@@ -122,7 +122,7 @@ export default function SubLessonRoadmap({
   if (activeSlot !== null && activeSlot < 3) {
     const subLesson = bundle.lessons[activeSlot]
     return (
-      <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 py-7' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
+      <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
           <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4">
@@ -179,7 +179,7 @@ export default function SubLessonRoadmap({
 
   if (activeSlot === 3) {
     return (
-      <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 py-7' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
+      <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
           <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4">
@@ -264,7 +264,7 @@ export default function SubLessonRoadmap({
       )}
 
       <div className="flex-1 overflow-hidden">
-        <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
+        <div className={`${embeddedDesktop ? 'h-full px-0 pb-0 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
           {embeddedDesktop && (
             <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
               <div className="flex items-start justify-between gap-4">

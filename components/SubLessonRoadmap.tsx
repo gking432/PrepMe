@@ -123,9 +123,9 @@ export default function SubLessonRoadmap({
   if (activeSlot !== null && activeSlot < 3) {
     const subLesson = bundle.lessons[activeSlot]
     return (
-      <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
+      <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 py-7' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-5 px-1 pt-1">
+          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -133,25 +133,25 @@ export default function SubLessonRoadmap({
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>{subLesson.title}</span>
                 </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <h2 className="text-[2rem] font-black leading-none text-slate-900">{subLesson.title}</h2>
+                <div className="mt-4 flex items-center gap-3">
+                  <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{subLesson.title}</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
                     Lesson {activeSlot + 1} of 3
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
                   Work through this drill, then return to the path for the next coaching step.
                 </p>
               </div>
               <button
                 onClick={() => setActiveSlot(null)}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to Path
               </button>
             </div>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-6 flex items-center gap-4">
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
@@ -164,23 +164,25 @@ export default function SubLessonRoadmap({
             </div>
           </div>
         )}
-        <PracticeLessonFlow
-          subLesson={subLesson}
-          lessonNumber={activeSlot + 1}
-          totalLessons={3}
-          onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
-          onClose={() => setActiveSlot(null)}
-          embeddedDesktop={embeddedDesktop}
-        />
+        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1' : ''}`}>
+          <PracticeLessonFlow
+            subLesson={subLesson}
+            lessonNumber={activeSlot + 1}
+            totalLessons={3}
+            onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
+            onClose={() => setActiveSlot(null)}
+            embeddedDesktop={embeddedDesktop}
+          />
+        </div>
       </div>
     )
   }
 
   if (activeSlot === 3) {
     return (
-      <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
+      <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 py-7' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-5 px-1 pt-1">
+          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -188,25 +190,25 @@ export default function SubLessonRoadmap({
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>Voice Re-Answer</span>
                 </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <h2 className="text-[2rem] font-black leading-none text-slate-900">Voice Re-Answer</h2>
+                <div className="mt-4 flex items-center gap-3">
+                  <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">Voice Re-Answer</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
                     Step 4 of 4
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
                   Final step. Re-answer the original question using the stronger structure you just practiced.
                 </p>
               </div>
               <button
                 onClick={() => setActiveSlot(null)}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to Path
               </button>
             </div>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-6 flex items-center gap-4">
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
@@ -219,16 +221,18 @@ export default function SubLessonRoadmap({
             </div>
           </div>
         )}
-        <FinalVoiceChallenge
-          question={originalQuestion || 'Tell me about a challenge you overcame.'}
-          originalAnswer={originalAnswer}
-          sessionId={sessionId}
-          currentStage={currentStage}
-          criterion={criterion}
-          onComplete={(passed, xp) => handleSlotComplete(3, passed, xp)}
-          onClose={() => setActiveSlot(null)}
-          embeddedDesktop={embeddedDesktop}
-        />
+        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1' : ''}`}>
+          <FinalVoiceChallenge
+            question={originalQuestion || 'Tell me about a challenge you overcame.'}
+            originalAnswer={originalAnswer}
+            sessionId={sessionId}
+            currentStage={currentStage}
+            criterion={criterion}
+            onComplete={(passed, xp) => handleSlotComplete(3, passed, xp)}
+            onClose={() => setActiveSlot(null)}
+            embeddedDesktop={embeddedDesktop}
+          />
+        </div>
       </div>
     )
   }

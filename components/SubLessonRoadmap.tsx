@@ -132,29 +132,33 @@ export default function SubLessonRoadmap({
   if (activeSlot !== null && activeSlot < 3) {
     const subLesson = bundle.lessons[activeSlot]
     return (
-      <PracticeLessonFlow
-        subLesson={subLesson}
-        lessonNumber={activeSlot + 1}
-        totalLessons={3}
-        onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
-        onClose={() => setActiveSlot(null)}
-        embeddedDesktop={embeddedDesktop}
-      />
+      <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+        <PracticeLessonFlow
+          subLesson={subLesson}
+          lessonNumber={activeSlot + 1}
+          totalLessons={3}
+          onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
+          onClose={() => setActiveSlot(null)}
+          embeddedDesktop={embeddedDesktop}
+        />
+      </div>
     )
   }
 
   if (activeSlot === 3) {
     return (
-      <FinalVoiceChallenge
-        question={originalQuestion || 'Tell me about a challenge you overcame.'}
-        originalAnswer={originalAnswer}
-        sessionId={sessionId}
-        currentStage={currentStage}
-        criterion={criterion}
-        onComplete={(passed, xp) => handleSlotComplete(3, passed, xp)}
-        onClose={() => setActiveSlot(null)}
-        embeddedDesktop={embeddedDesktop}
-      />
+      <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+        <FinalVoiceChallenge
+          question={originalQuestion || 'Tell me about a challenge you overcame.'}
+          originalAnswer={originalAnswer}
+          sessionId={sessionId}
+          currentStage={currentStage}
+          criterion={criterion}
+          onComplete={(passed, xp) => handleSlotComplete(3, passed, xp)}
+          onClose={() => setActiveSlot(null)}
+          embeddedDesktop={embeddedDesktop}
+        />
+      </div>
     )
   }
 
@@ -186,7 +190,7 @@ export default function SubLessonRoadmap({
       )}
 
       <div className="flex-1 overflow-hidden">
-        <div className={`mx-auto h-full max-w-2xl px-4 ${embeddedDesktop ? 'py-0 lg:px-8' : 'py-8'}`}>
+        <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
 
           {/* Preppi */}
           <div className="mb-8 text-center">
@@ -198,7 +202,7 @@ export default function SubLessonRoadmap({
             </div>
           </div>
 
-          <div className="premium-panel h-full overflow-hidden p-5 sm:p-6">
+          <div className="premium-panel overflow-hidden p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>

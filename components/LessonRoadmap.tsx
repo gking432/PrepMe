@@ -159,7 +159,7 @@ export default function LessonRoadmap({
       )}
 
       <div className={`flex-1 ${embeddedDesktop ? 'overflow-hidden' : 'overflow-hidden'}`}>
-        <div className={`mx-auto flex h-full max-w-6xl flex-col px-4 ${embeddedDesktop ? 'py-0 lg:px-8' : 'py-6'}`}>
+        <div className={`mx-auto flex h-full max-w-6xl flex-col px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-6'}`}>
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>

@@ -466,6 +466,18 @@ export default function PracticeLessonFlow({
     return null
   }
 
+  if (embeddedDesktop) {
+    return (
+      <>
+        <MiniStepBurst active={stepBurst} />
+        <div className="flex h-full flex-col rounded-[2rem] border border-violet-200/70 bg-[linear-gradient(180deg,#fbf8ff_0%,#f6f5ff_42%,#eef4fb_100%)] px-6 py-6 shadow-[0_18px_36px_rgba(76,29,149,0.08)] lg:px-8">
+          <div className="shrink-0">{renderHeader()}</div>
+          <div className="min-h-0 flex-1 overflow-hidden">{renderStep()}</div>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       <MiniStepBurst active={stepBurst} />
@@ -475,10 +487,10 @@ export default function PracticeLessonFlow({
         <div className="flex-1 overflow-hidden px-4 pb-8">{renderStep()}</div>
       </div>
 
-      <div className={`hidden md:flex ${embeddedDesktop ? 'md:relative md:inset-auto md:h-full md:items-stretch md:justify-start md:bg-transparent md:backdrop-blur-0' : 'fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm'}`}>
-        <div className={`${embeddedDesktop ? 'flex h-full w-full flex-col overflow-hidden bg-transparent' : 'premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none'}`}>
-          <div className={`${embeddedDesktop ? 'px-0 pb-3 pt-0' : 'shrink-0 border-b border-gray-100 px-6 pb-3 pt-5'}`}>{renderHeader()}</div>
-          <div className={`${embeddedDesktop ? 'flex-1 overflow-hidden px-0 py-0' : 'flex-1 overflow-hidden px-6 py-6'}`}>{renderStep()}</div>
+      <div className="hidden md:flex fixed inset-0 z-40 items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="premium-panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden md:max-h-none">
+          <div className="shrink-0 border-b border-gray-100 px-6 pb-3 pt-5">{renderHeader()}</div>
+          <div className="flex-1 overflow-hidden px-6 py-6">{renderStep()}</div>
         </div>
       </div>
     </>

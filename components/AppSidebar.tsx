@@ -2,15 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Target, User, Briefcase, Phone, Users, Crown } from 'lucide-react'
+import { Briefcase, Phone, Users, Crown, FolderOpen, PlusSquare } from 'lucide-react'
 
-type ActiveSection = 'learn' | 'practice' | 'profile'
+type ActiveSection = string
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
 interface ProcessStage {
   key: StageKey
   label: string
   status: 'current' | 'complete' | 'upcoming'
+  href?: string
+  onClick?: () => void
 }
 
 interface AppSidebarProps {
@@ -24,6 +26,8 @@ interface AppSidebarProps {
     onClick?: () => void
     icon: any
   }>
+  navTitle?: string
+  processTitle?: string
   contextTitle?: string
   contextItems?: Array<{
     label: string
@@ -34,9 +38,9 @@ interface AppSidebarProps {
 }
 
 const navItems = [
-  { key: 'learn', label: 'Prepare', href: '/dashboard', icon: BookOpen },
-  { key: 'practice', label: 'Practice', href: '/interview/feedback?preview=mock', icon: Target },
-  { key: 'profile', label: 'Profile', href: '/profile', icon: User },
+  { key: 'interviews', label: 'Interviews', href: '/dashboard', icon: Briefcase },
+  { key: 'documents', label: 'Documents', href: '/dashboard?panel=documents', icon: FolderOpen },
+  { key: 'new_process', label: 'New Process', href: '/dashboard?new=1', icon: PlusSquare },
 ] as const
 
 const stageIcons: Record<StageKey, any> = {
@@ -51,6 +55,8 @@ export default function AppSidebar({
   processStages = [],
   theme = 'dark',
   navItemsOverride,
+  navTitle = 'Workspace',
+  processTitle = 'Interview Stages',
   contextTitle,
   contextItems = [],
   footerText = 'One primary surface, one next step, one place to return to.',
@@ -84,61 +90,21 @@ export default function AppSidebar({
           </div>
         </Link>
 
-        <nav className="space-y-2">
-          {navItemsToRender.map(({ key, label, href, onClick, icon: Icon }) => {
-            const isActive = activeSection === key || pathname === href
-            const className = `flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
-              isActive ? navActiveClass : navIdleClass
-            }`
-            const content = (
-              <>
-                <Icon className={`h-4 w-4 ${isActive ? navActiveIconClass : navIdleIconClass}`} />
-                <span>{label}</span>
-              </>
-            )
-
-            if (onClick) {
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={onClick}
-                  className={className}
-                >
-                  {content}
-                </button>
-              )
-            }
-
-            return (
-              <Link
-                key={key}
-                href={href || '/'}
-                className={className}
-              >
-                {content}
-              </Link>
-            )
-          })}
-        </nav>
-
         {processStages.length > 0 && (
           <div className="mt-8">
-            <p className={`mb-3 px-1 text-[11px] font-black uppercase tracking-[0.24em] ${labelClass}`}>Interview Process</p>
+            <p className={`mb-3 px-1 text-[11px] font-black uppercase tracking-[0.24em] ${labelClass}`}>{processTitle}</p>
             <div className="space-y-2">
               {processStages.map((stage) => {
                 const Icon = stageIcons[stage.key]
-                return (
-                  <div
-                    key={stage.key}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
+                const className = `flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left ${
                       stage.status === 'current'
                         ? isLight ? 'bg-white/72 text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.05)]' : 'bg-white/6 text-white'
                         : stage.status === 'complete'
                         ? isLight ? 'bg-emerald-50 text-emerald-800' : 'bg-emerald-500/10 text-emerald-200'
                         : isLight ? 'bg-transparent text-slate-500' : 'bg-transparent text-slate-500'
-                    }`}
-                  >
+                    }`
+                const content = (
+                  <>
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-xl ${
                         stage.status === 'current'
@@ -151,12 +117,71 @@ export default function AppSidebar({
                       <Icon className="h-4 w-4" />
                     </div>
                     <p className="text-sm font-semibold">{stage.label}</p>
-                  </div>
+                  </>
                 )
+
+                if (stage.onClick) {
+                  return (
+                    <button key={stage.key} type="button" onClick={stage.onClick} className={className}>
+                      {content}
+                    </button>
+                  )
+                }
+
+                if (stage.href) {
+                  return (
+                    <Link key={stage.key} href={stage.href} className={className}>
+                      {content}
+                    </Link>
+                  )
+                }
+
+                return <div key={stage.key} className={className}>{content}</div>
               })}
             </div>
           </div>
         )}
+
+        <div className={processStages.length > 0 ? 'mt-8' : ''}>
+          <p className={`mb-3 px-1 text-[11px] font-black uppercase tracking-[0.24em] ${labelClass}`}>{navTitle}</p>
+          <nav className="space-y-2">
+            {navItemsToRender.map(({ key, label, href, onClick, icon: Icon }) => {
+              const isActive = activeSection === key || pathname === href
+              const className = `flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all ${
+                isActive ? navActiveClass : navIdleClass
+              }`
+              const content = (
+                <>
+                  <Icon className={`h-4 w-4 ${isActive ? navActiveIconClass : navIdleIconClass}`} />
+                  <span>{label}</span>
+                </>
+              )
+
+              if (onClick) {
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={onClick}
+                    className={className}
+                  >
+                    {content}
+                  </button>
+                )
+              }
+
+              return (
+                <Link
+                  key={key}
+                  href={href || '/'}
+                  className={className}
+                >
+                  {content}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
 
         {contextTitle && contextItems.length > 0 && (
           <div className="mt-8">

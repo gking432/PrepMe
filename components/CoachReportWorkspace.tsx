@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useMemo, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { ArrowRight, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Target, Trophy, FileText, Download, X } from 'lucide-react'
 
 type ReportSection = 'overview' | 'strengths' | 'issues' | 'criteria' | 'next_steps'
@@ -14,6 +14,8 @@ interface ReportWorkspaceProps {
   onUnlockNextStage?: () => void
   artifactContent?: ReactNode
   onPrintArtifact?: () => void
+  tutorialActive?: boolean
+  onDismissTutorial?: () => void
 }
 
 const SECTION_CONFIG: Array<{ key: ReportSection; label: string }> = [
@@ -96,10 +98,13 @@ export default function CoachReportWorkspace({
   onUnlockNextStage,
   artifactContent,
   onPrintArtifact,
+  tutorialActive = false,
+  onDismissTutorial,
 }: ReportWorkspaceProps) {
   const [section, setSection] = useState<ReportSection>('overview')
   const [issueIndex, setIssueIndex] = useState(0)
   const [showArtifact, setShowArtifact] = useState(false)
+  const [tutorialStep, setTutorialStep] = useState(0)
 
   const sixAreas = useMemo(() => getSixAreas(feedback, currentStage), [feedback, currentStage])
   const strengths = sixAreas?.what_went_well || []
@@ -116,6 +121,34 @@ export default function CoachReportWorkspace({
   const sectionIndex = SECTION_CONFIG.findIndex((item) => item.key === section)
   const topStrengths = strengths.slice(0, 4)
   const topIssues = issues.slice(0, 4)
+  const tutorialSteps = [
+    {
+      section: 'overview' as ReportSection,
+      title: 'This is your stage feedback workspace',
+      body: 'Start here after every interview. This screen shows the score, context, artifact access, and where to go next.',
+    },
+    {
+      section: 'strengths' as ReportSection,
+      title: 'Keep what already works',
+      body: 'Use Strengths to see the signals worth repeating in the next round instead of overcorrecting everything.',
+    },
+    {
+      section: 'issues' as ReportSection,
+      title: 'Flagged issues are where practice comes from',
+      body: 'Each issue here can turn into a coaching module. Fix the highest-leverage problems first.',
+    },
+    {
+      section: 'next_steps' as ReportSection,
+      title: 'This is how you move forward',
+      body: 'From Next Steps you can launch practice, retake the round, or move on when the feedback says you are ready.',
+    },
+  ]
+  const activeTutorial = tutorialSteps[Math.min(tutorialStep, tutorialSteps.length - 1)]
+
+  useEffect(() => {
+    if (!tutorialActive) return
+    setSection(activeTutorial.section)
+  }, [activeTutorial.section, tutorialActive])
 
   const renderSection = () => {
     if (section === 'overview') {
@@ -497,6 +530,53 @@ export default function CoachReportWorkspace({
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
+
+      {tutorialActive && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-[rgba(15,23,42,0.18)] p-6 backdrop-blur-[1px]">
+          <div className="w-full max-w-xl rounded-[1.8rem] border border-violet-200 bg-white p-6 shadow-[0_32px_80px_rgba(15,23,42,0.18)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-500">Preppi Guide</p>
+            <h2 className="mt-3 text-3xl font-black text-slate-900">{activeTutorial.title}</h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">{activeTutorial.body}</p>
+            <div className="mt-6 flex items-center gap-2">
+              {tutorialSteps.map((step, idx) => (
+                <div key={step.title} className={`h-2.5 flex-1 rounded-full ${idx <= tutorialStep ? 'bg-violet-600' : 'bg-slate-200'}`} />
+              ))}
+            </div>
+            <div className="mt-6 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={onDismissTutorial}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600"
+              >
+                Skip guide
+              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTutorialStep((value) => Math.max(0, value - 1))}
+                  disabled={tutorialStep === 0}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-600 disabled:opacity-40"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (tutorialStep >= tutorialSteps.length - 1) {
+                      onDismissTutorial?.()
+                      return
+                    }
+                    setTutorialStep((value) => value + 1)
+                  }}
+                  className="btn-coach-primary px-5 py-3 text-sm"
+                >
+                  {tutorialStep >= tutorialSteps.length - 1 ? 'Got it' : 'Next'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showArtifact && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm">

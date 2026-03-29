@@ -34,7 +34,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-white/40 bg-white/72 backdrop-blur-xl">
       <div className="page-container">
         <div className="flex items-center justify-between py-3.5">
-          <Link href={user ? '/profile' : '/'} className="flex items-center gap-3">
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
               <img src="/logo.svg" alt="PrepMe" className="h-7 w-auto" />
             </div>
@@ -48,11 +48,11 @@ export default function Header() {
               {user ? (
                 <>
                   <Link
-                    href="/profile"
+                    href="/dashboard"
                     className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:border-slate-300 hover:text-slate-900"
                   >
                     <User className="w-4 h-4" />
-                    <span>Profile</span>
+                    <span>Workspace</span>
                   </Link>
                   <button
                     onClick={handleLogout}

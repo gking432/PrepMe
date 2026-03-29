@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, AlertTriangle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap, FileText } from 'lucide-react'
+import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, AlertTriangle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap, FileText, FolderOpen } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
@@ -15,7 +15,6 @@ import ScoreRevealCard from '@/components/ScoreRevealCard'
 import LockedStageTeasers from '@/components/LockedStageTeasers'
 import InterviewTimeline from '@/components/InterviewTimeline'
 import SubLessonRoadmap from '@/components/SubLessonRoadmap'
-import PreppiWalkthrough from '@/components/PreppiWalkthrough'
 import LessonRoadmap from '@/components/LessonRoadmap'
 import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
@@ -211,6 +210,12 @@ export default function InterviewDashboard() {
       return () => clearTimeout(timer)
     }
   }, [showFeedbackChatTooltip])
+
+  useEffect(() => {
+    if (!currentSessionData?.id || !feedback) return
+    const hasSeenTutorial = localStorage.getItem(`feedback_tutorial_seen_${currentSessionData.id}`) === 'true'
+    setWalkthroughActive(!hasSeenTutorial)
+  }, [currentSessionData?.id, feedback])
 
   // Prevent body scroll when modal is open and handle ESC key
   useEffect(() => {
@@ -1968,30 +1973,28 @@ export default function InterviewDashboard() {
   ]
   const feedbackNavItems = [
     {
-      key: 'learn' as const,
+      key: 'feedback',
       label: 'Feedback',
       icon: FileText,
       onClick: () => {
-        setWalkthroughActive(false)
         setShowLessonRoadmap(false)
-        setShowRubricModal(true)
+        setShowRubricModal(false)
       },
     },
     {
-      key: 'practice' as const,
+      key: 'practice',
       label: 'Practice',
       icon: Target,
       onClick: () => {
-        setWalkthroughActive(false)
         setShowRubricModal(false)
         setShowLessonRoadmap(true)
       },
     },
     {
-      key: 'profile' as const,
-      label: 'Profile',
-      icon: User,
-      href: '/profile',
+      key: 'documents',
+      label: 'Workspace',
+      icon: FolderOpen,
+      href: '/dashboard',
     },
   ]
 
@@ -2104,72 +2107,30 @@ export default function InterviewDashboard() {
     }
   }
 
+  const dismissFeedbackTutorial = () => {
+    if (currentSessionData?.id) {
+      localStorage.setItem(`feedback_tutorial_seen_${currentSessionData.id}`, 'true')
+    }
+    setWalkthroughActive(false)
+  }
+
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
 
-  // ── Preppi Walkthrough: takes over the entire screen on first visit ──
-  if (hasFeedback && walkthroughActive) {
-    return (
-      <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]">
-        <div className="lg:hidden">
-          <Header />
-        </div>
-        <div className="hidden lg:block">
-          <AppSidebar
-            activeSection="learn"
-            processStages={processStages}
-            theme="light"
-            navItemsOverride={feedbackNavItems}
-            footerText="Review everything first. Practice starts after the full walkthrough."
-          />
-        </div>
-        <AppProgressRail cards={prepareRailCards} theme="light" header={processHeader} />
-        <div className="lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
-          <PreppiWalkthrough
-            embeddedDesktop
-            feedback={feedback}
-            structuredTranscript={structuredTranscript}
-            currentSessionData={currentSessionData}
-            currentStage={currentStage}
-            isPremium={isPremium}
-            sessionId={currentSessionData?.id}
-            onOpenDetailedReport={() => {
-              setWalkthroughActive(false)
-              setShowRubricModal(true)
-            }}
-            onRetakeInterview={() => {
-              setWalkthroughActive(false)
-              router.push('/dashboard')
-            }}
-            onUnlockNextStage={() => {
-              setWalkthroughActive(false)
-              setShowPurchaseFlow(true)
-            }}
-            onStartPractice={() => {
-              setWalkthroughActive(false)
-              setShowLessonRoadmap(true)
-            }}
-            onSkipToResults={() => {
-              setWalkthroughActive(false)
-            }}
-          />
-        </div>
-      </div>
-    )
-  }
-
-  if (hasFeedback && !walkthroughActive && !showLessonRoadmap) {
+  if (hasFeedback && !showLessonRoadmap) {
     return (
       <div className={shellClasses}>
         <div className="lg:hidden">
           <Header />
         </div>
         <AppSidebar
-          activeSection="learn"
+          activeSection="feedback"
           processStages={processStages}
           theme="light"
           navItemsOverride={feedbackNavItems}
-          footerText="Prepare is the full report workspace. Practice stays separate."
+          navTitle="Stage View"
+          processTitle="Interview Stages"
+          footerText="Stages are primary. Feedback and practice live inside the current stage."
         />
         <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
         <div className={shellCenterClasses}>
@@ -2183,8 +2144,11 @@ export default function InterviewDashboard() {
             onPrintArtifact={() => window.print()}
             onStartPractice={() => {
               setShowRubricModal(false)
+              dismissFeedbackTutorial()
               setShowLessonRoadmap(true)
             }}
+            tutorialActive={walkthroughActive}
+            onDismissTutorial={dismissFeedbackTutorial}
           />
         </div>
       </div>
@@ -2204,6 +2168,8 @@ export default function InterviewDashboard() {
           processStages={processStages}
           theme="light"
           navItemsOverride={feedbackNavItems}
+          navTitle="Stage View"
+          processTitle="Interview Stages"
           footerText="Use this as the practice home base. Finish a module, then come back up for air."
         />
         <AppProgressRail cards={practiceRailCards} theme="light" header={processHeader} />
@@ -2222,7 +2188,7 @@ export default function InterviewDashboard() {
             }}
             onViewReport={() => {
               setShowLessonRoadmap(false)
-              setShowRubricModal(true)
+              dismissFeedbackTutorial()
             }}
             onClose={() => setShowLessonRoadmap(false)}
           />

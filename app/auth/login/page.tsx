@@ -29,7 +29,7 @@ export default function LoginPage() {
       if (error) throw error
 
       if (data.user) {
-        router.replace('/profile')
+        router.replace('/dashboard')
         router.refresh()
       }
     } catch (err: any) {

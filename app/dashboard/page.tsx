@@ -3,12 +3,12 @@
 export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { CheckCircle2, Lock, Crown, ChevronDown } from 'lucide-react'
+import { CheckCircle2, Lock, Crown, ChevronDown, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
@@ -17,6 +17,18 @@ import AppProgressRail from '@/components/AppProgressRail'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type OnboardStep = 'welcome' | 'job' | 'resume' | 'stage'
+
+interface InterviewGroup {
+  companyName: string | null
+  positionTitle: string | null
+  stages: {
+    [key: string]: {
+      latestSession: any | null
+      hasFeedback: boolean
+      overallScore: number | null
+    }
+  }
+}
 
 const STAGE_CONFIG: Record<InterviewStage, {
   name: string; subtitle: string; emoji: string; price?: string
@@ -33,6 +45,7 @@ const PAID_STAGES: InterviewStage[] = ['hiring_manager', 'culture_fit', 'final']
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [interviewGroups, setInterviewGroups] = useState<InterviewGroup[]>([])
   const [onboardStep, setOnboardStep] = useState<OnboardStep>('welcome')
   const [selectedStage, setSelectedStage] = useState<InterviewStage>('hr_screen')
   const [interviewData, setInterviewData] = useState({
@@ -59,6 +72,7 @@ export default function DashboardPage() {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
 
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   useEffect(() => {
@@ -82,6 +96,7 @@ export default function DashboardPage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       setUser(session.user)
+      await loadInterviewGroups(session)
       try {
         const paymentRes = await fetch('/api/payments/status')
         if (paymentRes.ok) {
@@ -93,6 +108,70 @@ export default function DashboardPage() {
       }
     }
     setLoading(false)
+  }
+
+  const loadInterviewGroups = async (session: any) => {
+    try {
+      const { data: sessions, error } = await supabase
+        .from('interview_sessions')
+        .select(`
+          id, stage, status, created_at, completed_at,
+          user_interview_data ( job_description_text ),
+          interview_feedback ( id, overall_score, created_at )
+        `)
+        .eq('user_id', session.user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+
+      if (error || !sessions) return
+
+      const groupsMap = new Map<string, InterviewGroup>()
+
+      sessions.forEach((sessionRow: any) => {
+        if (!sessionRow.interview_feedback?.length) return
+
+        const text = sessionRow.user_interview_data?.job_description_text || ''
+        const companyMatch = text.match(/^Company:\s*(.+)$/m)
+        const positionMatch = text.match(/^Position:\s*(.+)$/m)
+        const companyName = companyMatch?.[1]?.trim() || null
+        const positionTitle = positionMatch?.[1]?.trim() || null
+        const groupKey = `${companyName || 'Unknown'}-${positionTitle || 'Unknown'}`
+        const stageKey = sessionRow.stage === 'team_interview'
+          ? 'culture_fit'
+          : sessionRow.stage === 'final_interview'
+          ? 'final'
+          : sessionRow.stage
+
+        if (!groupsMap.has(groupKey)) {
+          groupsMap.set(groupKey, {
+            companyName,
+            positionTitle,
+            stages: {
+              hr_screen: { latestSession: null, hasFeedback: false, overallScore: null },
+              hiring_manager: { latestSession: null, hasFeedback: false, overallScore: null },
+              culture_fit: { latestSession: null, hasFeedback: false, overallScore: null },
+              final: { latestSession: null, hasFeedback: false, overallScore: null },
+            },
+          })
+        }
+
+        const group = groupsMap.get(groupKey)!
+        const stageState = group.stages[stageKey]
+        if (!stageState) return
+        const latestDate = stageState.latestSession ? new Date(stageState.latestSession.completed_at || stageState.latestSession.created_at).getTime() : 0
+        const currentDate = new Date(sessionRow.completed_at || sessionRow.created_at).getTime()
+
+        stageState.hasFeedback = true
+        stageState.overallScore = sessionRow.interview_feedback[0]?.overall_score ?? null
+        if (!stageState.latestSession || currentDate >= latestDate) {
+          stageState.latestSession = sessionRow
+        }
+      })
+
+      setInterviewGroups(Array.from(groupsMap.values()))
+    } catch (error) {
+      console.error('Error loading interview groups:', error)
+    }
   }
 
   const loadInterviewData = async () => {
@@ -230,12 +309,29 @@ export default function DashboardPage() {
   const hasResume = interviewData.resumeText.length > 0 || !!interviewData.resumeFile
   const hasJobDesc = interviewData.jobDescriptionText.length > 0
   const canStartInterview = () => hasResume && hasJobDesc
+  const workspacePanel = searchParams?.get('panel') === 'documents' ? 'documents' : 'interviews'
+  const forceNewProcess = searchParams?.get('new') === '1'
+  const hasWorkspaceData = user && (interviewGroups.length > 0 || savedResumes.length > 0)
+  const showWorkspaceHub = !!hasWorkspaceData && !forceNewProcess
+  const getCompletedCount = (group: InterviewGroup) =>
+    (['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).filter((stage) => group.stages[stage]?.hasFeedback).length
+  const getLatestSessionForGroup = (group: InterviewGroup) => {
+    return (['final', 'culture_fit', 'hiring_manager', 'hr_screen'] as const)
+      .map((stage) => group.stages[stage]?.latestSession)
+      .find(Boolean) || null
+  }
+  const activeInterviewGroups = interviewGroups.filter((group) => getCompletedCount(group) < 4)
+  const completedInterviewGroups = interviewGroups.filter((group) => getCompletedCount(group) === 4)
+  const completedReportCount = interviewGroups.reduce(
+    (count, group) => count + (['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).filter((stage) => group.stages[stage]?.hasFeedback).length,
+    0
+  )
   const processStages = (['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => ({
     key: stage,
     label: STAGE_CONFIG[stage].name,
     status: selectedStage === stage ? 'current' as const : stage === 'hr_screen' || !isStageLockedFn(stage) ? 'complete' as const : 'upcoming' as const,
   }))
-  const railCards = [
+  const setupRailCards = [
     {
       title: 'Setup Progress',
       items: [
@@ -253,6 +349,25 @@ export default function DashboardPage() {
       ],
     },
   ]
+  const hubRailCards = [
+    {
+      title: 'Workspace Snapshot',
+      items: [
+        { label: 'Active Processes', value: `${activeInterviewGroups.length}`, progress: activeInterviewGroups.length ? 100 : 0, tone: 'brand' as const },
+        { label: 'Completed Processes', value: `${completedInterviewGroups.length}`, progress: completedInterviewGroups.length ? 100 : 0, tone: 'success' as const },
+        { label: 'Saved Resumes', value: `${savedResumes.length}`, progress: savedResumes.length ? 100 : 0, tone: 'brand' as const },
+      ],
+    },
+    {
+      title: 'Documents',
+      items: [
+        { label: 'Detailed Reports', value: `${completedReportCount}`, progress: completedReportCount ? 100 : 0, tone: 'success' as const },
+        { label: 'Current View', value: workspacePanel === 'documents' ? 'Documents' : 'Interviews' },
+        { label: 'Next Action', value: activeInterviewGroups.length ? 'Continue process' : 'Start new process' },
+      ],
+    },
+  ]
+  const dashboardRailCards = showWorkspaceHub ? hubRailCards : setupRailCards
 
   const getPreppiMessage = () => {
     if (onboardStep === 'stage') {
@@ -368,12 +483,201 @@ export default function DashboardPage() {
       <div className="lg:hidden">
         <Header />
       </div>
-      <AppSidebar activeSection="learn" processStages={processStages} />
-      <AppProgressRail cards={railCards} />
+      <AppSidebar
+        activeSection={showWorkspaceHub ? (workspacePanel === 'documents' ? 'documents' : 'interviews') : 'new_process'}
+        processStages={showWorkspaceHub ? [] : processStages}
+        navTitle={showWorkspaceHub ? 'Workspace' : 'Prep Workspace'}
+      />
+      <AppProgressRail
+        cards={dashboardRailCards}
+        header={showWorkspaceHub ? {
+          eyebrow: 'Workspace Hub',
+          title: activeInterviewGroups.length ? 'Pick up where you left off' : 'Start a fresh interview process',
+          subtitle: workspacePanel === 'documents' ? 'Resumes and coaching artifacts live here.' : 'Select a process or launch a new one.',
+        } : undefined}
+      />
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
       <main className="mx-auto max-w-xl px-5 pb-36 pt-6 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:pb-12 lg:pt-8">
+        {showWorkspaceHub && (
+          <div className="space-y-8 animate-slide-up">
+            <div className="premium-panel p-6 lg:p-7">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="eyebrow eyebrow-coach mb-3 w-fit">Workspace Hub</div>
+                  <h1 className="text-3xl font-black text-slate-950">Your interview prep lives here.</h1>
+                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                    Choose an interview process to continue, review saved materials, or launch a new round.
+                  </p>
+                </div>
+                <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-6 py-4">
+                  <PlusSquare className="h-5 w-5" />
+                  New Interview Process
+                </Link>
+              </div>
+            </div>
 
+            {workspacePanel === 'interviews' && (
+              <div className="space-y-8">
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-500">Active Processes</p>
+                      <h2 className="mt-1 text-2xl font-black text-slate-900">Continue where you left off</h2>
+                    </div>
+                    <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+                      {activeInterviewGroups.length} active
+                    </span>
+                  </div>
+                  {activeInterviewGroups.length === 0 ? (
+                    <div className="premium-panel p-8 text-center">
+                      <Briefcase className="mx-auto h-12 w-12 text-slate-300" />
+                      <p className="mt-4 text-base font-semibold text-slate-700">No active interview processes right now.</p>
+                      <p className="mt-2 text-sm text-slate-500">Start a new process when the next role comes in.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-5 xl:grid-cols-2">
+                      {activeInterviewGroups.map((group, idx) => {
+                        const latestSession = getLatestSessionForGroup(group)
+                        const completedCount = getCompletedCount(group)
+                        const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview Process ${idx + 1}`
+                        return (
+                          <button
+                            key={`${title}-${idx}`}
+                            type="button"
+                            onClick={() => latestSession && router.push(`/interview/feedback?sessionId=${latestSession.id}&stage=${latestSession.stage === 'team_interview' ? 'culture_fit' : latestSession.stage === 'final_interview' ? 'final' : latestSession.stage}`)}
+                            className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Interview Process</p>
+                                <h3 className="mt-2 text-2xl font-black text-slate-900">{title}</h3>
+                              </div>
+                              <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+                                {completedCount}/4 complete
+                              </span>
+                            </div>
+                            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                              <div className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]" style={{ width: `${(completedCount / 4) * 100}%` }} />
+                            </div>
+                            <div className="grid grid-cols-4 gap-3">
+                              {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
+                                const stageState = group.stages[stage]
+                                return (
+                                  <div key={stage} className={`rounded-[1.2rem] border px-3 py-3 text-center ${
+                                    stageState?.hasFeedback ? 'border-emerald-200 bg-emerald-50/80' : 'border-slate-200 bg-slate-50/80'
+                                  }`}>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{STAGE_CONFIG[stage].name}</p>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
+                              <span>{latestSession ? 'Open latest feedback' : 'No completed stages yet'}</span>
+                              <ArrowRight className="h-4 w-4" />
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </section>
+
+                <section className="space-y-4">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-500">Completed Processes</p>
+                    <h2 className="mt-1 text-2xl font-black text-slate-900">Finished interview tracks</h2>
+                  </div>
+                  {completedInterviewGroups.length === 0 ? (
+                    <div className="premium-panel p-8 text-center">
+                      <CheckCircle2 className="mx-auto h-12 w-12 text-slate-300" />
+                      <p className="mt-4 text-base font-semibold text-slate-700">No completed processes yet.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {completedInterviewGroups.map((group, idx) => {
+                        const latestSession = getLatestSessionForGroup(group)
+                        const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Completed Process ${idx + 1}`
+                        return (
+                          <button
+                            key={`${title}-${idx}`}
+                            type="button"
+                            onClick={() => latestSession && router.push(`/interview/feedback?sessionId=${latestSession.id}&stage=${latestSession.stage === 'team_interview' ? 'culture_fit' : latestSession.stage === 'final_interview' ? 'final' : latestSession.stage}`)}
+                            className="premium-panel flex items-center justify-between gap-4 p-5 text-left transition-all hover:-translate-y-0.5"
+                          >
+                            <div>
+                              <p className="text-lg font-black text-slate-900">{title}</p>
+                              <p className="mt-1 text-sm text-slate-500">All four stages completed.</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-slate-400" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </section>
+              </div>
+            )}
+
+            {workspacePanel === 'documents' && (
+              <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+                <div className="premium-panel p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-violet-100">
+                      <FolderOpen className="h-6 w-6 text-violet-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Resumes</p>
+                      <h2 className="text-2xl font-black text-slate-900">Saved resume library</h2>
+                    </div>
+                  </div>
+                  <div className="mt-5 space-y-3">
+                    {savedResumes.length === 0 ? (
+                      <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-5 text-sm text-slate-500">
+                        No saved resumes yet. Upload one when you start a new interview process.
+                      </div>
+                    ) : savedResumes.map((resume) => (
+                      <div key={resume.id} className="rounded-[1.4rem] border border-slate-200 bg-white/92 px-4 py-4">
+                        <p className="text-sm font-black text-slate-900">{resume.label}</p>
+                        <p className="mt-1 text-sm text-slate-500">Ready to use in a new interview process.</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="premium-panel p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-emerald-100">
+                      <FileText className="h-6 w-6 text-emerald-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Coaching Artifacts</p>
+                      <h2 className="text-2xl font-black text-slate-900">Detailed reports</h2>
+                    </div>
+                  </div>
+                  <div className="mt-5 grid gap-3">
+                    <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50/85 px-4 py-4">
+                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-600">Saved Reports</p>
+                      <p className="mt-2 text-3xl font-black text-emerald-800">{completedReportCount}</p>
+                    </div>
+                    <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 px-4 py-4">
+                      <p className="text-sm leading-7 text-slate-600">
+                        Every completed stage creates a downloadable coaching artifact inside that interview process.
+                      </p>
+                    </div>
+                    <Link href="/dashboard" className="btn-coach-secondary mt-2 flex items-center justify-center gap-2 py-3.5 text-sm">
+                      <Briefcase className="h-4 w-4" />
+                      Back to interview processes
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!showWorkspaceHub && (
+          <>
         {/* ── WELCOME ─────────────────────────────────────────────────── */}
         {onboardStep === 'welcome' && (
           <div className="flex min-h-[calc(100vh-140px)] flex-col items-center justify-center gap-8 text-center animate-slide-up">
@@ -619,10 +923,12 @@ export default function DashboardPage() {
             )}
           </div>
         )}
+          </>
+        )}
       </main>
 
       {/* ── STICKY BOTTOM CTA (Duolingo-style) ──────────────────────── */}
-      {onboardStep !== 'welcome' && (
+      {!showWorkspaceHub && onboardStep !== 'welcome' && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#f4f7fb] via-[#f4f7fb]/96 to-transparent px-5 pb-7 pt-4">
           {onboardStep === 'job' && (
             <button

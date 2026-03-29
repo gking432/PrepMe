@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { X, CheckCircle, RotateCcw, Trophy, ChevronRight, Mic } from 'lucide-react'
+import { X, CheckCircle, RotateCcw, Trophy, ChevronRight, Mic, ArrowLeft, ChevronRight as CrumbChevron } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
@@ -133,6 +133,41 @@ export default function SubLessonRoadmap({
     const subLesson = bundle.lessons[activeSlot]
     return (
       <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+        {embeddedDesktop && (
+          <div className="mb-4 rounded-[1.6rem] border border-white/70 bg-white/78 px-5 py-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
+                  <span>{bundle.displayName}</span>
+                  <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
+                  <span>{subLesson.title}</span>
+                </div>
+                <h2 className="mt-2 text-2xl font-black text-slate-900">{subLesson.title}</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Lesson {activeSlot + 1} of 3 in {bundle.displayName.toLowerCase()}.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveSlot(null)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Path
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
+                  style={{ width: `${((activeSlot + 1) / 4) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                Step {activeSlot + 1} / 4
+              </span>
+            </div>
+          </div>
+        )}
         <PracticeLessonFlow
           subLesson={subLesson}
           lessonNumber={activeSlot + 1}
@@ -148,6 +183,41 @@ export default function SubLessonRoadmap({
   if (activeSlot === 3) {
     return (
       <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+        {embeddedDesktop && (
+          <div className="mb-4 rounded-[1.6rem] border border-white/70 bg-white/78 px-5 py-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
+                  <span>{bundle.displayName}</span>
+                  <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
+                  <span>Voice Re-Answer</span>
+                </div>
+                <h2 className="mt-2 text-2xl font-black text-slate-900">Voice Re-Answer</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Final step. Re-answer the original question with the improved structure.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveSlot(null)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Path
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                Step 4 / 4
+              </span>
+            </div>
+          </div>
+        )}
         <FinalVoiceChallenge
           question={originalQuestion || 'Tell me about a challenge you overcame.'}
           originalAnswer={originalAnswer}
@@ -207,6 +277,7 @@ export default function SubLessonRoadmap({
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>
                 <h3 className="mt-1 text-xl font-black text-slate-900">{criterion}</h3>
+                <p className="mt-1 text-sm text-slate-500">{bundle.displayName}</p>
               </div>
               <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
                 4 steps

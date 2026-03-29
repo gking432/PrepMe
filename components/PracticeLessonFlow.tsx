@@ -470,7 +470,7 @@ export default function PracticeLessonFlow({
     return (
       <>
         <MiniStepBurst active={stepBurst} />
-        <div className="flex h-full flex-col rounded-[2rem] border border-violet-200/70 bg-[linear-gradient(180deg,#fbf8ff_0%,#f6f5ff_42%,#eef4fb_100%)] px-6 py-6 shadow-[0_18px_36px_rgba(76,29,149,0.08)] lg:px-8">
+        <div className="flex h-full flex-col rounded-[1.8rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(246,245,255,0.86)_42%,rgba(238,244,251,0.92)_100%)] px-5 py-5 shadow-[0_12px_28px_rgba(76,29,149,0.06)] lg:px-6">
           <div className="shrink-0">{renderHeader()}</div>
           <div className="min-h-0 flex-1 overflow-hidden">{renderStep()}</div>
         </div>

@@ -14,6 +14,7 @@ import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
 import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
+import { isAdminPreview, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type OnboardStep = 'welcome' | 'job' | 'resume' | 'stage'
@@ -168,6 +169,34 @@ export default function DashboardPage() {
         }
       })
 
+      if (isAdminPreview(session.user.email)) {
+        const mockCompany = 'Atlas Developer Tools'
+        const mockRole = 'Senior Technical Program Manager'
+        const mockKey = `${mockCompany}-${mockRole}`
+        if (!groupsMap.has(mockKey)) {
+          groupsMap.set(mockKey, {
+            companyName: mockCompany,
+            positionTitle: mockRole,
+            stages: {
+              hr_screen: {
+                latestSession: {
+                  id: 'mock-session',
+                  stage: 'hr_screen',
+                  previewMock: true,
+                  created_at: MOCK_SESSION_DATA.created_at,
+                  completed_at: MOCK_SESSION_DATA.created_at,
+                },
+                hasFeedback: true,
+                overallScore: 6.2,
+              },
+              hiring_manager: { latestSession: null, hasFeedback: false, overallScore: null },
+              culture_fit: { latestSession: null, hasFeedback: false, overallScore: null },
+              final: { latestSession: null, hasFeedback: false, overallScore: null },
+            },
+          })
+        }
+      }
+
       setInterviewGroups(Array.from(groupsMap.values()))
     } catch (error) {
       console.error('Error loading interview groups:', error)
@@ -319,6 +348,12 @@ export default function DashboardPage() {
     return (['final', 'culture_fit', 'hiring_manager', 'hr_screen'] as const)
       .map((stage) => group.stages[stage]?.latestSession)
       .find(Boolean) || null
+  }
+  const getFeedbackHref = (sessionRow: any) => {
+    if (!sessionRow) return '/dashboard'
+    if (sessionRow.previewMock) return '/interview/feedback?preview=mock'
+    const stage = sessionRow.stage === 'team_interview' ? 'culture_fit' : sessionRow.stage === 'final_interview' ? 'final' : sessionRow.stage
+    return `/interview/feedback?sessionId=${sessionRow.id}&stage=${stage}`
   }
   const activeInterviewGroups = interviewGroups.filter((group) => getCompletedCount(group) < 4)
   const completedInterviewGroups = interviewGroups.filter((group) => getCompletedCount(group) === 4)
@@ -479,7 +514,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]">
       <div className="lg:hidden">
         <Header />
       </div>
@@ -487,9 +522,11 @@ export default function DashboardPage() {
         activeSection={showWorkspaceHub ? (workspacePanel === 'documents' ? 'documents' : 'interviews') : 'new_process'}
         processStages={showWorkspaceHub ? [] : processStages}
         navTitle={showWorkspaceHub ? 'Workspace' : 'Prep Workspace'}
+        theme="light"
       />
       <AppProgressRail
         cards={dashboardRailCards}
+        theme="light"
         header={showWorkspaceHub ? {
           eyebrow: 'Workspace Hub',
           title: activeInterviewGroups.length ? 'Pick up where you left off' : 'Start a fresh interview process',
@@ -545,7 +582,7 @@ export default function DashboardPage() {
                           <button
                             key={`${title}-${idx}`}
                             type="button"
-                            onClick={() => latestSession && router.push(`/interview/feedback?sessionId=${latestSession.id}&stage=${latestSession.stage === 'team_interview' ? 'culture_fit' : latestSession.stage === 'final_interview' ? 'final' : latestSession.stage}`)}
+                            onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
                             className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
                           >
                             <div className="flex items-start justify-between gap-4">
@@ -602,7 +639,7 @@ export default function DashboardPage() {
                           <button
                             key={`${title}-${idx}`}
                             type="button"
-                            onClick={() => latestSession && router.push(`/interview/feedback?sessionId=${latestSession.id}&stage=${latestSession.stage === 'team_interview' ? 'culture_fit' : latestSession.stage === 'final_interview' ? 'final' : latestSession.stage}`)}
+                            onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
                             className="premium-panel flex items-center justify-between gap-4 p-5 text-left transition-all hover:-translate-y-0.5"
                           >
                             <div>

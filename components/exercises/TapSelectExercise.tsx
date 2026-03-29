@@ -49,8 +49,8 @@ export default function TapSelectExercise({
   }, [checked, correctIndices.length, selected])
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-5">
-      <p className="text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
+    <div className="mx-auto flex h-full w-full max-w-lg flex-col gap-5">
+      <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
 
       {/* Tap items */}
       <div className="flex flex-wrap gap-2">
@@ -94,7 +94,7 @@ export default function TapSelectExercise({
       {/* Post-check feedback */}
       {checked && (
         <div
-          className={`rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
+          className={`shrink-0 rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
             allCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
           }`}
         >
@@ -115,6 +115,7 @@ export default function TapSelectExercise({
         </div>
       )}
 
+      <div className="mt-auto shrink-0">
       {checked && (
         <button
           onClick={handleContinue}
@@ -123,6 +124,7 @@ export default function TapSelectExercise({
           Continue <ArrowRight className="w-4 h-4" />
         </button>
       )}
+      </div>
     </div>
   )
 }

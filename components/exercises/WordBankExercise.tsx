@@ -35,8 +35,8 @@ export default function WordBankExercise({
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-5">
-      <p className="text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
+    <div className="mx-auto flex h-full w-full max-w-lg flex-col gap-5">
+      <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
 
       {/* Sentence with blank */}
       <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-5 py-4 text-base font-semibold text-gray-800 leading-relaxed">
@@ -95,7 +95,7 @@ export default function WordBankExercise({
       {/* Post-check feedback */}
       {selected !== null && (
         <div
-          className={`rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
+          className={`shrink-0 rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
             correct ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
           }`}
         >
@@ -116,6 +116,7 @@ export default function WordBankExercise({
         </div>
       )}
 
+      <div className="mt-auto shrink-0">
       {selected !== null && (
         <button
           onClick={handleContinue}
@@ -124,6 +125,7 @@ export default function WordBankExercise({
           Continue <ArrowRight className="w-4 h-4" />
         </button>
       )}
+      </div>
     </div>
   )
 }

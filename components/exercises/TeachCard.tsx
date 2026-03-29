@@ -126,15 +126,17 @@ export default function TeachCard({
   const isLastStep = step === cards.length - 1
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
-      <Preppi message={currentCard.preppi} size="sm" />
+    <div className="mx-auto flex h-full w-full max-w-2xl flex-col gap-5">
+      <div className="shrink-0 space-y-4">
+        <Preppi message={currentCard.preppi} size="sm" />
 
-      <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-        <span>{currentCard.eyebrow}</span>
-        <span>{step + 1} / {cards.length}</span>
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+          <span>{currentCard.eyebrow}</span>
+          <span>{step + 1} / {cards.length}</span>
+        </div>
       </div>
 
-      <div className="rounded-[2rem] border border-violet-100 bg-white/95 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)] md:p-7">
+      <div className="min-h-0 flex-1 rounded-[2rem] border border-violet-100 bg-white/95 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)] md:p-7">
         <h2 className="text-xl font-extrabold text-slate-900 md:text-2xl">
           {currentCard.title}
         </h2>
@@ -151,7 +153,7 @@ export default function TeachCard({
         <div className="mt-5">{currentCard.content}</div>
       </div>
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="shrink-0 flex items-center justify-between gap-3">
         <button
           onClick={() => setStep(prev => Math.max(0, prev - 1))}
           disabled={step === 0}

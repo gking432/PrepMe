@@ -134,7 +134,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-5 px-1 pt-1">
+          <div className="mb-4 border-b border-slate-200/80 px-1 pb-4 pt-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -142,13 +142,13 @@ export default function SubLessonRoadmap({
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>{subLesson.title}</span>
                 </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <h2 className="text-[2rem] font-black leading-none text-slate-900">{subLesson.title}</h2>
+                <div className="mt-2 flex items-center gap-3">
+                  <h2 className="text-[1.8rem] font-black leading-none text-slate-900">{subLesson.title}</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
                     Lesson {activeSlot + 1} of 3
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm leading-6 text-slate-500">
                   Work through this drill, then return to the path for the next coaching step.
                 </p>
               </div>
@@ -160,7 +160,7 @@ export default function SubLessonRoadmap({
                 Back to Path
               </button>
             </div>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-3">
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
@@ -189,7 +189,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-5 px-1 pt-1">
+          <div className="mb-4 border-b border-slate-200/80 px-1 pb-4 pt-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -197,13 +197,13 @@ export default function SubLessonRoadmap({
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>Voice Re-Answer</span>
                 </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <h2 className="text-[2rem] font-black leading-none text-slate-900">Voice Re-Answer</h2>
+                <div className="mt-2 flex items-center gap-3">
+                  <h2 className="text-[1.8rem] font-black leading-none text-slate-900">Voice Re-Answer</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
                     Step 4 of 4
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm leading-6 text-slate-500">
                   Final step. Re-answer the original question using the stronger structure you just practiced.
                 </p>
               </div>
@@ -215,7 +215,7 @@ export default function SubLessonRoadmap({
                 Back to Path
               </button>
             </div>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-3">
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"

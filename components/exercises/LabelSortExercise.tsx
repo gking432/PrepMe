@@ -91,9 +91,9 @@ export default function LabelSortExercise({
   }, [shuffledLabels])
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-5">
+    <div className="mx-auto flex h-full w-full max-w-lg flex-col gap-5">
       {/* Instruction */}
-      <p className="text-base font-semibold text-gray-900 leading-snug md:text-lg">
+      <p className="shrink-0 text-base font-semibold text-gray-900 leading-snug md:text-lg">
         {instruction}
       </p>
 
@@ -191,7 +191,7 @@ export default function LabelSortExercise({
       {/* Score result */}
       {checked && (
         <div
-          className={`rounded-xl border p-4 transition-all duration-300 ${
+          className={`shrink-0 rounded-xl border p-4 transition-all duration-300 ${
             passed ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
           }`}
         >
@@ -202,6 +202,7 @@ export default function LabelSortExercise({
         </div>
       )}
 
+      <div className="mt-auto shrink-0">
       {checked && (
         <button
           onClick={() => onComplete(passed)}
@@ -211,6 +212,7 @@ export default function LabelSortExercise({
           <ArrowRight className="w-4 h-4" />
         </button>
       )}
+      </div>
     </div>
   )
 }

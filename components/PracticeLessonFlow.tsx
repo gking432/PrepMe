@@ -314,44 +314,60 @@ export default function PracticeLessonFlow({
   }
 
   const renderIntro = () => (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center md:min-h-0">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[1.3rem] bg-violet-100 animate-slide-up">
-        <span className="text-2xl font-extrabold text-violet-700">{lessonNumber}</span>
-      </div>
-      <p className="mb-1 text-xs font-bold uppercase tracking-widest text-gray-400">
-        Lesson {lessonNumber} of {totalLessons}
-      </p>
-      <h2 className="mb-2 animate-slide-up text-2xl font-extrabold text-gray-900">{subLesson.title}</h2>
-      <p className="mb-8 text-sm capitalize text-gray-400">{subLesson.difficulty} level</p>
+    <div className="flex h-full flex-col">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-1 pb-2 pt-2">
+        <div className="space-y-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.2rem] bg-violet-100">
+              <span className="text-xl font-extrabold text-violet-700">{lessonNumber}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                Lesson {lessonNumber} of {totalLessons}
+              </p>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{subLesson.title}</h3>
+              <p className="mt-2 text-sm capitalize text-slate-500">{subLesson.difficulty} level</p>
+            </div>
+          </div>
 
-      <div className="coach-card mb-8 w-full max-w-sm space-y-3 p-5 text-left animate-slide-up">
-        <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100">
-            <BookOpen className="h-3.5 w-3.5 text-violet-700" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-[1.6rem] border border-violet-100 bg-white/95 p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100">
+                  <BookOpen className="h-4 w-4 text-violet-700" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">4-step walkthrough</p>
+                  <p className="text-xs text-slate-500">Learn the pattern before you answer anything</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[1.6rem] border border-violet-100 bg-white/95 p-5 shadow-[0_18px_36px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+                  <Sparkles className="h-4 w-4 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">{exerciseCount} drills + a retry round</p>
+                  <p className="text-xs text-slate-500">Misses come back after the full set, not immediately</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-800">4-step walkthrough</p>
-            <p className="text-xs text-gray-400">Learn the pattern before you answer anything</p>
-          </div>
+
+          <Preppi
+            message="We will learn the pattern first, then do the full round, then come back to anything you missed."
+            size="md"
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-            <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-800">{exerciseCount} drills + a retry round</p>
-            <p className="text-xs text-gray-400">Misses come back after the full set, not immediately</p>
-          </div>
+
+        <div className="mt-auto flex items-center justify-end pt-6">
+          <button onClick={() => setFlowState('teach')} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
+            Start
+            <ArrowRight className="h-5 w-5" />
+          </button>
         </div>
       </div>
-
-      <div className="mb-6">
-        <Preppi message="We will learn the pattern first, then do the full round, then come back to anything you missed." size="md" />
-      </div>
-
-      <button onClick={() => setFlowState('teach')} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
-        Start <ArrowRight className="h-5 w-5" />
-      </button>
     </div>
   )
 
@@ -367,34 +383,38 @@ export default function PracticeLessonFlow({
   )
 
   const renderRetryIntro = () => (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100">
-        <RotateCcw className="h-10 w-10 text-violet-700" />
-      </div>
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-        Review round
-      </p>
-      <h2 className="mt-2 text-2xl font-extrabold text-slate-900">
-        Let&apos;s try those again
-      </h2>
-      <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500 md:text-base">
-        You made it through the full set. Now we&apos;ll bring back the {retryExerciseIndices.length} question{retryExerciseIndices.length === 1 ? '' : 's'} that still need work.
-      </p>
+    <div className="flex h-full flex-col animate-slide-up">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-1 pb-2 pt-2">
+        <div className="space-y-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-violet-100">
+              <RotateCcw className="h-8 w-8 text-violet-700" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Review round</p>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Let&apos;s try those again</h3>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500 md:text-base">
+                You made it through the full set. Now we&apos;ll bring back the {retryExerciseIndices.length} question{retryExerciseIndices.length === 1 ? '' : 's'} that still need work.
+              </p>
+            </div>
+          </div>
 
-      <div className="mb-8 mt-8">
-        <Preppi
-          message="This is the Duolingo rhythm. Keep moving through the round first, then revisit the misses with a clearer pattern in mind."
-          size="md"
-        />
-      </div>
+          <Preppi
+            message="This is the Duolingo rhythm. Keep moving through the round first, then revisit the misses with a clearer pattern in mind."
+            size="md"
+          />
+        </div>
 
-      <button
-        onClick={startRetryRound}
-        className="btn-coach-primary flex items-center gap-2 px-8 py-4"
-      >
-        Retry missed questions
-        <ArrowRight className="h-5 w-5" />
-      </button>
+        <div className="mt-auto flex items-center justify-end pt-6">
+          <button
+            onClick={startRetryRound}
+            className="btn-coach-primary flex items-center gap-2 px-8 py-4"
+          >
+            Retry missed questions
+            <ArrowRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 
@@ -404,13 +424,13 @@ export default function PracticeLessonFlow({
     if (!exercise) return null
 
     return (
-      <div className="animate-slide-up">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+      <div className="mx-auto flex h-full w-full max-w-3xl flex-col animate-slide-up px-1 pb-2 pt-2">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
             {round === 'retry' ? 'Retry' : 'Question'} {queuePosition + 1} of {activeExerciseIndices.length}
           </p>
         </div>
-        <div className="mb-4">
+        <div className="mb-5 shrink-0">
           <Preppi
             message={round === 'retry'
               ? 'You have seen this once already. Read carefully and give it another shot.'
@@ -418,41 +438,57 @@ export default function PracticeLessonFlow({
             size="sm"
           />
         </div>
-        {renderExercise(exercise, queuePosition)}
+        <div className="min-h-0 flex-1">
+          {renderExercise(exercise, queuePosition)}
+        </div>
       </div>
     )
   }
 
   const renderComplete = () => (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-12 text-center animate-slide-up md:min-h-0">
-      <div
-        className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-[#166534] bg-[#22c55e] animate-badge-reveal"
-        style={{ boxShadow: '0 6px 0 #1a5e00' }}
-      >
-        <CheckCircle className="h-10 w-10 text-white" />
-      </div>
-      <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Lesson {lessonNumber} Complete!</h2>
-      <div className="mb-8 flex items-center gap-6">
-        <div className="text-center">
-          <p className="text-2xl font-extrabold text-amber-600">{xp}</p>
-          <p className="text-xs font-semibold text-gray-400">XP Earned</p>
+    <div className="flex h-full flex-col animate-slide-up">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-1 pb-2 pt-2">
+        <div className="space-y-6">
+          <div className="flex items-start gap-4">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[5px] border-[#166534] bg-[#22c55e] animate-badge-reveal"
+              style={{ boxShadow: '0 6px 0 #1a5e00' }}
+            >
+              <CheckCircle className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Lesson complete</p>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Lesson {lessonNumber} complete</h3>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-[1.6rem] border border-amber-200 bg-amber-50/70 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">XP earned</p>
+              <p className="mt-2 text-3xl font-black text-amber-600">{xp}</p>
+            </div>
+            <div className="rounded-[1.6rem] border border-violet-200 bg-violet-50/70 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Solved</p>
+              <p className="mt-2 text-3xl font-black text-violet-700">{correctCount}/{exerciseCount}</p>
+            </div>
+          </div>
+
+          <Preppi
+            message={lessonNumber < totalLessons ? 'Good. Move to the next coaching step.' : 'The drills are done. Next is the voice re-answer.'}
+            size="lg"
+          />
         </div>
-        <div className="h-10 w-px bg-gray-200" />
-        <div className="text-center">
-          <p className="text-2xl font-extrabold text-violet-700">{correctCount}/{exerciseCount}</p>
-          <p className="text-xs font-semibold text-gray-400">Solved</p>
+
+        <div className="mt-auto flex items-center justify-end pt-6">
+          <button
+            onClick={() => onComplete(true, xp)}
+            className="btn-coach-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4"
+          >
+            {lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
+            <ArrowRight className="h-5 w-5" />
+          </button>
         </div>
       </div>
-      <div className="mb-6">
-        <Preppi message={lessonNumber < totalLessons ? 'Good. Move to the next coaching step.' : 'The drills are done. Next is the voice re-answer.'} size="lg" />
-      </div>
-      <button
-        onClick={() => onComplete(true, xp)}
-        className="btn-coach-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4"
-      >
-        {lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
-        <ArrowRight className="h-5 w-5" />
-      </button>
     </div>
   )
 

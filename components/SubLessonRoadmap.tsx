@@ -134,7 +134,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-4 px-1 py-1">
+          <div className="mb-5 px-1 pt-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -142,9 +142,14 @@ export default function SubLessonRoadmap({
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>{subLesson.title}</span>
                 </div>
-                <h2 className="mt-2 text-2xl font-black text-slate-900">{subLesson.title}</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Lesson {activeSlot + 1} of 3 in {bundle.displayName.toLowerCase()}.
+                <div className="mt-3 flex items-center gap-3">
+                  <h2 className="text-[2rem] font-black leading-none text-slate-900">{subLesson.title}</h2>
+                  <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
+                    Lesson {activeSlot + 1} of 3
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-slate-500">
+                  Work through this drill, then return to the path for the next coaching step.
                 </p>
               </div>
               <button
@@ -184,7 +189,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-4 px-1 py-1">
+          <div className="mb-5 px-1 pt-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -192,9 +197,14 @@ export default function SubLessonRoadmap({
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>Voice Re-Answer</span>
                 </div>
-                <h2 className="mt-2 text-2xl font-black text-slate-900">Voice Re-Answer</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Final step. Re-answer the original question with the improved structure.
+                <div className="mt-3 flex items-center gap-3">
+                  <h2 className="text-[2rem] font-black leading-none text-slate-900">Voice Re-Answer</h2>
+                  <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
+                    Step 4 of 4
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-slate-500">
+                  Final step. Re-answer the original question using the stronger structure you just practiced.
                 </p>
               </div>
               <button

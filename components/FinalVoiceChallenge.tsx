@@ -116,12 +116,7 @@ export default function FinalVoiceChallenge({
     return (
       <>
         <Confetti active={confetti} />
-        <div className="flex h-full flex-col px-1 py-1">
-          <div className="shrink-0 pb-4">
-            <div className="h-4 w-full overflow-hidden rounded-full bg-gray-100">
-              <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg,#58CC02,#7ade1a)', boxShadow: 'inset 0 -3px 0 rgba(0,0,0,0.15)' }} />
-            </div>
-          </div>
+        <div className="flex h-full flex-col">
           <div className="min-h-0 flex-1 overflow-hidden">
             <Inner
               question={question}
@@ -217,7 +212,7 @@ function Inner({
   const colors = result ? scoreColor(result.score) : null
 
   return (
-    <div className="space-y-5 py-4 animate-slide-up">
+    <div className="space-y-5 py-2 animate-slide-up">
       {/* Badge */}
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold rounded-full mb-3">

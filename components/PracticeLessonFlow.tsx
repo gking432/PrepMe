@@ -470,8 +470,7 @@ export default function PracticeLessonFlow({
     return (
       <>
         <MiniStepBurst active={stepBurst} />
-        <div className="flex h-full flex-col px-1 py-1">
-          <div className="shrink-0">{renderHeader()}</div>
+        <div className="flex h-full flex-col">
           <div className="min-h-0 flex-1 overflow-hidden">{renderStep()}</div>
         </div>
       </>

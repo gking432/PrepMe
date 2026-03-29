@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Briefcase, Phone, Users, Crown, FolderOpen, PlusSquare } from 'lucide-react'
+import { Briefcase, Phone, Users, Crown, FolderOpen, PlusSquare, ChevronDown, ChevronRight, FileText, Target, PlayCircle, Lock } from 'lucide-react'
 
 type ActiveSection = string
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
@@ -13,6 +13,16 @@ interface ProcessStage {
   status: 'current' | 'complete' | 'upcoming'
   href?: string
   onClick?: () => void
+  expanded?: boolean
+  children?: Array<{
+    key: string
+    label: string
+    href?: string
+    onClick?: () => void
+    active?: boolean
+    locked?: boolean
+    statusLabel?: string
+  }>
 }
 
 interface AppSidebarProps {
@@ -116,27 +126,80 @@ export default function AppSidebar({
                     >
                       <Icon className="h-4 w-4" />
                     </div>
-                    <p className="text-sm font-semibold">{stage.label}</p>
+                    <p className="flex-1 text-sm font-semibold">{stage.label}</p>
+                    {stage.children?.length ? (
+                      stage.expanded ? <ChevronDown className="h-4 w-4 opacity-60" /> : <ChevronRight className="h-4 w-4 opacity-60" />
+                    ) : null}
                   </>
                 )
 
-                if (stage.onClick) {
-                  return (
-                    <button key={stage.key} type="button" onClick={stage.onClick} className={className}>
-                      {content}
-                    </button>
-                  )
-                }
+                return (
+                  <div key={stage.key}>
+                    {stage.onClick ? (
+                      <button type="button" onClick={stage.onClick} className={className}>
+                        {content}
+                      </button>
+                    ) : stage.href ? (
+                      <Link href={stage.href} className={className}>
+                        {content}
+                      </Link>
+                    ) : (
+                      <div className={className}>{content}</div>
+                    )}
 
-                if (stage.href) {
-                  return (
-                    <Link key={stage.key} href={stage.href} className={className}>
-                      {content}
-                    </Link>
-                  )
-                }
+                    {stage.expanded && stage.children?.length ? (
+                      <div className="mt-2 space-y-2 pl-4">
+                        {stage.children.map((child) => {
+                          const childClass = `flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-semibold transition-all ${
+                            child.active
+                              ? isLight
+                                ? 'border border-violet-200 bg-violet-50 text-violet-700'
+                                : 'border border-violet-400/25 bg-violet-500/10 text-violet-200'
+                              : isLight
+                              ? 'text-slate-500 hover:bg-white/70 hover:text-slate-900'
+                              : 'text-slate-400 hover:bg-white/4 hover:text-white'
+                          } ${child.locked ? 'opacity-60' : ''}`
+                          const childIcon = child.label === 'Feedback'
+                            ? FileText
+                            : child.label === 'Practice'
+                            ? Target
+                            : child.locked
+                            ? Lock
+                            : PlayCircle
+                          const ChildIcon = childIcon
 
-                return <div key={stage.key} className={className}>{content}</div>
+                          if (child.onClick) {
+                            return (
+                              <button key={child.key} type="button" onClick={child.onClick} className={childClass}>
+                                <ChildIcon className="h-4 w-4" />
+                                <span className="flex-1">{child.label}</span>
+                                {child.statusLabel ? <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${labelClass}`}>{child.statusLabel}</span> : null}
+                              </button>
+                            )
+                          }
+
+                          if (child.href) {
+                            return (
+                              <Link key={child.key} href={child.href} className={childClass}>
+                                <ChildIcon className="h-4 w-4" />
+                                <span className="flex-1">{child.label}</span>
+                                {child.statusLabel ? <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${labelClass}`}>{child.statusLabel}</span> : null}
+                              </Link>
+                            )
+                          }
+
+                          return (
+                            <div key={child.key} className={childClass}>
+                              <ChildIcon className="h-4 w-4" />
+                              <span className="flex-1">{child.label}</span>
+                              {child.statusLabel ? <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${labelClass}`}>{child.statusLabel}</span> : null}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                )
               })}
             </div>
           </div>

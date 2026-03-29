@@ -1877,16 +1877,73 @@ export default function InterviewDashboard() {
     ...(hasFrFeedback ? ['final'] : []),
   ]
   const currentStageKey = (currentStage === 'final_round' ? 'final' : currentStage) as 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
+  const stageCompletionMap = {
+    hr_screen: hasFeedback,
+    hiring_manager: hasHmFeedback,
+    culture_fit: hasCfFeedback,
+    final: hasFrFeedback,
+  }
   const processStages = ([
     ['hr_screen', 'HR Screen'],
     ['hiring_manager', 'Hiring Manager'],
     ['culture_fit', 'Culture Fit'],
     ['final', 'Final Round'],
-  ] as const).map(([key, label]) => ({
-    key,
-    label,
-    status: currentStageKey === key ? 'current' as const : completedStages.includes(key) ? 'complete' as const : 'upcoming' as const,
-  }))
+  ] as const).map(([key, label]) => {
+    const isActiveStage = currentStageKey === key
+    const isCompletedStage = completedStages.includes(key)
+    const isCurrentStageAvailable = stageCompletionMap[key]
+    const stageParam = key === 'final' ? 'final' : key
+
+    const children = isActiveStage
+      ? isCurrentStageAvailable
+        ? [
+            {
+              key: `${key}-feedback`,
+              label: 'Feedback',
+              active: !showLessonRoadmap,
+              onClick: () => {
+                setShowLessonRoadmap(false)
+                setShowRubricModal(false)
+              },
+            },
+            {
+              key: `${key}-practice`,
+              label: 'Practice',
+              active: showLessonRoadmap,
+              onClick: () => {
+                setShowRubricModal(false)
+                setShowLessonRoadmap(true)
+              },
+            },
+          ]
+        : [
+            {
+              key: `${key}-start`,
+              label: 'Start Interview',
+              href: `/dashboard?stage=${stageParam}`,
+              statusLabel: key === 'hr_screen' || isPremium ? 'Ready' : 'Locked',
+              locked: key !== 'hr_screen' && !isPremium,
+            },
+          ]
+      : isCompletedStage
+      ? [
+          {
+            key: `${key}-feedback`,
+            label: 'Feedback',
+            href: `/interview/feedback?stage=${stageParam}`,
+            statusLabel: 'Saved',
+          },
+        ]
+      : []
+
+    return {
+      key,
+      label,
+      status: isActiveStage ? 'current' as const : isCompletedStage ? 'complete' as const : 'upcoming' as const,
+      expanded: isActiveStage,
+      children,
+    }
+  })
   const railCards = [
     {
       title: 'This Round',
@@ -1971,27 +2028,9 @@ export default function InterviewDashboard() {
     },
     processRailCard,
   ]
-  const feedbackNavItems = [
+  const processWorkspaceNavItems = [
     {
-      key: 'feedback',
-      label: 'Feedback',
-      icon: FileText,
-      onClick: () => {
-        setShowLessonRoadmap(false)
-        setShowRubricModal(false)
-      },
-    },
-    {
-      key: 'practice',
-      label: 'Practice',
-      icon: Target,
-      onClick: () => {
-        setShowRubricModal(false)
-        setShowLessonRoadmap(true)
-      },
-    },
-    {
-      key: 'documents',
+      key: 'interviews',
       label: 'Workspace',
       icon: FolderOpen,
       href: '/dashboard',
@@ -2127,8 +2166,8 @@ export default function InterviewDashboard() {
           activeSection="feedback"
           processStages={processStages}
           theme="light"
-          navItemsOverride={feedbackNavItems}
-          navTitle="Stage View"
+          navItemsOverride={processWorkspaceNavItems}
+          navTitle="Workspace"
           processTitle="Interview Stages"
           footerText="Stages are primary. Feedback and practice live inside the current stage."
         />
@@ -2167,8 +2206,8 @@ export default function InterviewDashboard() {
           activeSection="practice"
           processStages={processStages}
           theme="light"
-          navItemsOverride={feedbackNavItems}
-          navTitle="Stage View"
+          navItemsOverride={processWorkspaceNavItems}
+          navTitle="Workspace"
           processTitle="Interview Stages"
           footerText="Use this as the practice home base. Finish a module, then come back up for air."
         />
@@ -2206,7 +2245,7 @@ export default function InterviewDashboard() {
         activeSection="learn"
         processStages={processStages}
         theme="light"
-        navItemsOverride={feedbackNavItems}
+        navItemsOverride={processWorkspaceNavItems}
         footerText="Review the interview first, then move into targeted practice."
       />
       <AppProgressRail cards={prepareRailCards} theme="light" />

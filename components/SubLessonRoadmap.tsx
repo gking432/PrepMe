@@ -132,9 +132,9 @@ export default function SubLessonRoadmap({
   if (activeSlot !== null && activeSlot < 3) {
     const subLesson = bundle.lessons[activeSlot]
     return (
-      <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+      <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-4 rounded-[1.6rem] border border-white/70 bg-white/78 px-5 py-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur">
+          <div className="mb-4 px-1 py-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -182,9 +182,9 @@ export default function SubLessonRoadmap({
 
   if (activeSlot === 3) {
     return (
-      <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+      <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mb-4 rounded-[1.6rem] border border-white/70 bg-white/78 px-5 py-4 shadow-[0_14px_28px_rgba(15,23,42,0.06)] backdrop-blur">
+          <div className="mb-4 px-1 py-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -260,10 +260,10 @@ export default function SubLessonRoadmap({
       )}
 
       <div className="flex-1 overflow-hidden">
-        <div className={`mx-auto h-full max-w-4xl px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-8'}`}>
+        <div className={`${embeddedDesktop ? 'h-full px-0 py-0' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
 
           {/* Preppi */}
-          <div className="mb-8 text-center">
+          <div className={`text-center ${embeddedDesktop ? 'mb-6 px-1 pt-1' : 'mb-8'}`}>
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-white/92 shadow-[0_18px_34px_rgba(76,29,149,0.08)] animate-preppi-bounce">
               <PreppiSVG />
             </div>
@@ -272,7 +272,8 @@ export default function SubLessonRoadmap({
             </div>
           </div>
 
-          <div className="premium-panel overflow-hidden p-5 sm:p-6">
+          <div className={`${embeddedDesktop ? 'overflow-hidden px-1 pb-1' : 'premium-panel overflow-hidden p-5 sm:p-6'}`}>
+            <div className={`${embeddedDesktop ? 'rounded-[1.8rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:p-6' : ''}`}>
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>
@@ -378,6 +379,7 @@ export default function SubLessonRoadmap({
                 <p className="text-sm font-semibold text-emerald-800">You have completed all four coaching steps for this skill.</p>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

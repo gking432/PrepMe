@@ -116,13 +116,13 @@ export default function FinalVoiceChallenge({
     return (
       <>
         <Confetti active={confetti} />
-        <div className="flex h-full flex-col rounded-[1.8rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(246,245,255,0.86)_42%,rgba(238,244,251,0.92)_100%)] px-5 py-5 shadow-[0_12px_28px_rgba(76,29,149,0.06)] lg:px-6">
+        <div className="flex h-full flex-col px-1 py-1">
           <div className="shrink-0 pb-4">
             <div className="h-4 w-full overflow-hidden rounded-full bg-gray-100">
               <div className="h-full w-full rounded-full" style={{ background: 'linear-gradient(90deg,#58CC02,#7ade1a)', boxShadow: 'inset 0 -3px 0 rgba(0,0,0,0.15)' }} />
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <Inner
               question={question}
               originalAnswer={originalAnswer}

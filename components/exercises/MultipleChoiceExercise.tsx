@@ -29,7 +29,7 @@ export default function MultipleChoiceExercise({
   const correct = selected === correctIndex
 
   return (
-    <div className="flex h-full w-full max-w-3xl flex-col gap-5">
+    <div className="flex h-full w-full flex-col gap-5">
       {/* Question */}
       <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">
         {question}
@@ -111,11 +111,11 @@ export default function MultipleChoiceExercise({
         </div>
       )}
 
-      <div className="mt-auto shrink-0">
+      <div className="mt-auto shrink-0 flex items-end justify-end border-t border-slate-200/80 pt-5">
       {selected !== null && (
         <button
           onClick={() => onComplete(correct)}
-          className="w-full btn-coach-primary py-3"
+          className="btn-coach-primary min-w-[168px] px-6 py-3"
         >
           Continue
         </button>

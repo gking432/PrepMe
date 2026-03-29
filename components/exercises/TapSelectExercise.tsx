@@ -49,7 +49,7 @@ export default function TapSelectExercise({
   }, [checked, correctIndices.length, selected])
 
   return (
-    <div className="flex h-full w-full max-w-3xl flex-col gap-5">
+    <div className="flex h-full w-full flex-col gap-5">
       <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
 
       {/* Tap items */}
@@ -115,11 +115,11 @@ export default function TapSelectExercise({
         </div>
       )}
 
-      <div className="mt-auto shrink-0">
+      <div className="mt-auto shrink-0 flex items-end justify-end border-t border-slate-200/80 pt-5">
       {checked && (
         <button
           onClick={handleContinue}
-          className="w-full btn-coach-primary flex items-center justify-center gap-2 py-3"
+          className="btn-coach-primary flex min-w-[168px] items-center justify-center gap-2 px-6 py-3"
         >
           Continue <ArrowRight className="w-4 h-4" />
         </button>

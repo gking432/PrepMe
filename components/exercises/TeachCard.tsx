@@ -126,7 +126,7 @@ export default function TeachCard({
   const isLastStep = step === cards.length - 1
 
   return (
-    <div className="flex h-full w-full max-w-3xl flex-col gap-5">
+    <div className="flex h-full w-full flex-col gap-5">
       <div className="shrink-0 space-y-4">
         <Preppi message={currentCard.preppi} size="sm" />
 
@@ -153,7 +153,7 @@ export default function TeachCard({
         <div className="mt-5">{currentCard.content}</div>
       </div>
 
-      <div className="shrink-0 flex items-center justify-between gap-3">
+      <div className="mt-auto shrink-0 flex items-end justify-between gap-3 border-t border-slate-200/80 pt-5">
         <button
           onClick={() => setStep(prev => Math.max(0, prev - 1))}
           disabled={step === 0}

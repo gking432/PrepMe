@@ -49,7 +49,7 @@ export default function TapSelectExercise({
   }, [checked, correctIndices.length, selected])
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-lg flex-col gap-5">
+    <div className="flex h-full w-full max-w-3xl flex-col gap-5">
       <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">{instruction}</p>
 
       {/* Tap items */}

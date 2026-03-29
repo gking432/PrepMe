@@ -126,7 +126,7 @@ export default function TeachCard({
   const isLastStep = step === cards.length - 1
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-2xl flex-col gap-5">
+    <div className="flex h-full w-full max-w-3xl flex-col gap-5">
       <div className="shrink-0 space-y-4">
         <Preppi message={currentCard.preppi} size="sm" />
 

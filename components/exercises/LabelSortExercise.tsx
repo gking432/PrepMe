@@ -91,7 +91,7 @@ export default function LabelSortExercise({
   }, [shuffledLabels])
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-lg flex-col gap-5">
+    <div className="flex h-full w-full max-w-3xl flex-col gap-5">
       {/* Instruction */}
       <p className="shrink-0 text-base font-semibold text-gray-900 leading-snug md:text-lg">
         {instruction}

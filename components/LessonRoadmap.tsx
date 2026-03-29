@@ -128,6 +128,7 @@ export default function LessonRoadmap({
         priorXp={priorXp + sessionXp}
         onAllComplete={(totalXp) => handleLessonComplete(true, totalXp - priorXp - sessionXp)}
         onClose={() => setActiveIdx(null)}
+        embeddedDesktop={embeddedDesktop}
         onContextChange={onContextChange}
       />
     )

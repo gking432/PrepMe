@@ -159,133 +159,153 @@ export default function LessonRoadmap({
         </div>
       )}
 
-      <div className={`flex-1 ${embeddedDesktop ? 'overflow-hidden' : 'overflow-hidden'}`}>
-        <div className={`mx-auto flex h-full max-w-6xl flex-col px-4 ${embeddedDesktop ? 'py-4 lg:px-8' : 'py-6'}`}>
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>
-              <h2 className="mt-2 text-3xl font-black text-slate-900">Pick a module and fix what held this round back.</h2>
-            </div>
-            <div className="rounded-[1.4rem] border border-violet-200 bg-white/80 px-5 py-3 shadow-[0_14px_28px_rgba(76,29,149,0.08)]">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Progress</p>
-              <p className="mt-1 text-sm font-bold text-slate-900">{completedSet.size} / {weaknesses.length} complete</p>
+      <div className="flex-1 overflow-hidden">
+        <div className={`mx-auto flex h-full ${embeddedDesktop ? 'max-w-[1240px] px-6 py-4' : 'max-w-6xl px-4 py-6'} flex-col`}>
+          <div className={`mx-auto w-full ${embeddedDesktop ? 'max-w-5xl' : ''}`}>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>
+                <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                  Follow the path and rebuild the answers this round exposed.
+                </h2>
+                <p className="mt-3 max-w-3xl text-base leading-7 text-slate-500">
+                  {preppiMessage}
+                </p>
+              </div>
+              <div className="rounded-[1.4rem] border border-slate-200 bg-white/88 px-5 py-3 shadow-[0_14px_28px_rgba(15,23,42,0.06)]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Progress</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{completedSet.size} / {weaknesses.length} complete</p>
+              </div>
             </div>
           </div>
 
-          <div className="grid flex-1 gap-5 lg:grid-cols-[1fr_320px]">
-            <div className="relative rounded-[2rem] border border-violet-200/70 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f0ff_38%,#eef4fb_100%)] p-6 shadow-[0_18px_36px_rgba(76,29,149,0.08)]">
-              <div className="absolute inset-x-8 top-10 h-40 rounded-full bg-[radial-gradient(circle,#e9d8fd_0%,transparent_70%)] opacity-60" />
-              <div className="relative grid h-full grid-cols-3 grid-rows-3 gap-4">
-                {[0, 1, 2, 3, 4, 5].map((slot) => {
-                  const weakness = weaknesses[slot]
-                  if (!weakness) {
-                    if (slot === 4) {
-                      return (
-                        <div key="preppi-hub" className="col-start-2 row-start-2 flex items-center justify-center">
-                          <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full border border-violet-200 bg-white/86 shadow-[0_20px_34px_rgba(76,29,149,0.12)]">
-                            <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-violet-50">
-                              <PreppiSVG />
-                            </div>
-                            <p className="max-w-[11rem] text-center text-sm font-bold leading-6 text-slate-700">{preppiMessage}</p>
-                          </div>
-                        </div>
-                      )
-                    }
-                    return <div key={`empty-${slot}`} />
-                  }
+          <div className={`mx-auto flex min-h-0 w-full ${embeddedDesktop ? 'max-w-5xl flex-1' : ''}`}>
+            <div className={`relative w-full overflow-hidden rounded-[2rem] border ${embeddedDesktop ? 'border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-8 py-7 shadow-[0_20px_44px_rgba(15,23,42,0.08)]' : 'border-violet-200/70 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f0ff_38%,#eef4fb_100%)] p-6 shadow-[0_18px_36px_rgba(76,29,149,0.08)]'}`}>
+              <div className="absolute inset-x-12 top-8 h-32 rounded-full bg-[radial-gradient(circle,#ddd6fe_0%,transparent_72%)] opacity-40" />
 
-                  const idx = slot
+              <div className={`${embeddedDesktop ? 'relative h-full min-h-[620px] [perspective:1400px]' : 'relative min-h-[540px]'}`}>
+                <div className={`${embeddedDesktop ? 'absolute left-1/2 top-16 h-[76%] w-[220px] -translate-x-1/2 rounded-[999px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(241,245,249,0.9)_100%)] shadow-[inset_0_10px_32px_rgba(255,255,255,0.95),0_28px_56px_rgba(15,23,42,0.08)] [transform:translateX(-50%)_rotateX(58deg)]' : 'absolute left-1/2 top-12 h-[72%] w-[180px] -translate-x-1/2 rounded-[999px] bg-white/60'}`} />
+
+                <div className={`${embeddedDesktop ? 'absolute left-1/2 top-16 h-[72%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#e2e8f0_100%)] opacity-80' : 'absolute left-1/2 top-14 h-[68%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#e2e8f0_100%)]'}`} />
+
+                {weaknesses.map((weakness, idx) => {
                   const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
                   const bundle = getBundleForRootCause(rootCause)
                   const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
                   const isCompleted = completedSet.has(idx)
                   const isPassed = passedSet.has(idx)
                   const isRecommended = idx === nextIdx && !allDone
-                  const slotClasses = ['col-start-1 row-start-1', 'col-start-3 row-start-1', 'col-start-1 row-start-2', 'col-start-3 row-start-2', 'col-start-1 row-start-3', 'col-start-3 row-start-3']
+                  const side = idx % 2 === 0 ? 'left' : 'right'
+                  const topPercent = weaknesses.length > 1 ? 10 + (idx * (62 / Math.max(weaknesses.length - 1, 1))) : 28
 
                   return (
-                    <button
+                    <div
                       key={`${weakness.criterion}-${idx}`}
-                      onClick={() => setActiveIdx(idx)}
-                      className={`${slotClasses[slot]} relative rounded-[1.7rem] border p-5 text-left transition-all hover:-translate-y-1 hover:shadow-[0_24px_38px_rgba(15,23,42,0.12)] ${
-                        isCompleted && isPassed
-                          ? 'border-emerald-200 bg-emerald-50/92'
-                          : isCompleted
-                          ? 'border-amber-200 bg-amber-50/92'
-                          : isRecommended
-                          ? 'border-violet-300 bg-white ring-2 ring-violet-200/70 shadow-[0_20px_34px_rgba(109,40,217,0.12)]'
-                          : 'border-slate-200/80 bg-white/92'
-                      }`}
+                      className="absolute left-1/2 w-[calc(100%-2rem)] max-w-[760px] -translate-x-1/2"
+                      style={{ top: `${topPercent}%` }}
                     >
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] border border-violet-200 bg-violet-50 text-2xl text-violet-700">
-                          <span>{icon}</span>
+                      <div className={`relative flex items-center ${side === 'left' ? 'justify-start pr-[48%]' : 'justify-end pl-[48%]'}`}>
+                        <button
+                          onClick={() => setActiveIdx(idx)}
+                          className={`group relative w-full max-w-[320px] rounded-[1.6rem] border px-5 py-4 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_38px_rgba(15,23,42,0.12)] ${
+                            isCompleted && isPassed
+                              ? 'border-emerald-200 bg-emerald-50/96'
+                              : isCompleted
+                              ? 'border-amber-200 bg-amber-50/96'
+                              : isRecommended
+                              ? 'border-violet-300 bg-white ring-2 ring-violet-200/70 shadow-[0_20px_34px_rgba(109,40,217,0.12)]'
+                              : 'border-slate-200 bg-white/96'
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] border text-2xl ${
+                              isCompleted && isPassed
+                                ? 'border-emerald-200 bg-emerald-100/90'
+                                : isCompleted
+                                ? 'border-amber-200 bg-amber-100/90'
+                                : isRecommended
+                                ? 'border-violet-200 bg-violet-50'
+                                : 'border-slate-200 bg-slate-50'
+                            }`}>
+                              <span>{icon}</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="truncate text-base font-black text-slate-900">{bundle.displayName}</p>
+                                <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
+                                  isCompleted && isPassed
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : isCompleted
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : isRecommended
+                                    ? 'bg-violet-100 text-violet-700'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {isCompleted ? (isPassed ? 'Mastered' : 'Retry') : isRecommended ? 'Next' : 'Module'}
+                                </span>
+                              </div>
+                              <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{weakness.criterion}</p>
+                              <div className="mt-4 flex items-center justify-between">
+                                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                                  {weakness.score != null ? `${weakness.score}/10` : 'Practice'}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-sm font-bold text-slate-500 transition group-hover:text-slate-700">
+                                  Open
+                                  <ChevronRight className="h-4 w-4" />
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+
+                        <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
+                          <div className={`flex h-20 w-20 items-center justify-center rounded-full border-4 shadow-[0_16px_30px_rgba(15,23,42,0.12)] ${
+                            isCompleted && isPassed
+                              ? 'border-emerald-300 bg-emerald-500 text-white'
+                              : isCompleted
+                              ? 'border-amber-300 bg-amber-400 text-white'
+                              : isRecommended
+                              ? 'border-violet-300 bg-violet-600 text-white'
+                              : 'border-slate-200 bg-white text-slate-400'
+                          }`}>
+                            {isCompleted && isPassed ? (
+                              <CheckCircle className="h-9 w-9" />
+                            ) : isCompleted ? (
+                              <CheckCircle className="h-9 w-9" />
+                            ) : (
+                              <span className="text-3xl">{icon}</span>
+                            )}
+                          </div>
+                          {isRecommended && (
+                            <div className={`absolute ${side === 'left' ? '-left-28' : 'left-24'} top-1 flex items-center gap-3 rounded-full border border-violet-200 bg-white px-3 py-2 shadow-[0_16px_30px_rgba(109,40,217,0.12)]`}>
+                              <div className="h-10 w-10 rounded-full bg-violet-50 p-1.5">
+                                <PreppiSVG />
+                              </div>
+                              <span className="whitespace-nowrap text-xs font-black uppercase tracking-[0.16em] text-violet-700">
+                                Start here
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
-                          isCompleted && isPassed
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : isCompleted
-                            ? 'bg-amber-100 text-amber-700'
-                            : isRecommended
-                            ? 'bg-violet-100 text-violet-700'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          {isCompleted ? (isPassed ? 'Mastered' : 'Retry') : isRecommended ? 'Recommended' : 'Module'}
-                        </span>
                       </div>
-                      <p className="text-base font-black text-slate-900">{bundle.displayName}</p>
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{weakness.criterion}</p>
-                      <div className="mt-4 flex items-center justify-between">
-                        {weakness.score != null && <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{weakness.score}/10</span>}
-                        <ChevronRight className="h-5 w-5 text-slate-400" />
-                      </div>
-                    </button>
+                    </div>
                   )
                 })}
-              </div>
-            </div>
 
-            <div className="flex flex-col gap-4">
-              <div className="rounded-[1.7rem] border border-violet-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(76,29,149,0.08)]">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Start Here</p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  The highlighted module is the fastest way to improve this round. Finish it first, then come back here for the rest.
-                </p>
-                <div className="mt-4 rounded-[1.2rem] border border-violet-200 bg-violet-50 px-4 py-3">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-violet-600">Recommended Module</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">
-                    {nextIdx >= 0 ? getBundleForRootCause(getRootCauseForCriterion(weaknesses[nextIdx]?.criterion, weaknesses[nextIdx]?.rootCause)).displayName : 'All modules complete'}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-[1.7rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">How Practice Works</p>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
-                    1. Learn the pattern
+                {allDone && (
+                  <div className="absolute bottom-4 left-1/2 w-full max-w-[420px] -translate-x-1/2">
+                    <div className="rounded-[1.6rem] border border-emerald-200 bg-emerald-50/96 px-5 py-4 text-center shadow-[0_18px_36px_rgba(16,185,129,0.12)]">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Ready</p>
+                      <p className="mt-2 text-sm font-bold leading-7 text-emerald-800">
+                        Every module is complete. You can retake this round or move forward.
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
-                    2. Drill it three different ways
-                  </div>
-                  <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
-                    3. Re-answer the original question out loud
-                  </div>
-                </div>
+                )}
               </div>
-              <div className="rounded-[1.7rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Readiness</p>
-                <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
-                    style={{ width: `${weaknesses.length ? (completedSet.size / weaknesses.length) * 100 : 0}%` }}
-                  />
-                </div>
-                <p className="mt-3 text-sm font-semibold text-slate-700">
-                  {allDone ? 'Every module is complete.' : `${Math.max(weaknesses.length - completedSet.size, 0)} modules still available.`}
-                </p>
-              </div>
-              <div className="mt-auto space-y-3">
-                {!embeddedDesktop && (
+
+              {!embeddedDesktop && (
+                <div className="mt-6">
                   <button
                     onClick={onViewReport}
                     className="btn-coach-secondary flex w-full items-center justify-center gap-2 py-3.5 text-sm"
@@ -293,13 +313,8 @@ export default function LessonRoadmap({
                     <FileText className="w-4 h-4" />
                     Back to Feedback
                   </button>
-                )}
-                {allDone && (
-                  <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
-                    All modules completed. You are ready for a retake or the next round.
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -166,9 +166,9 @@ export default function LessonRoadmap({
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                  Follow the path and rebuild the answers this round exposed.
+                  Pick the next module and keep moving.
                 </h2>
-                <p className="mt-3 max-w-3xl text-base leading-7 text-slate-500">
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
                   {preppiMessage}
                 </p>
               </div>
@@ -181,12 +181,10 @@ export default function LessonRoadmap({
 
           <div className={`mx-auto flex min-h-0 w-full ${embeddedDesktop ? 'max-w-5xl flex-1' : ''}`}>
             <div className={`relative w-full overflow-hidden rounded-[2rem] border ${embeddedDesktop ? 'border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-8 py-7 shadow-[0_20px_44px_rgba(15,23,42,0.08)]' : 'border-violet-200/70 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f6f0ff_38%,#eef4fb_100%)] p-6 shadow-[0_18px_36px_rgba(76,29,149,0.08)]'}`}>
-              <div className="absolute inset-x-12 top-8 h-32 rounded-full bg-[radial-gradient(circle,#ddd6fe_0%,transparent_72%)] opacity-40" />
-
               <div className={`${embeddedDesktop ? 'relative h-full min-h-[620px] [perspective:1400px]' : 'relative min-h-[540px]'}`}>
-                <div className={`${embeddedDesktop ? 'absolute left-1/2 top-16 h-[76%] w-[220px] -translate-x-1/2 rounded-[999px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(241,245,249,0.9)_100%)] shadow-[inset_0_10px_32px_rgba(255,255,255,0.95),0_28px_56px_rgba(15,23,42,0.08)] [transform:translateX(-50%)_rotateX(58deg)]' : 'absolute left-1/2 top-12 h-[72%] w-[180px] -translate-x-1/2 rounded-[999px] bg-white/60'}`} />
+                <div className={`${embeddedDesktop ? 'absolute left-1/2 top-20 h-[66%] w-[184px] -translate-x-1/2 rounded-[999px] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f5f7fb_100%)] shadow-[inset_0_10px_24px_rgba(255,255,255,0.9),0_22px_40px_rgba(15,23,42,0.06)] [transform:translateX(-50%)_rotateX(58deg)]' : 'absolute left-1/2 top-12 h-[72%] w-[180px] -translate-x-1/2 rounded-[999px] bg-white/60'}`} />
 
-                <div className={`${embeddedDesktop ? 'absolute left-1/2 top-16 h-[72%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#e2e8f0_100%)] opacity-80' : 'absolute left-1/2 top-14 h-[68%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#e2e8f0_100%)]'}`} />
+                <div className={`${embeddedDesktop ? 'absolute left-1/2 top-20 h-[62%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#d8ccff_0%,#dbe3ef_100%)] opacity-90' : 'absolute left-1/2 top-14 h-[68%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#e2e8f0_100%)]'}`} />
 
                 {weaknesses.map((weakness, idx) => {
                   const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
@@ -196,18 +194,18 @@ export default function LessonRoadmap({
                   const isPassed = passedSet.has(idx)
                   const isRecommended = idx === nextIdx && !allDone
                   const side = idx % 2 === 0 ? 'left' : 'right'
-                  const topPercent = weaknesses.length > 1 ? 10 + (idx * (62 / Math.max(weaknesses.length - 1, 1))) : 28
+                  const topPercent = weaknesses.length > 1 ? 12 + (idx * (56 / Math.max(weaknesses.length - 1, 1))) : 28
 
                   return (
                     <div
                       key={`${weakness.criterion}-${idx}`}
-                      className="absolute left-1/2 w-[calc(100%-2rem)] max-w-[760px] -translate-x-1/2"
+                      className="absolute left-1/2 w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2"
                       style={{ top: `${topPercent}%` }}
                     >
-                      <div className={`relative flex items-center ${side === 'left' ? 'justify-start pr-[48%]' : 'justify-end pl-[48%]'}`}>
+                      <div className={`relative flex items-center ${side === 'left' ? 'justify-start pr-[43%]' : 'justify-end pl-[43%]'}`}>
                         <button
                           onClick={() => setActiveIdx(idx)}
-                          className={`group relative w-full max-w-[320px] rounded-[1.6rem] border px-5 py-4 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_38px_rgba(15,23,42,0.12)] ${
+                          className={`group relative w-full max-w-[236px] rounded-[1.35rem] border px-4 py-3.5 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_30px_rgba(15,23,42,0.10)] ${
                             isCompleted && isPassed
                               ? 'border-emerald-200 bg-emerald-50/96'
                               : isCompleted
@@ -216,9 +214,10 @@ export default function LessonRoadmap({
                               ? 'border-violet-300 bg-white ring-2 ring-violet-200/70 shadow-[0_20px_34px_rgba(109,40,217,0.12)]'
                               : 'border-slate-200 bg-white/96'
                           }`}
+                          title={bundle.displayName}
                         >
-                          <div className="flex items-start gap-4">
-                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] border text-2xl ${
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.95rem] border text-xl ${
                               isCompleted && isPassed
                                 ? 'border-emerald-200 bg-emerald-100/90'
                                 : isCompleted
@@ -230,9 +229,14 @@ export default function LessonRoadmap({
                               <span>{icon}</span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-3">
-                                <p className="truncate text-base font-black text-slate-900">{bundle.displayName}</p>
-                                <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
+                              <p className="truncate text-sm font-black text-slate-900">{bundle.displayName}</p>
+                              <div className="mt-1 flex items-center gap-2">
+                                {weakness.score != null && (
+                                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                                    {weakness.score}/10
+                                  </span>
+                                )}
+                                <span className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${
                                   isCompleted && isPassed
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : isCompleted
@@ -241,17 +245,7 @@ export default function LessonRoadmap({
                                     ? 'bg-violet-100 text-violet-700'
                                     : 'bg-slate-100 text-slate-500'
                                 }`}>
-                                  {isCompleted ? (isPassed ? 'Mastered' : 'Retry') : isRecommended ? 'Next' : 'Module'}
-                                </span>
-                              </div>
-                              <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{weakness.criterion}</p>
-                              <div className="mt-4 flex items-center justify-between">
-                                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                                  {weakness.score != null ? `${weakness.score}/10` : 'Practice'}
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-sm font-bold text-slate-500 transition group-hover:text-slate-700">
-                                  Open
-                                  <ChevronRight className="h-4 w-4" />
+                                  {isCompleted ? (isPassed ? 'Done' : 'Retry') : isRecommended ? 'Next' : 'Open'}
                                 </span>
                               </div>
                             </div>
@@ -277,13 +271,10 @@ export default function LessonRoadmap({
                             )}
                           </div>
                           {isRecommended && (
-                            <div className={`absolute ${side === 'left' ? '-left-28' : 'left-24'} top-1 flex items-center gap-3 rounded-full border border-violet-200 bg-white px-3 py-2 shadow-[0_16px_30px_rgba(109,40,217,0.12)]`}>
-                              <div className="h-10 w-10 rounded-full bg-violet-50 p-1.5">
+                            <div className={`absolute ${side === 'left' ? '-left-20' : 'left-16'} top-1 flex items-center gap-2 rounded-full border border-violet-200 bg-white px-2.5 py-2 shadow-[0_16px_30px_rgba(109,40,217,0.12)]`}>
+                              <div className="h-9 w-9 rounded-full bg-violet-50 p-1.5">
                                 <PreppiSVG />
                               </div>
-                              <span className="whitespace-nowrap text-xs font-black uppercase tracking-[0.16em] text-violet-700">
-                                Start here
-                              </span>
                             </div>
                           )}
                         </div>

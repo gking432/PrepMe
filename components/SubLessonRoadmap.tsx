@@ -124,7 +124,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/88 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -163,7 +163,7 @@ export default function SubLessonRoadmap({
             </div>
           </div>
         )}
-        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/80 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
+        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <PracticeLessonFlow
             subLesson={subLesson}
             lessonNumber={activeSlot + 1}
@@ -181,7 +181,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/88 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -220,7 +220,7 @@ export default function SubLessonRoadmap({
             </div>
           </div>
         )}
-        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/80 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
+        <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <FinalVoiceChallenge
             question={originalQuestion || 'Tell me about a challenge you overcame.'}
             originalAnswer={originalAnswer}
@@ -306,7 +306,7 @@ export default function SubLessonRoadmap({
             </div>
           )}
 
-          <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/80 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : 'premium-panel overflow-hidden p-5 sm:p-6'}`}>
+            <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : 'premium-panel overflow-hidden p-5 sm:p-6'}`}>
             <div className={`${embeddedDesktop ? '' : ''}`}>
               <div className="mb-5 flex items-center justify-between">
                 <div>

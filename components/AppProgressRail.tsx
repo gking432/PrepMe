@@ -40,7 +40,7 @@ export default function AppProgressRail({ cards, theme = 'dark', header }: AppPr
   return (
     <aside className={`hidden lg:order-3 lg:block ${
       isLight
-        ? 'border-l border-slate-200/80 bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]'
+        ? 'border-l border-slate-200/80 bg-[linear-gradient(180deg,#fbfcfe_0%,#f6f8fb_42%,#eef3f8_100%)]'
         : 'border-l border-white/8 bg-[#101720]'
     }`}>
       <div className="sticky top-0 flex min-h-screen w-[320px] flex-col gap-5 px-5 py-6">
@@ -48,7 +48,7 @@ export default function AppProgressRail({ cards, theme = 'dark', header }: AppPr
           <div
             className={`rounded-[1.9rem] border p-5 ${
               isLight
-                ? 'border-violet-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f7f2ff_100%)] shadow-[0_14px_28px_rgba(76,29,149,0.08)]'
+                ? 'border-slate-200/80 bg-[linear-gradient(180deg,#ffffff_0%,#f7f9fc_100%)] shadow-[0_14px_28px_rgba(15,23,42,0.06)]'
                 : 'border-white/8 bg-white/[0.04]'
             }`}
           >

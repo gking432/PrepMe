@@ -1976,8 +1976,8 @@ export default function InterviewDashboard() {
     title: currentSessionData?.job_title || 'Target Role',
     subtitle: currentSessionData?.company_name ? `at ${currentSessionData.company_name}` : 'Current interview track',
   }
-  const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]"
-  const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]"
+  const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#fbfcfe_0%,#f6f8fb_42%,#eef3f8_100%)]"
+  const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#fcfdff_0%,#f6f8fb_40%,#eef3f8_100%)]"
   const prepareRailCards = [
     {
       title: 'Review Progress',

@@ -514,7 +514,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)]">
+    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#fbfcfe_0%,#f6f8fb_42%,#eef3f8_100%)]">
       <div className="lg:hidden">
         <Header />
       </div>
@@ -535,7 +535,7 @@ export default function DashboardPage() {
       />
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-xl px-5 pb-36 pt-6 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:pb-12 lg:pt-8">
+      <main className="mx-auto max-w-xl px-5 pb-36 pt-6 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#fcfdff_0%,#f6f8fb_40%,#eef3f8_100%)] lg:px-8 lg:pb-12 lg:pt-8">
         {showWorkspaceHub && (
           <div className="space-y-8 animate-slide-up">
             <div className="premium-panel p-6 lg:p-7">

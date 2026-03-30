@@ -29,11 +29,26 @@ export interface TapSelectExercise {
   explanation: string
 }
 
+export interface ApplyToYourselfExercise {
+  type: 'apply_to_yourself'
+  instruction: string
+  coachingTip: string
+  fields: Array<{
+    label: string
+    placeholder: string
+    helper?: string
+    minWords?: number
+    shouldIncludeNumber?: boolean
+    avoidWords?: string[]
+  }>
+}
+
 export type Exercise =
   | MultipleChoiceExercise
   | LabelSortExercise
   | WordBankExercise
   | TapSelectExercise
+  | ApplyToYourselfExercise
 
 export interface SubLesson {
   title: string
@@ -279,6 +294,38 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             correctIndex: 2,
             explanation: 'The best revision supplies clear evidence and closes the STAR answer with a real result.',
           },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Apply it to yourself. Build a tight STAR answer from your own experience.',
+            coachingTip: 'Keep each section short, specific, and easy to say out loud later. The goal is not a perfect essay. It is a strong interview-ready skeleton.',
+            fields: [
+              {
+                label: 'Situation',
+                placeholder: 'What was happening? Give just enough context to orient the interviewer.',
+                helper: 'Name the moment, team, or problem without turning this into a long setup.',
+                minWords: 8,
+              },
+              {
+                label: 'Task',
+                placeholder: 'What did you need to solve, own, or deliver?',
+                helper: 'State the goal or responsibility clearly.',
+                minWords: 6,
+              },
+              {
+                label: 'Action',
+                placeholder: 'What did you personally do?',
+                helper: 'Use first-person ownership and name the real moves you made.',
+                minWords: 12,
+              },
+              {
+                label: 'Result',
+                placeholder: 'What changed because of your work?',
+                helper: 'End with the outcome, impact, or evidence.',
+                minWords: 8,
+                shouldIncludeNumber: true,
+              },
+            ],
+          },
         ],
       },
     ],
@@ -516,6 +563,32 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             correctIndex: 2,
             explanation: 'It names the process, quantifies the change, and shows the business impact.',
           },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Apply it to yourself. Build one answer using the Specificity Ladder.',
+            coachingTip: 'Name the exact thing, quantify the change, then show why it mattered. If the claim cannot be proven, tighten it.',
+            fields: [
+              {
+                label: 'Name it',
+                placeholder: 'What exact project, workflow, feature, or problem did you work on?',
+                helper: 'Avoid generic phrases like "a process" or "some reporting work."',
+                minWords: 6,
+              },
+              {
+                label: 'Quantify it',
+                placeholder: 'What metric, volume, time frame, or scope proves the claim?',
+                helper: 'Use the number that best supports the specific improvement you are claiming.',
+                minWords: 6,
+                shouldIncludeNumber: true,
+              },
+              {
+                label: 'Show impact',
+                placeholder: 'Why did that change matter to the business, customer, or team?',
+                helper: 'Close the loop from evidence to value.',
+                minWords: 10,
+              },
+            ],
+          },
         ],
       },
     ],
@@ -740,6 +813,34 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
             correctIndex: 1,
             explanation: 'It leads with a clear answer and stays grounded in a real action.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Apply it to yourself. Draft a confident answer without hedging.',
+            coachingTip: 'Lead with the answer. Cut soft qualifiers. Then support the claim with one specific proof point.',
+            fields: [
+              {
+                label: 'Direct opening',
+                placeholder: 'Write the first sentence the interviewer should hear.',
+                helper: 'Lead with the answer instead of circling around it.',
+                minWords: 6,
+                avoidWords: ['maybe', 'probably', 'kind of', 'sort of', 'i think', 'i guess'],
+              },
+              {
+                label: 'Supporting proof',
+                placeholder: 'Add one concrete line that backs up your claim.',
+                helper: 'Use active voice and direct ownership.',
+                minWords: 10,
+                avoidWords: ['maybe', 'probably', 'kind of', 'sort of', 'i think', 'i guess'],
+              },
+              {
+                label: 'Tight close',
+                placeholder: 'Write a concise closing line that sounds clear and credible.',
+                helper: 'No overclaiming. No wobbling.',
+                minWords: 6,
+                avoidWords: ['always', 'never', 'maybe', 'probably', 'kind of', 'sort of'],
+              },
+            ],
           },
         ],
       },
@@ -969,6 +1070,32 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
             correctIndex: 2,
             explanation: 'It identifies a business priority and matches it with relevant proof.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Apply it to yourself. Build a Research Bridge answer for one target role.',
+            coachingTip: 'Use one real company or role priority, one piece of your own evidence, and one sentence that ties them together.',
+            fields: [
+              {
+                label: 'Their priority',
+                placeholder: 'What does this company, team, or role seem to care about right now?',
+                helper: 'Choose a role-relevant priority, not a random fact.',
+                minWords: 8,
+              },
+              {
+                label: 'Your evidence',
+                placeholder: 'What from your own experience proves you can help with that?',
+                helper: 'Use a relevant example, ideally with scope or a measurable result.',
+                minWords: 10,
+                shouldIncludeNumber: true,
+              },
+              {
+                label: 'The connection',
+                placeholder: 'Why does that make you a fit for this role?',
+                helper: 'Make the bridge explicit.',
+                minWords: 8,
+              },
+            ],
           },
         ],
       },
@@ -1205,6 +1332,31 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             correctIndex: 1,
             explanation: 'The answer sounds relevant, but it proves communication more than judgment under ambiguity.',
           },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Apply it to yourself. Decode the question before you answer it.',
+            coachingTip: 'Start by naming what the interviewer is really testing. Then choose the example and opening that prove that exact capability.',
+            fields: [
+              {
+                label: 'Surface question',
+                placeholder: 'What would the interviewer literally ask?',
+                helper: 'Use the wording you expect to hear.',
+                minWords: 6,
+              },
+              {
+                label: 'Hidden question',
+                placeholder: 'What are they actually evaluating?',
+                helper: 'Judgment, ownership, adaptability, conflict handling, and so on.',
+                minWords: 6,
+              },
+              {
+                label: 'Your answer opening',
+                placeholder: 'Write the first lines of an answer that directly proves that hidden skill.',
+                helper: 'Pick the example that fits the evaluation, not just your favorite story.',
+                minWords: 14,
+              },
+            ],
+          },
         ],
       },
     ],
@@ -1419,6 +1571,44 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
             correctIndex: 1,
             explanation: 'It lists actions but gives no stakes and no result, so it still feels thin.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Apply it to yourself. Build a concise 5-layer answer.',
+            coachingTip: 'The answer should feel complete, not long. Give one useful sentence per layer and make the outcome real.',
+            fields: [
+              {
+                label: 'Claim',
+                placeholder: 'What did you lead, fix, improve, or own?',
+                helper: 'Open with the main point.',
+                minWords: 5,
+              },
+              {
+                label: 'Context',
+                placeholder: 'Why did this matter or what problem made it important?',
+                helper: 'Add stakes without rambling.',
+                minWords: 8,
+              },
+              {
+                label: 'Action',
+                placeholder: 'What did you specifically do?',
+                helper: 'Name the work, choices, or intervention.',
+                minWords: 10,
+              },
+              {
+                label: 'Outcome',
+                placeholder: 'What changed because of your work?',
+                helper: 'Use evidence if you have it.',
+                minWords: 8,
+                shouldIncludeNumber: true,
+              },
+              {
+                label: 'Reflection',
+                placeholder: 'What did you learn or what principle would you carry forward?',
+                helper: 'End with judgment, not filler.',
+                minWords: 8,
+              },
+            ],
           },
         ],
       },

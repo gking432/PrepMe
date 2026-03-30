@@ -8,6 +8,7 @@ import MultipleChoiceExercise from '@/components/exercises/MultipleChoiceExercis
 import LabelSortExercise from '@/components/exercises/LabelSortExercise'
 import WordBankExercise from '@/components/exercises/WordBankExercise'
 import TapSelectExercise from '@/components/exercises/TapSelectExercise'
+import ApplyToYourselfExercise from '@/components/exercises/ApplyToYourselfExercise'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -103,6 +104,8 @@ function randomizeExercise(exercise: Exercise): Exercise {
           text: neutralizeSegmentText(segment.text),
         })),
       }
+    case 'apply_to_yourself':
+      return exercise
     default:
       return exercise
   }
@@ -305,6 +308,16 @@ export default function PracticeLessonFlow({
             items={exercise.items}
             correctIndices={exercise.correctIndices}
             explanation={exercise.explanation}
+            onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
+          />
+        )
+      case 'apply_to_yourself':
+        return (
+          <ApplyToYourselfExercise
+            key={key}
+            instruction={exercise.instruction}
+            coachingTip={exercise.coachingTip}
+            fields={exercise.fields}
             onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )

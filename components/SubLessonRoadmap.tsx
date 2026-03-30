@@ -124,7 +124,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/88 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+          <div className="mx-auto mb-6 w-full max-w-5xl px-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -181,7 +181,7 @@ export default function SubLessonRoadmap({
     return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
-          <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/88 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+          <div className="mx-auto mb-6 w-full max-w-5xl px-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
@@ -266,7 +266,7 @@ export default function SubLessonRoadmap({
       <div className="flex-1 overflow-hidden">
         <div className={`${embeddedDesktop ? 'h-full px-0 pb-0 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
           {embeddedDesktop && (
-            <div className="mx-auto mb-7 w-full max-w-5xl rounded-[2rem] border border-slate-200/80 bg-white/78 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm">
+            <div className="mx-auto mb-6 w-full max-w-5xl px-1">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">

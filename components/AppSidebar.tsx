@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Briefcase, Phone, Users, Crown, FolderOpen, PlusSquare, ChevronDown, ChevronRight, FileText, Target, PlayCircle, Lock } from 'lucide-react'
+import { Briefcase, Phone, Users, Crown, FolderOpen, PlusSquare, ChevronDown, ChevronRight, FileText, Target, PlayCircle, Lock, Check } from 'lucide-react'
 
 type ActiveSection = string
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
@@ -103,30 +103,62 @@ export default function AppSidebar({
         {processStages.length > 0 && (
           <div className="mt-8">
             <p className={`mb-3 px-1 text-[11px] font-black uppercase tracking-[0.24em] ${labelClass}`}>{processTitle}</p>
-            <div className="space-y-2">
+            <div className="relative space-y-2">
+              <div className={`pointer-events-none absolute bottom-5 left-5 top-5 w-px ${isLight ? 'bg-[linear-gradient(180deg,#ddd6fe_0%,#e2e8f0_100%)]' : 'bg-[linear-gradient(180deg,rgba(167,139,250,0.38)_0%,rgba(148,163,184,0.18)_100%)]'}`} />
               {processStages.map((stage) => {
                 const Icon = stageIcons[stage.key]
+                const isCurrent = stage.status === 'current'
+                const isComplete = stage.status === 'complete'
+                const isUpcoming = stage.status === 'upcoming'
                 const className = `flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left ${
-                      stage.status === 'current'
+                      isCurrent
                         ? isLight ? 'bg-white/72 text-slate-900 shadow-[0_8px_18px_rgba(15,23,42,0.05)]' : 'bg-white/6 text-white'
-                        : stage.status === 'complete'
+                        : isComplete
                         ? isLight ? 'bg-emerald-50 text-emerald-800' : 'bg-emerald-500/10 text-emerald-200'
                         : isLight ? 'bg-transparent text-slate-500' : 'bg-transparent text-slate-500'
                     }`
                 const content = (
                   <>
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-                        stage.status === 'current'
-                          ? isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-500/16 text-violet-300'
-                          : stage.status === 'complete'
-                          ? isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/18 text-emerald-300'
-                          : isLight ? 'bg-slate-100 text-slate-500' : 'bg-white/5 text-slate-600'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
+                    <div className="relative flex h-8 w-8 items-center justify-center">
+                      <span
+                        className={`absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${
+                          isCurrent
+                            ? isLight
+                              ? 'border-violet-500 bg-violet-500'
+                              : 'border-violet-300 bg-violet-300'
+                            : isComplete
+                            ? isLight
+                              ? 'border-emerald-500 bg-emerald-500'
+                              : 'border-emerald-300 bg-emerald-300'
+                            : isLight
+                            ? 'border-slate-300 bg-white'
+                            : 'border-slate-500 bg-[#101720]'
+                        }`}
+                      />
+                      <div
+                        className={`relative flex h-8 w-8 items-center justify-center rounded-xl ${
+                          isCurrent
+                            ? isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-500/16 text-violet-300'
+                            : isComplete
+                            ? isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/18 text-emerald-300'
+                            : isLight ? 'bg-slate-100 text-slate-500' : 'bg-white/5 text-slate-600'
+                        }`}
+                      >
+                        {isComplete ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                      </div>
                     </div>
-                    <p className="flex-1 text-sm font-semibold">{stage.label}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{stage.label}</p>
+                      <p className={`mt-0.5 text-[10px] font-black uppercase tracking-[0.18em] ${
+                        isCurrent
+                          ? isLight ? 'text-violet-500' : 'text-violet-300'
+                          : isComplete
+                          ? isLight ? 'text-emerald-600' : 'text-emerald-300'
+                          : isLight ? 'text-slate-400' : 'text-slate-500'
+                      }`}>
+                        {isCurrent ? 'Current Round' : isComplete ? 'Complete' : isUpcoming ? 'Still Ahead' : ''}
+                      </p>
+                    </div>
                     {stage.children?.length ? (
                       stage.expanded ? <ChevronDown className="h-4 w-4 opacity-60" /> : <ChevronRight className="h-4 w-4 opacity-60" />
                     ) : null}
@@ -148,7 +180,7 @@ export default function AppSidebar({
                     )}
 
                     {stage.expanded && stage.children?.length ? (
-                      <div className="mt-2 space-y-2 pl-4">
+                      <div className="mt-2 space-y-2 pl-9">
                         {stage.children.map((child) => {
                           const childClass = `flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-semibold transition-all ${
                             child.active

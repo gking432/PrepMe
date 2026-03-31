@@ -47,6 +47,27 @@ function normalizeCriteria(fullRubric: any) {
   const criteria = fullRubric?.traditional_hr_criteria
   if (!criteria) return []
 
+  if (criteria?.scores && criteria?.feedback) {
+    const labelMap: Array<[string, string, number]> = [
+      ['Communication', 'communication_skills', 5],
+      ['Professionalism', 'professionalism', 10],
+      ['Qualifications', 'basic_qualifications_match', 10],
+      ['Interest', 'interest_and_enthusiasm', 5],
+      ['Culture Fit', 'culture_fit_indicators', 5],
+      ['Response Quality', 'response_quality', 5],
+      ['Red Flags', 'red_flags', 10],
+    ]
+
+    return labelMap
+      .filter(([, key]) => criteria.scores[key] != null || criteria.feedback[key])
+      .map(([label, key, max]) => ({
+        label,
+        score: typeof criteria.scores[key] === 'number' ? criteria.scores[key] : 0,
+        max,
+        feedback: criteria.feedback[key] || 'No additional notes.',
+      }))
+  }
+
   const entries = [
     ['Communication', criteria.communication_skills],
     ['Professionalism', criteria.professionalism],
@@ -505,11 +526,10 @@ export default function CoachReportWorkspace({
         </div>
         <button
           type="button"
-          onClick={() => setSection(SECTION_CONFIG[Math.min(SECTION_CONFIG.length - 1, sectionIndex + 1)].key)}
-          disabled={sectionIndex === SECTION_CONFIG.length - 1}
-          className="btn-coach-primary flex items-center gap-2 px-4 py-3 text-sm disabled:opacity-40"
+          onClick={() => setSection(SECTION_CONFIG[(sectionIndex + 1) % SECTION_CONFIG.length].key)}
+          className="btn-coach-primary flex items-center gap-2 px-4 py-3 text-sm"
         >
-          Next
+          {sectionIndex === SECTION_CONFIG.length - 1 ? 'Back to Overview' : 'Next'}
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>

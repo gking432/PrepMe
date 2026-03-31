@@ -49,6 +49,7 @@ export default function InterviewDashboard() {
   const [practicePlayingQuestion, setPracticePlayingQuestion] = useState<Record<string, boolean>>({}) // Playing question audio
   const [practicePlayingFeedback, setPracticePlayingFeedback] = useState<Record<string, boolean>>({}) // Playing feedback audio
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isMockPreview, setIsMockPreview] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [showFeedbackChatTooltip, setShowFeedbackChatTooltip] = useState(true) // Show tooltip on initial load
   const [strengthCarouselIndex, setStrengthCarouselIndex] = useState(0)
@@ -96,27 +97,28 @@ export default function InterviewDashboard() {
       const email = session?.user?.email || null
       setUserEmail(email)
       const isMockParam = searchParams?.get('preview') === 'mock'
-      if (isAdminPreview(email) || isMockParam) {
+      setIsMockPreview(isMockParam)
+      if (isAdminPreview(email)) {
         setIsAdmin(true)
       }
     }
     checkAdmin()
-  }, [])
+  }, [searchParams, supabase.auth])
 
-  // Inject mock data for admin when loading completes with no real feedback
+  // Inject mock data only when preview mode is explicitly requested
   useEffect(() => {
-    if (isAdmin && !feedback && !loading && !feedbackGenerating) {
+    if (isMockPreview && !feedback && !loading && !feedbackGenerating) {
       console.log('[Admin Preview] Injecting mock feedback data')
       setFeedback(MOCK_FEEDBACK as any)
       setStructuredTranscript(MOCK_TRANSCRIPT)
       setCurrentSessionData(MOCK_SESSION_DATA)
       setHasTranscript(true)
     }
-  }, [isAdmin, feedback, loading, feedbackGenerating])
+  }, [isMockPreview, feedback, loading, feedbackGenerating])
 
-  // Fallback: if admin check finishes after loadFeedback, retry mock injection
+  // Fallback: if preview mode is established after loadFeedback, retry mock injection
   useEffect(() => {
-    if (!isAdmin) return
+    if (!isMockPreview) return
     const timer = setTimeout(() => {
       if (!feedback) {
         console.log('[Admin Preview] Fallback mock injection')
@@ -128,7 +130,7 @@ export default function InterviewDashboard() {
       }
     }, 2000)
     return () => clearTimeout(timer)
-  }, [isAdmin])
+  }, [isMockPreview, feedback])
 
   useEffect(() => {
     loadFeedback()
@@ -2400,7 +2402,7 @@ export default function InterviewDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Admin preview banner */}
-        {isAdmin && !feedback?.id && (
+        {isMockPreview && !feedback?.id && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <p className="text-sm text-amber-800">

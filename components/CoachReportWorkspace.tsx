@@ -102,7 +102,6 @@ export default function CoachReportWorkspace({
   onDismissTutorial,
 }: ReportWorkspaceProps) {
   const [section, setSection] = useState<ReportSection>('overview')
-  const [issueIndex, setIssueIndex] = useState(0)
   const [showArtifact, setShowArtifact] = useState(false)
   const [tutorialStep, setTutorialStep] = useState(0)
 
@@ -115,7 +114,6 @@ export default function CoachReportWorkspace({
   const overallAssessment = fullRubric?.overall_assessment || {}
   const overallScore = feedback?.overall_score || overallAssessment?.overall_score || 0
   const likelihood = overallAssessment?.likelihood_to_advance || feedback?.likelihood || 'marginal'
-  const currentIssue = issues[Math.min(issueIndex, Math.max(issues.length - 1, 0))]
   const studyAreas = fullRubric?.next_steps_preparation?.areas_to_study || []
   const predictedQuestions = fullRubric?.next_steps_preparation?.predicted_hiring_manager_questions || []
   const sectionIndex = SECTION_CONFIG.findIndex((item) => item.key === section)
@@ -291,82 +289,67 @@ export default function CoachReportWorkspace({
     }
 
     if (section === 'issues') {
-      return currentIssue ? (
-        <div className="grid h-full gap-5 lg:grid-cols-[0.82fr_1.18fr]">
-          <div className="rounded-[1.8rem] border border-amber-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-600">Flagged Areas</p>
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-black text-amber-700">{issues.length} total</span>
-            </div>
-            <div className="space-y-3">
-              {topIssues.map((item: any, idx: number) => {
-                const isActive = idx === issueIndex
-                return (
-                  <button
-                    key={`${item.criterion}-issue-${idx}`}
-                    type="button"
-                    onClick={() => setIssueIndex(idx)}
-                    className={`w-full rounded-[1.2rem] border px-4 py-3 text-left transition-all ${
-                      isActive
-                        ? 'border-amber-300 bg-amber-50 shadow-[0_12px_20px_rgba(245,158,11,0.12)]'
-                        : 'border-slate-200 bg-slate-50/70 hover:border-amber-200 hover:bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-black text-slate-900">{item.criterion}</p>
-                      {item.score != null && <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{item.score}/10</span>}
-                    </div>
-                  </button>
-                )
-              })}
+      return (
+        <div className="grid h-full gap-5 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="rounded-[1.8rem] border border-amber-200 bg-amber-50/90 p-6">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-600">Issue Summary</p>
+            <h2 className="mt-3 text-3xl font-black text-amber-900">{issues.length} flagged issues</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-700">
+              These are the places where the interview lost signal. This is the work that feeds your practice modules and the next retake.
+            </p>
+            <div className="mt-6 space-y-3">
+              {topIssues.map((item: any, idx: number) => (
+                <div key={`${item.criterion}-summary-${idx}`} className="rounded-[1.2rem] border border-amber-200 bg-white/80 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-black text-slate-900">{item.criterion}</p>
+                    {item.score != null && (
+                      <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">
+                        {item.score}/10
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          <div className="rounded-[1.8rem] border border-amber-200 bg-white/92 p-6 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
-            <div className="flex items-center justify-between gap-4">
-              <p className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-amber-700">
-                Issue {issueIndex + 1} of {issues.length}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIssueIndex((value) => Math.max(0, value - 1))}
-                  disabled={issueIndex === 0}
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIssueIndex((value) => Math.min(issues.length - 1, value + 1))}
-                  disabled={issueIndex >= issues.length - 1}
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 disabled:opacity-40"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <h2 className="mt-5 text-3xl font-black text-slate-900">{currentIssue.criterion}</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600">{currentIssue.feedback}</p>
-            {currentIssue.evidence?.[0]?.question && (
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50/90 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Flagged Question</p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">{currentIssue.evidence[0].question}</p>
+          <div className="grid h-full gap-4 lg:grid-cols-2">
+            {topIssues.map((item: any, idx: number) => (
+              <div key={`${item.criterion}-${idx}`} className="rounded-[1.5rem] border border-amber-200 bg-white/92 p-5 shadow-[0_14px_28px_rgba(15,23,42,0.06)]">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-amber-100">
+                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <p className="text-base font-black text-slate-900">{item.criterion}</p>
+                  </div>
+                  {item.score != null && (
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">
+                      {item.score}/10
+                    </span>
+                  )}
                 </div>
-                {currentIssue.evidence[0].excerpt && (
-                  <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50/90 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Your Answer</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      &ldquo;{String(currentIssue.evidence[0].excerpt).slice(0, 220)}{String(currentIssue.evidence[0].excerpt).length > 220 ? '…' : ''}&rdquo;
-                    </p>
+                <p className="text-sm leading-7 text-slate-600">{item.feedback}</p>
+                {item.evidence?.[0]?.question && (
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Flagged Question</p>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{item.evidence[0].question}</p>
+                    </div>
+                    {item.evidence?.[0]?.excerpt && (
+                      <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 p-4">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Your Answer</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          &ldquo;{String(item.evidence[0].excerpt).slice(0, 220)}{String(item.evidence[0].excerpt).length > 220 ? '…' : ''}&rdquo;
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            ))}
           </div>
         </div>
-      ) : null
+      )
     }
 
     if (section === 'criteria') {

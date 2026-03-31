@@ -2042,20 +2042,132 @@ export default function InterviewDashboard() {
   const buildHrArtifactData = () => {
     const fullRubric = (feedback as any)?.full_rubric
     if (!fullRubric) return null
+    const normalizeScore = (score: number, maxScale: number = 10) => {
+      if (typeof score !== 'number') return 0
+      return maxScale === 10 && score > 5 ? Math.round((score / 10) * 5) : score
+    }
 
-    const criteria = fullRubric.traditional_hr_criteria || {}
-    const communication = criteria.communication_skills || {}
-    const professionalism = criteria.professionalism || {}
-    const qualifications = criteria.basic_qualifications_match || criteria.basic_qualifications || {}
-    const interest = criteria.interest_and_enthusiasm || criteria.interest_enthusiasm || {}
-    const cultureFit = criteria.culture_fit_indicators || criteria.culture_fit || {}
-    const responseQuality = criteria.response_quality || {}
-    const strengths = wentWellAreas.slice(0, 3).map((item: any) => ({ title: item.criterion, description: item.feedback }))
-    const weaknesses = needsImproveAreas.slice(0, 3).map((item: any) => ({ title: item.criterion, description: item.feedback }))
+    let transformedTraditionalCriteria = fullRubric.traditional_hr_criteria || {}
+    if (fullRubric.traditional_hr_criteria?.scores && fullRubric.traditional_hr_criteria?.feedback) {
+      const scores = fullRubric.traditional_hr_criteria.scores
+      const feedbackObj = fullRubric.traditional_hr_criteria.feedback
+      const questionAnalysis = fullRubric.question_analysis?.questions || []
+
+      transformedTraditionalCriteria = {
+        communication_skills: {
+          score: normalizeScore(scores.communication || 0),
+          scale: '1-5',
+          feedback: feedbackObj.communication || 'Communication assessment unavailable.',
+          components: {
+            clarity: normalizeScore(scores.communication || 0),
+            articulation: normalizeScore(scores.communication || 0),
+            pacing: normalizeScore(scores.communication || 0),
+            tone_appropriateness: normalizeScore(scores.communication || 0),
+            active_listening: normalizeScore(scores.communication || 0),
+            professional_language: normalizeScore(scores.communication || 0),
+          },
+        },
+        professionalism: {
+          score: (scores.professionalism || 0) >= 4 ? 'pass' : 'fail',
+          scale: 'pass/fail',
+          feedback: feedbackObj.professionalism || 'Professionalism assessment unavailable.',
+          components: {
+            appropriate_greeting: (scores.professionalism || 0) >= 4,
+            appropriate_closing: (scores.professionalism || 0) >= 4,
+            respectful_tone: (scores.professionalism || 0) >= 4,
+            prepared_environment: (scores.professionalism || 0) >= 4,
+            phone_etiquette: (scores.professionalism || 0) >= 4,
+          },
+        },
+        basic_qualifications_match: {
+          score: scores.job_alignment || scores.experience_relevance || 0,
+          scale: '1-10',
+          feedback: feedbackObj.job_alignment || feedbackObj.experience_relevance || 'Basic qualifications assessment unavailable.',
+          components: {},
+          alignment_details: {
+            job_requirements_met: Array.isArray(fullRubric.comparative_analysis?.standout_qualities) ? fullRubric.comparative_analysis.standout_qualities : [],
+            job_requirements_missing: Array.isArray(fullRubric.comparative_analysis?.job_requirements_gaps) ? fullRubric.comparative_analysis.job_requirements_gaps : [],
+            transferable_skills_identified: [],
+          },
+        },
+        interest_and_enthusiasm: {
+          score: normalizeScore(scores.interest_and_enthusiasm || 0),
+          scale: '1-5',
+          feedback: feedbackObj.interest_and_enthusiasm || 'Interest assessment unavailable.',
+          components: {},
+          enthusiasm_indicators: {
+            mentioned_specific_company_details: (scores.interest_and_enthusiasm || 0) >= 4,
+            tone_was_enthusiastic: (scores.interest_and_enthusiasm || 0) >= 4,
+            company_knowledge: (scores.interest_and_enthusiasm || 0) >= 4 ? 'Strong' : (scores.interest_and_enthusiasm || 0) >= 3 ? 'Moderate' : 'Limited',
+            energy_level: (scores.interest_and_enthusiasm || 0) >= 4 ? 'High' : (scores.interest_and_enthusiasm || 0) >= 3 ? 'Moderate' : 'Low',
+            tone_enthusiasm: (scores.interest_and_enthusiasm || 0) >= 4 ? 'Very Enthusiastic' : (scores.interest_and_enthusiasm || 0) >= 3 ? 'Enthusiastic' : 'Neutral',
+            follow_up_questions: (scores.interest_and_enthusiasm || 0) >= 4 ? 'Multiple thoughtful questions' : (scores.interest_and_enthusiasm || 0) >= 3 ? 'Some questions' : 'Few or no questions',
+          },
+        },
+        culture_fit_indicators: {
+          score: (scores.cultural_fit || 0) >= 4 ? 'pass' : 'fail',
+          scale: 'pass/fail',
+          feedback: feedbackObj.cultural_fit || 'Culture fit assessment unavailable.',
+          components: {
+            work_style_preferences_align: (scores.cultural_fit || 0) >= 4 ? 'Aligned' : 'Needs Review',
+            values_alignment: (scores.cultural_fit || 0) >= 4 ? 'Aligned' : 'Needs Review',
+            team_collaboration_mentions: (scores.cultural_fit || 0) >= 4 ? 'Strong collaboration focus' : 'Limited mention',
+          },
+          notes: feedbackObj.cultural_fit || '',
+        },
+        response_quality: {
+          score: normalizeScore(scores.problem_solving || scores.technical_skills || 0),
+          scale: '1-5',
+          feedback: feedbackObj.problem_solving || feedbackObj.technical_skills || 'Response quality assessment unavailable.',
+          components: {},
+          quality_metrics: {
+            questions_answered_directly: questionAnalysis.length > 0 ? `${questionAnalysis.filter((q: any) => q.answered_directly !== false).length}/${questionAnalysis.length}` : 'N/A',
+            questions_with_strong_examples: questionAnalysis.length > 0 ? `${questionAnalysis.filter((q: any) => q.has_examples).length}/${questionAnalysis.length}` : 'N/A',
+            questions_with_vague_answers: questionAnalysis.length > 0 ? `${questionAnalysis.filter((q: any) => q.is_vague).length}/${questionAnalysis.length}` : 'N/A',
+            avg_length: questionAnalysis.length > 0 ? `${Math.round(questionAnalysis.reduce((sum: number, q: any) => sum + (q.word_count || 0), 0) / questionAnalysis.length)} words` : 'N/A',
+          },
+        },
+        red_flags: {
+          present: false,
+          scale: 'present/absent',
+          detected_flags: [],
+          feedback: 'No major red flags surfaced.',
+        },
+      }
+    }
+
+    const transformedOverallAssessment = {
+      ...(fullRubric.overall_assessment || {}),
+      key_strengths: Array.isArray(fullRubric.overall_assessment?.key_strengths)
+        ? fullRubric.overall_assessment.key_strengths.map((item: any) => typeof item === 'string' ? { title: item, description: item } : item)
+        : [],
+      key_weaknesses: Array.isArray(fullRubric.overall_assessment?.key_weaknesses)
+        ? fullRubric.overall_assessment.key_weaknesses.map((item: any) => typeof item === 'string' ? { title: item, description: item } : item)
+        : [],
+      executive_summary: fullRubric.overall_assessment?.executive_summary || fullRubric.overall_assessment?.summary || feedback?.detailed_feedback || 'Detailed summary unavailable.',
+      overall_score: Math.round(((fullRubric.overall_assessment?.overall_score ?? overallScore) || 0) * 10),
+    }
+
+    const timingArray = fullRubric.time_management_analysis?.per_question_timing || fullRubric.time_management_analysis?.time_per_question || []
+    const transformedTimeManagement = {
+      total_interview_duration: fullRubric.time_management_analysis?.total_interview_duration || (currentSessionData?.duration_seconds ? `${Math.floor((currentSessionData.duration_seconds || 0) / 60)}:${String((currentSessionData.duration_seconds || 0) % 60).padStart(2, '0')}` : 'N/A'),
+      target_duration: fullRubric.time_management_analysis?.target_duration || 'N/A',
+      variance: fullRubric.time_management_analysis?.variance || 'N/A',
+      questions_asked: fullRubric.time_management_analysis?.questions_asked ?? timingArray.length,
+      time_per_question: Array.isArray(timingArray) ? timingArray.map((item: any, index: number) => ({
+        question_id: item.question_id || `q${index + 1}`,
+        question_text: item.question_text || item.question || item.text || 'Question text not available',
+        candidate_response_time: item.candidate_response_time || item.response_time || item.duration || item.time || 'N/A',
+        assessment: item.assessment || 'appropriate',
+        target_range: item.target_range || item.target || '30-90 seconds',
+      })) : [],
+      pacing_feedback: fullRubric.time_management_analysis?.overall_pace || fullRubric.time_management_analysis?.pacing_feedback || 'Pacing analysis unavailable.',
+    }
 
     return {
+      ...fullRubric,
       rubric_version: fullRubric.rubric_version || '1.0',
-      interview_type: 'hr_screen',
+      interview_type: fullRubric.interview_type || 'hr_screen',
       session_metadata: fullRubric.session_metadata || {
         session_id: currentSessionData?.id || feedback?.interview_session_id || 'unknown',
         candidate_name: currentSessionData?.candidate_name || 'Candidate',
@@ -2064,81 +2176,26 @@ export default function InterviewDashboard() {
         interview_date: currentSessionData?.created_at || feedback?.created_at || new Date().toISOString(),
         interview_duration_seconds: currentSessionData?.duration_seconds || 0,
       },
-      overall_assessment: {
-        overall_score: Math.round((overallScore || 0) * 10),
-        likelihood_to_advance: fullRubric.overall_assessment?.likelihood_to_advance || likelihood || 'marginal',
-        key_strengths: fullRubric.overall_assessment?.key_strengths || strengths,
-        key_weaknesses: fullRubric.overall_assessment?.key_weaknesses || weaknesses,
-        executive_summary: fullRubric.overall_assessment?.executive_summary || fullRubric.overall_assessment?.summary || feedback?.detailed_feedback || 'Detailed summary unavailable.',
+      overall_assessment: transformedOverallAssessment,
+      traditional_hr_criteria: transformedTraditionalCriteria,
+      time_management_analysis: transformedTimeManagement,
+      comparative_analysis: {
+        resume_vs_interview: fullRubric.comparative_analysis?.resume_vs_interview || 'Comparative analysis not available.',
+        job_requirements_gaps: Array.isArray(fullRubric.comparative_analysis?.job_requirements_gaps) ? fullRubric.comparative_analysis.job_requirements_gaps : [],
+        standout_qualities: Array.isArray(fullRubric.comparative_analysis?.standout_qualities) ? fullRubric.comparative_analysis.standout_qualities : [],
+        common_weaknesses_avoided: Array.isArray(fullRubric.comparative_analysis?.common_weaknesses_avoided) ? fullRubric.comparative_analysis.common_weaknesses_avoided : [],
+        percentile_estimate: typeof fullRubric.comparative_analysis?.percentile_estimate === 'number' ? fullRubric.comparative_analysis.percentile_estimate : 50,
       },
-      traditional_hr_criteria: {
-        communication_skills: {
-          score: communication.score || 3,
-          scale: communication.scale || '1-5',
-          components: communication.components || {},
-          feedback: communication.feedback || 'Communication assessment unavailable.',
-        },
-        professionalism: {
-          score: professionalism.score || (professionalism.passed ? 'pass' : 'fail') || 'pass',
-          scale: professionalism.scale || 'pass/fail',
-          components: professionalism.components || {},
-          feedback: professionalism.feedback || 'Professionalism assessment unavailable.',
-          issues_detected: professionalism.issues_detected || [],
-        },
-        basic_qualifications_match: {
-          score: qualifications.score || 0,
-          scale: qualifications.scale || '1-10',
-          components: qualifications.components || {},
-          feedback: qualifications.feedback || 'Qualifications assessment unavailable.',
-          alignment_details: qualifications.alignment_details || qualifications.alignment || {
-            job_requirements_met: qualifications.alignment?.met || [],
-            job_requirements_missing: qualifications.alignment?.missing || [],
-            transferable_skills_identified: qualifications.alignment?.transferable || [],
-          },
-        },
-        interest_and_enthusiasm: {
-          score: interest.score || 0,
-          scale: interest.scale || '1-5',
-          components: interest.components || {},
-          feedback: interest.feedback || 'Interest assessment unavailable.',
-          enthusiasm_indicators: interest.enthusiasm_indicators || interest.indicators || {},
-        },
-        culture_fit_indicators: {
-          score: cultureFit.score || (cultureFit.passed ? 'pass' : 'fail') || 'pass',
-          scale: cultureFit.scale || 'pass/fail',
-          components: cultureFit.components || {},
-          feedback: cultureFit.feedback || 'Culture fit assessment unavailable.',
-          notes: cultureFit.notes || '',
-        },
-        response_quality: {
-          score: responseQuality.score || 0,
-          scale: responseQuality.scale || '1-5',
-          components: responseQuality.components || {},
-          feedback: responseQuality.feedback || 'Response quality assessment unavailable.',
-          quality_metrics: responseQuality.quality_metrics || {},
-        },
-        red_flags: criteria.red_flags || { present: false, scale: 'present/absent', detected_flags: [], feedback: 'No major red flags surfaced.' },
+      question_analysis: {
+        questions: Array.isArray(fullRubric.question_analysis?.questions) ? fullRubric.question_analysis.questions : [],
+        summary: fullRubric.question_analysis?.summary || 'Question analysis not available.',
       },
-      time_management_analysis: fullRubric.time_management_analysis || {
-        total_interview_duration: currentSessionData?.duration_seconds ? `${Math.floor((currentSessionData.duration_seconds || 0) / 60)}:${String((currentSessionData.duration_seconds || 0) % 60).padStart(2, '0')}` : 'N/A',
-        target_duration: 'N/A',
-        variance: 'N/A',
-        questions_asked: 0,
-        time_per_question: [],
-        pacing_feedback: 'Pacing analysis unavailable.',
-      },
-      observer_notes: fullRubric.observer_notes,
       next_steps_preparation: fullRubric.next_steps_preparation || {
         ready_for_hiring_manager: likelihood === 'likely',
         confidence_level: 'Moderate',
         areas_to_study: [],
         predicted_hiring_manager_questions: [],
         skills_to_highlight_more: [],
-      },
-      comparative_analysis: fullRubric.comparative_analysis || {
-        percentile_estimate: 50,
-        standout_qualities: [],
-        common_weaknesses_avoided: [],
       },
       grading_metadata: fullRubric.grading_metadata || {
         graded_by_agent: 'Claude Sonnet 4',

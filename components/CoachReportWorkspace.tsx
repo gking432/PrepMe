@@ -48,23 +48,25 @@ function normalizeCriteria(fullRubric: any) {
   if (!criteria) return []
 
   if (criteria?.scores && criteria?.feedback) {
-    const labelMap: Array<[string, string, number]> = [
-      ['Communication', 'communication_skills', 5],
-      ['Professionalism', 'professionalism', 10],
-      ['Qualifications', 'basic_qualifications_match', 10],
-      ['Interest', 'interest_and_enthusiasm', 5],
-      ['Culture Fit', 'culture_fit_indicators', 5],
-      ['Response Quality', 'response_quality', 5],
-      ['Red Flags', 'red_flags', 10],
+    const labelMap: Array<[string, string, number, string]> = [
+      ['Communication', 'communication_skills', 10, 'How clearly and credibly you communicated in the interview.'],
+      ['Professionalism', 'professionalism', 10, 'How polished and serious your interview presence felt.'],
+      ['Qualifications', 'basic_qualifications_match', 10, 'How well your background matched the role on paper and in your answers.'],
+      ['Interest', 'interest_and_enthusiasm', 10, 'How much genuine interest and preparation you showed.'],
+      ['Culture Fit', 'culture_fit_indicators', 10, 'How well your answers suggested you would fit the team and working style.'],
+      ['Response Quality', 'response_quality', 10, 'How specific, structured, and convincing your answers were.'],
+      ['Risk Flags', 'red_flags', 10, 'This reflects absence of concern, not a positive achievement score.'],
     ]
 
     return labelMap
       .filter(([, key]) => criteria.scores[key] != null || criteria.feedback[key])
-      .map(([label, key, max]) => ({
+      .map(([label, key, max, helper]) => ({
         label,
         score: typeof criteria.scores[key] === 'number' ? criteria.scores[key] : 0,
         max,
         feedback: criteria.feedback[key] || 'No additional notes.',
+        helper,
+        isRiskMetric: key === 'red_flags',
       }))
   }
 
@@ -106,6 +108,8 @@ function normalizeCriteria(fullRubric: any) {
         score: rawScore,
         max: rawMax,
         feedback: value.feedback || value.notes || 'No additional notes.',
+        helper: '',
+        isRiskMetric: false,
       }
     })
 }
@@ -380,25 +384,38 @@ export default function CoachReportWorkspace({
             <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Rubric Summary</p>
             <h2 className="mt-3 text-3xl font-black text-slate-900">{criteria.length} scored dimensions</h2>
             <p className="mt-4 text-sm leading-7 text-slate-700">
-              This is the formal scoring view behind the interview. It is useful for understanding how your performance translated into actual evaluator signal.
+              This is the formal scoring view behind the interview. These dimensions are evaluator signals, not a simple averaged replacement for your overall score.
             </p>
+            <div className="mt-6 rounded-[1.2rem] border border-violet-200 bg-white/80 px-4 py-4">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-violet-600">Important</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                The overall score is holistic. It reflects how the interview came together as a whole, including weak answer quality, lack of preparation, and missing specificity.
+              </p>
+            </div>
           </div>
-          <div className="grid h-full gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid h-full content-start gap-4 md:grid-cols-2 xl:grid-cols-3">
             {criteria.map((item) => (
-              <div key={item.label} className="rounded-[1.7rem] border border-slate-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+              <div key={item.label} className="rounded-[1.5rem] border border-slate-200 bg-white/92 p-4 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-base font-black text-slate-900">{item.label}</p>
-                  <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">
+                  <div className="min-w-0">
+                    <p className="text-base font-black text-slate-900">{item.label}</p>
+                    {item.helper ? (
+                      <p className="mt-1 text-xs leading-5 text-slate-500">{item.helper}</p>
+                    ) : null}
+                  </div>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
+                    item.isRiskMetric ? 'bg-slate-100 text-slate-700' : 'bg-violet-100 text-violet-700'
+                  }`}>
                     {item.score}/{item.max}
                   </span>
                 </div>
                 <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
+                    className={`h-full rounded-full ${item.isRiskMetric ? 'bg-[linear-gradient(90deg,#94a3b8_0%,#64748b_100%)]' : 'bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]'}`}
                     style={{ width: `${Math.max(0, Math.min(100, (item.score / item.max) * 100))}%` }}
                   />
                 </div>
-                <p className="mt-4 text-sm leading-6 text-slate-600">{item.feedback}</p>
+                <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-600">{item.feedback}</p>
               </div>
             ))}
           </div>

@@ -43,9 +43,10 @@ function getSixAreas(feedback: any, stage: string) {
   }
 }
 
-function normalizeCriteria(fullRubric: any) {
+function normalizeCriteria(fullRubric: any, overallScoreRef: number) {
   const criteria = fullRubric?.traditional_hr_criteria
   if (!criteria) return []
+  const overallTen = typeof overallScoreRef === 'number' ? overallScoreRef : fullRubric?.overall_assessment?.overall_score || 0
 
   if (criteria?.scores && criteria?.feedback) {
     const labelMap: Array<[string, string, number, string]> = [
@@ -60,14 +61,33 @@ function normalizeCriteria(fullRubric: any) {
 
     return labelMap
       .filter(([, key]) => criteria.scores[key] != null || criteria.feedback[key])
-      .map(([label, key, max, helper]) => ({
-        label,
-        score: typeof criteria.scores[key] === 'number' ? criteria.scores[key] : 0,
-        max,
-        feedback: criteria.feedback[key] || 'No additional notes.',
-        helper,
-        isRiskMetric: key === 'red_flags',
-      }))
+      .map(([label, key, max, helper]) => {
+        const score10 = typeof criteria.scores[key] === 'number' ? criteria.scores[key] : 0
+        const isRiskMetric = key === 'red_flags'
+        const delta = score10 - overallTen
+        const impact = isRiskMetric
+          ? score10 >= 7
+            ? 'clear'
+            : score10 >= 5
+            ? 'watch'
+            : 'risk'
+          : delta >= 1.5
+          ? 'supporting'
+          : delta <= -1
+          ? 'dragging'
+          : 'mixed'
+
+        return {
+          label,
+          score: score10,
+          max,
+          feedback: criteria.feedback[key] || 'No additional notes.',
+          helper,
+          isRiskMetric,
+          impact,
+          score10,
+        }
+      })
   }
 
   const entries = [
@@ -110,6 +130,13 @@ function normalizeCriteria(fullRubric: any) {
         feedback: value.feedback || value.notes || 'No additional notes.',
         helper: '',
         isRiskMetric: false,
+        impact:
+          ((rawMax ? (rawScore / rawMax) * 10 : 0) - overallTen) >= 1.5
+            ? 'supporting'
+            : ((rawMax ? (rawScore / rawMax) * 10 : 0) - overallTen) <= -1
+            ? 'dragging'
+            : 'mixed',
+        score10: rawMax ? (rawScore / rawMax) * 10 : 0,
       }
     })
 }
@@ -134,10 +161,10 @@ export default function CoachReportWorkspace({
   const strengths = sixAreas?.what_went_well || []
   const issues = sixAreas?.what_needs_improve || []
   const fullRubric = useMemo(() => feedback?.full_rubric || {}, [feedback])
-  const criteria = useMemo(() => normalizeCriteria(fullRubric), [fullRubric])
   const stageLabel = STAGE_LABELS[currentStage] || 'Interview Round'
   const overallAssessment = fullRubric?.overall_assessment || {}
   const overallScore = feedback?.overall_score || overallAssessment?.overall_score || 0
+  const criteria = useMemo(() => normalizeCriteria(fullRubric, overallScore), [fullRubric, overallScore])
   const likelihood = overallAssessment?.likelihood_to_advance || feedback?.likelihood || 'marginal'
   const studyAreas = fullRubric?.next_steps_preparation?.areas_to_study || []
   const predictedQuestions = fullRubric?.next_steps_preparation?.predicted_hiring_manager_questions || []
@@ -379,45 +406,80 @@ export default function CoachReportWorkspace({
 
     if (section === 'criteria') {
       return (
-        <div className="grid h-full gap-5 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="rounded-[1.8rem] border border-violet-200 bg-violet-50/90 p-6">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Rubric Summary</p>
-            <h2 className="mt-3 text-3xl font-black text-slate-900">{criteria.length} scored dimensions</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-700">
-              This is the formal scoring view behind the interview. These dimensions are evaluator signals, not a simple averaged replacement for your overall score.
-            </p>
-            <div className="mt-6 rounded-[1.2rem] border border-violet-200 bg-white/80 px-4 py-4">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-violet-600">Important</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                The overall score is holistic. It reflects how the interview came together as a whole, including weak answer quality, lack of preparation, and missing specificity.
+        <div className="flex h-full flex-col gap-4">
+          <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+            <div className="rounded-[1.7rem] border border-violet-200 bg-violet-50/90 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Score Drivers</p>
+              <h2 className="mt-3 text-3xl font-black text-slate-900">{Math.round(overallScore * 10)}/100</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                This is the only score that matters. The dimensions on the right show what most strongly supported or dragged down that result.
               </p>
             </div>
-          </div>
-          <div className="grid h-full content-start gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {criteria.map((item) => (
-              <div key={item.label} className="rounded-[1.5rem] border border-slate-200 bg-white/92 p-4 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-base font-black text-slate-900">{item.label}</p>
-                    {item.helper ? (
-                      <p className="mt-1 text-xs leading-5 text-slate-500">{item.helper}</p>
-                    ) : null}
-                  </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-black ${
-                    item.isRiskMetric ? 'bg-slate-100 text-slate-700' : 'bg-violet-100 text-violet-700'
-                  }`}>
-                    {item.score}/{item.max}
-                  </span>
+            <div className="rounded-[1.7rem] border border-slate-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-[1.1rem] border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Supports Score</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">Meaningfully above your overall result</p>
                 </div>
-                <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full rounded-full ${item.isRiskMetric ? 'bg-[linear-gradient(90deg,#94a3b8_0%,#64748b_100%)]' : 'bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]'}`}
-                    style={{ width: `${Math.max(0, Math.min(100, (item.score / item.max) * 100))}%` }}
-                  />
+                <div className="rounded-[1.1rem] border border-amber-200 bg-amber-50 px-4 py-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-700">Dragged Score</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">Meaningfully below your overall result</p>
                 </div>
-                <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-600">{item.feedback}</p>
+                <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-600">Mixed / Risk</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">Neutral, mixed, or concern-oriented signal</p>
+                </div>
               </div>
-            ))}
+            </div>
+          </div>
+          <div className="grid flex-1 content-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {criteria.map((item) => {
+              const toneClass =
+                item.impact === 'supporting'
+                  ? 'border-emerald-200 bg-emerald-50/70'
+                  : item.impact === 'dragging'
+                  ? 'border-amber-200 bg-amber-50/70'
+                  : item.impact === 'risk'
+                  ? 'border-rose-200 bg-rose-50/70'
+                  : 'border-slate-200 bg-white/92'
+              const chipClass =
+                item.impact === 'supporting'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : item.impact === 'dragging'
+                  ? 'bg-amber-100 text-amber-700'
+                  : item.impact === 'risk'
+                  ? 'bg-rose-100 text-rose-700'
+                  : item.impact === 'watch'
+                  ? 'bg-slate-100 text-slate-700'
+                  : 'bg-slate-100 text-slate-700'
+              const label =
+                item.impact === 'supporting'
+                  ? 'Supports score'
+                  : item.impact === 'dragging'
+                  ? 'Dragged score'
+                  : item.impact === 'risk'
+                  ? 'Risk flag'
+                  : item.impact === 'watch'
+                  ? 'Watch'
+                  : 'Mixed'
+
+              return (
+                <div key={item.label} className={`rounded-[1.4rem] border p-4 shadow-[0_12px_24px_rgba(15,23,42,0.05)] ${toneClass}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-base font-black text-slate-900">{item.label}</p>
+                      {item.helper ? (
+                        <p className="mt-1 text-xs leading-5 text-slate-500">{item.helper}</p>
+                      ) : null}
+                    </div>
+                    <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-black ${chipClass}`}>
+                      {label}
+                    </span>
+                  </div>
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{item.feedback}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       )

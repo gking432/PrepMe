@@ -75,11 +75,23 @@ export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const forceNewProcess = searchParams?.get('new') === '1'
+
+  const emptyInterviewData = {
+    resumeFile: null as { name: string; text: string } | null,
+    resumeText: '',
+    jobDescriptionText: '',
+    jobDescriptionUrl: '',
+    companyName: '',
+    positionTitle: '',
+    companyWebsite: '',
+    notes: '',
+  }
 
   useEffect(() => {
     checkUser()
     loadInterviewData()
-  }, [])
+  }, [forceNewProcess])
 
   useEffect(() => {
     const loadResumes = async () => {
@@ -204,6 +216,15 @@ export default function DashboardPage() {
   }
 
   const loadInterviewData = async () => {
+    if (forceNewProcess) {
+      setInterviewData(emptyInterviewData)
+      setSelectedResumeId(null)
+      setExtractedUserInfo({ email: null, name: null, phone: null })
+      setSelectedStage('hr_screen')
+      setOnboardStep('job')
+      return
+    }
+
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
 
@@ -339,7 +360,6 @@ export default function DashboardPage() {
   const hasJobDesc = interviewData.jobDescriptionText.length > 0
   const canStartInterview = () => hasResume && hasJobDesc
   const workspacePanel = searchParams?.get('panel') === 'documents' ? 'documents' : 'interviews'
-  const forceNewProcess = searchParams?.get('new') === '1'
   const hasWorkspaceData = user && (interviewGroups.length > 0 || savedResumes.length > 0)
   const showWorkspaceHub = !!hasWorkspaceData && !forceNewProcess
   const getCompletedCount = (group: InterviewGroup) =>

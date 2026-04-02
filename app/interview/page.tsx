@@ -176,14 +176,24 @@ export default function InterviewPage() {
   const initializeSession = async (stageFromUrl?: Stage) => {
     const stageToUse = stageFromUrl ?? stage
     try {
+      const redirectToSetup = () => {
+        router.push('/dashboard?new=1')
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
       if (!session) {
-        // HR screen is free and anonymous — let them through.
-        // connectRealtime / startInterviewTraditional already handle localStorage-based anonymous flow.
+        // HR screen is free and anonymous, but it still requires temp setup data.
         if (stageToUse !== 'hr_screen') {
           router.push('/auth/login')
+          return
+        }
+
+        const tempDataStr = typeof window !== 'undefined' ? localStorage.getItem('temp_interview_data') : null
+        if (!tempDataStr) {
+          console.log('No anonymous interview setup data found - redirecting to dashboard setup')
+          redirectToSetup()
         }
         return
       }
@@ -230,6 +240,19 @@ export default function InterviewPage() {
           resumeTextLength: interviewData?.resume_text?.length || 0,
           jobDescriptionLength: interviewData?.job_description_text?.length || 0,
         })
+      }
+
+      const hasResumeText = !!interviewData?.resume_text && interviewData.resume_text.trim().length > 0
+      const hasJobDescription = !!interviewData?.job_description_text && interviewData.job_description_text.trim().length > 0
+
+      if (!hasResumeText || !hasJobDescription) {
+        console.log('Missing interview setup data - redirecting to dashboard setup', {
+          hasResumeText,
+          hasJobDescription,
+          stage: stageToUse,
+        })
+        redirectToSetup()
+        return
       }
 
       // Cancel any existing in-progress sessions for this user/stage (use URL stage so correct type)

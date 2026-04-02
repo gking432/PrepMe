@@ -12,7 +12,7 @@ import {
   extractCompanyName,
   extractRoleTitle,
 } from '@/lib/hr-screen-script'
-import { getOrCreateCachedSpeech } from '@/lib/interview-audio'
+import { getOrCreateCachedSpeech, loadCachedSpeech } from '@/lib/interview-audio'
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,6 +101,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate scripted HR audio' }, { status: 500 })
     }
 
+    const scriptPrompts = await Promise.all(
+      state.prompts.map(async (prompt) => {
+        const audioSequenceBase64 = await Promise.all(
+          prompt.audioSegments.map(async (segment) => {
+            if (segment.type === 'fixed') {
+              return loadCachedSpeech(`${segment.key}.mp3`)
+            }
+
+            return getOrCreateCachedSpeech({
+              cacheKey: segment.cacheKey,
+              text: segment.text,
+              requireElevenLabs: true,
+            })
+          })
+        )
+
+        if (audioSequenceBase64.some((item) => !item)) {
+          throw new Error(`Failed to load full scripted HR audio for ${prompt.key}`)
+        }
+
+        return {
+          questionId: prompt.questionId,
+          text: prompt.text,
+          audioSequenceBase64: audioSequenceBase64 as string[],
+        }
+      })
+    )
+
     await appendQuestion({
       sessionId,
       questionId: openingPrompt?.questionId || 'q1',
@@ -132,6 +160,7 @@ export async function POST(request: NextRequest) {
       message: openingText,
       audioBase64,
       audioSequenceBase64: [audioBase64],
+      scriptPrompts,
       conversationPhase: 'screening',
       scriptedMode: true,
     })

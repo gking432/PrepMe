@@ -74,6 +74,8 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const interviewStartTimeRef = useRef<number | null>(null)
+  const scriptedPromptPlanRef = useRef<Array<{ questionId: string; text: string; audioSequenceBase64: string[] }>>([])
+  const scriptedPromptIndexRef = useRef(0)
   const supabase = createClient()
 
   useEffect(() => {
@@ -747,6 +749,10 @@ export default function InterviewPage() {
         throw new Error('Invalid response from interview start API')
       }
       setCurrentMessage(data.message)
+      if (stage === 'hr_screen' && Array.isArray(data.scriptPrompts)) {
+        scriptedPromptPlanRef.current = data.scriptPrompts
+        scriptedPromptIndexRef.current = 0
+      }
       
       // Initialize conversation phase for HR screen
       if (stage === 'hr_screen') {
@@ -1018,8 +1024,8 @@ export default function InterviewPage() {
         const now = Date.now()
         const silenceDuration = now - lastAudioTime
         
-        // If silence for 2 seconds and we have audio, stop and send
-        if (silenceDuration > 2000 && audioChunksRef.current.length > 0) {
+        // Scripted HR should move quickly once the user stops speaking.
+        if (silenceDuration > 900 && audioChunksRef.current.length > 0) {
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             console.log('Silence detected, stopping recording')
             mediaRecorderRef.current.stop()
@@ -1135,11 +1141,37 @@ export default function InterviewPage() {
       }
       
       const voiceRoute = stage === 'hr_screen' ? '/api/interview/hr-scripted/turn' : '/api/interview/voice'
+      const isScriptedHr = stage === 'hr_screen' && scriptedPromptPlanRef.current.length > 0
+      const nextPrompt = isScriptedHr
+        ? scriptedPromptPlanRef.current[scriptedPromptIndexRef.current + 1] || null
+        : null
+      const isClosingPrompt = !!nextPrompt && scriptedPromptIndexRef.current + 1 === scriptedPromptPlanRef.current.length - 1
 
-      const response = await fetch(voiceRoute, {
+      const responsePromise = fetch(voiceRoute, {
         method: 'POST',
         body: formData,
       })
+
+      if (isScriptedHr && nextPrompt) {
+        scriptedPromptIndexRef.current += 1
+        setCurrentMessage(`Interviewer: ${nextPrompt.text}`)
+
+        if (isClosingPrompt) {
+          setInterviewComplete(true)
+        }
+
+        try {
+          await playAudio(nextPrompt.audioSequenceBase64)
+        } catch (error) {
+          console.error('Error playing scripted HR audio:', error)
+          if (!isClosingPrompt) {
+            setIsListening(true)
+            setTimeout(() => startVoiceInput(), 250)
+          }
+        }
+      }
+
+      const response = await responsePromise
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -1196,76 +1228,42 @@ export default function InterviewPage() {
         }
       }
       
-      // HR Screen specific: Check for natural ending keywords in traditional approach
-      if (stage === 'hr_screen') {
-        const assistantText = data.assistantMessage.replace('Interviewer: ', '').toLowerCase()
-        const endingKeywords = [
-          'scheduled',
-          'hiring manager',
-          'get something scheduled',
-          'thanks for your time',
-          'i\'ll get something scheduled',
-          'i\'ll schedule',
-          'we\'ll schedule',
-          'next steps',
-          'move forward',
-          'connect you with'
-        ]
-        
-        const hasEndingKeyword = endingKeywords.some(keyword => assistantText.includes(keyword))
-        const elapsedMinutes = interviewStartTimeRef.current 
-          ? (Date.now() - interviewStartTimeRef.current) / 1000 / 60 
-          : 0
-        
-        // End if: (1) contains ending keyword, OR (2) 10+ minutes elapsed, OR (3) 6+ turns and 5+ minutes
-        if (hasEndingKeyword || elapsedMinutes >= 10 || (turnCount >= 5 && elapsedMinutes >= 5)) {
-          console.log('HR screen ending detected (traditional):', { hasEndingKeyword, elapsedMinutes, turnCount })
-          setTimeout(() => {
-            setInterviewComplete(true)
-            endInterview()
-          }, 2000)
-          return
-        }
-      }
-
       // Ensure isListening stays true throughout conversation
       setIsListening(true)
       
-      // Play audio if available (will auto-start listening after)
-      if (data.audioSequenceBase64?.length) {
-        try {
-          console.log('Playing AI response audio sequence...')
-          await playAudio(data.audioSequenceBase64)
-          console.log('Audio playback completed, should restart listening')
-        } catch (error) {
-          console.error('Error playing audio:', error)
+      if (!isScriptedHr) {
+        if (data.audioSequenceBase64?.length) {
+          try {
+            console.log('Playing AI response audio sequence...')
+            await playAudio(data.audioSequenceBase64)
+            console.log('Audio playback completed, should restart listening')
+          } catch (error) {
+            console.error('Error playing audio:', error)
+            if (!interviewComplete) {
+              console.log('Audio failed, restarting listening manually')
+              setIsListening(true)
+              setTimeout(() => startVoiceInput(), 500)
+            }
+          }
+        } else if (data.audioBase64) {
+          try {
+            console.log('Playing AI response audio...')
+            await playAudio(data.audioBase64)
+            console.log('Audio playback completed, should restart listening')
+          } catch (error) {
+            console.error('Error playing audio:', error)
+            if (!interviewComplete) {
+              console.log('Audio failed, restarting listening manually')
+              setIsListening(true)
+              setTimeout(() => startVoiceInput(), 500)
+            }
+          }
+        } else {
+          console.log('No audio in response, restarting listening')
           if (!interviewComplete) {
-            console.log('Audio failed, restarting listening manually')
             setIsListening(true)
             setTimeout(() => startVoiceInput(), 500)
           }
-        }
-      } else if (data.audioBase64) {
-        try {
-          console.log('Playing AI response audio...')
-          await playAudio(data.audioBase64)
-          console.log('Audio playback completed, should restart listening')
-          // playAudio will automatically start listening again after audio finishes
-        } catch (error) {
-          console.error('Error playing audio:', error)
-          // If audio fails, start listening anyway
-          if (!interviewComplete) {
-            console.log('Audio failed, restarting listening manually')
-            setIsListening(true)
-            setTimeout(() => startVoiceInput(), 500)
-          }
-        }
-      } else {
-        // No audio response, start listening again
-        console.log('No audio in response, restarting listening')
-        if (!interviewComplete) {
-          setIsListening(true)
-          setTimeout(() => startVoiceInput(), 500)
         }
       }
 
@@ -1284,7 +1282,11 @@ export default function InterviewPage() {
       // Check if interview is complete
       if (data.complete) {
         setInterviewComplete(true)
-        await endInterview()
+        if (isScriptedHr) {
+          await endInterview()
+        } else if (!isScriptedHr) {
+          await endInterview()
+        }
       }
     } catch (error) {
       console.error('Error sending audio:', error)

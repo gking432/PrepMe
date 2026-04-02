@@ -77,23 +77,24 @@ function buildPrompt(args: {
 export function buildInitialHrState(args: {
   companyName: string
   roleTitle: string
-  personalizedQuestions: [string, string]
+  personalizedQuestions: string[]
 }): HrScriptState {
   const interviewerName = INTERVIEWER_NAMES[Math.floor(Math.random() * INTERVIEWER_NAMES.length)]
 
   const opening = `Hi, this is ${interviewerName} calling from ${args.companyName} about the ${args.roleTitle} position. Thanks for taking the time to chat today. I have a few quick questions, and then we’ll wrap up. To start, can you tell me a bit about yourself?`
   const companyKnowledge = 'Okay, and then, what do you know about our company so far?'
   const roleMotivation = 'Got it. So then, what interests you about this role specifically?'
-  const personalizedOne = `That makes sense. So then, ${args.personalizedQuestions[0]}`
-  const personalizedTwo = `Okay, understood. So then, ${args.personalizedQuestions[1]}`
   const salary = 'Gotcha. So then, I know this can be a little awkward to talk about early on, but what are you expecting salary-wise?'
   const availability = 'Right. So then, if we did decide to move forward with your application, when would you be available to start?'
   const close = 'Alright, that covers everything I wanted to ask today. Thanks again for your time.'
 
-  const prompts: HrScriptPrompt[] = [
+  const prompts: HrScriptPrompt[] = []
+  let questionNumber = 1
+
+  prompts.push(
     buildPrompt({
       key: 'opening',
-      questionId: 'q1',
+      questionId: `q${questionNumber++}`,
       text: opening,
       audioSegments: [
         {
@@ -102,81 +103,106 @@ export function buildInitialHrState(args: {
           cacheKey: `opening-${interviewerName}-${args.companyName}-${args.roleTitle}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
         },
       ],
-    }),
+    })
+  )
+
+  prompts.push(
     buildPrompt({
       key: 'company_knowledge',
-      questionId: 'q2',
+      questionId: `q${questionNumber++}`,
       text: companyKnowledge,
       audioSegments: [
         { type: 'fixed', key: 'okay_and' },
         { type: 'fixed', key: 'company_knowledge' },
       ],
-    }),
+    })
+  )
+
+  prompts.push(
     buildPrompt({
       key: 'role_motivation',
-      questionId: 'q3',
+      questionId: `q${questionNumber++}`,
       text: roleMotivation,
       audioSegments: [
         { type: 'fixed', key: 'got_it' },
         { type: 'fixed', key: 'so_then' },
         { type: 'fixed', key: 'role_motivation' },
       ],
-    }),
-    buildPrompt({
-      key: 'personalized_experience_1',
-      questionId: 'q4',
-      text: personalizedOne,
-      audioSegments: [
-        { type: 'fixed', key: 'that_makes_sense' },
-        { type: 'fixed', key: 'so_then' },
-        {
-          type: 'dynamic',
-          text: args.personalizedQuestions[0],
-          cacheKey: `personalized-q1-${args.personalizedQuestions[0]}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
-        },
-      ],
-    }),
-    buildPrompt({
-      key: 'personalized_experience_2',
-      questionId: 'q5',
-      text: personalizedTwo,
-      audioSegments: [
-        { type: 'fixed', key: 'understood' },
-        { type: 'fixed', key: 'so_then' },
-        {
-          type: 'dynamic',
-          text: args.personalizedQuestions[1],
-          cacheKey: `personalized-q2-${args.personalizedQuestions[1]}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
-        },
-      ],
-    }),
+    })
+  )
+
+  if (args.personalizedQuestions[0]) {
+    prompts.push(
+      buildPrompt({
+        key: 'personalized_experience_1',
+        questionId: `q${questionNumber++}`,
+        text: `That makes sense. So then, ${args.personalizedQuestions[0]}`,
+        audioSegments: [
+          { type: 'fixed', key: 'that_makes_sense' },
+          { type: 'fixed', key: 'so_then' },
+          {
+            type: 'dynamic',
+            text: args.personalizedQuestions[0],
+            cacheKey: `personalized-q1-${args.personalizedQuestions[0]}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+          },
+        ],
+      })
+    )
+  }
+
+  if (args.personalizedQuestions[1]) {
+    prompts.push(
+      buildPrompt({
+        key: 'personalized_experience_2',
+        questionId: `q${questionNumber++}`,
+        text: `Okay, understood. So then, ${args.personalizedQuestions[1]}`,
+        audioSegments: [
+          { type: 'fixed', key: 'understood' },
+          { type: 'fixed', key: 'so_then' },
+          {
+            type: 'dynamic',
+            text: args.personalizedQuestions[1],
+            cacheKey: `personalized-q2-${args.personalizedQuestions[1]}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+          },
+        ],
+      })
+    )
+  }
+
+  prompts.push(
     buildPrompt({
       key: 'salary_expectations',
-      questionId: 'q6',
+      questionId: `q${questionNumber++}`,
       text: salary,
       audioSegments: [
         { type: 'fixed', key: 'gotcha' },
         { type: 'fixed', key: 'so_then' },
         { type: 'fixed', key: 'salary_expectations' },
       ],
-    }),
+    })
+  )
+
+  prompts.push(
     buildPrompt({
       key: 'availability',
-      questionId: 'q7',
+      questionId: `q${questionNumber++}`,
       text: availability,
       audioSegments: [
         { type: 'fixed', key: 'right' },
         { type: 'fixed', key: 'so_then' },
         { type: 'fixed', key: 'availability' },
       ],
-    }),
+    })
+  )
+
+  prompts.push(
     buildPrompt({
       key: 'close',
-      questionId: 'q8',
+      questionId: `q${questionNumber++}`,
       text: close,
       audioSegments: [{ type: 'fixed', key: 'close' }],
-    }),
-  ]
+    })
+  )
 
   return {
     interviewerName,
@@ -205,15 +231,23 @@ export function getPrewarmDynamicSegments(
     .filter((segment): segment is Extract<HrAudioSegment, { type: 'dynamic' }> => segment.type === 'dynamic')
 }
 
-export function buildPersonalizedQuestions(resumeText: string, roleTitle: string): [string, string] {
-  const topics = extractPersonalizedTopics(resumeText)
-  const firstTopic = topics[0] || 'the part of your background that feels most relevant here'
-  const secondTopic = topics[1] || 'the strongest part of your recent experience'
+export function buildPersonalizedQuestions(resumeText: string, roleTitle: string): string[] {
+  const roles = extractResumeRoles(resumeText)
+  const prompts: string[] = []
 
-  return [
-    `I noticed your background includes ${firstTopic}. Could you walk me through that experience and how it would help you in the ${roleTitle} role?`,
-    `I also saw experience with ${secondTopic}. What did you learn from that work, and how would it translate to this position?`,
-  ]
+  if (roles[0]) {
+    prompts.push(
+      `I saw your experience with ${roles[0].company} as a ${roles[0].title}. Could you tell me a bit more about that role and how it would help you in the ${roleTitle} position?`
+    )
+  }
+
+  if (roles[1]) {
+    prompts.push(
+      `I also noticed you worked at ${roles[1].company} as a ${roles[1].title}. How do you think that experience would help you in this position?`
+    )
+  }
+
+  return prompts
 }
 
 export function classifyHrResponse(text: string): InterviewMode | 'vague' {
@@ -319,46 +353,54 @@ export function extractRoleTitle(jobDescription: string): string {
   return 'this position'
 }
 
-export function extractPersonalizedTopics(resumeText: string): string[] {
+export function extractResumeRoles(resumeText: string): Array<{ title: string; company: string }> {
   const lines = resumeText
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.length > 0)
+    .filter((line) => line.length > 0 && line.length < 120)
+    .filter((line) => !/^[•*-]\s*/.test(line))
+    .filter((line) => !/\b(20\d{2}|19\d{2}|present)\b/i.test(line))
 
-  const actionLines = lines
-    .map((line) => line.replace(/^[•*-]\s*/, ''))
-    .filter((line) => /^(led|managed|built|created|owned|developed|improved|launched|designed|implemented|coordinated|supported|drove|scaled)/i.test(line))
-    .map((line) => line.split(/[.;]/)[0].trim())
-    .filter((line) => line.length > 18)
+  const roles: Array<{ title: string; company: string }> = []
 
-  const uniqueLines = actionLines.filter(
-    (line, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === line.toLowerCase()) === index
-  )
+  const clean = (value: string) => value.replace(/\s+/g, ' ').trim()
 
-  if (uniqueLines.length >= 2) {
-    return uniqueLines.slice(0, 2)
+  for (const line of lines) {
+    let match = line.match(/^(.+?)\s+at\s+(.+)$/i)
+    if (match) {
+      roles.push({ title: clean(match[1]), company: clean(match[2]) })
+      continue
+    }
+
+    match = line.match(/^(.+?)\s+\|\s+(.+)$/)
+    if (match) {
+      roles.push({ title: clean(match[1]), company: clean(match[2]) })
+      continue
+    }
+
+    match = line.match(/^(.+?)\s+[–—-]\s+(.+)$/)
+    if (match) {
+      const left = clean(match[1])
+      const right = clean(match[2])
+      const leftLooksLikeCompany = /\b(inc|llc|corp|corporation|company|co\.|group|labs|systems|technologies|university|school|hospital|health|bank|studio|agency)\b/i.test(left)
+      const rightLooksLikeCompany = /\b(inc|llc|corp|corporation|company|co\.|group|labs|systems|technologies|university|school|hospital|health|bank|studio|agency)\b/i.test(right)
+
+      if (leftLooksLikeCompany && !rightLooksLikeCompany) {
+        roles.push({ title: right, company: left })
+      } else if (!leftLooksLikeCompany && rightLooksLikeCompany) {
+        roles.push({ title: left, company: right })
+      }
+    }
   }
 
-  const phraseMatches = Array.from(
-    new Set(
-      Array.from(
-        resumeText.matchAll(/\b(customer retention|inventory management|project coordination|operations planning|b2b sales|process improvement|data analysis|team leadership|cross-functional collaboration|account management|process automation|stakeholder management)\b/gi)
-      ).map((match) => match[1])
-    )
-  )
-
-  const combined = [...uniqueLines, ...phraseMatches].filter(
-    (line, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === line.toLowerCase()) === index
-  )
-
-  if (combined.length >= 2) {
-    return combined.slice(0, 2)
-  }
-
-  if (combined.length === 1) {
-    return [combined[0], 'working closely with teams and stakeholders']
-  }
-
-  const fallback = lines.find((line) => line.length > 24)?.split(/[.,;:]/)[0].slice(0, 90)
-  return [fallback || 'the work most relevant to this position', 'the strongest part of your recent experience']
+  return roles.filter(
+    (role, index, all) =>
+      role.title.length > 1 &&
+      role.company.length > 1 &&
+      all.findIndex(
+        (candidate) =>
+          candidate.title.toLowerCase() === role.title.toLowerCase() &&
+          candidate.company.toLowerCase() === role.company.toLowerCase()
+      ) === index
+  ).slice(0, 2)
 }

@@ -7,7 +7,8 @@ import {
   buildPersonalizedQuestions,
   buildInitialHrState,
   buildOpeningLine,
-  getAllPromptTexts,
+  getCurrentPrompt,
+  getPrewarmDynamicSegments,
   extractCompanyName,
   extractRoleTitle,
 } from '@/lib/hr-screen-script'
@@ -83,13 +84,13 @@ export async function POST(request: NextRequest) {
     })
 
     const openingText = buildOpeningLine(state)
-    const openingPrompt = state.prompts[0]
-
-    const promptTexts = getAllPromptTexts(state)
+    const openingPrompt = getCurrentPrompt(state)
+    const dynamicSegments = getPrewarmDynamicSegments(state)
     const prewarmed = await Promise.all(
-      promptTexts.map((text) =>
+      dynamicSegments.map((segment) =>
         getOrCreateCachedSpeech({
-          text,
+          cacheKey: segment.cacheKey,
+          text: segment.text,
           requireElevenLabs: true,
         })
       )
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: openingText,
       audioBase64,
+      audioSequenceBase64: [audioBase64],
       conversationPhase: 'screening',
       scriptedMode: true,
     })

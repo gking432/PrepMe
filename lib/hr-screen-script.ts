@@ -10,10 +10,15 @@ type HrStepKey =
 
 type InterviewMode = 'normal' | 'terminate'
 
+export type HrAudioSegment =
+  | { type: 'fixed'; key: string }
+  | { type: 'dynamic'; text: string; cacheKey?: string }
+
 export interface HrScriptPrompt {
   key: HrStepKey
   text: string
   questionId: string
+  audioSegments: HrAudioSegment[]
 }
 
 export interface HrScriptState {
@@ -32,7 +37,7 @@ export interface HrTurnDecision {
   questionId?: string | null
   nextState: HrScriptState
   complete: boolean
-  dynamicAudioText: string
+  audioSegments: HrAudioSegment[]
 }
 
 const INTERVIEWER_NAMES = [
@@ -50,19 +55,24 @@ const INTERVIEWER_NAMES = [
   'Matthew',
 ]
 
-const TRANSITIONS = {
-  company_knowledge: 'Okay, yeah. And then,',
-  role_motivation: 'Got it. So then,',
-  personalized_experience_1: 'That makes a lot of sense. So,',
-  personalized_experience_2: 'Okay, understood. So,',
-  salary_expectations: 'Gotcha. And then,',
-  availability: 'Right, that makes sense. So,',
-} as const
-
 const TERMINATION_LINES = [
   'Alright, I think we’ll wrap up here. Thanks for your time.',
   'I’m going to end the interview here. Thank you for your time.',
 ]
+
+function buildPrompt(args: {
+  key: HrStepKey
+  questionId: string
+  text: string
+  audioSegments: HrAudioSegment[]
+}): HrScriptPrompt {
+  return {
+    key: args.key,
+    questionId: args.questionId,
+    text: args.text,
+    audioSegments: args.audioSegments,
+  }
+}
 
 export function buildInitialHrState(args: {
   companyName: string
@@ -70,49 +80,102 @@ export function buildInitialHrState(args: {
   personalizedQuestions: [string, string]
 }): HrScriptState {
   const interviewerName = INTERVIEWER_NAMES[Math.floor(Math.random() * INTERVIEWER_NAMES.length)]
+
   const opening = `Hi, this is ${interviewerName} calling from ${args.companyName} about the ${args.roleTitle} position. Thanks for taking the time to chat today. I have a few quick questions, and then we’ll wrap up. To start, can you tell me a bit about yourself?`
+  const companyKnowledge = 'Okay, and then, what do you know about our company so far?'
+  const roleMotivation = 'Got it. So then, what interests you about this role specifically?'
+  const personalizedOne = `That makes sense. So then, ${args.personalizedQuestions[0]}`
+  const personalizedTwo = `Okay, understood. So then, ${args.personalizedQuestions[1]}`
+  const salary = 'Gotcha. So then, I know this can be a little awkward to talk about early on, but what are you expecting salary-wise?'
+  const availability = 'Right. So then, if we did decide to move forward with your application, when would you be available to start?'
+  const close = 'Alright, that covers everything I wanted to ask today. Thanks again for your time.'
 
   const prompts: HrScriptPrompt[] = [
-    {
+    buildPrompt({
       key: 'opening',
-      text: opening,
       questionId: 'q1',
-    },
-    {
+      text: opening,
+      audioSegments: [
+        {
+          type: 'dynamic',
+          text: opening,
+          cacheKey: `opening-${interviewerName}-${args.companyName}-${args.roleTitle}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+        },
+      ],
+    }),
+    buildPrompt({
       key: 'company_knowledge',
-      text: `${TRANSITIONS.company_knowledge} What do you know about our company so far?`,
       questionId: 'q2',
-    },
-    {
+      text: companyKnowledge,
+      audioSegments: [
+        { type: 'fixed', key: 'okay_and' },
+        { type: 'fixed', key: 'company_knowledge' },
+      ],
+    }),
+    buildPrompt({
       key: 'role_motivation',
-      text: `${TRANSITIONS.role_motivation} What interests you about this role specifically?`,
       questionId: 'q3',
-    },
-    {
+      text: roleMotivation,
+      audioSegments: [
+        { type: 'fixed', key: 'got_it' },
+        { type: 'fixed', key: 'so_then' },
+        { type: 'fixed', key: 'role_motivation' },
+      ],
+    }),
+    buildPrompt({
       key: 'personalized_experience_1',
-      text: `${TRANSITIONS.personalized_experience_1} ${args.personalizedQuestions[0]}`,
       questionId: 'q4',
-    },
-    {
+      text: personalizedOne,
+      audioSegments: [
+        { type: 'fixed', key: 'that_makes_sense' },
+        { type: 'fixed', key: 'so_then' },
+        {
+          type: 'dynamic',
+          text: args.personalizedQuestions[0],
+          cacheKey: `personalized-q1-${args.personalizedQuestions[0]}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+        },
+      ],
+    }),
+    buildPrompt({
       key: 'personalized_experience_2',
-      text: `${TRANSITIONS.personalized_experience_2} ${args.personalizedQuestions[1]}`,
       questionId: 'q5',
-    },
-    {
+      text: personalizedTwo,
+      audioSegments: [
+        { type: 'fixed', key: 'understood' },
+        { type: 'fixed', key: 'so_then' },
+        {
+          type: 'dynamic',
+          text: args.personalizedQuestions[1],
+          cacheKey: `personalized-q2-${args.personalizedQuestions[1]}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+        },
+      ],
+    }),
+    buildPrompt({
       key: 'salary_expectations',
-      text: `${TRANSITIONS.salary_expectations} I know this can be a little awkward to talk about early on, but what are you expecting salary-wise?`,
       questionId: 'q6',
-    },
-    {
+      text: salary,
+      audioSegments: [
+        { type: 'fixed', key: 'gotcha' },
+        { type: 'fixed', key: 'so_then' },
+        { type: 'fixed', key: 'salary_expectations' },
+      ],
+    }),
+    buildPrompt({
       key: 'availability',
-      text: `${TRANSITIONS.availability} If we did decide to move forward with your application, when would you be available to start?`,
       questionId: 'q7',
-    },
-    {
+      text: availability,
+      audioSegments: [
+        { type: 'fixed', key: 'right' },
+        { type: 'fixed', key: 'so_then' },
+        { type: 'fixed', key: 'availability' },
+      ],
+    }),
+    buildPrompt({
       key: 'close',
-      text: 'Alright, that covers everything I wanted to ask today. Thanks again for your time.',
       questionId: 'q8',
-    },
+      text: close,
+      audioSegments: [{ type: 'fixed', key: 'close' }],
+    }),
   ]
 
   return {
@@ -130,23 +193,27 @@ export function buildOpeningLine(state: HrScriptState): string {
   return state.prompts[0]?.text || ''
 }
 
+export function getCurrentPrompt(state: HrScriptState): HrScriptPrompt {
+  return state.prompts[state.currentPromptIndex]
+}
+
+export function getPrewarmDynamicSegments(
+  state: HrScriptState
+): Extract<HrAudioSegment, { type: 'dynamic' }>[] {
+  return state.prompts
+    .flatMap((prompt) => prompt.audioSegments)
+    .filter((segment): segment is Extract<HrAudioSegment, { type: 'dynamic' }> => segment.type === 'dynamic')
+}
+
 export function buildPersonalizedQuestions(resumeText: string, roleTitle: string): [string, string] {
   const topics = extractPersonalizedTopics(resumeText)
-  const firstTopic = topics[0] || 'the work in your background that feels most relevant here'
+  const firstTopic = topics[0] || 'the part of your background that feels most relevant here'
   const secondTopic = topics[1] || 'the strongest part of your recent experience'
 
   return [
     `I noticed your background includes ${firstTopic}. Could you walk me through that experience and how it would help you in the ${roleTitle} role?`,
     `I also saw experience with ${secondTopic}. What did you learn from that work, and how would it translate to this position?`,
   ]
-}
-
-export function getAllPromptTexts(state: HrScriptState): string[] {
-  return state.prompts.map((prompt) => prompt.text)
-}
-
-export function getCurrentPrompt(state: HrScriptState): HrScriptPrompt {
-  return state.prompts[state.currentPromptIndex]
 }
 
 export function classifyHrResponse(text: string): InterviewMode | 'vague' {
@@ -184,7 +251,13 @@ export function handleHrTurn(state: HrScriptState, userMessage: string): HrTurnD
         interviewComplete: true,
       },
       complete: true,
-      dynamicAudioText: line,
+      audioSegments: [
+        {
+          type: 'dynamic',
+          text: line,
+          cacheKey: `termination-${line}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+        },
+      ],
     }
   }
 
@@ -192,15 +265,17 @@ export function handleHrTurn(state: HrScriptState, userMessage: string): HrTurnD
   const nextPrompt = state.prompts[nextPromptIndex]
 
   if (!nextPrompt) {
-    const closeLine = state.prompts[state.prompts.length - 1]?.text || 'Thanks again for your time.'
+    const closePrompt = state.prompts[state.prompts.length - 1]
     return {
-      assistantText: closeLine,
+      assistantText: closePrompt?.text || 'Thanks again for your time.',
       nextState: {
         ...state,
         interviewComplete: true,
       },
       complete: true,
-      dynamicAudioText: closeLine,
+      questionText: closePrompt?.text,
+      questionId: closePrompt?.questionId,
+      audioSegments: closePrompt?.audioSegments || [],
     }
   }
 
@@ -216,7 +291,7 @@ export function handleHrTurn(state: HrScriptState, userMessage: string): HrTurnD
     questionId: nextPrompt.questionId,
     nextState,
     complete: nextPrompt.key === 'close',
-    dynamicAudioText: nextPrompt.text,
+    audioSegments: nextPrompt.audioSegments,
   }
 }
 
@@ -286,8 +361,4 @@ export function extractPersonalizedTopics(resumeText: string): string[] {
 
   const fallback = lines.find((line) => line.length > 24)?.split(/[.,;:]/)[0].slice(0, 90)
   return [fallback || 'the work most relevant to this position', 'the strongest part of your recent experience']
-}
-
-export function buildDefaultOpeningAudioText(state: HrScriptState): string {
-  return buildOpeningLine(state)
 }

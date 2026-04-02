@@ -760,7 +760,17 @@ export default function InterviewPage() {
       console.log('Set isListening to true, interview is now active')
 
       // Play audio if available
-      if (data.audioBase64) {
+      if (data.audioSequenceBase64?.length) {
+        try {
+          await playAudio(data.audioSequenceBase64)
+        } catch (error) {
+          console.error('Error playing audio:', error)
+          // If audio fails, start listening anyway
+          if (isListening && !isRecording && !interviewComplete) {
+            setTimeout(() => startVoiceInput(), 500)
+          }
+        }
+      } else if (data.audioBase64) {
         try {
           await playAudio(data.audioBase64)
         } catch (error) {
@@ -796,7 +806,7 @@ export default function InterviewPage() {
     }
   }
 
-  const playAudio = (audioBase64: string) => {
+  const playAudio = (audioBase64: string | string[]) => {
     return new Promise<void>((resolve, reject) => {
       try {
         // Safety check: Only play audio on interview page and when interview is active
@@ -813,7 +823,7 @@ export default function InterviewPage() {
           return
         }
         
-        if (!audioBase64) {
+        if (!audioBase64 || (Array.isArray(audioBase64) && audioBase64.length === 0)) {
           reject(new Error('No audio data provided'))
           return
         }
@@ -826,17 +836,6 @@ export default function InterviewPage() {
           setIsRecording(false)
         }
 
-        // Convert base64 to binary string, then to Uint8Array
-        const binaryString = atob(audioBase64)
-        const bytes = new Uint8Array(binaryString.length)
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i)
-        }
-        
-        // Create blob from bytes
-        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' })
-        const audioUrl = URL.createObjectURL(audioBlob)
-
         // Create audio element if it doesn't exist
         if (!audioRef.current) {
           audioRef.current = new Audio()
@@ -848,8 +847,8 @@ export default function InterviewPage() {
         audio.pause()
         audio.currentTime = 0
         
-        audio.src = audioUrl
-        setIsPlayingAudio(true)
+        const segments = Array.isArray(audioBase64) ? audioBase64 : [audioBase64]
+        let currentAudioUrl: string | null = null
 
         // Allow interruption - if user starts speaking, stop audio
         const handleInterruption = () => {
@@ -858,34 +857,70 @@ export default function InterviewPage() {
             audio.pause()
             audio.currentTime = 0
             setIsPlayingAudio(false)
-            URL.revokeObjectURL(audioUrl)
+            if (currentAudioUrl) {
+              URL.revokeObjectURL(currentAudioUrl)
+              currentAudioUrl = null
+            }
             resolve()
           }
         }
 
-        audio.onended = () => {
-          console.log('Audio playback finished, restarting listening...')
-          setIsPlayingAudio(false)
-          URL.revokeObjectURL(audioUrl)
-          // Start listening again after audio finishes
-          // Use a function to get current state values
-          setTimeout(() => {
-            // Check current state - isListening should still be true
-            if (!interviewComplete) {
-              console.log('Restarting voice input after audio finished')
-              // Ensure isListening is true before restarting
-              setIsListening(true)
-              startVoiceInput()
-            } else {
-              console.log('Not restarting - interview complete')
+        let segmentIndex = 0
+
+        const playSegment = () => {
+          if (segmentIndex >= segments.length) {
+            console.log('Audio playback finished, restarting listening...')
+            setIsPlayingAudio(false)
+            setTimeout(() => {
+              if (!interviewComplete) {
+                console.log('Restarting voice input after audio finished')
+                setIsListening(true)
+                startVoiceInput()
+              } else {
+                console.log('Not restarting - interview complete')
+              }
+            }, 300)
+            resolve()
+            return
+          }
+
+          const binaryString = atob(segments[segmentIndex])
+          const bytes = new Uint8Array(binaryString.length)
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i)
+          }
+
+          const audioBlob = new Blob([bytes], { type: 'audio/mpeg' })
+          currentAudioUrl = URL.createObjectURL(audioBlob)
+          audio.src = currentAudioUrl
+          setIsPlayingAudio(true)
+
+          audio.play().catch((error) => {
+            console.error('Error playing audio:', error)
+            if (currentAudioUrl) {
+              URL.revokeObjectURL(currentAudioUrl)
+              currentAudioUrl = null
             }
-          }, 300)
-          resolve()
+            setIsPlayingAudio(false)
+            reject(error)
+          })
+        }
+
+        audio.onended = () => {
+          if (currentAudioUrl) {
+            URL.revokeObjectURL(currentAudioUrl)
+            currentAudioUrl = null
+          }
+          segmentIndex += 1
+          setTimeout(playSegment, 100)
         }
 
         audio.onerror = () => {
           setIsPlayingAudio(false)
-          URL.revokeObjectURL(audioUrl)
+          if (currentAudioUrl) {
+            URL.revokeObjectURL(currentAudioUrl)
+            currentAudioUrl = null
+          }
           reject(new Error('Audio playback failed'))
         }
 
@@ -897,16 +932,8 @@ export default function InterviewPage() {
           }
         }, 100)
 
-        audio.play().then(() => {
-          // Clear interruption check when audio finishes naturally
-          audio.addEventListener('ended', () => clearInterval(interruptionCheck))
-        }).catch((error) => {
-          console.error('Error playing audio:', error)
-          clearInterval(interruptionCheck)
-          setIsPlayingAudio(false)
-          URL.revokeObjectURL(audioUrl)
-          reject(error)
-        })
+        audio.addEventListener('ended', () => clearInterval(interruptionCheck), { once: true })
+        playSegment()
       } catch (error) {
         console.error('Error creating audio:', error)
         setIsPlayingAudio(false)
@@ -1205,7 +1232,20 @@ export default function InterviewPage() {
       setIsListening(true)
       
       // Play audio if available (will auto-start listening after)
-      if (data.audioBase64) {
+      if (data.audioSequenceBase64?.length) {
+        try {
+          console.log('Playing AI response audio sequence...')
+          await playAudio(data.audioSequenceBase64)
+          console.log('Audio playback completed, should restart listening')
+        } catch (error) {
+          console.error('Error playing audio:', error)
+          if (!interviewComplete) {
+            console.log('Audio failed, restarting listening manually')
+            setIsListening(true)
+            setTimeout(() => startVoiceInput(), 500)
+          }
+        }
+      } else if (data.audioBase64) {
         try {
           console.log('Playing AI response audio...')
           await playAudio(data.audioBase64)

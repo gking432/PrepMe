@@ -4,15 +4,14 @@ import { appendMessage, appendQuestion } from '@/lib/interview-session'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import {
-  buildDefaultOpeningAudioText,
   buildPersonalizedQuestions,
   buildInitialHrState,
   buildOpeningLine,
+  getAllPromptTexts,
   extractCompanyName,
   extractRoleTitle,
-  loadFixedHrAudio,
 } from '@/lib/hr-screen-script'
-import { getOrCreateCachedSpeech, synthesizePreferredSpeech } from '@/lib/interview-audio'
+import { getOrCreateCachedSpeech } from '@/lib/interview-audio'
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,22 +83,26 @@ export async function POST(request: NextRequest) {
     })
 
     const openingText = buildOpeningLine(state)
-    const audioBase64 =
-      (await loadFixedHrAudio('opening')) ??
-      (await getOrCreateCachedSpeech({
-        text: buildDefaultOpeningAudioText(state),
-      })) ??
-      (await synthesizePreferredSpeech(buildDefaultOpeningAudioText(state)))
+    const openingPrompt = state.prompts[0]
 
-    await Promise.allSettled(
-      Object.values(state.promptPlan)
-        .filter((text) => text !== openingText)
-        .map((text) => getOrCreateCachedSpeech({ text }))
+    const promptTexts = getAllPromptTexts(state)
+    const prewarmed = await Promise.all(
+      promptTexts.map((text) =>
+        getOrCreateCachedSpeech({
+          text,
+          requireElevenLabs: true,
+        })
+      )
     )
+    const audioBase64 = prewarmed[0]
+
+    if (!audioBase64 || prewarmed.some((item) => !item)) {
+      return NextResponse.json({ error: 'Failed to generate scripted HR audio' }, { status: 500 })
+    }
 
     await appendQuestion({
       sessionId,
-      questionId: state.currentQuestionId || 'q1',
+      questionId: openingPrompt?.questionId || 'q1',
       question: openingText,
       assessmentAreas: ['answer_structure', 'pace_and_flow'],
       timestamp: '0:00',
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
       sessionId,
       speaker: 'interviewer',
       text: openingText,
-      questionId: state.currentQuestionId || 'q1',
+      questionId: openingPrompt?.questionId || 'q1',
       timestamp: '0:00',
     })
 

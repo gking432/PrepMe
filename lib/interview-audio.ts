@@ -73,10 +73,11 @@ function hrAudioPath(fileName: string) {
 function getSpeechCacheNamespace() {
   const voiceId = process.env.ELEVENLABS_VOICE_ID
   const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2'
+  const cacheVersion = 'v3'
   if (process.env.ELEVENLABS_API_KEY && voiceId) {
-    return `generated/elevenlabs-${voiceId}-${modelId}`
+    return `generated/${cacheVersion}-elevenlabs-${voiceId}-${modelId}`
   }
-  return 'generated/openai-alloy'
+  return `generated/${cacheVersion}-openai-alloy`
 }
 
 async function writeBase64Audio(filePath: string, audioBase64: string) {
@@ -96,6 +97,7 @@ export async function loadCachedSpeech(fileName: string): Promise<string | null>
 export async function getOrCreateCachedSpeech(args: {
   cacheKey?: string
   text: string
+  requireElevenLabs?: boolean
 }): Promise<string | null> {
   const namespace = getSpeechCacheNamespace()
   const fileName = args.cacheKey
@@ -105,7 +107,9 @@ export async function getOrCreateCachedSpeech(args: {
   const cached = await loadCachedSpeech(fileName)
   if (cached) return cached
 
-  const audioBase64 = await synthesizePreferredSpeech(args.text)
+  const audioBase64 = args.requireElevenLabs
+    ? await synthesizeElevenLabsSpeech(args.text)
+    : await synthesizePreferredSpeech(args.text)
   if (!audioBase64) return null
 
   try {

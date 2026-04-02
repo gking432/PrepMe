@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
-import { getFixedHrAudioText, handleHrTurn, loadFixedHrAudio } from '@/lib/hr-screen-script'
-import { getOrCreateCachedSpeech, synthesizePreferredSpeech } from '@/lib/interview-audio'
+import { getCurrentPrompt, handleHrTurn } from '@/lib/hr-screen-script'
+import { getOrCreateCachedSpeech } from '@/lib/interview-audio'
 
 let _openai: OpenAI | null = null
 
@@ -44,11 +44,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Scripted HR state not found for session' }, { status: 400 })
     }
 
+    const currentPrompt = getCurrentPrompt(state)
+
     await appendMessage({
       sessionId,
       speaker: 'candidate',
       text: userMessage,
-      questionId: state.currentQuestionId || undefined,
+      questionId: currentPrompt?.questionId || undefined,
     })
 
     const decision = handleHrTurn(state, userMessage)
@@ -93,26 +95,14 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', sessionId)
 
-    let audioBase64: string | null = null
-
-    if (decision.usedAudioKey) {
-      audioBase64 = await loadFixedHrAudio(decision.usedAudioKey)
-      if (!audioBase64) {
-        const fixedText = getFixedHrAudioText(decision.usedAudioKey)
-        if (fixedText) {
-          audioBase64 = await getOrCreateCachedSpeech({
-            cacheKey: decision.usedAudioKey,
-            text: fixedText,
-          })
-        }
-      }
-    }
+    const speechText = decision.dynamicAudioText || decision.assistantText
+    const audioBase64 = await getOrCreateCachedSpeech({
+      text: speechText,
+      requireElevenLabs: true,
+    })
 
     if (!audioBase64) {
-      const speechText = decision.dynamicAudioText || decision.assistantText
-      audioBase64 =
-        (await getOrCreateCachedSpeech({ text: speechText })) ??
-        (await synthesizePreferredSpeech(speechText))
+      return NextResponse.json({ error: 'Failed to generate scripted HR audio' }, { status: 500 })
     }
 
     return NextResponse.json({

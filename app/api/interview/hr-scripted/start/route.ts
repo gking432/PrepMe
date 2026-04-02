@@ -5,10 +5,10 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import {
   buildDefaultOpeningAudioText,
+  buildPersonalizedQuestions,
   buildInitialHrState,
   buildOpeningLine,
   extractCompanyName,
-  extractPersonalizedTopic,
   extractRoleTitle,
   loadFixedHrAudio,
 } from '@/lib/hr-screen-script'
@@ -73,10 +73,14 @@ export async function POST(request: NextRequest) {
       companyWebsite = interviewData?.company_website || ''
     }
 
+    const companyName = extractCompanyName(companyWebsite)
+    const roleTitle = extractRoleTitle(jobDescriptionText)
+    const personalizedQuestions = buildPersonalizedQuestions(resumeText, roleTitle)
+
     const state = buildInitialHrState({
-      companyName: extractCompanyName(companyWebsite),
-      roleTitle: extractRoleTitle(jobDescriptionText),
-      personalizedTopic: extractPersonalizedTopic(resumeText),
+      companyName,
+      roleTitle,
+      personalizedQuestions,
     })
 
     const openingText = buildOpeningLine(state)
@@ -86,6 +90,12 @@ export async function POST(request: NextRequest) {
         text: buildDefaultOpeningAudioText(state),
       })) ??
       (await synthesizePreferredSpeech(buildDefaultOpeningAudioText(state)))
+
+    await Promise.allSettled(
+      Object.values(state.promptPlan)
+        .filter((text) => text !== openingText)
+        .map((text) => getOrCreateCachedSpeech({ text }))
+    )
 
     await appendQuestion({
       sessionId,

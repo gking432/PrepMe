@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
-import { getCurrentAudioKey, getFixedHrAudioText, handleHrTurn, loadFixedHrAudio } from '@/lib/hr-screen-script'
+import { getFixedHrAudioText, handleHrTurn, loadFixedHrAudio } from '@/lib/hr-screen-script'
 import { getOrCreateCachedSpeech, synthesizePreferredSpeech } from '@/lib/interview-audio'
 
 let _openai: OpenAI | null = null
@@ -104,22 +104,6 @@ export async function POST(request: NextRequest) {
             cacheKey: decision.usedAudioKey,
             text: fixedText,
           })
-        }
-      }
-    }
-
-    if (!audioBase64) {
-      const defaultAudioKey = getCurrentAudioKey(decision.nextState)
-      if (defaultAudioKey) {
-        audioBase64 = await loadFixedHrAudio(defaultAudioKey)
-        if (!audioBase64) {
-          const fixedText = getFixedHrAudioText(defaultAudioKey)
-          if (fixedText) {
-            audioBase64 = await getOrCreateCachedSpeech({
-              cacheKey: defaultAudioKey,
-              text: fixedText,
-            })
-          }
         }
       }
     }

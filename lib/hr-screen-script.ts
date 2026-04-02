@@ -5,7 +5,8 @@ type HrStepKey =
   | 'opening'
   | 'company_knowledge'
   | 'role_motivation'
-  | 'personalized_experience'
+  | 'personalized_experience_1'
+  | 'personalized_experience_2'
   | 'salary_expectations'
   | 'availability'
   | 'close'
@@ -16,7 +17,8 @@ export interface HrScriptState {
   interviewerName: string
   companyName: string
   roleTitle: string
-  personalizedTopic: string
+  personalizedQuestions: [string, string]
+  promptPlan: Record<HrStepKey, string>
   stepOrder: HrStepKey[]
   currentStepIndex: number
   currentQuestionId: string | null
@@ -58,28 +60,25 @@ const QUESTION_AUDIO_KEYS: Partial<Record<HrStepKey, string>> = {
   close: 'close',
 }
 
-const STATIC_QUESTIONS: Record<Exclude<HrStepKey, 'opening' | 'personalized_experience'>, string> = {
+const STATIC_QUESTIONS: Record<Exclude<HrStepKey, 'opening' | 'personalized_experience_1' | 'personalized_experience_2'>, string> = {
   company_knowledge: 'What do you know about our company so far?',
   role_motivation: 'What interests you about this role specifically?',
-  salary_expectations: 'What are your salary expectations for this role?',
-  availability: 'If things moved forward, when would you be available to start?',
+  salary_expectations: 'I know this can be a little awkward to talk about early on, but what are you expecting salary-wise?',
+  availability: 'If we did decide to move forward with your application, when would you be available to start?',
   close: 'Alright, that covers everything I wanted to ask today. Thanks again for your time.',
 }
 
-const TRANSITION_AUDIO_KEYS = [
-  'okay',
-  'mhm',
-  'got_it',
-  'i_see',
-  'understood',
-  'right',
-  'that_makes_sense',
-  'gotcha',
-  'okay_and',
-  'so_then',
-  'alright',
-  'oh_okay',
-] as const
+const STEP_TRANSITIONS: Record<
+  Exclude<HrStepKey, 'opening' | 'close'>,
+  string
+> = {
+  company_knowledge: 'Okay, yeah. And then,',
+  role_motivation: 'Got it. So then,',
+  personalized_experience_1: 'That makes a lot of sense. So,',
+  personalized_experience_2: 'Okay, understood. So,',
+  salary_expectations: 'Gotcha. And then,',
+  availability: 'Right, that makes sense. So,',
+}
 
 const GENERIC_FOLLOW_UPS = [
   {
@@ -175,18 +174,33 @@ export function getFixedHrAudioText(audioKey: string): string | null {
 export function buildInitialHrState(args: {
   companyName: string
   roleTitle: string
-  personalizedTopic: string
+  personalizedQuestions: [string, string]
 }): HrScriptState {
+  const interviewerName = INTERVIEWER_NAMES[Math.floor(Math.random() * INTERVIEWER_NAMES.length)]
+  const opening = `Hi, this is ${interviewerName} calling from ${args.companyName} about the ${args.roleTitle} position. Thanks for taking the time to chat today. I have a few quick questions, and then we’ll wrap up. To start, can you tell me a bit about yourself?`
+  const promptPlan: Record<HrStepKey, string> = {
+    opening,
+    company_knowledge: `${STEP_TRANSITIONS.company_knowledge} ${STATIC_QUESTIONS.company_knowledge}`,
+    role_motivation: `${STEP_TRANSITIONS.role_motivation} ${STATIC_QUESTIONS.role_motivation}`,
+    personalized_experience_1: `${STEP_TRANSITIONS.personalized_experience_1} ${args.personalizedQuestions[0]}`,
+    personalized_experience_2: `${STEP_TRANSITIONS.personalized_experience_2} ${args.personalizedQuestions[1]}`,
+    salary_expectations: `${STEP_TRANSITIONS.salary_expectations} ${STATIC_QUESTIONS.salary_expectations}`,
+    availability: `${STEP_TRANSITIONS.availability} ${STATIC_QUESTIONS.availability}`,
+    close: STATIC_QUESTIONS.close,
+  }
+
   return {
-    interviewerName: INTERVIEWER_NAMES[Math.floor(Math.random() * INTERVIEWER_NAMES.length)],
+    interviewerName,
     companyName: args.companyName,
     roleTitle: args.roleTitle,
-    personalizedTopic: args.personalizedTopic,
+    personalizedQuestions: args.personalizedQuestions,
+    promptPlan,
     stepOrder: [
       'opening',
       'company_knowledge',
       'role_motivation',
-      'personalized_experience',
+      'personalized_experience_1',
+      'personalized_experience_2',
       'salary_expectations',
       'availability',
       'close',
@@ -200,24 +214,33 @@ export function buildInitialHrState(args: {
 }
 
 export function buildOpeningLine(state: HrScriptState): string {
-  return `Hi, this is ${state.interviewerName} calling from ${state.companyName} about the ${state.roleTitle} position. Thanks for taking the time to chat today. I have a few quick questions, and then we’ll wrap up. To start, can you tell me a bit about yourself?`
+  return state.promptPlan.opening
 }
 
-export function buildPersonalizedQuestion(state: HrScriptState): string {
-  return `I saw that you have experience with ${state.personalizedTopic}. Could you tell me a bit more about that and how it relates to this role?`
+export function buildPersonalizedQuestions(resumeText: string, roleTitle: string): [string, string] {
+  const topics = extractPersonalizedTopics(resumeText)
+  const firstTopic = topics[0] || 'work that is most relevant to this position'
+  const secondTopic = topics[1] || 'the strongest part of your recent experience'
+
+  return [
+    `I noticed your background includes ${firstTopic}. Could you walk me through that experience and how it would help you in the ${roleTitle} role?`,
+    `I also saw experience with ${secondTopic}. What did you learn from that work, and how would it translate to this position?`,
+  ]
 }
 
 export function getCurrentQuestionText(state: HrScriptState): string {
   const step = state.stepOrder[state.currentStepIndex]
   if (step === 'opening') return buildOpeningLine(state)
-  if (step === 'personalized_experience') return buildPersonalizedQuestion(state)
+  if (step === 'personalized_experience_1') return state.personalizedQuestions[0]
+  if (step === 'personalized_experience_2') return state.personalizedQuestions[1]
   return STATIC_QUESTIONS[step as keyof typeof STATIC_QUESTIONS]
 }
 
 export function getCurrentAudioKey(state: HrScriptState): string | undefined {
   const step = state.stepOrder[state.currentStepIndex]
   if (step === 'opening') return undefined
-  if (step === 'personalized_experience') return undefined
+  if (step === 'personalized_experience_1') return undefined
+  if (step === 'personalized_experience_2') return undefined
   return QUESTION_AUDIO_KEYS[step]
 }
 
@@ -250,7 +273,7 @@ export function classifyHrResponse(text: string): InterviewMode | 'vague' {
   }
 
   const wordCount = normalized.split(/\s+/).filter(Boolean).length
-  if (wordCount < 6) return 'vague'
+  if (wordCount < 3) return 'vague'
 
   const vaguePatterns = [
     'not sure',
@@ -259,6 +282,7 @@ export function classifyHrResponse(text: string): InterviewMode | 'vague' {
     'kind of',
     'sort of',
     'whatever',
+    'i guess',
   ]
   if (vaguePatterns.some((phrase) => normalized.includes(phrase))) {
     return 'vague'
@@ -353,9 +377,10 @@ export function handleHrTurn(state: HrScriptState, userMessage: string): HrTurnD
   }
 
   const questionText = getCurrentQuestionText(nextState)
-  const transitionText = interimTransition ? `${interimTransition.text} ` : ''
-  const assistantText = `${transitionText}${questionText}`.trim()
-  const shouldGenerateFullLine = Boolean(interimTransition) || nextStep === 'opening' || nextStep === 'personalized_experience'
+  const assistantText = interimTransition
+    ? `${interimTransition.text} ${questionText}`.trim()
+    : nextState.promptPlan[nextStep]
+  const shouldGenerateFullLine = true
 
   return {
     assistantText,
@@ -392,22 +417,50 @@ export function extractRoleTitle(jobDescription: string): string {
   return 'this position'
 }
 
-export function extractPersonalizedTopic(resumeText: string): string {
+export function extractPersonalizedTopics(resumeText: string): string[] {
   const lines = resumeText
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
 
-  const bulletLike = lines.find((line) => /^(led|managed|built|created|owned|developed|improved|launched|designed)/i.test(line))
-  if (bulletLike) {
-    return bulletLike.replace(/^[•*-]\s*/, '').split(/[.,;:]/)[0].slice(0, 60)
+  const actionLines = lines
+    .map((line) => line.replace(/^[•*-]\s*/, ''))
+    .filter((line) => /^(led|managed|built|created|owned|developed|improved|launched|designed|implemented|coordinated|supported|drove|scaled)/i.test(line))
+    .map((line) => line.split(/[.;]/)[0].trim())
+    .filter((line) => line.length > 18)
+
+  const normalized = actionLines
+    .map((line) => line.replace(/\s+/g, ' ').slice(0, 90))
+    .filter((line, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === line.toLowerCase()) === index)
+
+  if (normalized.length >= 2) {
+    return normalized.slice(0, 2)
   }
 
-  const strongPhrase = resumeText.match(/\b(customer retention|inventory management|project coordination|operations planning|b2b sales|process improvement|data analysis|team leadership)\b/i)
-  if (strongPhrase?.[1]) return strongPhrase[1]
+  const strongPhrases = Array.from(
+    new Set(
+      Array.from(
+        resumeText.matchAll(/\b(customer retention|inventory management|project coordination|operations planning|b2b sales|process improvement|data analysis|team leadership|cross-functional collaboration|account management|process automation|stakeholder management)\b/gi)
+      ).map((match) => match[1])
+    )
+  )
+
+  const combined = [
+    ...normalized,
+    ...strongPhrases,
+  ].filter((line, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === line.toLowerCase()) === index)
+
+  if (combined.length >= 2) {
+    return combined.slice(0, 2)
+  }
+
+  if (combined.length === 1) {
+    return [combined[0], 'working closely with teams and stakeholders']
+  }
 
   const sentence = lines.find((line) => line.length > 20)
-  return sentence ? sentence.split(/[.,;:]/)[0].slice(0, 60) : 'relevant experience'
+  const fallback = sentence ? sentence.split(/[.,;:]/)[0].slice(0, 80) : 'relevant experience'
+  return [fallback, 'the most relevant part of your background']
 }
 
 export function buildDefaultOpeningAudioText(state: HrScriptState): string {
@@ -415,5 +468,5 @@ export function buildDefaultOpeningAudioText(state: HrScriptState): string {
 }
 
 export function pickTransitionAudioKey(): string {
-  return TRANSITION_AUDIO_KEYS[Math.floor(Math.random() * TRANSITION_AUDIO_KEYS.length)]
+  return 'got_it'
 }

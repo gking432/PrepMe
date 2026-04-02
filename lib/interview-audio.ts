@@ -70,6 +70,15 @@ function hrAudioPath(fileName: string) {
   return path.join(process.cwd(), 'public', 'audio', 'hr-screen', fileName)
 }
 
+function getSpeechCacheNamespace() {
+  const voiceId = process.env.ELEVENLABS_VOICE_ID
+  const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2'
+  if (process.env.ELEVENLABS_API_KEY && voiceId) {
+    return `generated/elevenlabs-${voiceId}-${modelId}`
+  }
+  return 'generated/openai-alloy'
+}
+
 async function writeBase64Audio(filePath: string, audioBase64: string) {
   await fs.mkdir(path.dirname(filePath), { recursive: true })
   await fs.writeFile(filePath, Buffer.from(audioBase64, 'base64'))
@@ -88,9 +97,10 @@ export async function getOrCreateCachedSpeech(args: {
   cacheKey?: string
   text: string
 }): Promise<string | null> {
+  const namespace = getSpeechCacheNamespace()
   const fileName = args.cacheKey
-    ? `${args.cacheKey}.mp3`
-    : `generated/${crypto.createHash('sha1').update(args.text).digest('hex')}.mp3`
+    ? `${namespace}/${args.cacheKey}.mp3`
+    : `${namespace}/${crypto.createHash('sha1').update(args.text).digest('hex')}.mp3`
 
   const cached = await loadCachedSpeech(fileName)
   if (cached) return cached

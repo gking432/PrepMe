@@ -3,7 +3,6 @@ import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
 import { getCurrentPrompt, handleHrTurn } from '@/lib/hr-screen-script'
-import { getOrCreateCachedSpeech, loadCachedSpeech } from '@/lib/interview-audio'
 
 let _openai: OpenAI | null = null
 
@@ -95,29 +94,9 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', sessionId)
 
-    const audioSequenceBase64 = await Promise.all(
-      decision.audioSegments.map(async (segment) => {
-        if (segment.type === 'fixed') {
-          return loadCachedSpeech(`${segment.key}.mp3`)
-        }
-
-        return getOrCreateCachedSpeech({
-          cacheKey: segment.cacheKey,
-          text: segment.text,
-          requireElevenLabs: true,
-        })
-      })
-    )
-
-    if (!audioSequenceBase64.length || audioSequenceBase64.some((item) => !item)) {
-      return NextResponse.json({ error: 'Failed to generate scripted HR audio' }, { status: 500 })
-    }
-
     return NextResponse.json({
       userMessage: `You: ${userMessage}`,
       assistantMessage: `Interviewer: ${decision.assistantText}`,
-      audioBase64: audioSequenceBase64[0],
-      audioSequenceBase64,
       complete: decision.complete,
       conversationPhase: decision.complete ? 'closing' : 'screening',
       scriptedMode: true,

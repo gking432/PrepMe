@@ -1230,7 +1230,9 @@ export default function InterviewPage() {
       // Ensure isListening stays true throughout conversation
       setIsListening(true)
       
-      if (!isScriptedHr && data.audioSequenceBase64?.length) {
+      if (isScriptedHr) {
+        // Scripted HR already played the next prompt locally when recording stopped.
+      } else if (data.audioSequenceBase64?.length) {
         try {
           console.log('Playing AI response audio sequence...')
           await playAudio(data.audioSequenceBase64)

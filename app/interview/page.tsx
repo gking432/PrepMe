@@ -302,6 +302,7 @@ export default function InterviewPage() {
       // For HR screen, allow proceeding without account (anonymous mode)
       // Check for temp data in localStorage
       let tempInterviewData = null
+      let reuseInterviewDataId: string | null = null
       if (!authSession) {
         const tempDataStr = localStorage.getItem('temp_interview_data')
         if (tempDataStr) {
@@ -312,13 +313,15 @@ export default function InterviewPage() {
           router.push('/auth/login')
           return
         }
+      } else {
+        reuseInterviewDataId = localStorage.getItem('prepme_retake_interview_data_id')
       }
 
       // Create session via API (uses supabaseAdmin to bypass RLS for anonymous users)
       const sessionRes = await fetch('/api/interview/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage, tempInterviewData }),
+        body: JSON.stringify({ stage, tempInterviewData, reuseInterviewDataId }),
       })
       if (!sessionRes.ok) {
         const err = await sessionRes.json()
@@ -329,6 +332,7 @@ export default function InterviewPage() {
       setSessionId(newSessionId)
       sessionIdRef.current = newSessionId
       console.log('Created new interview session:', newSessionId)
+      localStorage.removeItem('prepme_retake_interview_data_id')
       
       // Mark interview as active before connecting
       isInterviewActiveRef.current = true
@@ -650,6 +654,7 @@ export default function InterviewPage() {
       // For HR screen, allow proceeding without account (anonymous mode)
       // Check for temp data in localStorage
       let tempInterviewData = null
+      let reuseInterviewDataId: string | null = null
       if (!authSession) {
         const tempDataStr = localStorage.getItem('temp_interview_data')
         if (tempDataStr) {
@@ -660,6 +665,8 @@ export default function InterviewPage() {
           router.push('/auth/login')
           return
         }
+      } else {
+        reuseInterviewDataId = localStorage.getItem('prepme_retake_interview_data_id')
       }
 
       // Reuse existing session if one was already created, otherwise create new
@@ -669,7 +676,7 @@ export default function InterviewPage() {
         const sessionRes = await fetch('/api/interview/create-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stage, tempInterviewData }),
+          body: JSON.stringify({ stage, tempInterviewData, reuseInterviewDataId }),
         })
         if (!sessionRes.ok) {
           const err = await sessionRes.json()
@@ -681,6 +688,7 @@ export default function InterviewPage() {
         setSessionId(newSessionId)
         sessionIdRef.current = newSessionId
         console.log('Created new interview session:', newSessionId)
+        localStorage.removeItem('prepme_retake_interview_data_id')
       } else {
         console.log('Reusing existing session from Realtime attempt:', activeSessionId)
       }

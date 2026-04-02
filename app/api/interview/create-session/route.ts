@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { stage, tempInterviewData } = await request.json()
+    const { stage, tempInterviewData, reuseInterviewDataId } = await request.json()
 
     // Get authenticated user if present
     const supabase = createRouteHandlerClient({ cookies })
@@ -21,15 +21,27 @@ export async function POST(request: NextRequest) {
     let interviewDataId: string | null = null
 
     if (session) {
-      // Logged-in user: fetch their latest interview data record
-      const { data: interviewData } = await supabaseAdmin
-        .from('user_interview_data')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      interviewDataId = interviewData?.id || null
+      if (reuseInterviewDataId) {
+        const { data: interviewData } = await supabaseAdmin
+          .from('user_interview_data')
+          .select('id')
+          .eq('id', reuseInterviewDataId)
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+        interviewDataId = interviewData?.id || null
+      }
+
+      if (!interviewDataId) {
+        // Logged-in user: fetch their latest interview data record
+        const { data: interviewData } = await supabaseAdmin
+          .from('user_interview_data')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        interviewDataId = interviewData?.id || null
+      }
     } else if (tempInterviewData) {
       // Anonymous user: save temp data to DB so the interview API can access it
       const { data: savedData } = await supabaseAdmin

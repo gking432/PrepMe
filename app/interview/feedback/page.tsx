@@ -2212,6 +2212,73 @@ export default function InterviewDashboard() {
     setWalkthroughActive(false)
   }
 
+  const handleRetakeInterview = async () => {
+    try {
+      if (!currentSessionData?.id) {
+        router.push('/dashboard')
+        return
+      }
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const { data: sessionRow, error: sessionError } = await supabase
+        .from('interview_sessions')
+        .select(`
+          id,
+          stage,
+          user_interview_data_id,
+          user_interview_data (
+            resume_text,
+            job_description_text,
+            company_website,
+            notes
+          )
+        `)
+        .eq('id', currentSessionData.id)
+        .single()
+
+      if (sessionError || !sessionRow) {
+        console.error('Failed to load retake session data:', sessionError)
+        router.push('/dashboard')
+        return
+      }
+
+      const stage = (sessionRow.stage === 'team_interview'
+        ? 'culture_fit'
+        : sessionRow.stage === 'final_interview'
+          ? 'final'
+          : sessionRow.stage) as string
+
+      const linkedInterviewData = Array.isArray(sessionRow.user_interview_data)
+        ? sessionRow.user_interview_data[0]
+        : sessionRow.user_interview_data
+
+      if (session && sessionRow.user_interview_data_id) {
+        localStorage.setItem('prepme_retake_interview_data_id', sessionRow.user_interview_data_id)
+      } else if (linkedInterviewData) {
+        const jobDescriptionText = linkedInterviewData.job_description_text || ''
+        const companyMatch = jobDescriptionText.match(/^Company:\s*(.+)$/m)
+        const positionMatch = jobDescriptionText.match(/^Position:\s*(.+)$/m)
+
+        localStorage.setItem('temp_interview_data', JSON.stringify({
+          resumeText: linkedInterviewData.resume_text || '',
+          jobDescriptionText,
+          companyName: companyMatch?.[1]?.trim() || '',
+          positionTitle: positionMatch?.[1]?.trim() || '',
+          companyWebsite: linkedInterviewData.company_website || '',
+          notes: linkedInterviewData.notes || '',
+        }))
+      }
+
+      router.push(`/interview?stage=${stage}`)
+    } catch (error) {
+      console.error('Error preparing interview retake:', error)
+      router.push('/dashboard')
+    }
+  }
+
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
 
@@ -2236,7 +2303,7 @@ export default function InterviewDashboard() {
             feedback={feedback}
             currentSessionData={currentSessionData}
             currentStage={currentStage}
-            onRetakeInterview={() => router.push('/dashboard')}
+            onRetakeInterview={handleRetakeInterview}
             onUnlockNextStage={() => setShowPurchaseFlow(true)}
             artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
             onPrintArtifact={() => window.print()}

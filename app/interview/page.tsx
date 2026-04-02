@@ -597,6 +597,11 @@ export default function InterviewPage() {
     // Record start time for HR screen time tracking
     interviewStartTimeRef.current = Date.now()
     
+    if (stage === 'hr_screen') {
+      await startInterviewTraditional()
+      return
+    }
+
     // Try Realtime API first, fallback to optimized traditional approach
     try {
       await connectRealtime()
@@ -663,14 +668,21 @@ export default function InterviewPage() {
       setIsInterviewActive(true)
       
       // Start the interview conversation using traditional API
-      const response = await fetch('/api/interview/start', {
+      const startRoute = stage === 'hr_screen' ? '/api/interview/hr-scripted/start' : '/api/interview/start'
+      const startBody = stage === 'hr_screen'
+        ? {
+            sessionId: activeSessionId,
+            hrCompleted: localStorage.getItem('prepme_hr_completed') === 'true',
+          }
+        : {
+            stage,
+            sessionId: activeSessionId,
+          }
+
+      const response = await fetch(startRoute, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stage,
-          sessionId: activeSessionId,
-          hrCompleted: stage === 'hr_screen' ? localStorage.getItem('prepme_hr_completed') === 'true' : undefined,
-        }),
+        body: JSON.stringify(startBody),
       })
 
       if (!response.ok) {
@@ -1064,7 +1076,9 @@ export default function InterviewPage() {
         console.log('Sending request to /api/interview/voice', { stage })
       }
       
-      const response = await fetch('/api/interview/voice', {
+      const voiceRoute = stage === 'hr_screen' ? '/api/interview/hr-scripted/turn' : '/api/interview/voice'
+
+      const response = await fetch(voiceRoute, {
         method: 'POST',
         body: formData,
       })

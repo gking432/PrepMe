@@ -78,6 +78,26 @@ export default function InterviewPage() {
   const scriptedPromptIndexRef = useRef(0)
   const supabase = createClient()
 
+  const getOrCreateInterviewMediaStream = async () => {
+    const existingStream = mediaStreamRef.current
+    const hasLiveTrack = existingStream?.getAudioTracks().some((track) => track.readyState === 'live')
+
+    if (existingStream && hasLiveTrack) {
+      return existingStream
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+    })
+
+    mediaStreamRef.current = stream
+    return stream
+  }
+
   useEffect(() => {
     // Ensure interviewComplete starts as false (reset on page load)
     setInterviewComplete(false)
@@ -384,14 +404,7 @@ export default function InterviewPage() {
       }
 
       // Add local mic track — WebRTC handles encoding natively
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      })
-      mediaStreamRef.current = stream
+      const stream = await getOrCreateInterviewMediaStream()
       stream.getTracks().forEach((track) => pc.addTrack(track, stream))
 
       // Data channel for control events
@@ -844,7 +857,6 @@ export default function InterviewPage() {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           console.log('User interrupted - stopping current recording')
           mediaRecorderRef.current.stop()
-          mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
           setIsRecording(false)
         }
 
@@ -977,13 +989,7 @@ export default function InterviewPage() {
       console.log('Starting continuous voice recording...')
       
       // Request explicit permission
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      })
+      const stream = await getOrCreateInterviewMediaStream()
       setHasUserPermission(true)
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       mediaRecorderRef.current = mediaRecorder
@@ -997,12 +1003,6 @@ export default function InterviewPage() {
 
       mediaRecorder.onstop = async () => {
         console.log('MediaRecorder stopped event fired')
-        // Close the stream tracks to free up resources
-        const tracks = stream.getTracks()
-        tracks.forEach(track => {
-          track.stop()
-          console.log('Stopped track:', track.kind)
-        })
         
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         console.log('Recording stopped, audio blob size:', audioBlob.size, 'bytes')
@@ -1100,7 +1100,6 @@ export default function InterviewPage() {
   const stopVoiceInput = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
       setIsRecording(false)
     }
   }

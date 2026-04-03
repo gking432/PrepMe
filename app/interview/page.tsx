@@ -384,7 +384,13 @@ export default function InterviewPage() {
       }
 
       // Add local mic track — WebRTC handles encoding natively
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      })
       mediaStreamRef.current = stream
       stream.getTracks().forEach((track) => pc.addTrack(track, stream))
 
@@ -971,7 +977,13 @@ export default function InterviewPage() {
       console.log('Starting continuous voice recording...')
       
       // Request explicit permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      })
       setHasUserPermission(true)
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       mediaRecorderRef.current = mediaRecorder

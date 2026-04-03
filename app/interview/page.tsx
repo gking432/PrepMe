@@ -664,6 +664,11 @@ export default function InterviewPage() {
     try {
       console.log('Starting traditional interview approach')
 
+      if (stage === 'hr_screen') {
+        await getOrCreateInterviewMediaStream()
+        setHasUserPermission(true)
+      }
+
       // Check if a session was already created (e.g. by failed Realtime attempt)
       const existingSessionId = sessionIdRef.current
 

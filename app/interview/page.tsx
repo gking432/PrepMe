@@ -1160,6 +1160,7 @@ export default function InterviewPage() {
         }
 
         try {
+          await new Promise((resolve) => setTimeout(resolve, 250))
           await playAudio(nextPrompt.audioSequenceBase64)
         } catch (error) {
           console.error('Error playing scripted HR audio:', error)

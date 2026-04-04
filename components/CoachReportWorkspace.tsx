@@ -22,7 +22,7 @@ const SECTION_CONFIG: Array<{ key: ReportSection; label: string }> = [
   { key: 'overview', label: 'Overview' },
   { key: 'strengths', label: 'Strengths' },
   { key: 'issues', label: 'Issues' },
-  { key: 'criteria', label: 'Criteria' },
+  { key: 'criteria', label: 'Comparison' },
   { key: 'next_steps', label: 'Next Steps' },
 ]
 
@@ -416,18 +416,18 @@ export default function CoachReportWorkspace({
       const percentile = typeof comparativeAnalysis?.percentile_estimate === 'number'
         ? comparativeAnalysis.percentile_estimate
         : null
-      const standoutQualities = comparativeAnalysis?.standout_qualities || []
-      const avoidedWeaknesses = comparativeAnalysis?.common_weaknesses_avoided || []
-      const requirementGaps = comparativeAnalysis?.job_requirements_gaps || []
+      const standoutQualities = (comparativeAnalysis?.standout_qualities || []).slice(0, 2)
+      const avoidedWeaknesses = (comparativeAnalysis?.common_weaknesses_avoided || []).slice(0, 2)
+      const requirementGaps = (comparativeAnalysis?.job_requirements_gaps || []).slice(0, 2)
       const resumeVsInterview = comparativeAnalysis?.resume_vs_interview || ''
 
       if (percentile != null) {
         return (
-          <div className="flex h-full flex-col gap-4">
-            <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
+          <div className="grid h-full gap-4 xl:grid-cols-[320px_1fr]">
+            <div className="flex flex-col gap-4">
               <div className="rounded-[1.7rem] border border-violet-200 bg-violet-50/90 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">How You Compare</p>
-                <div className="mt-4 flex items-end justify-between gap-4">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Comparison</p>
+                <div className="mt-4 flex items-end justify-between gap-3">
                   <div>
                     <h2 className="text-4xl font-black text-slate-900">{percentile}th</h2>
                     <p className="text-sm font-bold text-slate-500">percentile</p>
@@ -439,11 +439,27 @@ export default function CoachReportWorkspace({
                 <p className="mt-4 text-sm leading-6 text-slate-700">
                   You performed better than {percentile}% of candidates interviewing for similar roles at this stage.
                 </p>
-                <p className="mt-3 text-sm font-bold text-violet-800">
+                <p className="mt-3 text-sm font-bold leading-6 text-violet-800">
                   {percentileInterpretation(percentile)}
                 </p>
               </div>
 
+              {resumeVsInterview ? (
+                <div className="rounded-[1.6rem] border border-violet-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Resume vs Interview</p>
+                  <p className="mt-3 line-clamp-6 text-sm leading-6 text-slate-700">{resumeVsInterview}</p>
+                </div>
+              ) : (
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Benchmark Note</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Benchmarks are based on current PrepMe interview data and will get tighter as more candidates complete this stage.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-4">
               <div className="rounded-[1.7rem] border border-slate-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
                 <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.18em] text-slate-500">
                   <span>Current benchmark estimate</span>
@@ -463,45 +479,40 @@ export default function CoachReportWorkspace({
                     <span>Top 25%</span>
                   </div>
                 </div>
-                <p className="mt-4 text-sm leading-6 text-slate-600">
-                  Benchmarks are based on current PrepMe interview data and will get tighter as more candidates complete this stage.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid flex-1 content-start gap-4 lg:grid-cols-3">
-              <div className="rounded-[1.6rem] border border-emerald-200 bg-emerald-50/80 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">What Made You Stand Out</p>
-                <div className="mt-4 space-y-3">
-                  {standoutQualities.length > 0 ? standoutQualities.map((item: string, idx: number) => (
-                    <div key={`${item}-${idx}`} className="rounded-[1.1rem] border border-emerald-200 bg-white/85 px-4 py-3 text-sm font-semibold leading-6 text-slate-700">
-                      {item}
-                    </div>
-                  )) : (
-                    <p className="text-sm leading-6 text-slate-600">No standout benchmark signals were recorded for this round yet.</p>
-                  )}
-                </div>
               </div>
 
-              <div className="rounded-[1.6rem] border border-amber-200 bg-amber-50/80 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Common Mistakes You Avoided</p>
-                <div className="mt-4 space-y-3">
-                  {avoidedWeaknesses.length > 0 ? avoidedWeaknesses.map((item: string, idx: number) => (
-                    <div key={`${item}-${idx}`} className="rounded-[1.1rem] border border-amber-200 bg-white/85 px-4 py-3 text-sm font-semibold leading-6 text-slate-700">
-                      {item}
-                    </div>
-                  )) : (
-                    <p className="text-sm leading-6 text-slate-600">No benchmark comparison notes were recorded here yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <div className="rounded-[1.6rem] border border-slate-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Role Match Notes</p>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-[1.6rem] border border-emerald-200 bg-emerald-50/80 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">Standout</p>
                   <div className="mt-4 space-y-3">
-                    {requirementGaps.length > 0 ? requirementGaps.slice(0, 3).map((item: string, idx: number) => (
-                      <div key={`${item}-${idx}`} className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                    {standoutQualities.length > 0 ? standoutQualities.map((item: string, idx: number) => (
+                      <div key={`${item}-${idx}`} className="rounded-[1.1rem] border border-emerald-200 bg-white/85 px-4 py-3 text-sm font-semibold leading-6 text-slate-700 line-clamp-3">
+                        {item}
+                      </div>
+                    )) : (
+                      <p className="text-sm leading-6 text-slate-600">No standout benchmark notes yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.6rem] border border-amber-200 bg-amber-50/80 p-5">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Mistakes Avoided</p>
+                  <div className="mt-4 space-y-3">
+                    {avoidedWeaknesses.length > 0 ? avoidedWeaknesses.map((item: string, idx: number) => (
+                      <div key={`${item}-${idx}`} className="rounded-[1.1rem] border border-amber-200 bg-white/85 px-4 py-3 text-sm font-semibold leading-6 text-slate-700 line-clamp-3">
+                        {item}
+                      </div>
+                    )) : (
+                      <p className="text-sm leading-6 text-slate-600">No benchmark comparison notes yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white/92 p-5 shadow-[0_16px_30px_rgba(15,23,42,0.06)]">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Role Match</p>
+                  <div className="mt-4 space-y-3">
+                    {requirementGaps.length > 0 ? requirementGaps.map((item: string, idx: number) => (
+                      <div key={`${item}-${idx}`} className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 line-clamp-3">
                         {item}
                       </div>
                     )) : (
@@ -509,13 +520,6 @@ export default function CoachReportWorkspace({
                     )}
                   </div>
                 </div>
-
-                {resumeVsInterview ? (
-                  <div className="rounded-[1.6rem] border border-violet-200 bg-violet-50/80 p-5">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Resume vs Interview</p>
-                    <p className="mt-4 text-sm leading-6 text-slate-700">{resumeVsInterview}</p>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>

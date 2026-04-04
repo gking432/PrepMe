@@ -131,19 +131,6 @@ export default function TeachCard({
             </p>
           )}
 
-          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
-              <ThumbsUp className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
-                Full example
-              </span>
-            </div>
-            <div className="px-4 py-4">
-              <p className="text-base leading-relaxed text-emerald-900">
-                &ldquo;{example.goodAnswer}&rdquo;
-              </p>
-            </div>
-          </div>
         </div>
       ),
     },

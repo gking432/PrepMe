@@ -1118,12 +1118,12 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I care a lot about doing good work, and I always try to improve when I get feedback. In general I take feedback seriously and try to support the team however I can.',
             goodAnswer:
-              'The surface question is about feedback, but the hidden question is whether I can absorb criticism and change my behavior. In one role, I was told my project updates were too detailed for executives. I started sending one-page summaries with decisions, risks, and asks, and the updates became easier for leadership to use.',
+              'In one role, my manager told me my project updates were too detailed for executives and made it harder to spot the real decisions. I reworked the format into a one-page summary with decisions, risks, and asks, then used that format for the next few leadership reviews. The updates became easier for executives to use, and I kept that structure going forward.',
             breakdown: {
-              SurfaceQuestion: 'Tell me about difficult feedback.',
-              HiddenQuestion: 'Can you accept criticism and adapt?',
-              WhyBadFails: 'It talks about values in general, not the feedback example.',
-              WhyGoodWorks: 'It answers both the event and the capability being evaluated.',
+              SurfaceQuestion: 'A real example of difficult feedback you received.',
+              HiddenQuestion: 'Can you absorb criticism, adjust, and improve your behavior?',
+              WhyBadFails: 'It stays abstract and never gives an actual moment where feedback was delivered.',
+              WhyGoodWorks: 'It shows the feedback, the change made in response, and the result of adapting.',
             },
           },
         },
@@ -1196,11 +1196,11 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I am usually very collaborative and try to keep everyone aligned. In one situation I was involved in a launch across several teams, and we eventually worked through the differences.',
             goodAnswer:
-              'The interviewer is testing whether I can disagree professionally and still move work forward. In one role, I pushed back on a rushed launch date because support documentation was not ready. I brought evidence from recent ticket trends, proposed a one-week delay, and we launched with fewer escalations.',
+              'In one role, my manager wanted to keep a launch date even though our support documentation was still incomplete. I pulled recent ticket trends, showed where customers were already getting stuck, and recommended delaying the launch by one week so the team could finish the materials. We made the change, launched the following week, and saw fewer avoidable escalations.',
             breakdown: {
-              Trap: 'A strong story can still be off-topic if it proves the wrong thing.',
-              HiddenQuestion: 'Can you challenge upward with judgment?',
-              BetterChoice: 'Use the example that directly demonstrates the evaluated skill.',
+              Trap: 'A polished story still misses if it proves teamwork in general instead of respectful disagreement.',
+              HiddenQuestion: 'Can you push back professionally and still move the work forward?',
+              BetterChoice: 'Pick the story where you actually disagreed, explained your reasoning, and helped reach a better outcome.',
             },
           },
         },
@@ -1269,11 +1269,11 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I worked closely with many teams during a large project, and communication was really important.',
             goodAnswer:
-              'The hidden question is whether I can make sound decisions under uncertainty. During a vendor outage, we did not yet know the root cause, but I still had to decide whether to pause customer-facing changes. I froze new releases for 24 hours, set a communication cadence, and reopened the pipeline only after error rates normalized.',
+              'During a vendor outage, we did not yet know the root cause, but I still had to decide whether to keep customer-facing changes moving. I paused new releases for 24 hours, set a communication cadence with support and engineering, and used error-rate thresholds to decide when it was safe to resume. Once the metrics stabilized, we reopened the pipeline with less risk to customers.',
             breakdown: {
-              EdgeCase: 'A teamwork story may sound related but does not prove judgment under uncertainty.',
-              NarrowEvaluation: 'Decision-making with incomplete information.',
-              GoodFit: 'The answer shows a choice, a rationale, and a controlled response.',
+              EdgeCase: 'A related story can still miss if it never shows a decision made under uncertainty.',
+              NarrowEvaluation: 'Can you make a sound call before you have the full picture?',
+              GoodFit: 'This answer shows the decision, the reasoning behind it, and the control measures used.',
             },
           },
         },

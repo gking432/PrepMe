@@ -34,47 +34,13 @@ function breakdownKeyLabel(key: string): string {
     .trim()
 }
 
-function splitExplanation(explanation: string) {
-  const sentences = explanation
+function summarizeExplanation(explanation: string) {
+  const [firstSentence] = explanation
     .split(/(?<=[.!?])\s+/)
     .map((sentence) => sentence.trim())
     .filter(Boolean)
 
-  if (sentences.length <= 1) {
-    return {
-      intro: explanation,
-      outro: '',
-    }
-  }
-
-  return {
-    intro: sentences.slice(0, 2).join(' '),
-    outro: sentences.slice(2).join(' '),
-  }
-}
-
-function breakdownLead(key: string): string | null {
-  const leads: Record<string, string> = {
-    situation: 'Situation gives context.',
-    task: 'Task states the goal.',
-    action: 'Action shows what you did.',
-    result: 'Result proves it worked.',
-    nameit: 'Name it clearly.',
-    quantifyit: 'Quantify the change.',
-    showimpact: 'Show why it mattered.',
-    nohedges: 'Cut the hedge words.',
-    leadwithanswer: 'Lead with the answer.',
-    activevoice: 'Use active voice.',
-    theirpriority: 'Start with their priority.',
-    yourevidence: 'Then show your evidence.',
-    theconnection: 'Finish the connection.',
-    surfacequestion: 'Answer the surface question.',
-    hiddenquestion: 'Also answer the hidden question.',
-    whybadfails: 'This is why the weak version misses.',
-    whygoodworks: 'This is why the strong version lands.',
-  }
-
-  return leads[key.toLowerCase().replace(/[^a-z]/g, '')] || null
+  return firstSentence || explanation
 }
 
 export default function TeachCard({
@@ -84,7 +50,7 @@ export default function TeachCard({
   onContinue,
 }: TeachCardProps) {
   const [step, setStep] = useState(0)
-  const { intro, outro } = useMemo(() => splitExplanation(explanation), [explanation])
+  const summary = useMemo(() => summarizeExplanation(explanation), [explanation])
 
   const cards = useMemo(() => ([
     {
@@ -92,45 +58,31 @@ export default function TeachCard({
       title,
       preppi: 'Start with the pattern. Then we will compare weak and strong answers.',
       content: (
-        <div className="space-y-5">
-          <p className="text-base leading-relaxed text-slate-700 md:text-lg">
-            {intro}
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+            {summary}
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {Object.entries(example.breakdown).map(([key, value], index) => (
               <div
                 key={key}
-                className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 shadow-sm"
+                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3"
               >
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
-                    {formatBreakdownKey(key, index)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
-                      {breakdownKeyLabel(key)}
-                    </p>
-                    {breakdownLead(key) && (
-                      <p className="mt-1 text-sm font-semibold text-slate-900 md:text-base">
-                        {breakdownLead(key)}
-                      </p>
-                    )}
-                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-base">
-                      {value}
-                    </p>
-                  </div>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                  {formatBreakdownKey(key, index)}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
+                    {breakdownKeyLabel(key)}
+                  </p>
+                  <p className="mt-1 text-sm leading-snug text-slate-700 md:text-[15px]">
+                    {value}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
-
-          {outro && (
-            <p className="text-base leading-relaxed text-slate-700 md:text-lg">
-              {outro}
-            </p>
-          )}
-
         </div>
       ),
     },
@@ -201,7 +153,7 @@ export default function TeachCard({
         </div>
       ),
     },
-  ]), [example, intro, outro, title])
+  ]), [example, summary, title])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

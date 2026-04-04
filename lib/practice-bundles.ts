@@ -89,7 +89,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you solved a difficult problem.',
             badAnswer:
-              'At my last job there was a reporting issue and I worked hard on it with the team. We did a lot, and it ended up better. It was a good learning experience.',
+              'At my last job we had an issue with reporting, and I was involved in helping fix it. I worked with the team on a few changes and things ended up improving. It taught me a lot about staying flexible.',
             goodAnswer:
               'At my last job, our weekly revenue report was delayed by two days because data from three systems had to be merged manually. I was responsible for making the report reliable before the CFO review. I mapped the data sources, built one validation script, and created a single export template so the team stopped reconciling by hand. Within two weeks, the report went out the same day every Friday and finance stopped escalating data errors.',
             breakdown: {
@@ -157,7 +157,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you improved a process.',
             badAnswer:
-              'Our onboarding was confusing, so I helped improve it. We made updates and it was smoother afterward.',
+              'Our onboarding process had a few issues, so I got involved and helped clean some of it up. We made a couple of updates and it definitely felt smoother afterward for the team.',
             goodAnswer:
               'New hires were taking almost two weeks to get system access, which slowed their ramp-up. I was asked to shorten that timeline without adding headcount. I mapped every approval step, removed duplicate manager sign-offs, and created one request form tied to IT and HR workflows. Access time dropped from 9 business days to 3, and new hires completed their first tasks in week one.',
             breakdown: {
@@ -227,7 +227,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Describe a time you influenced without authority.',
             badAnswer:
-              'We had a disagreement between teams, and I spent a lot of time aligning people. In the end, we moved forward and it all worked out.',
+              'There was some disagreement between teams, and I spent a lot of time trying to get everyone aligned. Eventually we got on the same page and moved forward, so it ended up working out.',
             goodAnswer:
               'Product and support disagreed on the rollout timeline for a billing change, which risked confusing current customers. My goal was to get agreement on a launch sequence without formal authority over either team. I collected the top support risks, paired them with product dependencies, and proposed a phased launch with customer messaging checkpoints. Both teams adopted the plan, the change shipped on schedule, and support tickets stayed flat during rollout.',
             breakdown: {
@@ -345,7 +345,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a project you are proud of.',
             badAnswer:
-              'I improved our onboarding process a lot and it really helped the team. It was more efficient and people liked it.',
+              'I worked on our onboarding process and made it a lot better for the team. It became more efficient overall, and people appreciated that it was easier to use.',
             goodAnswer:
               'I redesigned the customer onboarding checklist for our SMB accounts. Before the change, setup took an average of 12 days; after I removed duplicate approvals and added automated reminders, it dropped to 7 days. That shorter ramp meant customers reached first value faster and our implementation team could handle more accounts each month.',
             breakdown: {
@@ -422,7 +422,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Describe a time you increased efficiency.',
             badAnswer:
-              'I made our reporting process much more efficient, and the team definitely noticed the difference.',
+              'I improved our reporting process and made it run a lot more efficiently. The team noticed it was easier to work with after the changes.',
             goodAnswer:
               'I streamlined the monthly compliance report by removing duplicate data pulls and standardizing the template. The process went from 5 hours of manual work to 90 minutes, which freed the analyst team to review exceptions instead of formatting spreadsheets.',
             breakdown: {
@@ -497,7 +497,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you improved customer experience.',
             badAnswer:
-              'I handled a lot of tickets and customers were happier. We also had more meetings, which helped us stay aligned.',
+              'I spent a lot of time handling tickets and trying to support customers better. Customers seemed happier afterward, and our team also stayed more aligned through regular check-ins.',
             goodAnswer:
               'I noticed billing tickets were taking too long because agents had to verify account history in two systems. I created one lookup view and a macro for the three most common billing issues. First-response time on billing tickets fell from 11 hours to 4, and CSAT on that queue rose from 82% to 91%.',
             breakdown: {
@@ -861,7 +861,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Why do you want to work here?',
             badAnswer:
-              'Your company seems great, and I think it would be a good place to grow my career. I like the culture and the mission.',
+              'Your company seems like a great place to grow, and I really like what you are building. The culture and mission both stood out to me, so it feels like a place where I could see myself doing well.',
             goodAnswer:
               'What stands out to me is your push to shorten implementation time for mid-market customers. In my current role, I redesigned onboarding steps and cut average time-to-launch from 21 days to 12. That is why this role makes sense to me: the problem you are solving is one I have already improved in practice.',
             breakdown: {
@@ -933,7 +933,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Why this role?',
             badAnswer:
-              'I saw that your company is expanding in Europe, which is exciting to me.',
+              'I saw that your company is expanding in Europe, which sounded exciting to me. It feels like a good time to join, and I would love to be part of that growth.',
             goodAnswer:
               'I saw that this team is expanding in Europe and building more multilingual support coverage. In my last role, I standardized escalation flows across three regions, which reduced handoff delays and made issue ownership clearer. That is why this role stands out to me: the scaling challenge is one I have already worked through.',
             breakdown: {
@@ -1006,7 +1006,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Why are you interested in this company?',
             badAnswer:
-              'I know you were founded in 2017, raised funding last year, and your headquarters moved recently, which I found interesting.',
+              'I know you were founded a few years ago, raised funding recently, and have been growing quickly. Those are all really interesting signs to me that the company is heading in a strong direction.',
             goodAnswer:
               'I noticed your recent hiring push in customer education, which suggests adoption and retention are core priorities right now. In my current role, I built a webinar-to-onboarding handoff that increased activation for new accounts. That is the bridge for me: the customer problem you are investing in is one I have already helped solve.',
             breakdown: {
@@ -1116,7 +1116,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you received difficult feedback.',
             badAnswer:
-              'I work really hard and care a lot about quality. In general, I always try to improve and support the team.',
+              'I care a lot about doing good work, and I always try to improve when I get feedback. In general I take feedback seriously and try to support the team however I can.',
             goodAnswer:
               'The surface question is about feedback, but the hidden question is whether I can absorb criticism and change my behavior. In one role, I was told my project updates were too detailed for executives. I started sending one-page summaries with decisions, risks, and asks, and the updates became easier for leadership to use.',
             breakdown: {
@@ -1194,7 +1194,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you disagreed with your manager.',
             badAnswer:
-              'I am generally very collaborative and I care a lot about teamwork. One time I led a successful launch across several teams.',
+              'I am usually very collaborative and try to keep everyone aligned. In one situation I was involved in a launch across several teams, and we eventually worked through the differences.',
             goodAnswer:
               'The interviewer is testing whether I can disagree professionally and still move work forward. In one role, I pushed back on a rushed launch date because support documentation was not ready. I brought evidence from recent ticket trends, proposed a one-week delay, and we launched with fewer escalations.',
             breakdown: {

@@ -161,10 +161,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'New hires were taking almost two weeks to get system access, which slowed their ramp-up. I was asked to shorten that timeline without adding headcount. I mapped every approval step, removed duplicate manager sign-offs, and created one request form tied to IT and HR workflows. Access time dropped from 9 business days to 3, and new hires completed their first tasks in week one.',
             breakdown: {
-              Focus: 'The hardest part is not naming the problem; it is proving your intervention.',
+              Focus: 'The weak version names the problem but never proves what changed.',
               Action: 'Mapped steps, removed duplicate approvals, created one request form.',
-              Result: 'Access time dropped from 9 days to 3.',
-              WhyItWorks: 'Specific actions create credibility and the metric closes the story.',
+              Result: 'Access time dropped from 9 business days to 3.',
+              WhyItWorks: 'Concrete steps and a hard result make the answer believable.',
             },
           },
         },
@@ -231,7 +231,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'Product and support disagreed on the rollout timeline for a billing change, which risked confusing current customers. My goal was to get agreement on a launch sequence without formal authority over either team. I collected the top support risks, paired them with product dependencies, and proposed a phased launch with customer messaging checkpoints. Both teams adopted the plan, the change shipped on schedule, and support tickets stayed flat during rollout.',
             breakdown: {
-              EdgeCase: 'The answer sounds polished only if Action shows real influence moves.',
+              EdgeCase: 'This only works if the influence move is specific, not generic.',
               Situation: 'Product and support disagreed on rollout timing.',
               Action: 'Collected risks, mapped dependencies, proposed phased launch.',
               Result: 'Shipped on schedule and support tickets stayed flat.',
@@ -429,7 +429,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               Claim: 'Increased efficiency.',
               Proof: 'Reduced manual work from 5 hours to 90 minutes.',
               Impact: 'Freed analysts for higher-value review work.',
-              Tip: 'Choose the metric that directly proves the claim.',
+              Tip: 'Use the metric that proves the exact claim you are making.',
             },
           },
         },
@@ -501,9 +501,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'I noticed billing tickets were taking too long because agents had to verify account history in two systems. I created one lookup view and a macro for the three most common billing issues. First-response time on billing tickets fell from 11 hours to 4, and CSAT on that queue rose from 82% to 91%.',
             breakdown: {
-              EdgeCase: 'Ticket volume alone would not prove customer experience improved.',
+              EdgeCase: 'A busy queue alone does not prove customer experience improved.',
               RelevantMetric: 'First-response time and CSAT fit the claim.',
-              Impact: 'The evidence ties directly to the customer experience outcome.',
+              Impact: 'Both metrics connect directly to a better customer experience.',
             },
           },
         },
@@ -612,9 +612,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'You should hire me because I have already done this work at scale. I led a process redesign that cut response time by 35%, and I can bring that same operational discipline to this role.',
             breakdown: {
-              NoHedges: 'The good answer removes "I think," "probably," and "kind of."',
-              LeadWithAnswer: 'It starts with a clear claim instead of circling toward one.',
-              ActiveVoice: 'It says "I led" instead of hiding behind passive language.',
+              NoHedges: 'The weak version wobbles with "I think," "probably," and "kind of."',
+              LeadWithAnswer: 'The strong version starts with the answer right away.',
+              ActiveVoice: 'It says "I led" instead of hiding behind vague phrasing.',
             },
           },
         },
@@ -679,9 +679,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'My leadership style is collaborative and direct. I set clear priorities, remove blockers early, and give teams enough context to move without waiting on me.',
             breakdown: {
-              DirectClaim: 'Starts with the answer immediately.',
-              ActiveVerbs: 'Set, remove, and give are ownership verbs.',
-              Tone: 'Clear does not mean harsh; it means unambiguous.',
+              DirectClaim: 'The first sentence answers the question immediately.',
+              ActiveVerbs: 'Set, remove, and give make the answer sound owned.',
+              Tone: 'The delivery is clear without sounding aggressive.',
             },
           },
         },
@@ -752,9 +752,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'I address conflict early and directly. I start by clarifying the disagreement, align on the decision needed, and document next steps so the issue does not keep resurfacing.',
             breakdown: {
-              EdgeCase: 'Avoid fake certainty like "always" or "never" when it is not credible.',
-              ClearClaim: 'Start with a direct statement of approach.',
-              Support: 'Use process and evidence instead of hedges or exaggeration.',
+              EdgeCase: 'Do not replace hedging with fake certainty like "always" or "never."',
+              ClearClaim: 'Start with a direct statement of how you handle conflict.',
+              Support: 'Back the claim with process instead of exaggeration.',
             },
           },
         },
@@ -867,7 +867,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             breakdown: {
               TheirPriority: 'Shortening implementation time for mid-market customers.',
               YourEvidence: 'Cut average time-to-launch from 21 days to 12.',
-              TheConnection: 'Your past work directly matches their stated priority.',
+              TheConnection: 'Your past work matches the exact problem they care about.',
             },
           },
         },
@@ -937,9 +937,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'I saw that this team is expanding in Europe and building more multilingual support coverage. In my last role, I standardized escalation flows across three regions, which reduced handoff delays and made issue ownership clearer. That is why this role stands out to me: the scaling challenge is one I have already worked through.',
             breakdown: {
-              Miss: 'The bad answer notices a fact but never makes it relevant.',
-              Evidence: 'Regional escalation workflow experience is the proof.',
-              Connection: 'The candidate ties prior work to the company challenge.',
+              Miss: 'The weak version notices a fact but never makes it relevant.',
+              Evidence: 'Regional escalation workflow experience is the proof point.',
+              Connection: 'The answer links past work to the company problem.',
             },
           },
         },
@@ -1010,9 +1010,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'I noticed your recent hiring push in customer education, which suggests adoption and retention are core priorities right now. In my current role, I built a webinar-to-onboarding handoff that increased activation for new accounts. That is the bridge for me: the customer problem you are investing in is one I have already helped solve.',
             breakdown: {
-              EdgeCase: 'Random company facts do not prove understanding of the role.',
-              BetterResearch: 'Focus on business priorities that map to the job.',
-              Bridge: 'Tie those priorities to relevant proof from your experience.',
+              EdgeCase: 'Random company facts do not show real preparation.',
+              BetterResearch: 'Focus on a business priority that actually maps to the job.',
+              Bridge: 'Tie that priority to proof from your own background.',
             },
           },
         },
@@ -1122,8 +1122,8 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             breakdown: {
               SurfaceQuestion: 'A real example of difficult feedback you received.',
               HiddenQuestion: 'Can you absorb criticism, adjust, and improve your behavior?',
-              WhyBadFails: 'It stays abstract and never gives an actual moment where feedback was delivered.',
-              WhyGoodWorks: 'It shows the feedback, the change made in response, and the result of adapting.',
+              WhyBadFails: 'It stays abstract and never shows a real feedback moment.',
+              WhyGoodWorks: 'It shows the feedback, the adjustment, and the result.',
             },
           },
         },
@@ -1198,9 +1198,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'In one role, my manager wanted to keep a launch date even though our support documentation was still incomplete. I pulled recent ticket trends, showed where customers were already getting stuck, and recommended delaying the launch by one week so the team could finish the materials. We made the change, launched the following week, and saw fewer avoidable escalations.',
             breakdown: {
-              Trap: 'A polished story still misses if it proves teamwork in general instead of respectful disagreement.',
+              Trap: 'A polished story still misses if it proves teamwork instead of disagreement handled well.',
               HiddenQuestion: 'Can you push back professionally and still move the work forward?',
-              BetterChoice: 'Pick the story where you actually disagreed, explained your reasoning, and helped reach a better outcome.',
+              BetterChoice: 'Use the story where you pushed back, explained why, and improved the outcome.',
             },
           },
         },
@@ -1271,9 +1271,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'During a vendor outage, we did not yet know the root cause, but I still had to decide whether to keep customer-facing changes moving. I paused new releases for 24 hours, set a communication cadence with support and engineering, and used error-rate thresholds to decide when it was safe to resume. Once the metrics stabilized, we reopened the pipeline with less risk to customers.',
             breakdown: {
-              EdgeCase: 'A related story can still miss if it never shows a decision made under uncertainty.',
+              EdgeCase: 'A related story still misses if it never shows an actual decision under uncertainty.',
               NarrowEvaluation: 'Can you make a sound call before you have the full picture?',
-              GoodFit: 'This answer shows the decision, the reasoning behind it, and the control measures used.',
+              GoodFit: 'It shows the decision, the reasoning, and the risk control.',
             },
           },
         },
@@ -1384,7 +1384,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               Context: 'Duplicate invoices were creating operational pain for finance.',
               Action: 'Mapped failure points, planned phased cutover, partnered on checks.',
               Outcome: 'Errors dropped and monthly close improved.',
-              Reflection: 'Learned to front-load risk reviews on finance-impacting changes.',
+              Reflection: 'Front-load risk reviews when finance workflows are involved.',
             },
           },
         },
@@ -1450,9 +1450,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'I improved our handoff process between sales and implementation because key customer details were being lost after close. I added required fields to the CRM handoff, built a kickoff summary template, and reviewed the first ten handoffs with both teams. Implementation started projects with fewer surprises, and I learned that process fixes stick faster when both teams help design the checklist.',
             breakdown: {
-              MissingContext: 'Why the process mattered becomes clear when you name the pain.',
-              Action: 'The specific intervention gives the answer substance.',
-              Reflection: 'The lesson adds depth without making the answer longer for no reason.',
+              MissingContext: 'Name the pain so the process change actually matters.',
+              Action: 'Specific intervention is what gives the answer substance.',
+              Reflection: 'A short lesson adds maturity without dragging the answer out.',
             },
           },
         },
@@ -1514,10 +1514,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'I noticed new support agents were answering the same billing question inconsistently, which was frustrating customers and managers alike. I drafted a one-page decision guide, tested it with two senior agents, and rolled it into onboarding. Billing escalations dropped the following month, and it reinforced for me that small documentation fixes can create outsized operational stability.',
             breakdown: {
-              Stakes: 'The context shows why the issue mattered.',
-              Action: 'The initiative is concrete, not just claimed.',
-              Outcome: 'The result proves the effort worked.',
-              Reflection: 'The final lesson adds substance rather than filler.',
+              Stakes: 'The context shows why this issue was worth fixing.',
+              Action: 'The initiative is concrete instead of just claimed.',
+              Outcome: 'The result proves the change worked.',
+              Reflection: 'The final lesson adds substance instead of filler.',
             },
           },
         },

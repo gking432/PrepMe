@@ -74,8 +74,6 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const interviewStartTimeRef = useRef<number | null>(null)
-  const scriptedPromptPlanRef = useRef<Array<{ questionId: string; text: string; audioSequenceBase64: string[] }>>([])
-  const scriptedPromptIndexRef = useRef(0)
   const supabase = createClient()
 
   const getOrCreateInterviewMediaStream = async () => {
@@ -418,12 +416,12 @@ export default function InterviewPage() {
           session: {
             modalities: ['text', 'audio'],
             instructions: instructions || '',
-            input_audio_transcription: { model: 'whisper-1' },
+            input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.8,
+              threshold: 0.5,
               prefix_padding_ms: 300,
-              silence_duration_ms: 800,
+              silence_duration_ms: 500,
             },
             temperature: 0.7,
             max_response_output_tokens: 400,
@@ -644,11 +642,6 @@ export default function InterviewPage() {
   const startInterview = async () => {
     // Record start time for HR screen time tracking
     interviewStartTimeRef.current = Date.now()
-    
-    if (stage === 'hr_screen') {
-      await startInterviewTraditional()
-      return
-    }
 
     // Try Realtime API first, fallback to optimized traditional approach
     try {
@@ -725,16 +718,12 @@ export default function InterviewPage() {
       setIsInterviewActive(true)
       
       // Start the interview conversation using traditional API
-      const startRoute = stage === 'hr_screen' ? '/api/interview/hr-scripted/start' : '/api/interview/start'
-      const startBody = stage === 'hr_screen'
-        ? {
-            sessionId: activeSessionId,
-            hrCompleted: localStorage.getItem('prepme_hr_completed') === 'true',
-          }
-        : {
-            stage,
-            sessionId: activeSessionId,
-          }
+      const startRoute = '/api/interview/start'
+      const startBody = {
+        stage,
+        sessionId: activeSessionId,
+        hrCompleted: localStorage.getItem('prepme_hr_completed') === 'true',
+      }
 
       const response = await fetch(startRoute, {
         method: 'POST',
@@ -773,10 +762,6 @@ export default function InterviewPage() {
         throw new Error('Invalid response from interview start API')
       }
       setCurrentMessage(data.message)
-      if (stage === 'hr_screen' && Array.isArray(data.scriptPrompts)) {
-        scriptedPromptPlanRef.current = data.scriptPrompts
-        scriptedPromptIndexRef.current = 0
-      }
       
       // Initialize conversation phase for HR screen
       if (stage === 'hr_screen') {
@@ -1155,37 +1140,12 @@ export default function InterviewPage() {
         console.log('Sending request to /api/interview/voice', { stage })
       }
       
-      const voiceRoute = stage === 'hr_screen' ? '/api/interview/hr-scripted/turn' : '/api/interview/voice'
-      const isScriptedHr = stage === 'hr_screen' && scriptedPromptPlanRef.current.length > 0
-      const nextPrompt = isScriptedHr
-        ? scriptedPromptPlanRef.current[scriptedPromptIndexRef.current + 1] || null
-        : null
-      const isClosingPrompt = !!nextPrompt && scriptedPromptIndexRef.current + 1 === scriptedPromptPlanRef.current.length - 1
+      const voiceRoute = '/api/interview/voice'
 
       const responsePromise = fetch(voiceRoute, {
         method: 'POST',
         body: formData,
       })
-
-      if (isScriptedHr && nextPrompt) {
-        scriptedPromptIndexRef.current += 1
-        setCurrentMessage(`Interviewer: ${nextPrompt.text}`)
-
-        if (isClosingPrompt) {
-          setInterviewComplete(true)
-        }
-
-        try {
-          await new Promise((resolve) => setTimeout(resolve, 250))
-          await playAudio(nextPrompt.audioSequenceBase64)
-        } catch (error) {
-          console.error('Error playing scripted HR audio:', error)
-          if (!isClosingPrompt) {
-            setIsListening(true)
-            setTimeout(() => startVoiceInput(), 500)
-          }
-        }
-      }
 
       const response = await responsePromise
 
@@ -1247,9 +1207,7 @@ export default function InterviewPage() {
       // Ensure isListening stays true throughout conversation
       setIsListening(true)
       
-      if (isScriptedHr) {
-        // Scripted HR already played the next prompt locally when recording stopped.
-      } else if (data.audioSequenceBase64?.length) {
+      if (data.audioSequenceBase64?.length) {
         try {
           console.log('Playing AI response audio sequence...')
           await playAudio(data.audioSequenceBase64)
@@ -1262,7 +1220,7 @@ export default function InterviewPage() {
             setTimeout(() => startVoiceInput(), 500)
           }
         }
-      } else if (!isScriptedHr && data.audioBase64) {
+      } else if (data.audioBase64) {
         try {
           console.log('Playing AI response audio...')
           await playAudio(data.audioBase64)
@@ -1298,11 +1256,7 @@ export default function InterviewPage() {
       // Check if interview is complete
       if (data.complete) {
         setInterviewComplete(true)
-        if (isScriptedHr && isClosingPrompt) {
-          await endInterview()
-        } else if (!isScriptedHr) {
-          await endInterview()
-        }
+        await endInterview()
       }
     } catch (error) {
       console.error('Error sending audio:', error)

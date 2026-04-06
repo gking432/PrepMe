@@ -260,15 +260,15 @@ Company: Not provided`
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini-realtime-preview',
-        voice: (['coral', 'shimmer', 'ash'] as const)[Math.floor(Math.random() * 3)],
+        voice: 'marin',
         instructions: optimizedSystemPrompt,
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.8,
+          threshold: 0.5,
           prefix_padding_ms: 300,
-          silence_duration_ms: 800,
+          silence_duration_ms: 500,
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,
@@ -324,4 +324,3 @@ Company: Not provided`
     )
   }
 }
-

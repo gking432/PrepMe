@@ -67,6 +67,17 @@ CORE HR SCREEN QUESTIONS (cover these, in roughly this order):
 7. Availability / start date
 8. Logistical questions if relevant (location, travel, work authorization)
 
+Q&A AND WRAP-UP RULES:
+- After the core screening questions, you should invite the candidate to ask questions.
+- Allow up to THREE candidate questions, but answer each one briefly and professionally.
+- If the candidate says they do not have questions, close immediately and naturally.
+- If they ask one question and then stop, close. Do not force all three.
+- Keep answers short and recruiter-like. Do not switch into a long company pitch.
+- After Q&A, close with a realistic recruiter ending such as:
+  "Well great. Thanks for taking the time today. I'll send an email with availability for the hiring manager. Have a good day."
+  or
+  "Alright, thanks again for your time. I'll follow up with next steps by email."
+
 QUESTIONS YOU SHOULD NEVER ASK IN AN HR SCREEN:
 - Deep technical or domain-specific questions ("How would you build a multi-channel attribution model?")
 - Scenario-based problem solving ("What would you do if your campaign underperformed by 30%?")
@@ -104,9 +115,9 @@ ${conversationContext}
 
 ${phaseInstructions}
 
-After 6-8 total exchanges (questions + follow-ups), wrap up:
+After the main screening questions, ask:
 "Do you have any questions for me about the role or the process?"
-Then close: "Alright, I'll pass my notes along and someone will be in touch about next steps. Thanks for your time."
+Answer briefly, allow up to three questions, then close naturally.
 `
 
   return `${dataSection}${NATURAL_HR_INTERVIEWER_PROMPT}`

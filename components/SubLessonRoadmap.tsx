@@ -168,6 +168,8 @@ export default function SubLessonRoadmap({
             subLesson={subLesson}
             lessonNumber={activeSlot + 1}
             totalLessons={3}
+            originalQuestion={originalQuestion}
+            originalAnswer={originalAnswer}
             onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
             onClose={() => setActiveSlot(null)}
             embeddedDesktop={embeddedDesktop}

@@ -15,6 +15,8 @@ interface PracticeLessonFlowProps {
   subLesson: SubLesson
   lessonNumber: number
   totalLessons: number
+  originalQuestion?: string
+  originalAnswer?: string
   onComplete: (passed: boolean, xpEarned: number) => void
   onClose: () => void
   embeddedDesktop?: boolean
@@ -115,6 +117,8 @@ export default function PracticeLessonFlow({
   subLesson,
   lessonNumber,
   totalLessons,
+  originalQuestion,
+  originalAnswer,
   onComplete,
   onClose,
   embeddedDesktop = false,
@@ -318,6 +322,8 @@ export default function PracticeLessonFlow({
             instruction={exercise.instruction}
             coachingTip={exercise.coachingTip}
             fields={exercise.fields}
+            originalQuestion={originalQuestion}
+            originalAnswer={originalAnswer}
             onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )

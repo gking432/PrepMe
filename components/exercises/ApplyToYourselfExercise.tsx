@@ -16,6 +16,8 @@ interface ApplyToYourselfExerciseProps {
   instruction: string
   coachingTip: string
   fields: ApplyField[]
+  originalQuestion?: string
+  originalAnswer?: string
   onComplete: (correct: boolean) => void
 }
 
@@ -36,6 +38,8 @@ export default function ApplyToYourselfExercise({
   instruction,
   coachingTip,
   fields,
+  originalQuestion,
+  originalAnswer,
   onComplete,
 }: ApplyToYourselfExerciseProps) {
   const [answers, setAnswers] = useState<Record<string, string>>(
@@ -114,6 +118,22 @@ export default function ApplyToYourselfExercise({
             <p className="text-sm leading-6 text-slate-700">{coachingTip}</p>
           </div>
         </div>
+        {(originalQuestion || originalAnswer) && (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {originalQuestion && (
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">Flagged Question</p>
+                <p className="mt-2 text-sm leading-6 text-slate-800">{originalQuestion}</p>
+              </div>
+            )}
+            {originalAnswer && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-rose-700">Your Original Answer</p>
+                <p className="mt-2 text-sm leading-6 text-slate-800 italic">&ldquo;{originalAnswer}&rdquo;</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 space-y-4">

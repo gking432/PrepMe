@@ -74,6 +74,8 @@ export default function InterviewPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const interviewStartTimeRef = useRef<number | null>(null)
+  const assistantSpeakingRef = useRef(false)
+  const assistantSpeechResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const supabase = createClient()
 
   const getOrCreateInterviewMediaStream = async () => {
@@ -94,6 +96,20 @@ export default function InterviewPage() {
 
     mediaStreamRef.current = stream
     return stream
+  }
+
+  const setRealtimeMicEnabled = (enabled: boolean) => {
+    if (assistantSpeechResetTimeoutRef.current && enabled) {
+      clearTimeout(assistantSpeechResetTimeoutRef.current)
+      assistantSpeechResetTimeoutRef.current = null
+    }
+
+    const stream = mediaStreamRef.current
+    if (!stream) return
+
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = enabled
+    })
   }
 
   useEffect(() => {
@@ -419,7 +435,7 @@ export default function InterviewPage() {
             input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.68,
+              threshold: 0.8,
               prefix_padding_ms: 300,
               silence_duration_ms: 900,
             },
@@ -521,11 +537,25 @@ export default function InterviewPage() {
   const handleRealtimeMessage = (data: any) => {
     switch (data.type) {
       case 'response.audio_transcript.delta':
+        if (!assistantSpeakingRef.current) {
+          assistantSpeakingRef.current = true
+          setIsPlayingAudio(true)
+          setRealtimeMicEnabled(false)
+        }
         // Update current message as AI speaks
         setCurrentMessage((prev) => (prev + (data.delta || '')).trim())
         break
 
       case 'response.audio_transcript.done':
+        if (assistantSpeechResetTimeoutRef.current) {
+          clearTimeout(assistantSpeechResetTimeoutRef.current)
+        }
+        assistantSpeechResetTimeoutRef.current = setTimeout(() => {
+          assistantSpeakingRef.current = false
+          setIsPlayingAudio(false)
+          setRealtimeMicEnabled(true)
+          assistantSpeechResetTimeoutRef.current = null
+        }, 350)
         // Final transcript
         const fullMessage = data.transcript || ''
         setCurrentMessage(fullMessage)
@@ -606,6 +636,11 @@ export default function InterviewPage() {
   }
 
   const disconnectRealtime = () => {
+    if (assistantSpeechResetTimeoutRef.current) {
+      clearTimeout(assistantSpeechResetTimeoutRef.current)
+      assistantSpeechResetTimeoutRef.current = null
+    }
+    assistantSpeakingRef.current = false
     if (dcRef.current) {
       dcRef.current.close()
       dcRef.current = null
@@ -623,6 +658,9 @@ export default function InterviewPage() {
       wsRef.current = null
     }
     if (mediaStreamRef.current) {
+      mediaStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = true
+      })
       mediaStreamRef.current.getTracks().forEach(track => track.stop())
       mediaStreamRef.current = null
     }

@@ -1,6 +1,7 @@
 // API route to create a Realtime API session
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { buildSystemPrompt as buildHrScreenPrompt } from '@/lib/interview-prompts/hr_screen'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
@@ -105,6 +106,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const hasResume = !!interviewData?.resume_text && interviewData.resume_text.trim().length > 0
+    const hasJobDescription = !!interviewData?.job_description_text && interviewData.job_description_text.trim().length > 0
+
+    let companyName = 'the company'
+    if (interviewData?.company_website) {
+      try {
+        const url = interviewData.company_website.startsWith('http')
+          ? new URL(interviewData.company_website)
+          : new URL(`https://${interviewData.company_website}`)
+        companyName = url.hostname.replace('www.', '').split('.')[0]
+      } catch {
+        companyName = interviewData.company_website.replace(/^https?:\/\//, '').replace('www.', '').split('.')[0] || 'the company'
+      }
+    }
+
+    const sharedDataSection = `=== CANDIDATE INFORMATION - READ THIS FIRST ===
+
+CANDIDATE'S RESUME:
+${interviewData?.resume_text || 'Not provided'}
+
+JOB DESCRIPTION:
+${interviewData?.job_description_text || 'Not provided'}
+
+${websiteContent ? `COMPANY WEBSITE CONTENT:
+${websiteContent}
+` : `COMPANY WEBSITE: ${interviewData?.company_website || 'Not provided'}
+`}
+
+=== END CANDIDATE INFORMATION ===
+
+`
+
     // Build enhanced system prompt with tone and depth level
     const basePrompt = promptData?.system_prompt || 'You are conducting a job interview.'
     
@@ -150,7 +183,7 @@ TONE & EMOTIONAL STATE:
 - Do NOT continue asking questions after you have the information you need.`
     }
 
-    const optimizedSystemPrompt = `${basePrompt}
+    let optimizedSystemPrompt = `${basePrompt}
 
 You are conducting a ${stage.replace('_', ' ')} interview.
 
@@ -171,21 +204,6 @@ ${stage === 'hr_screen' ? '' : '- End interview after 5-10 turns max unless user
 ${stageSpecificInstructions}
 
 ${(() => {
-      const hasResume = interviewData?.resume_text && interviewData.resume_text.trim().length > 0
-      const hasJobDescription = interviewData?.job_description_text && interviewData.job_description_text.trim().length > 0
-      let companyName = 'the company'
-      if (interviewData?.company_website) {
-        try {
-          const url = interviewData.company_website.startsWith('http') 
-            ? new URL(interviewData.company_website)
-            : new URL(`https://${interviewData.company_website}`)
-          companyName = url.hostname.replace('www.', '').split('.')[0]
-        } catch {
-          // If URL parsing fails, try to extract from the string
-          companyName = interviewData.company_website.replace(/^https?:\/\//, '').replace('www.', '').split('.')[0] || 'the company'
-        }
-      }
-      
       // websiteContent is now fetched outside the IIFE, so we can use it here
       if (hasResume && hasJobDescription) {
         const isHrScreen = stage === 'hr_screen'
@@ -243,12 +261,41 @@ ${websiteContent}
 `}`
       } else {
         return `
-Context about the candidate:
+    Context about the candidate:
 Resume: Not provided
 Job Description: Not provided
 Company: Not provided`
       }
     })()}`
+
+    if (stage === 'hr_screen') {
+      optimizedSystemPrompt = buildHrScreenPrompt({
+        dataSection: sharedDataSection,
+        conversationContext: `
+REALTIME HR SCREEN RULES:
+- Keep this to roughly 6-8 total questions.
+- Stay surface-level even if the candidate says something impressive or unusual.
+- Ask at most ONE brief follow-up on any topic, then move on.
+- Do NOT do technical evaluation, problem-solving, or long behavioral deep-dives.
+- Use the resume to verify background at a high level, not to interrogate.
+- Prioritize these topics: background, company knowledge, role interest, one or two resume checks, why leaving, salary, availability.
+`,
+        phaseInstructions: `
+OPENING:
+- You speak first.
+- Start with a short recruiter phone-screen intro.
+- Say you have a few quick questions.
+- Begin with "Can you tell me a bit about yourself?"
+
+QUESTION BOUNDARIES:
+- Do not ask "how would you..." questions.
+- Do not ask methodology questions.
+- Do not ask for detailed STAR stories unless the candidate naturally answers that way.
+- After salary and availability, close the interview.
+- If you already have enough information, wrap up instead of inventing more questions.
+`,
+      })
+    }
 
     // Create Realtime API session
     const response = await fetch('https://api.openai.com/v1/realtime/sessions', {

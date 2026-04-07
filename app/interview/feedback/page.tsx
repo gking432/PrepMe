@@ -155,18 +155,18 @@ export default function InterviewDashboard() {
     return () => clearTimeout(migrationTimer)
   }, [])
 
-  // Poll for feedback if it's still generating (up to 60 seconds)
+  // Poll for feedback while generation is in flight.
   useEffect(() => {
-    if (feedbackGenerating && pollingAttempts < 12) { // 12 attempts * 5 seconds = 60 seconds max
+    if (feedbackGenerating && pollingAttempts < 8) {
       const pollInterval = setInterval(async () => {
         setPollingAttempts(prev => prev + 1)
         await loadFeedback(true)
-      }, 5000) // Poll every 5 seconds
+      }, 3000)
 
       return () => clearInterval(pollInterval)
-    } else if (pollingAttempts >= 12) {
+    } else if (pollingAttempts >= 8) {
       setFeedbackGenerating(false)
-      console.error('Feedback generation timed out after 60 seconds')
+      console.error('Feedback generation timed out after 24 seconds')
     }
   }, [feedbackGenerating, pollingAttempts])
 
@@ -1078,16 +1078,13 @@ export default function InterviewDashboard() {
           </h2>
           <p className="text-gray-600 mb-2">
             {feedbackGenerating 
-              ? 'Our AI is analyzing your interview responses and generating personalized feedback. This may take up to 60 seconds.'
+              ? 'We are analyzing your interview and building your report now. This usually takes a few seconds.'
               : 'Loading your interview feedback...'}
           </p>
           {feedbackGenerating && (
             <>
               <p className="text-sm text-gray-500 mt-4">
-                We're carefully reviewing your answers to provide the most helpful insights...
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                Checking for feedback... (Attempt {pollingAttempts + 1} of 12)
+                Preparing your score, percentile comparison, and next-step coaching.
               </p>
             </>
           )}
@@ -1136,7 +1133,7 @@ export default function InterviewDashboard() {
   }
 
   // Show error message if feedback generation timed out
-  if (pollingAttempts >= 12 && !feedback) {
+  if (pollingAttempts >= 8 && !feedback) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center max-w-md mx-auto px-4">

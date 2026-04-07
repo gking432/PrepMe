@@ -419,9 +419,9 @@ export default function InterviewPage() {
             input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
             turn_detection: {
               type: 'server_vad',
-              threshold: 0.5,
+              threshold: 0.68,
               prefix_padding_ms: 300,
-              silence_duration_ms: 500,
+              silence_duration_ms: 900,
             },
             temperature: 0.7,
             max_response_output_tokens: 400,
@@ -537,34 +537,29 @@ export default function InterviewPage() {
         })
         setTurnCount((prev) => prev + 1)
         
-        // HR Screen specific: Check for natural ending keywords
+        // HR Screen specific: only end after an explicit recruiter closing.
         if (stage === 'hr_screen') {
           const lowerMessage = fullMessage.toLowerCase()
-          const endingKeywords = [
-            'scheduled',
-            'hiring manager',
-            'get something scheduled',
+          const closingSignals = [
+            'that covers everything i wanted to ask',
+            'that covers everything',
+            'i have what i need for now',
+            'i\'ll pass my notes along',
+            'someone will be in touch about next steps',
             'thanks for your time',
-            'i\'ll get something scheduled',
-            'i\'ll schedule',
-            'we\'ll schedule',
-            'next steps',
-            'move forward',
-            'connect you with'
+            'thanks again for your time',
+            'we\'ll wrap up here',
+            'we can wrap up here'
           ]
-          
-          const hasEndingKeyword = endingKeywords.some(keyword => lowerMessage.includes(keyword))
-          const elapsedMinutes = interviewStartTimeRef.current 
-            ? (Date.now() - interviewStartTimeRef.current) / 1000 / 60 
-            : 0
-          
-          // End if: (1) contains ending keyword, OR (2) 10+ minutes elapsed, OR (3) 6+ turns and 5+ minutes
-          if (hasEndingKeyword || elapsedMinutes >= 10 || (turnCount >= 6 && elapsedMinutes >= 5)) {
-            console.log('HR screen ending detected:', { hasEndingKeyword, elapsedMinutes, turnCount })
+
+          const hasClosingSignal = closingSignals.some(keyword => lowerMessage.includes(keyword))
+
+          if (hasClosingSignal) {
+            console.log('HR screen explicit close detected')
             setTimeout(() => {
               setInterviewComplete(true)
               endInterview()
-            }, 2000)
+            }, 2500)
           }
         } else {
           // Other stages: Check if should end interview (after 5-10 turns)
@@ -1519,16 +1514,6 @@ export default function InterviewPage() {
       type: 'response.create',
     }))
   }
-
-  // Handle redirect when interview is complete
-  useEffect(() => {
-    if (interviewComplete) {
-      const timer = setTimeout(() => {
-        router.push('/interview/feedback')
-      }, 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [interviewComplete, router])
 
   if (interviewComplete) {
     return (

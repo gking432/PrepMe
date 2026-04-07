@@ -313,9 +313,9 @@ QUESTION BOUNDARIES:
         output_audio_format: 'pcm16',
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.5,
+          threshold: 0.68,
           prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          silence_duration_ms: 900,
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,

@@ -1102,6 +1102,277 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
     ],
   },
   {
+    rootCause: 'questions_about_company',
+    displayName: 'Questions About the Company',
+    description: 'Weak company prep and weak end-of-interview questions make you sound underprepared.',
+    lessons: [
+      {
+        title: 'Show You Did Real Homework',
+        difficulty: 'easy',
+        teach: {
+          title: 'Use two real specifics, then connect them to the role',
+          explanation:
+            'Good company answers are short and concrete. Mention one or two real things you noticed, then say why they matter to you and this role.',
+          example: {
+            question: 'What do you know about our company?',
+            badAnswer:
+              'I know you are growing pretty quickly and seem to have a strong reputation. The role looked interesting, and I like the kind of work you are doing.',
+            goodAnswer:
+              'From what I saw, a couple things stood out to me. First, you have been expanding the product line over the last year. Second, a lot of your messaging focuses on customer experience, not just features. That stood out because my background has mostly been in roles where I had to connect what the product does to how customers actually experience it.',
+            breakdown: {
+              Ask: 'Show real preparation, not a full company history.',
+              Miss: 'The weak version has no concrete detail and no real fit.',
+              WhyItWorks: 'The strong version uses specific observations and ties them back to relevant experience.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer sounds the most prepared without sounding rehearsed?',
+            options: [
+              'I noticed customer experience comes up across both your product messaging and user reviews. That interested me because my best work has been in roles where customer experience affected retention and growth.',
+              'You seem like a great company with strong values, and that really speaks to me.',
+              'I do not know a ton yet, but that is part of why I wanted to interview.',
+              'I know you are in this industry and have been around for a while, which is always a good sign.',
+            ],
+            correctIndex: 0,
+            explanation: 'The strongest answer uses a real observation and links it to the candidate’s background.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each segment of a stronger company answer.',
+            segments: [
+              { text: 'I noticed your team has been expanding into mid-market accounts.', correctLabel: 'Specific company observation' },
+              { text: 'That caught my attention because I have worked in growth roles where messaging had to shift for a new buyer type.', correctLabel: 'Connection to my background' },
+              { text: 'That makes this role feel especially relevant to where I am strongest.', correctLabel: 'Why this role fits' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best phrase to complete the answer.',
+            sentenceWithBlank: 'One thing that stood out to me was [___], because it connects directly to the kind of work I have done before.',
+            options: [
+              'your recent expansion into a new customer segment',
+              'that your company seems nice',
+              'that I need a new opportunity',
+              'that the office looked cool online',
+            ],
+            correctIndex: 0,
+            explanation: 'Strong answers use something observable and relevant, not generic praise or personal need.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the parts that make someone sound genuinely prepared.',
+            items: [
+              'A specific company detail',
+              'A broad compliment with no evidence',
+              'A link between the company and your experience',
+              'A vague statement like "it just seemed interesting"',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'Prepared candidates sound specific and relevant. Generic praise and filler weaken credibility.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Write a better version of your answer to "What do you know about us?" using two real details and one connection to your background.',
+            coachingTip: 'Do not summarize the whole company. Pick two specifics you can actually explain, then connect them to your experience or interest in the role.',
+            fields: [
+              {
+                label: 'Two things you noticed about the company',
+                placeholder: 'Example: recent launch, customer focus, business model, team setup, market move',
+                helper: 'Use real observations, not compliments.',
+                minWords: 12,
+              },
+              {
+                label: 'Why those details matter to you',
+                placeholder: 'Explain why those specifics connect to your experience, strengths, or goals.',
+                helper: 'Make the connection clear and practical.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Answer Why This Company With Real Fit',
+        difficulty: 'medium',
+        teach: {
+          title: 'Move from interest to evidence',
+          explanation:
+            'A strong "Why this company?" answer names something real about the company, explains why it matters to you, and shows why this role fits your direction. Interest alone is not enough.',
+          example: {
+            question: 'Why do you want to work here?',
+            badAnswer:
+              'It seems like a good company, and the role looks like a strong next step for me. I think I would learn a lot, and the team seems great.',
+            goodAnswer:
+              'A big reason is that this role seems to sit right at the intersection of execution and cross-functional work. From what I read, your team works closely across departments, and that matches how I have done my best work. I am not just looking for the same title somewhere else. I am looking for a role where that kind of work is actually central to the job.',
+            breakdown: {
+              Risk: 'The weak version could apply to almost any company.',
+              Focus: 'The strong version explains why this company and role make sense together.',
+              Fit: 'It ties the company setup to how the candidate actually works best.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What makes a "Why this company?" answer stronger?',
+            options: [
+              'Explaining why the company and the role fit your actual direction',
+              'Saying you have always wanted to work somewhere successful',
+              'Talking mostly about compensation and flexibility',
+              'Keeping it vague so you do not sound too scripted',
+            ],
+            correctIndex: 0,
+            explanation: 'The strongest answers show informed motivation and real role fit, not generic enthusiasm.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label the parts of this stronger answer.',
+            segments: [
+              { text: 'I noticed this role works closely with both operations and customer-facing teams.', correctLabel: 'Role-specific observation' },
+              { text: 'That matters to me because my strongest work has usually involved translating between teams, not working in a silo.', correctLabel: 'Why it matters to me' },
+              { text: 'That is why this feels more specific than just another opening with the same title.', correctLabel: 'Why this company and role' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Complete the sentence with the strongest fit-based phrase.',
+            sentenceWithBlank: 'What makes this role especially compelling to me is [___], not just the title itself.',
+            options: [
+              'how the work seems to sit between teams and drive real coordination',
+              'that I have been applying to a lot of companies lately',
+              'that the brand seems well known',
+              'that it would probably help my resume',
+            ],
+            correctIndex: 0,
+            explanation: 'Good answers focus on the actual work and why it matches the candidate.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the parts that improve a "Why this company?" answer.',
+            items: [
+              'A reason tied to how the company operates',
+              'A connection to your own strengths or goals',
+              'A generic statement that the company seems exciting',
+              'A claim that you can do any job as long as the team is nice',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'Specific fit beats broad enthusiasm.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Rewrite your answer to "Why this company?" so it sounds chosen, not generic.',
+            coachingTip: 'Use this formula: what you noticed, why it matters, why it fits you now. Avoid praise that could apply anywhere.',
+            fields: [
+              {
+                label: 'What feels specific about this company or role',
+                placeholder: 'Write one thing that makes this role different from similar jobs elsewhere.',
+                helper: 'Focus on the actual work, team, market, or company direction.',
+                minWords: 12,
+              },
+              {
+                label: 'Why that specifically fits you',
+                placeholder: 'Explain how it matches your background, strengths, or next step.',
+                helper: 'Make it about fit, not just desire.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Ask Questions That Signal Judgment',
+        difficulty: 'hard',
+        teach: {
+          title: 'Good candidate questions show seriousness, not just curiosity',
+          explanation:
+            'The best end-of-interview questions help you understand expectations, team realities, and what success looks like. Weak questions are usually too generic, too easy to answer, or clearly copied from a list.',
+          example: {
+            question: 'What questions do you have for me?',
+            badAnswer:
+              'Yeah, I guess just what do you like most about working here? And what are the growth opportunities?',
+            goodAnswer:
+              'I would love to understand what success looks like in the first six months for this role. And if someone does really well here, what tends to separate them from people who are just meeting expectations?',
+            breakdown: {
+              Miss: 'The weak version asks broad questions that rarely reveal much.',
+              WhyItWorks: 'The strong version gets at expectations, performance, and standards.',
+              Signal: 'It shows the candidate is thinking seriously about doing the job well.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which end-of-interview question signals the strongest judgment in an HR screen?',
+            options: [
+              'What does strong performance look like in this role after the first few months?',
+              'Do people usually have fun on the team?',
+              'What is your favorite part about the company?',
+              'How fast do promotions happen here?',
+            ],
+            correctIndex: 0,
+            explanation: 'This question is concrete, role-relevant, and useful. It signals maturity and seriousness.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each question based on what it is really trying to learn.',
+            segments: [
+              { text: 'What tends to be most challenging for new hires in this role?', correctLabel: 'Role reality' },
+              { text: 'How would you describe someone who is really effective on this team?', correctLabel: 'Success profile' },
+              { text: 'What do you like best about working here?', correctLabel: 'Generic culture question' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best phrase to complete a stronger candidate question.',
+            sentenceWithBlank: 'Before we wrap up, one thing I would love to understand is [___] in this role.',
+            options: [
+              'what strong performance looks like early on',
+              'whether people here are nice',
+              'if promotions happen quickly',
+              'what snacks are in the office',
+            ],
+            correctIndex: 0,
+            explanation: 'Strong questions focus on expectations, work, and success.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the questions that would likely leave a stronger impression in an HR screen.',
+            items: [
+              'What are the most important things you would want this person to own well in the first few months?',
+              'How would this role interact with other teams day to day?',
+              'So, what is the company culture like?',
+              'Do you personally enjoy working here?',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'The strongest questions help the candidate understand the work and show real judgment.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Write two better questions you could ask at the end of an interview for this role.',
+            coachingTip: 'Aim for questions about expectations, team dynamics, performance, or role priorities. Avoid questions that are too generic or easy to answer from the website.',
+            fields: [
+              {
+                label: 'Question 1',
+                placeholder: 'Write a question that helps you understand success or expectations.',
+                helper: 'Make it specific to the role, not just the company.',
+                minWords: 12,
+              },
+              {
+                label: 'Question 2',
+                placeholder: 'Write a question that helps you understand team reality or priorities.',
+                helper: 'Ask something that would help you perform better if hired.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
     rootCause: 'off_topic',
     displayName: 'Answering the Real Question',
     description: "You're answering what you want to say, not what was asked.",
@@ -1627,7 +1898,7 @@ export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
   'Answer Structure and Conciseness': 'poor_structure',
   'Specific Examples and Evidence': 'lack_of_specificity',
   'Pace and Conversation Flow': 'weak_communication',
-  'Questions Asked About Role/Company': 'missing_knowledge',
+  'Questions Asked About Role/Company': 'questions_about_company',
   'Alignment of Career Goals with Position': 'missing_knowledge',
   'Handling Uncertain/Difficult Questions': 'off_topic',
   'Technical Depth': 'lack_of_specificity',

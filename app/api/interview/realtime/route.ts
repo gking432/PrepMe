@@ -273,12 +273,13 @@ Company: Not provided`
         dataSection: sharedDataSection,
         conversationContext: `
 REALTIME HR SCREEN RULES:
-- Keep this to roughly 6-8 total questions.
+- Keep this to roughly 8-10 total questions.
 - Stay surface-level even if the candidate says something impressive or unusual.
 - Ask at most ONE brief follow-up on any topic, then move on.
 - Do NOT do technical evaluation, problem-solving, or long behavioral deep-dives.
 - Use the resume to verify background at a high level, not to interrogate.
-- Prioritize these topics: background, company knowledge, role interest, one or two resume checks, why leaving, salary, availability.
+- Prioritize these topics: background, company knowledge, role interest, one accomplishment/example question, one uncertainty-handling question, one resume verification question, why leaving, salary, availability.
+- Do not jump to salary or availability before the candidate has had a fair chance to demonstrate structure, specificity, and judgment.
 - After the core questions, invite the candidate to ask questions.
 - Allow up to three candidate questions and answer them briefly.
 - If they say they have no questions, close right away.
@@ -296,6 +297,13 @@ QUESTION BOUNDARIES:
 - Do not ask for detailed STAR stories unless the candidate naturally answers that way.
 - After salary and availability, invite candidate questions before closing.
 - If you already have enough information, wrap up instead of inventing more questions.
+- However, "enough information" for HR usually means you have covered:
+  - background
+  - company knowledge
+  - role interest
+  - one accomplishment/example
+  - one unclear-path / uncertainty example
+  - one resume verification prompt
 `,
       })
     }

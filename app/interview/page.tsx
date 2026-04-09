@@ -76,6 +76,8 @@ export default function InterviewPage() {
   const interviewStartTimeRef = useRef<number | null>(null)
   const assistantSpeakingRef = useRef(false)
   const assistantSpeechResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closingDetectedRef = useRef(false)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const supabase = createClient()
 
   const getOrCreateInterviewMediaStream = async () => {
@@ -110,6 +112,23 @@ export default function InterviewPage() {
     stream.getAudioTracks().forEach((track) => {
       track.enabled = enabled
     })
+  }
+
+  const markClosingAndFinish = () => {
+    if (closingDetectedRef.current) return
+    closingDetectedRef.current = true
+    setIsListening(false)
+    setRealtimeMicEnabled(false)
+
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+    }
+
+    closeTimerRef.current = setTimeout(() => {
+      setInterviewComplete(true)
+      endInterview()
+      closeTimerRef.current = null
+    }, 3200)
   }
 
   useEffect(() => {
@@ -535,12 +554,26 @@ export default function InterviewPage() {
   }
 
   const handleRealtimeMessage = (data: any) => {
+    if (
+      data.type === 'response.audio_transcript.delta' ||
+      data.type === 'response.audio_transcript.done' ||
+      data.type === 'conversation.item.input_audio_transcription.completed' ||
+      data.type === 'error'
+    ) {
+      console.log('[realtime]', data.type, {
+        assistantSpeaking: assistantSpeakingRef.current,
+        closingDetected: closingDetectedRef.current,
+        transcriptPreview: typeof data.transcript === 'string' ? data.transcript.slice(0, 120) : undefined,
+      })
+    }
+
     switch (data.type) {
       case 'response.audio_transcript.delta':
         if (!assistantSpeakingRef.current) {
           assistantSpeakingRef.current = true
           setIsPlayingAudio(true)
           setRealtimeMicEnabled(false)
+          console.log('[realtime] assistant speech started')
         }
         // Update current message as AI speaks
         setCurrentMessage((prev) => (prev + (data.delta || '')).trim())
@@ -554,6 +587,7 @@ export default function InterviewPage() {
           assistantSpeakingRef.current = false
           setIsPlayingAudio(false)
           setRealtimeMicEnabled(true)
+          console.log('[realtime] assistant speech ended')
           assistantSpeechResetTimeoutRef.current = null
         }, 350)
         // Final transcript
@@ -586,10 +620,7 @@ export default function InterviewPage() {
 
           if (hasClosingSignal) {
             console.log('HR screen explicit close detected')
-            setTimeout(() => {
-              setInterviewComplete(true)
-              endInterview()
-            }, 2500)
+            markClosingAndFinish()
           }
         } else {
           // Other stages: Check if should end interview (after 5-10 turns)
@@ -600,8 +631,17 @@ export default function InterviewPage() {
         break
 
       case 'conversation.item.input_audio_transcription.completed':
+        if (closingDetectedRef.current) {
+          console.log('[realtime] ignoring user transcript after close')
+          break
+        }
         // User's speech transcribed
         const userMessage = data.transcript || ''
+        if (assistantSpeakingRef.current) {
+          console.log('[realtime] user transcript arrived while assistant marked as speaking', {
+            userMessagePreview: userMessage.slice(0, 120),
+          })
+        }
         setTranscript((prev) => {
           const updated = [...prev, `You: ${userMessage}`]
           // Save to database asynchronously (don't block UI)
@@ -636,11 +676,16 @@ export default function InterviewPage() {
   }
 
   const disconnectRealtime = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
     if (assistantSpeechResetTimeoutRef.current) {
       clearTimeout(assistantSpeechResetTimeoutRef.current)
       assistantSpeechResetTimeoutRef.current = null
     }
     assistantSpeakingRef.current = false
+    closingDetectedRef.current = false
     if (dcRef.current) {
       dcRef.current.close()
       dcRef.current = null
@@ -675,6 +720,7 @@ export default function InterviewPage() {
   const startInterview = async () => {
     // Record start time for HR screen time tracking
     interviewStartTimeRef.current = Date.now()
+    closingDetectedRef.current = false
 
     // Try Realtime API first, fallback to optimized traditional approach
     try {

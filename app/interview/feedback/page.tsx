@@ -1390,23 +1390,7 @@ export default function InterviewDashboard() {
   const sixAreas = feedback?.hr_screen_six_areas
   const wentWellAreas = sixAreas?.what_went_well || []
   const needsImproveAreas = sixAreas?.what_needs_improve || []
-  const practiceWeaknesses = currentStage === 'hr_screen' && areaScores.length > 0
-    ? areaScores
-        .filter((area: any) => area.score <= 6)
-        .map((area: any) => {
-          const matchingArea =
-            needsImproveAreas.find((item: any) => item.criterion === area.displayName) ||
-            needsImproveAreas.find((item: any) => item.criterion === area.area)
-
-          return {
-            criterion: area.displayName,
-            score: area.score,
-            feedback: area.feedback,
-            evidence: matchingArea?.evidence || [],
-            rootCause: getRootCauseForCriterion(area.displayName),
-          }
-        })
-    : needsImproveAreas
+  const practiceWeaknesses = needsImproveAreas
 
   const uniquePracticeModuleCount = new Set(
     practiceWeaknesses.map((area: any) => getRootCauseForCriterion(area.criterion, area.rootCause))

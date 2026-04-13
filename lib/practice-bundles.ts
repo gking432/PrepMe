@@ -270,15 +270,6 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             explanation: 'This one opens clearly, walks through the STAR middle, and closes on a real outcome.',
           },
           {
-            type: 'label_sort',
-            instruction: 'Label each part of the answer with the role it plays.',
-            segments: [
-              { text: 'A project I am proud of was rebuilding our onboarding workflow.', correctLabel: 'Lead' },
-              { text: 'I removed duplicate approvals and created one shared request form.', correctLabel: 'Support (STAR middle)' },
-              { text: 'That cut onboarding time from nine business days to three.', correctLabel: 'Land' },
-            ],
-          },
-          {
             type: 'word_bank',
             instruction: 'Complete the structure rule.',
             sentenceWithBlank: 'Lead with the point, use STAR in the middle, then [___].',
@@ -348,26 +339,33 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Rebuild your flagged answer using Lead, STAR middle, Land.',
-            coachingTip: 'Keep the spoken shape simple: one clear opening line, a tight STAR-style middle, then one clean result line at the end.',
+            instruction: 'Build your answer as STAR.',
+            coachingTip: 'Do not write a long paragraph. Write one clean line for the Situation, one for the Task, one for the Action, and one for the Result.',
             fields: [
               {
-                label: 'Lead',
-                placeholder: 'Write the first sentence that states your point directly',
-                helper: 'This should answer the question immediately instead of warming up slowly.',
+                label: 'Situation',
+                placeholder: 'What was happening? Give only the context the interviewer needs.',
+                helper: 'Keep this short. Just orient the listener.',
+                minWords: 5,
+              },
+              {
+                label: 'Task',
+                placeholder: 'What did you own or need to solve?',
+                helper: 'Make your responsibility explicit.',
+                minWords: 5,
+              },
+              {
+                label: 'Action',
+                placeholder: 'What did you actually do?',
+                helper: 'Use real execution steps, not general effort words.',
                 minWords: 8,
               },
               {
-                label: 'STAR middle',
-                placeholder: 'Write the core context, what you owned, and what you did',
-                helper: 'This is where the story lives. Keep it tight and specific.',
-                minWords: 14,
-              },
-              {
-                label: 'Land',
-                placeholder: 'Write the result, outcome, or why this mattered',
-                helper: 'End with a clean takeaway so the answer feels complete.',
+                label: 'Result',
+                placeholder: 'What changed because of your work?',
+                helper: 'Use a concrete result if you can.',
                 minWords: 8,
+                shouldIncludeNumber: true,
               },
             ],
           },

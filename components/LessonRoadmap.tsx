@@ -82,8 +82,31 @@ export default function LessonRoadmap({
       const currentScore = weakness.score ?? Number.POSITIVE_INFINITY
 
       if (currentScore < existingScore) {
-        byRootCause.set(rootCause, { ...weakness, rootCause })
+        byRootCause.set(rootCause, {
+          ...weakness,
+          rootCause,
+          evidence: [
+            ...(existing.evidence || []),
+            ...(weakness.evidence || []),
+          ].filter((item, index, array) => {
+            const key = `${item.question || ''}::${item.excerpt || ''}`
+            return array.findIndex((candidate) => `${candidate.question || ''}::${candidate.excerpt || ''}` === key) === index
+          }),
+        })
+        return
       }
+
+      byRootCause.set(rootCause, {
+        ...existing,
+        rootCause,
+        evidence: [
+          ...(existing.evidence || []),
+          ...(weakness.evidence || []),
+        ].filter((item, index, array) => {
+          const key = `${item.question || ''}::${item.excerpt || ''}`
+          return array.findIndex((candidate) => `${candidate.question || ''}::${candidate.excerpt || ''}` === key) === index
+        }),
+      })
     })
 
     return Array.from(byRootCause.values())
@@ -149,6 +172,7 @@ export default function LessonRoadmap({
         criterion={weakness.criterion}
         originalQuestion={evidence?.question}
         originalAnswer={evidence?.excerpt}
+        evidenceItems={weakness.evidence}
         sessionId={sessionId}
         currentStage={currentStage}
         priorXp={priorXp + sessionXp}

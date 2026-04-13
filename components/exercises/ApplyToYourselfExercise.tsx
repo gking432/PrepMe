@@ -15,6 +15,8 @@ interface ApplyField {
 interface ApplyToYourselfExerciseProps {
   instruction: string
   coachingTip: string
+  evaluationType?: string
+  criterion?: string
   fields: ApplyField[]
   originalQuestion?: string
   originalAnswer?: string
@@ -37,6 +39,8 @@ function containsAvoidWords(text: string, avoidWords: string[]) {
 export default function ApplyToYourselfExercise({
   instruction,
   coachingTip,
+  evaluationType,
+  criterion,
   fields,
   originalQuestion,
   originalAnswer,
@@ -46,6 +50,9 @@ export default function ApplyToYourselfExercise({
     Object.fromEntries(fields.map((field) => [field.label, '']))
   )
   const [reviewed, setReviewed] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [remoteFeedback, setRemoteFeedback] = useState<Record<string, string[]>>({})
+  const [remotePassed, setRemotePassed] = useState<boolean | null>(null)
 
   const analysis = useMemo(() => {
     return fields.map((field) => {
@@ -98,10 +105,45 @@ export default function ApplyToYourselfExercise({
   }, [answers, fields])
 
   const allFilled = fields.every((field) => (answers[field.label] || '').trim().length > 0)
-  const passed = analysis.every((item) => item.passed)
+  const localPassed = analysis.every((item) => item.passed)
+  const passed = remotePassed ?? localPassed
 
-  const handlePrimary = () => {
+  const handlePrimary = async () => {
     if (!reviewed) {
+      if (!localPassed) {
+        setReviewed(true)
+        return
+      }
+
+      if (evaluationType && originalQuestion) {
+        setSubmitting(true)
+        try {
+          const response = await fetch('/api/interview/practice-draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              criterion,
+              question: originalQuestion,
+              evaluationType,
+              answers,
+            }),
+          })
+
+          const data = await response.json()
+          if (response.ok) {
+            setRemotePassed(Boolean(data.passed))
+            setRemoteFeedback(data.fieldFeedback || {})
+          } else {
+            setRemotePassed(false)
+            setRemoteFeedback({ General: [data.error || 'Could not evaluate this draft yet.'] })
+          }
+        } catch {
+          setRemotePassed(false)
+          setRemoteFeedback({ General: ['Could not evaluate this draft yet.'] })
+        } finally {
+          setSubmitting(false)
+        }
+      }
       setReviewed(true)
       return
     }
@@ -157,6 +199,8 @@ export default function ApplyToYourselfExercise({
                 onChange={(event) => {
                   setAnswers((prev) => ({ ...prev, [field.label]: event.target.value }))
                   if (reviewed) setReviewed(false)
+                  setRemotePassed(null)
+                  setRemoteFeedback({})
                 }}
                 placeholder={field.placeholder}
                 className="mt-3 min-h-[92px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium leading-6 text-slate-800 outline-none transition focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-100"
@@ -171,18 +215,38 @@ export default function ApplyToYourselfExercise({
                   </ul>
                 </div>
               )}
+              {reviewed && remoteFeedback[field.label]?.length ? (
+                <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">Coach feedback</p>
+                  <ul className="mt-2 space-y-1">
+                    {remoteFeedback[field.label].map((check) => (
+                      <li key={check} className="text-sm leading-6 text-amber-800">{check}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           )
         })}
+        {reviewed && remoteFeedback.General?.length ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">Coach feedback</p>
+            <ul className="mt-2 space-y-1">
+              {remoteFeedback.General.map((check) => (
+                <li key={check} className="text-sm leading-6 text-amber-800">{check}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-auto shrink-0 flex items-end justify-end border-t border-slate-200/80 pt-5">
         <button
           onClick={handlePrimary}
-          disabled={!allFilled}
+          disabled={!allFilled || submitting}
           className="btn-coach-primary flex min-w-[184px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
         >
-          {reviewed ? 'Continue' : 'Analyze draft'}
+          {submitting ? 'Reviewing...' : reviewed ? 'Continue' : 'Analyze draft'}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

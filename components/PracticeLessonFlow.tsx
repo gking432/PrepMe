@@ -334,6 +334,8 @@ export default function PracticeLessonFlow({
             key={key}
             instruction={exercise.instruction}
             coachingTip={exercise.coachingTip}
+            evaluationType={exercise.evaluationType}
+            criterion={criterion}
             fields={exercise.fields}
             originalQuestion={originalQuestion}
             originalAnswer={originalAnswer}

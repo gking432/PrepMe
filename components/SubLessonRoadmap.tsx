@@ -6,7 +6,7 @@ import Confetti from '@/components/Confetti'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import PracticeLessonFlow from '@/components/PracticeLessonFlow'
 import FinalVoiceChallenge from '@/components/FinalVoiceChallenge'
-import type { PracticeBundle } from '@/lib/practice-bundles'
+import { getContextualPracticeBundle, type PracticeBundle } from '@/lib/practice-bundles'
 
 function MiniConfettiBurst({ active }: { active: boolean }) {
   if (!active) return null
@@ -35,6 +35,7 @@ interface SubLessonRoadmapProps {
   criterion: string
   originalQuestion?: string
   originalAnswer?: string
+  evidenceItems?: Array<{ question?: string; excerpt?: string }>
   sessionId?: string
   currentStage?: string
   priorXp?: number
@@ -58,6 +59,7 @@ export default function SubLessonRoadmap({
   criterion,
   originalQuestion,
   originalAnswer,
+  evidenceItems,
   sessionId,
   currentStage,
   priorXp = 0,
@@ -76,23 +78,34 @@ export default function SubLessonRoadmap({
   const [sessionXp, setSessionXp] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
   const [miniBurstIdx, setMiniBurstIdx] = useState<number | null>(null)
-  const requiredSteps = useMemo(() => ([
-    {
-      label: 'Core lesson',
-      description: 'Start with the exact flagged answer, learn the fix, and do one focused drill.',
-      meta: 'Step 1',
-      type: 'lesson' as const,
-      lessonIndex: 0,
-    },
-    {
-      label: 'Voice re-answer',
-      description: 'Answer the original flagged question again out loud using the stronger structure.',
-      meta: 'Step 2',
-      type: 'voice' as const,
-      lessonIndex: null,
-    },
-  ]), [])
-  const optionalLessons = bundle.lessons.slice(1)
+  const questionRepairs = useMemo(() => {
+    const base = (evidenceItems && evidenceItems.length > 0
+      ? evidenceItems
+      : [{ question: originalQuestion, excerpt: originalAnswer }]
+    ).filter((item) => item.question || item.excerpt)
+
+    return base.length > 0 ? base : [{ question: originalQuestion, excerpt: originalAnswer }]
+  }, [evidenceItems, originalAnswer, originalQuestion])
+
+  const requiredSteps = useMemo(() => (
+    questionRepairs.flatMap((item, index) => ([
+      {
+        label: `Draft ${index + 1}`,
+        description: `Write the scripted version for: ${item.question || 'this flagged question'}`,
+        meta: `Question ${index + 1}`,
+        type: 'lesson' as const,
+        evidenceIndex: index,
+      },
+      {
+        label: `Voice ${index + 1}`,
+        description: 'Answer the original flagged question again out loud using the stronger structure.',
+        meta: `Question ${index + 1}`,
+        type: 'voice' as const,
+        evidenceIndex: index,
+      },
+    ]))
+  ), [questionRepairs])
+  const optionalLessons = bundle.rootCause === 'poor_structure' ? [] : bundle.lessons.slice(1)
   const totalSlots = requiredSteps.length
   const allDone = completedSet.size === totalSlots
 
@@ -151,21 +164,25 @@ export default function SubLessonRoadmap({
     const isOptional = activeSlot >= totalSlots
     const requiredStep = !isOptional ? requiredSteps[activeSlot] : null
     const optionalLessonIndex = isOptional ? activeSlot - totalSlots + 1 : null
+    const currentEvidence = requiredStep ? questionRepairs[requiredStep.evidenceIndex] : questionRepairs[0]
+    const activeBundle = isOptional
+      ? bundle
+      : getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question)
     const subLesson = isOptional
       ? bundle.lessons[optionalLessonIndex as number]
       : requiredStep?.type === 'lesson'
-        ? bundle.lessons[requiredStep.lessonIndex]
+        ? activeBundle.lessons[0]
         : null
 
     if (subLesson) {
-    return (
+      return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
           <div className="mx-auto mb-6 w-full max-w-5xl px-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
-                  <span>{bundle.displayName}</span>
+                  <span>{activeBundle.displayName}</span>
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>{subLesson.title}</span>
                 </div>
@@ -208,8 +225,8 @@ export default function SubLessonRoadmap({
             lessonNumber={isOptional ? optionalLessonIndex as number : 1}
             totalLessons={isOptional ? optionalLessons.length : 1}
             criterion={criterion}
-            originalQuestion={originalQuestion}
-            originalAnswer={originalAnswer}
+            originalQuestion={currentEvidence?.question}
+            originalAnswer={currentEvidence?.excerpt}
             onComplete={(passed, xp) => isOptional ? handleOptionalComplete(optionalLessonIndex as number, passed, xp) : handleSlotComplete(activeSlot, passed, xp)}
             onClose={() => setActiveSlot(null)}
             embeddedDesktop={embeddedDesktop}
@@ -217,24 +234,25 @@ export default function SubLessonRoadmap({
           />
         </div>
       </div>
-    )
-  }
+      )
+    }
     if (requiredStep?.type === 'voice') {
-    return (
+      const currentEvidence = questionRepairs[requiredStep.evidenceIndex]
+      return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
           <div className="mx-auto mb-6 w-full max-w-5xl px-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
-                  <span>{bundle.displayName}</span>
+                  <span>{getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question).displayName}</span>
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>Voice Re-Answer</span>
                 </div>
                 <div className="mt-4 flex items-center gap-3">
                   <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">Voice Re-Answer</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                    Step 2 of 2
+                    Step {activeSlot + 1} of {totalSlots}
                   </span>
                 </div>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -257,15 +275,15 @@ export default function SubLessonRoadmap({
                 />
               </div>
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                Step 2 / 2
+                Step {activeSlot + 1} / {totalSlots}
               </span>
             </div>
           </div>
         )}
         <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <FinalVoiceChallenge
-            question={originalQuestion || 'Tell me about a challenge you overcame.'}
-            originalAnswer={originalAnswer}
+            question={currentEvidence?.question || 'Tell me about a challenge you overcame.'}
+            originalAnswer={currentEvidence?.excerpt}
             sessionId={sessionId}
             currentStage={currentStage}
             criterion={criterion}
@@ -275,14 +293,14 @@ export default function SubLessonRoadmap({
           />
         </div>
       </div>
-    )
-  }
+      )
+    }
   }
 
   const pathSummary = allDone
     ? 'Core path complete. You can stop here or keep going with optional practice.'
     : completedSet.size === 0
-    ? 'One real lesson, then one voice retry on the real question.'
+    ? `${questionRepairs.length} flagged question${questionRepairs.length === 1 ? '' : 's'} to repair. Each one gets a draft and a voice retry.`
     : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
@@ -320,7 +338,7 @@ export default function SubLessonRoadmap({
                   <div className="mt-4 flex items-center gap-3">
                     <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{bundle.displayName}</h2>
                     <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                      2 steps
+                      {totalSlots} steps
                     </span>
                   </div>
                   <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -358,7 +376,7 @@ export default function SubLessonRoadmap({
                   <p className="mt-1 text-sm text-slate-500">{bundle.displayName}</p>
                 </div>
                 <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-                  2 steps
+                  {totalSlots} steps
                 </div>
               </div>
 

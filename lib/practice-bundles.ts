@@ -33,6 +33,7 @@ export interface ApplyToYourselfExercise {
   type: 'apply_to_yourself'
   instruction: string
   coachingTip: string
+  evaluationType?: string
   fields: Array<{
     label: string
     placeholder: string
@@ -2686,4 +2687,262 @@ export function getRootCauseForCriterion(criterion: string, explicitRootCause?: 
   if (mappedRootCause) return mappedRootCause
   if (explicitRootCause) return explicitRootCause
   return 'poor_structure'
+}
+
+export type AnswerStructureTemplate =
+  | 'star'
+  | 'present_past_why_here'
+  | 'noticed_fit_now'
+  | 'answer_reason_example'
+
+export function detectAnswerStructureTemplate(question?: string): AnswerStructureTemplate {
+  const normalized = (question || '').toLowerCase()
+
+  if (
+    normalized.includes('tell me about yourself') ||
+    normalized.includes('walk me through your background') ||
+    normalized.includes('briefly introduce yourself') ||
+    normalized.includes('walk me through your resume')
+  ) {
+    return 'present_past_why_here'
+  }
+
+  if (
+    normalized.includes('why this role') ||
+    normalized.includes('why are you interested') ||
+    normalized.includes('why do you want') ||
+    normalized.includes('why this company') ||
+    normalized.includes('what interests you about') ||
+    normalized.includes('why are you exploring')
+  ) {
+    return 'noticed_fit_now'
+  }
+
+  if (
+    normalized.includes('tell me about a time') ||
+    normalized.includes('project you are proud') ||
+    normalized.includes('project you\'re proud') ||
+    normalized.includes('challenge') ||
+    normalized.includes('accomplishment') ||
+    normalized.includes('example of') ||
+    normalized.includes('improved') ||
+    normalized.includes('solved') ||
+    normalized.includes('handled')
+  ) {
+    return 'star'
+  }
+
+  return 'answer_reason_example'
+}
+
+function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesson {
+  switch (template) {
+    case 'present_past_why_here':
+      return {
+        title: 'Tell your story in three beats',
+        difficulty: 'easy',
+        teach: {
+          title: 'Use Present, Past, Why Here',
+          explanation: 'Tell me about yourself is not a life story. Start with where you are now, give the relevant past that explains how you got there, then close on why this role makes sense as the next step.',
+          example: {
+            question: 'Can you tell me about yourself?',
+            badAnswer: 'Sure. I started out doing a lot of different marketing work, and over the years I have touched a bunch of industries and learned a lot. I have worked with agencies and internal teams and done everything from content to operations, so there is a lot I could get into.',
+            goodAnswer: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving. Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution. That is why this role stands out to me now. It is a chance to keep doing that kind of work in a position where it is central to the job.',
+            breakdown: {
+              Present: 'Start with where you are now so the interviewer can place you quickly.',
+              Past: 'Give only the background that explains how you got here.',
+              WhyHere: 'End by tying your story to this role now.',
+            },
+            annotatedStrongAnswer: [
+              { label: 'Present', text: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving.', detail: 'Open with your current snapshot, not your whole career history.' },
+              { label: 'Past', text: 'Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution.', detail: 'Pick only the past that explains the through-line.' },
+              { label: 'Why Here', text: 'That is why this role stands out to me now. It is a chance to keep doing that kind of work in a position where it is central to the job.', detail: 'Close by connecting your background to this role.' },
+            ],
+          },
+        },
+        exercises: [
+          { type: 'multiple_choice', question: 'What should come first in a strong "tell me about yourself" answer?', options: ['Your full career history', 'Your current role and focus', 'Why you left your first job', 'A long story about college'], correctIndex: 1, explanation: 'Start with the present so the interviewer can place you immediately.' },
+          { type: 'multiple_choice', question: 'Which answer opening is strongest?', options: ['I have done a lot of different things over the years.', 'Right now I work in growth marketing, mostly focused on execution and analytics.', 'I can start from the very beginning if that is helpful.', 'My background is a little all over the place.'], correctIndex: 1, explanation: 'A strong opening gives a clean current snapshot.' },
+          { type: 'multiple_choice', question: 'What should the middle "Past" section do?', options: ['List every prior role in order', 'Explain the relevant background that led you here', 'Focus mostly on hobbies and personality', 'Repeat your current job again'], correctIndex: 1, explanation: 'Past should explain the relevant path, not recite your whole resume.' },
+          { type: 'multiple_choice', question: 'Which closing is strongest?', options: ['So yeah, that is a little about me.', 'That is why this role makes sense as the next step for me now.', 'I have done a lot and can go deeper if needed.', 'There is more I could say, but I will stop there.'], correctIndex: 1, explanation: 'The best close ties your background to the role you are interviewing for.' },
+          { type: 'multiple_choice', question: 'What is the biggest mistake in a weak tell-me-about-yourself answer?', options: ['It is too structured', 'It gives no sense of current relevance', 'It mentions your current role', 'It ends too clearly'], correctIndex: 1, explanation: 'Weak answers often sound like resume recitals with no clear point.' },
+          { type: 'multiple_choice', question: 'Select the "Present" sentence.', options: ['Before that, I spent several years in agency roles building execution discipline.', 'That is why this role feels like a natural next step now.', 'Right now I lead projects that sit between marketing, operations, and analytics.', 'Those experiences taught me how to work across teams.'], correctIndex: 2, explanation: 'Present tells the interviewer where you are now.' },
+          { type: 'multiple_choice', question: 'Select the "Past" sentence.', options: ['That is why I am excited about this role now.', 'Right now I manage cross-functional launches.', 'Before that, I built my foundation in agency and in-house marketing roles.', 'This role lines up with how I work best.'], correctIndex: 2, explanation: 'Past gives the relevant path that led to the present.' },
+          { type: 'multiple_choice', question: 'Select the "Why Here" sentence.', options: ['Right now I work in lifecycle marketing.', 'Before that, I worked across agency and in-house teams.', 'That is why this role stands out to me now.', 'I have worked in several industries.'], correctIndex: 2, explanation: 'Why Here connects your story to this role.' },
+          { type: 'word_bank', instruction: 'Complete the pattern.', sentenceWithBlank: 'Present -> Past -> [___]', options: ['Why Here', 'Compensation', 'Disclaimer', 'Reflection'], correctIndex: 0, explanation: 'A strong intro answer ends by linking your story to the role.' },
+          { type: 'tap_select', instruction: 'Tap the moves that strengthen a tell-me-about-yourself answer.', items: ['Start with where you are now', 'Walk through every job in order', 'Use only the most relevant past', 'Close by tying your story to the role'], correctIndices: [0, 2, 3], explanation: 'The strongest version is selective and role-relevant.' },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Draft your answer as Present, Past, Why Here.',
+            coachingTip: 'Keep it tight. One line for where you are now, one line for the relevant background, and one line for why this role fits.',
+            evaluationType: 'present_past_why_here',
+            fields: [
+              { label: 'Present', placeholder: 'What do you do now, and what is your current focus?', helper: 'Give the interviewer a clean current snapshot.', minWords: 6 },
+              { label: 'Past', placeholder: 'What relevant background led you here?', helper: 'Only include the past that helps explain your fit.', minWords: 6 },
+              { label: 'Why Here', placeholder: 'Why does this role make sense as your next step now?', helper: 'Tie your story to this role directly.', minWords: 8 },
+            ],
+          },
+        ],
+      }
+    case 'noticed_fit_now':
+      return {
+        title: 'Make motivation sound chosen',
+        difficulty: 'easy',
+        teach: {
+          title: 'Use What I noticed, Why it fits, Why now',
+          explanation: 'For motivation answers, do not start with generic enthusiasm. Name something real about the role or company, explain why it fits your background, and close on why this move makes sense now.',
+          example: {
+            question: 'Why are you interested in this role?',
+            badAnswer: 'It seems like a great company and a strong opportunity. I think I would learn a lot and it feels like a good next step for me.',
+            goodAnswer: 'What stood out to me is that this role sits between execution and cross-functional coordination, which is where I have done some of my best work. That fits because a lot of my recent experience has been about turning messy requirements into clear execution across teams. And the reason it makes sense now is that I am looking for a role where that kind of work is central, not just an occasional part of the job.',
+            breakdown: {
+              WhatINoticed: 'Start with a real observation about the role or company.',
+              WhyItFits: 'Show the overlap between that observation and your background.',
+              WhyNow: 'Explain why this is the right next step now.',
+            },
+            annotatedStrongAnswer: [
+              { label: 'What I noticed', text: 'What stood out to me is that this role sits between execution and cross-functional coordination,', detail: 'Start with a specific observation instead of generic praise.' },
+              { label: 'Why it fits', text: 'which is where I have done some of my best work. That fits because a lot of my recent experience has been about turning messy requirements into clear execution across teams.', detail: 'Connect the role to what you already do well.' },
+              { label: 'Why now', text: 'And the reason it makes sense now is that I am looking for a role where that kind of work is central, not just an occasional part of the job.', detail: 'Close on timing and direction.' },
+            ],
+          },
+        },
+        exercises: [
+          { type: 'multiple_choice', question: 'What should come first in a strong motivation answer?', options: ['A compliment about the brand', 'Something specific you noticed about the role or company', 'Your salary expectations', 'A long summary of your resume'], correctIndex: 1, explanation: 'Start with a real observation, not empty enthusiasm.' },
+          { type: 'multiple_choice', question: 'Which opening is strongest?', options: ['You seem like a great company.', 'What stood out to me is how cross-functional this role is.', 'I am open to a lot of opportunities right now.', 'I have always wanted to work somewhere successful.'], correctIndex: 1, explanation: 'The strongest opening shows you noticed something real.' },
+          { type: 'multiple_choice', question: 'What should the middle "Why it fits" section do?', options: ['Explain why the role lines up with your background', 'Repeat why the company is impressive', 'Talk about compensation', 'List every skill you have ever used'], correctIndex: 0, explanation: 'Fit is about overlap between the role and your experience.' },
+          { type: 'multiple_choice', question: 'What should the "Why now" section do?', options: ['Show why the timing makes sense', 'List your grievances with your current job', 'Repeat your resume summary', 'Add more company research'], correctIndex: 0, explanation: 'Why now explains why this move is logical now.' },
+          { type: 'multiple_choice', question: 'Which answer sounds most chosen rather than generic?', options: ['This seems like a great place to grow.', 'I am excited about any strong opportunity.', 'This role stands out because it focuses on work I already know I want to keep building toward.', 'I think I could do a lot of jobs like this one.'], correctIndex: 2, explanation: 'Chosen answers sound specific and directional.' },
+          { type: 'multiple_choice', question: 'Select the "What I noticed" sentence.', options: ['A lot of my recent work has involved coordinating across teams.', 'That is why this feels like the right next step now.', 'What stood out to me is how this role connects execution with stakeholder coordination.', 'I want a role where that kind of work is central.'], correctIndex: 2, explanation: 'What I noticed starts with a real observation.' },
+          { type: 'multiple_choice', question: 'Select the "Why it fits" sentence.', options: ['What stood out to me is the role’s cross-functional scope.', 'A lot of my recent work has been about coordinating execution across teams.', 'That is why now feels like the right time to move.', 'The company seems to be growing quickly.'], correctIndex: 1, explanation: 'Why it fits connects the observation to your background.' },
+          { type: 'multiple_choice', question: 'Select the "Why now" sentence.', options: ['This role seems to touch a lot of teams.', 'I have done this kind of work before.', 'That is why this move makes sense now for me.', 'The company has a strong reputation.'], correctIndex: 2, explanation: 'Why now explains timing and direction.' },
+          { type: 'word_bank', instruction: 'Complete the pattern.', sentenceWithBlank: 'What I noticed -> Why it fits -> [___]', options: ['Why now', 'Salary range', 'Resume recap', 'Reflection'], correctIndex: 0, explanation: 'The last step explains why the move makes sense now.' },
+          { type: 'tap_select', instruction: 'Tap the moves that strengthen a motivation answer.', items: ['Use a specific observation', 'Tie it to your background', 'Stay vague so it works everywhere', 'Explain why now makes sense'], correctIndices: [0, 1, 3], explanation: 'Strong motivation answers sound informed and intentional.' },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Draft your answer as What I noticed, Why it fits, Why now.',
+            coachingTip: 'Start with one real observation, connect it to your experience, then explain why this move makes sense now.',
+            evaluationType: 'noticed_fit_now',
+            fields: [
+              { label: 'What I noticed', placeholder: 'What specifically stood out to you about the role or company?', helper: 'Use one real observation, not generic praise.', minWords: 6 },
+              { label: 'Why it fits', placeholder: 'Why does that fit your background or strengths?', helper: 'Connect the role to your actual experience.', minWords: 8 },
+              { label: 'Why now', placeholder: 'Why does this role make sense for you now?', helper: 'Explain the timing and direction.', minWords: 8 },
+            ],
+          },
+        ],
+      }
+    case 'answer_reason_example':
+      return {
+        title: 'Make judgment answers easy to follow',
+        difficulty: 'easy',
+        teach: {
+          title: 'Use Answer, Reason, Example',
+          explanation: 'For simpler judgment or opinion questions, do not overbuild the answer. State your answer directly, give the reason behind it, then add one concrete example to make it credible.',
+          example: {
+            question: 'How do you prioritize when everything feels urgent?',
+            badAnswer: 'I try to stay organized and communicate a lot. It depends on the situation, but I usually work hard and keep moving things along.',
+            goodAnswer: 'I prioritize by identifying what has the biggest business impact and the shortest real deadline. The reason is that urgency and importance are not always the same thing, so I try to separate noise from actual risk. For example, in my last role I had two requests come in at once, and I pushed the one tied to a client launch first because missing it would have created downstream issues for three teams.',
+            breakdown: {
+              Answer: 'State your answer directly instead of circling around it.',
+              Reason: 'Explain the thinking behind your answer.',
+              Example: 'Use one concrete example so the answer feels real.',
+            },
+            annotatedStrongAnswer: [
+              { label: 'Answer', text: 'I prioritize by identifying what has the biggest business impact and the shortest real deadline.', detail: 'Open with the answer, not with caveats.' },
+              { label: 'Reason', text: 'The reason is that urgency and importance are not always the same thing, so I try to separate noise from actual risk.', detail: 'Explain your thinking clearly.' },
+              { label: 'Example', text: 'For example, in my last role I had two requests come in at once, and I pushed the one tied to a client launch first because missing it would have created downstream issues for three teams.', detail: 'A short concrete example makes the answer believable.' },
+            ],
+          },
+        },
+        exercises: [
+          { type: 'multiple_choice', question: 'What should come first in a judgment answer?', options: ['A disclaimer', 'The answer itself', 'A long story', 'A reflection'], correctIndex: 1, explanation: 'Judgment answers are strongest when you answer first.' },
+          { type: 'multiple_choice', question: 'What should the middle "Reason" section do?', options: ['List every detail you remember', 'Explain the logic behind your answer', 'Switch to a different topic', 'Repeat the answer word for word'], correctIndex: 1, explanation: 'Reason explains the thinking behind the answer.' },
+          { type: 'multiple_choice', question: 'Why add an Example?', options: ['To make the answer longer', 'To prove the answer works in real life', 'To avoid answering directly', 'To sound more formal'], correctIndex: 1, explanation: 'A short example makes the judgment answer credible.' },
+          { type: 'multiple_choice', question: 'Which opening is strongest?', options: ['It depends, but I guess I usually try to stay organized.', 'I prioritize by ranking work by impact and real deadline.', 'There are a lot of ways to think about that.', 'I have seen a lot of urgent requests over the years.'], correctIndex: 1, explanation: 'Answer first.' },
+          { type: 'multiple_choice', question: 'Which middle sentence is the strongest Reason?', options: ['The reason is that not everything urgent is actually high impact.', 'I try to stay flexible and positive.', 'It really depends on the circumstances.', 'There is a lot to balance in those moments.'], correctIndex: 0, explanation: 'Reason should make your logic visible.' },
+          { type: 'multiple_choice', question: 'Which sentence is the best Example?', options: ['For example, I once had two deadlines and picked the one tied to a client launch first.', 'It usually works out well when I do this.', 'People generally appreciate this approach.', 'That is how I think about it most of the time.'], correctIndex: 0, explanation: 'A short real example is better than vague commentary.' },
+          { type: 'multiple_choice', question: 'Select the Answer sentence.', options: ['The reason is that urgency and importance are not always the same.', 'For example, I once prioritized a client launch request first.', 'I prioritize by identifying what has the biggest impact and closest real deadline.', 'That approach has worked well for me over time.'], correctIndex: 2, explanation: 'Answer comes first and states your approach directly.' },
+          { type: 'multiple_choice', question: 'Select the Reason sentence.', options: ['I prioritize by identifying the biggest impact first.', 'The reason is that urgency and importance are not always the same.', 'For example, I once had two competing deadlines.', 'That kept three teams from getting blocked.'], correctIndex: 1, explanation: 'Reason makes the logic visible.' },
+          { type: 'word_bank', instruction: 'Complete the pattern.', sentenceWithBlank: 'Answer -> Reason -> [___]', options: ['Example', 'Disclaimer', 'Resume', 'Reflection'], correctIndex: 0, explanation: 'A short example completes the answer.' },
+          { type: 'tap_select', instruction: 'Tap the moves that strengthen a judgment answer.', items: ['Answer first', 'Explain your reasoning', 'Hide your point until the end', 'Use one concrete example'], correctIndices: [0, 1, 3], explanation: 'Judgment answers work best when they are direct, reasoned, and grounded.' },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Draft your answer as Answer, Reason, Example.',
+            coachingTip: 'Start with the answer itself. Then explain the logic behind it. Then add one short example that proves it.',
+            evaluationType: 'answer_reason_example',
+            fields: [
+              { label: 'Answer', placeholder: 'What is your answer to the question?', helper: 'State the answer directly.', minWords: 5 },
+              { label: 'Reason', placeholder: 'Why do you approach it that way?', helper: 'Make your logic clear.', minWords: 6 },
+              { label: 'Example', placeholder: 'What is one short example that proves it?', helper: 'Use one concrete example, not a long story.', minWords: 8 },
+            ],
+          },
+        ],
+      }
+    case 'star':
+    default:
+      return {
+        title: 'Build the story with STAR',
+        difficulty: 'easy',
+        teach: {
+          title: 'Lead clearly, then use STAR in the middle',
+          explanation: 'Behavioral answers should be easy to follow out loud and specific underneath. Lead with the project or challenge, walk through Situation, Task, Action, and Result, then land on why the outcome mattered.',
+          example: {
+            question: 'Tell me about a project you are proud of.',
+            badAnswer: 'There are a few I could talk about. One was this onboarding work I did, and there were a lot of moving pieces around approvals and handoffs. I worked with different teams on it and changed some parts of the process, and overall it ended up being better for everyone involved.',
+            goodAnswer: 'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months. The old process had duplicate approvals and too many handoffs, and I was responsible for shortening the setup timeline without making more work for HR or IT. I mapped the blockers, removed two extra sign-offs, and created one shared request form. That cut onboarding time from about nine business days to three. It also meant new hires could start contributing in their first week instead of waiting around for access.',
+            breakdown: {
+              Lead: 'Open with the answer so the interviewer knows your point right away.',
+              Support: 'Use STAR in the middle: Situation for context, Task for what you owned, Action for what you did, and Result for what changed.',
+              Land: 'Close on the result so the answer feels finished and believable.',
+            },
+            annotatedStrongAnswer: [
+              { label: 'Lead', text: 'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months.', detail: 'This answers the question immediately and tells the interviewer where the story is going.' },
+              { label: 'Situation', text: 'The old process had duplicate approvals and too many handoffs,', detail: 'This gives just enough context to understand the problem.' },
+              { label: 'Task', text: 'and I was responsible for shortening the setup timeline without making more work for HR or IT.', detail: 'This makes your responsibility clear instead of leaving ownership vague.' },
+              { label: 'Action', text: 'I mapped the blockers, removed two extra sign-offs, and created one shared request form.', detail: 'This is the execution. It should sound like real moves, not generic effort.' },
+              { label: 'Result', text: 'That cut onboarding time from about nine business days to three.', detail: 'This proves the change worked.' },
+              { label: 'Land', text: 'It also meant new hires could start contributing in their first week instead of waiting around for access.', detail: 'This closes the answer with why the result mattered.' },
+            ],
+          },
+        },
+        exercises: [
+          { type: 'multiple_choice', question: 'Which opening makes the answer easiest to follow?', options: ['There are a few things I could mention, but one project was kind of interesting.', 'A project I am proud of was rebuilding our onboarding workflow because it solved a concrete team problem.', 'So this was a pretty complex situation with a lot of pieces, and I can walk through all of them.', 'I have worked on a lot of projects, and they all taught me different things.'], correctIndex: 1, explanation: 'The strongest opening leads with the point right away instead of circling around it.' },
+          { type: 'multiple_choice', question: 'Select the Situation.', options: ['I needed to shorten the setup timeline without creating more work for HR or IT', 'The old onboarding flow had duplicate approvals and too many handoffs', 'I removed two extra sign-offs and created one shared request form', 'Setup time dropped from nine business days to three'], correctIndex: 1, explanation: 'Situation is the context or problem the answer starts from.' },
+          { type: 'multiple_choice', question: 'Select the Task.', options: ['New hires started contributing in their first week instead of waiting for access', 'I mapped the blockers and built one shared request form', 'I was responsible for shortening the setup timeline without adding more work for HR or IT', 'The old onboarding flow had duplicate approvals and too many handoffs'], correctIndex: 2, explanation: 'Task is the responsibility, goal, or problem you personally had to solve.' },
+          { type: 'multiple_choice', question: 'Select the Action.', options: ['I removed two extra sign-offs and created one shared request form', 'I was responsible for improving the process', 'The process had too many handoffs', 'Onboarding time dropped to three days'], correctIndex: 0, explanation: 'Action is what you actually did, not just what needed to happen.' },
+          { type: 'multiple_choice', question: 'Select the Result.', options: ['I owned shortening the setup timeline', 'The process had duplicate approvals and too many handoffs', 'I mapped the blockers across HR and IT', 'Onboarding time dropped from nine business days to three'], correctIndex: 3, explanation: 'Result is the outcome that proves the work changed something.' },
+          { type: 'multiple_choice', question: 'Which ending lands the answer best?', options: ['Overall it went well and I was proud of how it turned out.', 'People were really happy with the changes.', 'That cut onboarding time from nine business days to three and got new hires contributing in their first week.', 'It taught me a lot about communication and teamwork.'], correctIndex: 2, explanation: 'A strong ending closes with a concrete result and why it mattered.' },
+          { type: 'multiple_choice', question: 'What is the biggest problem with this answer? "There were a lot of moving parts, I worked with different teams, and it ended up being better in the end."', options: ['It has no numbers anywhere', 'It sounds too formal', 'It stays vague about ownership, action, and result', 'It is too short to understand'], correctIndex: 2, explanation: 'The listener still does not know what you owned, what you did, or what changed.' },
+          { type: 'multiple_choice', question: 'Which answer best combines clear spoken flow with STAR underneath?', options: ['A project I am proud of was fixing our onboarding bottleneck. The process had duplicate approvals, I owned shortening the timeline, I removed two sign-offs and created one shared form, and setup time dropped from nine days to three.', 'One project that maybe stands out was onboarding, and there were a lot of things happening, but overall it ended up much better after we worked on it.', 'I have done a lot of work over the years, so it is hard to choose just one example.', 'The project was complex, cross-functional, and definitely a strong learning experience for me.'], correctIndex: 0, explanation: 'This one opens clearly, walks through STAR, and closes on an outcome.' },
+          { type: 'word_bank', instruction: 'Complete the structure rule.', sentenceWithBlank: 'Lead with the point, use STAR in the middle, then [___].', options: ['land on the outcome', 'restart the story', 'add every side detail', 'repeat the setup'], correctIndex: 0, explanation: 'A strong answer feels complete because it ends on what happened or why it mattered.' },
+          { type: 'tap_select', instruction: 'Tap the moves that make the middle of the answer stronger.', items: ['Give just enough context to orient the interviewer', 'State what you were responsible for', 'Jump around between details as you remember them', 'Name the concrete action you took'], correctIndices: [0, 1, 3], explanation: 'The middle works when it still has a STAR backbone instead of turning into a ramble.' },
+          { type: 'multiple_choice', question: 'If you only changed one thing to make a messy answer better, what should you do first?', options: ['Add more detail so the interviewer sees how much work it was', 'Open with a direct Lead sentence that answers the question immediately', 'Use bigger words so the answer sounds more polished', 'Save the real result for the very end without mentioning the project up front'], correctIndex: 1, explanation: 'The biggest immediate improvement is making the answer easy to follow from the first sentence.' },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Build your answer as STAR.',
+            coachingTip: 'Do not write a long paragraph. Write one clean line for the Situation, one for the Task, one for the Action, and one for the Result.',
+            evaluationType: 'star',
+            fields: [
+              { label: 'Situation', placeholder: 'What was happening? Give only the context the interviewer needs.', helper: 'Keep this short. Just orient the listener.', minWords: 5 },
+              { label: 'Task', placeholder: 'What did you own or need to solve?', helper: 'Make your responsibility explicit.', minWords: 5 },
+              { label: 'Action', placeholder: 'What did you actually do?', helper: 'Use real execution steps, not general effort words.', minWords: 8 },
+              { label: 'Result', placeholder: 'What changed because of your work?', helper: 'Use a concrete result if you can.', minWords: 8, shouldIncludeNumber: true },
+            ],
+          },
+        ],
+      }
+  }
+}
+
+export function getContextualPracticeBundle(rootCause: string, question?: string): PracticeBundle {
+  const baseBundle = getBundleForRootCause(rootCause)
+  if (rootCause !== 'poor_structure') return baseBundle
+
+  const template = detectAnswerStructureTemplate(question)
+  const lesson = buildAnswerStructureLesson(template)
+
+  return {
+    ...baseBundle,
+    lessons: [lesson],
+  }
 }

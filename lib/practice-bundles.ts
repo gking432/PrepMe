@@ -67,6 +67,12 @@ export interface SubLesson {
         text: string
         detail?: string
       }>
+      pairedAnnotatedAnswer?: Array<{
+        label: string
+        statement: string
+        groundingDetail: string
+        note?: string
+      }>
     }
   }
   exercises: Exercise[]
@@ -2758,6 +2764,26 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
               { label: 'Past (descriptor)', text: 'Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution.', detail: 'This is not a resume list. It explains the pattern behind the candidate’s background.' },
               { label: 'Why Here (descriptor)', text: 'That is why this role stands out to me now. It is a chance to keep doing that kind of work in a position where it is central to the job.', detail: 'This is strong because it connects the story to the role itself, not just to getting hired.' },
             ],
+            pairedAnnotatedAnswer: [
+              {
+                label: 'Present',
+                statement: 'Right now I work at the intersection of marketing execution and operations',
+                groundingDetail: 'with a lot of my recent work focused on keeping cross-functional projects moving',
+                note: 'The statement names the lane. The grounding detail tells the interviewer what that actually looks like in practice.',
+              },
+              {
+                label: 'Past',
+                statement: 'Before that, I built my foundation across agency and in-house roles',
+                groundingDetail: 'where I had to turn messy requirements into clean execution',
+                note: 'The statement gives the background. The grounding detail explains the through-line that makes the background relevant.',
+              },
+              {
+                label: 'Why Here',
+                statement: 'That is why this role stands out to me now',
+                groundingDetail: 'It is a chance to keep doing that kind of work in a position where it is central to the job',
+                note: 'The statement signals the transition. The grounding detail is what makes the transition feel chosen and specific.',
+              },
+            ],
           },
         },
         exercises: [
@@ -2771,6 +2797,56 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
           { type: 'multiple_choice', question: 'Which "Present" sentence is too generic to lead with?', options: ['Right now I work at the intersection of marketing execution and operations.', 'Right now I make AI tools for small businesses.', 'Right now I lead launches that require coordination across marketing, ops, and analytics.', 'Right now I focus on turning messy requests into clean execution across teams.'], correctIndex: 1, explanation: 'That line is too bare. It names a broad category but gives no useful scope, function, or descriptor.' },
           { type: 'multiple_choice', question: 'Which "Why Here" closing is strongest?', options: ['Now I am looking to use those skills in a full-time role.', 'That is why this role stands out to me now. It gives me a chance to keep doing that kind of cross-functional execution in a role where it is central to the job.', 'I think this would be a good next step for me.', 'I am ready for something new at this point.'], correctIndex: 1, explanation: 'A strong Why Here close connects your background to this specific move with real direction, not generic desire.' },
           { type: 'multiple_choice', question: 'Why is "Now I am looking to use those skills in a full-time role" weak as a closing?', options: ['It is too short to understand.', 'It focuses on employment status instead of why this role fits.', 'It gives too many specifics.', 'It sounds too confident.'], correctIndex: 1, explanation: 'That close is about wanting a job, not about why this particular role makes sense.' },
+          {
+            type: 'label_sort',
+            instruction: 'Label each fragment by the job it does in the stronger answer.',
+            segments: [
+              { text: 'Right now I work at the intersection of marketing execution and operations', correctLabel: 'Present Statement' },
+              { text: 'with a lot of my recent work focused on keeping cross-functional projects moving', correctLabel: 'Present Grounding Detail' },
+              { text: 'Before that, I built my foundation across agency and in-house roles', correctLabel: 'Past Statement' },
+              { text: 'where I had to turn messy requirements into clean execution', correctLabel: 'Past Grounding Detail' },
+              { text: 'That is why this role stands out to me now', correctLabel: 'Why Here Statement' },
+              { text: 'It is a chance to keep doing that kind of work in a position where it is central to the job', correctLabel: 'Why Here Grounding Detail' },
+            ],
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the lines that are grounding details rather than bucket statements.',
+            items: [
+              'Right now I work at the intersection of marketing execution and operations',
+              'with a lot of my recent work focused on keeping cross-functional projects moving',
+              'Before that, I built my foundation across agency and in-house roles',
+              'where I had to turn messy requirements into clean execution',
+              'That is why this role stands out to me now',
+              'It is a chance to keep doing that kind of work in a position where it is central to the job',
+            ],
+            correctIndices: [1, 3, 5],
+            explanation: 'The statement gives the section its shape. The grounding detail is what makes that section sound real and specific.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which pair is strongest for the Present section?',
+            options: [
+              'Present statement: Right now I make AI tools for small businesses. Grounding detail: I like building useful things.',
+              'Present statement: Right now I work in operations. Grounding detail: I have done a lot of different things over time.',
+              'Present statement: Right now I work at the intersection of marketing execution and operations. Grounding detail: A lot of my recent work has focused on keeping cross-functional projects moving.',
+              'Present statement: Right now I am in marketing. Grounding detail: I am looking for a new challenge.',
+            ],
+            correctIndex: 2,
+            explanation: 'The strongest pair names a clear lane and then grounds it in the kind of work the candidate actually does.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the grounding detail supposed to do?',
+            options: [
+              'Make the answer sound longer',
+              'Add concrete texture so the section sounds real and credible',
+              'Repeat the statement with different words',
+              'Hide weak points behind general language',
+            ],
+            correctIndex: 1,
+            explanation: 'Grounding detail is what turns a bucket label into a believable answer.',
+          },
           { type: 'multiple_choice', question: 'Select the "Present" sentence.', options: ['Before that, I spent several years in agency roles building execution discipline.', 'That is why this role feels like a natural next step now.', 'Right now I lead projects that sit between marketing, operations, and analytics.', 'Those experiences taught me how to work across teams.'], correctIndex: 2, explanation: 'Present tells the interviewer where you are now.' },
           { type: 'multiple_choice', question: 'Select the "Past" sentence.', options: ['That is why I am excited about this role now.', 'Right now I manage cross-functional launches.', 'Before that, I built my foundation in agency and in-house marketing roles.', 'This role lines up with how I work best.'], correctIndex: 2, explanation: 'Past gives the relevant path that led to the present.' },
           { type: 'multiple_choice', question: 'Select the "Why Here" sentence.', options: ['Right now I work in lifecycle marketing.', 'Before that, I worked across agency and in-house teams.', 'That is why this role stands out to me now.', 'I have worked in several industries.'], correctIndex: 2, explanation: 'Why Here connects your story to this role.' },

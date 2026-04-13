@@ -311,6 +311,42 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             explanation: 'The biggest immediate improvement is making the answer easy to follow from the first sentence.',
           },
           {
+            type: 'multiple_choice',
+            question: 'Which answer is easiest to follow out loud?',
+            options: [
+              'I can talk about a customer issue we had, and there were a few layers to it, but eventually we solved it and I learned a lot from the situation.',
+              'One example was a customer escalation I owned. The account was at risk because response times had slipped, so I reset the communication plan, coordinated fixes across support and product, and the client renewed for another year.',
+              'There were a lot of things happening at once with that customer, and I worked with different people to keep things moving.',
+              'It was definitely one of the more complicated situations I have been part of, but it turned out well in the end.',
+            ],
+            correctIndex: 1,
+            explanation: 'The strongest answer leads clearly, walks through the work, and lands on a concrete result.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Select the Action.',
+            options: [
+              'The release timeline was slipping because design changes kept arriving late',
+              'I had to get the launch back on track before the client review',
+              'I created a daily checkpoint, cut non-critical scope, and reassigned the final QA pass',
+              'We shipped on time and avoided pushing the client demo',
+            ],
+            correctIndex: 2,
+            explanation: 'Action is the actual execution step, not the context, responsibility, or result.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer has the strongest Land?',
+            options: [
+              'That project really taught me a lot about communication.',
+              'Overall, it was a strong experience and I was glad I worked on it.',
+              'The fix reduced billing errors by 28%, and it also gave the support team a cleaner process to work with every week.',
+              'People seemed to feel much better about the workflow after that.',
+            ],
+            correctIndex: 2,
+            explanation: 'A strong Land closes on what changed and why it mattered, not just how it felt.',
+          },
+          {
             type: 'apply_to_yourself',
             instruction: 'Rebuild your flagged answer using Lead, STAR middle, Land.',
             coachingTip: 'Keep the spoken shape simple: one clear opening line, a tight STAR-style middle, then one clean result line at the end.',

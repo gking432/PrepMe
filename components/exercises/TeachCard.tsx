@@ -73,16 +73,31 @@ export default function TeachCard({
   const summary = useMemo(() => summarizeExplanation(explanation), [explanation])
   const frameworkRows = useMemo(() => Object.entries(example.breakdown), [example.breakdown])
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
+  const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
+  const placeholderMatchesQuestion = useMemo(() => {
+    if (!placeholderQuestion) return false
+    return normalizeQuestion(placeholderQuestion) === normalizeQuestion(originalQuestion || example.question)
+  }, [example.question, originalQuestion, placeholderQuestion])
   const hasMatchingOriginalAnswer = useMemo(() => {
     if (!originalAnswer) return false
     if (placeholderQuestion) {
-      return normalizeQuestion(placeholderQuestion) === normalizeQuestion(originalQuestion || example.question)
+      return placeholderMatchesQuestion
     }
     return true
-  }, [example.question, originalAnswer, originalQuestion, placeholderQuestion])
+  }, [originalAnswer, placeholderQuestion, placeholderMatchesQuestion])
   const safeOriginalAnswer = hasMatchingOriginalAnswer ? originalAnswer : undefined
 
   const whyMissed = useMemo(() => {
+    if (originalAnswerMissing && placeholderMatchesQuestion) {
+      return 'This was flagged because you did not give a usable answer to this question. The first fix is to answer the exact question directly instead of pausing, restarting, or leaving it blank.'
+    }
+    if (originalAnswerMissing && placeholderQuestion && !placeholderMatchesQuestion) {
+      return 'This was flagged because the interview transcript does not contain a usable answer for this exact question. That usually means you answered a different question, got interrupted, or never got a clean response out.'
+    }
+    if (!safeOriginalAnswer) {
+      return 'This was flagged because we do not have a clean matching answer excerpt for this question. We should still practice the right move, but we should not pretend we have a real answer to critique.'
+    }
+
     const key = criterion.toLowerCase()
     if (key.includes('answer structure')) {
       return 'This answer likely got flagged because it takes too long to get to the point, packs in too many side details, and does not land cleanly at the end.'
@@ -103,7 +118,7 @@ export default function TeachCard({
       return 'This answer likely got flagged because the delivery does not feel clean and controlled yet.'
     }
     return 'This answer likely got flagged because the interviewer could not clearly hear the move you wanted them to hear.'
-  }, [criterion])
+  }, [criterion, originalAnswerMissing, placeholderMatchesQuestion, placeholderQuestion, safeOriginalAnswer])
 
   const cards = useMemo(() => ([
     {

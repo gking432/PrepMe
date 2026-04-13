@@ -133,9 +133,9 @@ export default function PracticeLessonFlow({
   )
 
   const coreExercises = useMemo(() => {
+    const quickDrills = randomizedExercises.filter((exercise) => exercise.type !== 'apply_to_yourself').slice(0, 2)
     const applyExercise = randomizedExercises.find((exercise) => exercise.type === 'apply_to_yourself')
-    if (applyExercise) return [applyExercise]
-    return randomizedExercises.slice(0, Math.min(2, randomizedExercises.length))
+    return applyExercise ? [...quickDrills, applyExercise] : quickDrills
   }, [randomizedExercises])
 
   const activeExercises = mode === 'core' ? coreExercises : randomizedExercises

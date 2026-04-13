@@ -46,6 +46,20 @@ function summarizeExplanation(explanation: string) {
   return firstSentence || explanation
 }
 
+function normalizeQuestion(text?: string) {
+  return (text || '')
+    .trim()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+}
+
+function extractPlaceholderQuestion(answer?: string) {
+  if (!answer) return null
+  const match = answer.match(/No response provided to:\s*['"](.+?)['"]/i)
+  return match?.[1] || null
+}
+
 export default function TeachCard({
   criterion,
   title,
@@ -58,6 +72,15 @@ export default function TeachCard({
   const [step, setStep] = useState(0)
   const summary = useMemo(() => summarizeExplanation(explanation), [explanation])
   const frameworkRows = useMemo(() => Object.entries(example.breakdown), [example.breakdown])
+  const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
+  const hasMatchingOriginalAnswer = useMemo(() => {
+    if (!originalAnswer) return false
+    if (placeholderQuestion) {
+      return normalizeQuestion(placeholderQuestion) === normalizeQuestion(originalQuestion || example.question)
+    }
+    return true
+  }, [example.question, originalAnswer, originalQuestion, placeholderQuestion])
+  const safeOriginalAnswer = hasMatchingOriginalAnswer ? originalAnswer : undefined
 
   const whyMissed = useMemo(() => {
     const key = criterion.toLowerCase()
@@ -89,7 +112,7 @@ export default function TeachCard({
       preppi: 'We should start with the exact miss first, not generic advice.',
       content: (
         <div className="space-y-4">
-          {originalAnswer ? (
+          {safeOriginalAnswer ? (
             <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
               <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-rose-600">
@@ -98,14 +121,14 @@ export default function TeachCard({
               </div>
               <div className="px-4 py-4">
                 <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                  &ldquo;{originalAnswer}&rdquo;
+                  &ldquo;{safeOriginalAnswer}&rdquo;
                 </p>
               </div>
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
               <p className="text-sm leading-relaxed text-slate-600 md:text-base">
-                We do not have the full original answer here, so we will use the flagged question and rebuild the move from there.
+                We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
               </p>
             </div>
           )}
@@ -216,7 +239,7 @@ export default function TeachCard({
         </div>
       ),
     },
-  ]), [example, frameworkRows, originalAnswer, originalQuestion, summary, title, whyMissed])
+  ]), [example, frameworkRows, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

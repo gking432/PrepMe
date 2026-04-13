@@ -83,9 +83,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
         title: 'Make the answer easy to follow',
         difficulty: 'easy',
         teach: {
-          title: 'Use Lead, Support, Land',
+          title: 'Lead clearly, then use STAR in the middle',
           explanation:
-            'When an answer feels messy, the problem is usually order. Start with your point in one sentence, support it with the two details that matter most, then land on why it mattered. That keeps the interviewer with you the whole time.',
+            'Good interview answers need two things at once: they need to be easy to follow out loud, and they need enough structure underneath to sound credible. Lead with the point, use a tight STAR-style middle to explain what happened, then land on the result.',
           example: {
             question: 'Tell me about a project you are proud of.',
             badAnswer:
@@ -93,9 +93,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'A project I am proud of was rebuilding our onboarding workflow because it fixed a problem the team had been fighting for months. The old process had duplicate approvals and too many handoffs, so I mapped the blockers, removed two extra sign-offs, and created one shared request form. That cut onboarding time from about nine business days to three and made the handoff much easier for both HR and IT.',
             breakdown: {
-              Lead: 'Start with the point so the interviewer knows where the answer is going.',
-              Support: 'Pick only the two or three details that explain what you actually did.',
-              Land: 'End with the result or why it mattered so the answer feels complete.',
+              Lead: 'Open with the answer so the interviewer knows your point right away.',
+              Support: 'Use a tight STAR middle: enough context, what you owned, what you did.',
+              Land: 'Close on the result so the answer feels finished and believable.',
             },
           },
         },
@@ -117,34 +117,34 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             instruction: 'Label each part of the answer with the role it plays.',
             segments: [
               { text: 'A project I am proud of was rebuilding our onboarding workflow.', correctLabel: 'Lead' },
-              { text: 'I removed duplicate approvals and created one shared request form.', correctLabel: 'Support' },
+              { text: 'I removed duplicate approvals and created one shared request form.', correctLabel: 'Support (STAR middle)' },
               { text: 'That cut onboarding time from nine business days to three.', correctLabel: 'Land' },
             ],
           },
           {
             type: 'word_bank',
             instruction: 'Complete the structure rule.',
-            sentenceWithBlank: 'Lead with the point, support it with the most useful details, then [___].',
-            options: ['change topics', 'land on the outcome', 'add more setup', 'repeat the question'],
-            correctIndex: 1,
+            sentenceWithBlank: 'Lead with the point, use STAR in the middle, then [___].',
+            options: ['land on the outcome', 'restart the story', 'add every side detail', 'repeat the setup'],
+            correctIndex: 0,
             explanation: 'A strong answer feels complete because it ends on what happened or why it mattered.',
           },
           {
             type: 'tap_select',
-            instruction: 'Tap the moves that make an answer easier to follow.',
+            instruction: 'Tap the moves that make the middle of the answer stronger.',
             items: [
-              'State the point in the first sentence',
-              'Add every background detail you remember',
-              'Choose only the two or three details that matter most',
-              'End with the result or takeaway',
+              'Give just enough context to orient the interviewer',
+              'State what you were responsible for',
+              'Jump around between details as you remember them',
+              'Name the concrete action you took',
             ],
-            correctIndices: [0, 2, 3],
-            explanation: 'Good structure is about leading clearly, staying selective, and landing the answer cleanly.',
+            correctIndices: [0, 1, 3],
+            explanation: 'The middle works when it still has a STAR backbone instead of turning into a ramble.',
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Rebuild your flagged answer using Lead, Support, Land.',
-            coachingTip: 'Do not try to say everything. Give one opening sentence, two supporting details, and one ending line that explains the result or why it mattered.',
+            instruction: 'Rebuild your flagged answer using Lead, STAR middle, Land.',
+            coachingTip: 'Keep the spoken shape simple: one clear opening line, a tight STAR-style middle, then one clean result line at the end.',
             fields: [
               {
                 label: 'Lead',
@@ -153,10 +153,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
                 minWords: 8,
               },
               {
-                label: 'Support',
-                placeholder: 'Write the two details that best explain what you did',
-                helper: 'Use only the details that move the story forward.',
-                minWords: 12,
+                label: 'STAR middle',
+                placeholder: 'Write the core context, what you owned, and what you did',
+                helper: 'This is where the story lives. Keep it tight and specific.',
+                minWords: 14,
               },
               {
                 label: 'Land',

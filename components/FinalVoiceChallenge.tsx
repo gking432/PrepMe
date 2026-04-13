@@ -27,6 +27,11 @@ function scoreColor(score: number) {
   return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' }
 }
 
+function isUsableOriginalAnswer(answer?: string) {
+  if (!answer) return false
+  return !/^No response provided to:/i.test(answer.trim())
+}
+
 export default function FinalVoiceChallenge({
   question,
   originalAnswer,
@@ -210,6 +215,7 @@ function Inner({
   onComplete: () => void
 }) {
   const colors = result ? scoreColor(result.score) : null
+  const safeOriginalAnswer = isUsableOriginalAnswer(originalAnswer) ? originalAnswer : undefined
 
   return (
     <div className="space-y-5 py-2 animate-slide-up">
@@ -241,10 +247,10 @@ function Inner({
       </div>
 
       {/* Original answer */}
-      {originalAnswer && (
+      {safeOriginalAnswer && (
         <div className="bg-red-50 border border-red-100 rounded-xl p-4">
           <p className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-1">Your original answer</p>
-          <p className="text-sm text-red-700 italic leading-relaxed line-clamp-3">&ldquo;{originalAnswer}&rdquo;</p>
+          <p className="text-sm text-red-700 italic leading-relaxed line-clamp-3">&ldquo;{safeOriginalAnswer}&rdquo;</p>
         </div>
       )}
 
@@ -266,11 +272,11 @@ function Inner({
 
       {result?.practiceAnswer && (
         <div className="grid gap-4 md:grid-cols-2">
-          {originalAnswer && (
+          {safeOriginalAnswer && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-rose-500">Before</p>
               <p className="mt-2 text-sm leading-relaxed text-rose-900">
-                &ldquo;{originalAnswer}&rdquo;
+                &ldquo;{safeOriginalAnswer}&rdquo;
               </p>
             </div>
           )}

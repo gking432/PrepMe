@@ -9,7 +9,7 @@ function getOpenAI() {
 
 const FRAMEWORK_GUIDANCE: Record<string, string> = {
   star: 'Evaluate whether the draft correctly uses STAR: Situation, Task, Action, Result.',
-  present_past_why_here: 'Evaluate whether the draft correctly uses Present, Past, Why Here.',
+  present_past_why_here: 'Evaluate whether the draft correctly uses Present, Past, Why Here. Be strict about generic language. A weak draft names broad categories without descriptors, like "I make AI tools for small businesses" or "I ran a marketing agency" or "I want to use those skills in a full-time role." A strong draft should include concrete descriptors of focus, function, scope, or through-line, and the Why Here section must connect to this role specifically, not just employment generally.',
   noticed_fit_now: 'Evaluate whether the draft correctly uses What I noticed, Why it fits, Why now.',
   answer_reason_example: 'Evaluate whether the draft correctly uses Answer, Reason, Example.',
 }
@@ -47,6 +47,7 @@ Return ONLY valid JSON in this exact shape:
 Evaluation rules:
 - Be strict about structure quality, but keep feedback short and practical.
 - Fail the draft if it is vague, off-question, nonsensical, or uses the wrong structure.
+- Fail the draft if it is technically in the right buckets but still too generic to score well in a real interview.
 - If a field is acceptable, omit it from fieldFeedback.
 - Use "General" only for a short overall note when needed.
 - ${FRAMEWORK_GUIDANCE[evaluationType] || 'Evaluate whether the draft uses the intended structure correctly.'}`,

@@ -128,12 +128,14 @@ export default function PracticeLessonFlow({
   mode = 'optional',
 }: PracticeLessonFlowProps) {
   const randomizedExercises = useMemo(
-    () => subLesson.exercises.map(randomizeExercise),
+    () => shuffle(subLesson.exercises.map(randomizeExercise)),
     [subLesson.exercises]
   )
 
   const coreExercises = useMemo(() => {
-    const quickDrills = randomizedExercises.filter((exercise) => exercise.type !== 'apply_to_yourself').slice(0, 6)
+    const quickDrills = shuffle(
+      randomizedExercises.filter((exercise) => exercise.type !== 'apply_to_yourself')
+    ).slice(0, 10)
     const applyExercise = randomizedExercises.find((exercise) => exercise.type === 'apply_to_yourself')
     return applyExercise ? [...quickDrills, applyExercise] : quickDrills
   }, [randomizedExercises])

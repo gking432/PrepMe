@@ -178,7 +178,7 @@ export default function CoachReportWorkspace({
   const predictedQuestions = fullRubric?.next_steps_preparation?.predicted_hiring_manager_questions || []
   const sectionIndex = SECTION_CONFIG.findIndex((item) => item.key === section)
   const topStrengths = strengths.slice(0, 4)
-  const topIssues = issues.slice(0, 4)
+  const topIssues = issues
   const tutorialSteps = [
     {
       section: 'overview' as ReportSection,

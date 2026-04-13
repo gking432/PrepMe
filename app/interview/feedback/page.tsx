@@ -1390,6 +1390,9 @@ export default function InterviewDashboard() {
   const sixAreas = feedback?.hr_screen_six_areas
   const wentWellAreas = sixAreas?.what_went_well || []
   const needsImproveAreas = sixAreas?.what_needs_improve || []
+  const uniquePracticeModuleCount = new Set(
+    needsImproveAreas.map((area: any) => getRootCauseForCriterion(area.criterion, area.rootCause))
+  ).size
   const strengthsCards = wentWellAreas
   const needsWorkCards = needsImproveAreas
   const totalAreas =
@@ -1956,7 +1959,7 @@ export default function InterviewDashboard() {
       title: 'Practice',
       items: [
         { label: 'Completed', value: `${passedCriteria.length}`, progress: needsImproveAreas.length ? (passedCriteria.length / needsImproveAreas.length) * 100 : 0, tone: 'success' as const },
-        { label: 'Remaining', value: `${Math.max(needsImproveAreas.length - passedCriteria.length, 0)}` },
+        { label: 'Remaining', value: `${Math.max(uniquePracticeModuleCount - passedCriteria.length, 0)}` },
         { label: 'Stage', value: currentStageKey.replace('_', ' ') },
       ],
     },
@@ -2000,8 +2003,8 @@ export default function InterviewDashboard() {
     {
       title: 'Practice Hub',
       items: [
-        { label: 'Modules', value: `${needsImproveAreas.length || 0}` },
-        { label: 'Completed', value: `${passedCriteria.length}`, progress: needsImproveAreas.length ? (passedCriteria.length / needsImproveAreas.length) * 100 : 0, tone: 'success' as const },
+        { label: 'Modules', value: `${uniquePracticeModuleCount || 0}` },
+        { label: 'Completed', value: `${passedCriteria.length}`, progress: uniquePracticeModuleCount ? (passedCriteria.length / uniquePracticeModuleCount) * 100 : 0, tone: 'success' as const },
         { label: 'Focus', value: practiceSidebarItems.find(item => item.status === 'current')?.label || 'Pick a module' },
       ],
     },

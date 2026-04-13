@@ -61,6 +61,11 @@ export interface SubLesson {
       badAnswer: string
       goodAnswer: string
       breakdown: Record<string, string>
+      annotatedStrongAnswer?: Array<{
+        label: string
+        text: string
+        detail?: string
+      }>
     }
   }
   exercises: Exercise[]
@@ -91,12 +96,44 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'There are a few I could talk about. One was this onboarding work I did, and there were a lot of moving pieces around approvals and handoffs. I worked with different teams on it and changed some parts of the process, and overall it ended up being better for everyone involved.',
             goodAnswer:
-              'A project I am proud of was rebuilding our onboarding workflow because it fixed a problem the team had been fighting for months. The old process had duplicate approvals and too many handoffs, so I mapped the blockers, removed two extra sign-offs, and created one shared request form. That cut onboarding time from about nine business days to three and made the handoff much easier for both HR and IT.',
+              'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months. The old process had duplicate approvals and too many handoffs, and I was responsible for shortening the setup timeline without making more work for HR or IT. I mapped the blockers, removed two extra sign-offs, and created one shared request form. That cut onboarding time from about nine business days to three. It also meant new hires could start contributing in their first week instead of waiting around for access.',
             breakdown: {
               Lead: 'Open with the answer so the interviewer knows your point right away.',
               Support: 'Use a tight STAR middle: enough context, what you owned, what you did.',
               Land: 'Close on the result so the answer feels finished and believable.',
             },
+            annotatedStrongAnswer: [
+              {
+                label: 'Lead',
+                text: 'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months.',
+                detail: 'This answers the question immediately and tells the interviewer where the story is going.',
+              },
+              {
+                label: 'Situation',
+                text: 'The old process had duplicate approvals and too many handoffs,',
+                detail: 'This gives just enough context to understand the problem.',
+              },
+              {
+                label: 'Task',
+                text: 'and I was responsible for shortening the setup timeline without making more work for HR or IT.',
+                detail: 'This makes your responsibility clear instead of leaving ownership vague.',
+              },
+              {
+                label: 'Action',
+                text: 'I mapped the blockers, removed two extra sign-offs, and created one shared request form.',
+                detail: 'This is the execution. It should sound like real moves, not generic effort.',
+              },
+              {
+                label: 'Result',
+                text: 'That cut onboarding time from about nine business days to three.',
+                detail: 'This proves the change worked.',
+              },
+              {
+                label: 'Land',
+                text: 'It also meant new hires could start contributing in their first week instead of waiting around for access.',
+                detail: 'This closes the answer with why the result mattered.',
+              },
+            ],
           },
         },
         exercises: [

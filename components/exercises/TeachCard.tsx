@@ -13,6 +13,11 @@ interface TeachCardProps {
     badAnswer: string
     goodAnswer: string
     breakdown: Record<string, string>
+    annotatedStrongAnswer?: Array<{
+      label: string
+      text: string
+      detail?: string
+    }>
   }
   originalQuestion?: string
   originalAnswer?: string
@@ -254,6 +259,33 @@ export default function TeachCard({
         </div>
       ),
     },
+    ...(example.annotatedStrongAnswer ? [{
+      eyebrow: 'Label The Strong Answer',
+      title: 'See exactly where each part lives',
+      preppi: 'If we teach a structure, we should be able to point to each piece inside the stronger answer.',
+      content: (
+        <div className="space-y-3">
+          {example.annotatedStrongAnswer.map((part) => (
+            <div
+              key={`${part.label}-${part.text}`}
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
+            >
+              <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
+                {part.label}
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-900 md:text-[15px]">
+                {part.text}
+              </p>
+              {part.detail && (
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {part.detail}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      ),
+    }] : []),
   ]), [example, frameworkRows, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]

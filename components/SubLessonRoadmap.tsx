@@ -6,7 +6,11 @@ import Confetti from '@/components/Confetti'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import PracticeLessonFlow from '@/components/PracticeLessonFlow'
 import FinalVoiceChallenge from '@/components/FinalVoiceChallenge'
-import { getContextualPracticeBundle, type PracticeBundle } from '@/lib/practice-bundles'
+import {
+  detectAnswerStructureTemplate,
+  getContextualPracticeBundle,
+  type PracticeBundle,
+} from '@/lib/practice-bundles'
 
 function MiniConfettiBurst({ active }: { active: boolean }) {
   if (!active) return null
@@ -70,6 +74,16 @@ export default function SubLessonRoadmap({
 }: SubLessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
+  const canonicalStructureQuestions = useMemo(
+    () => ({
+      present_past_why_here: 'Can you tell me about yourself and walk me through your background briefly?',
+      star: 'Tell me about a project you are proud of.',
+      noticed_fit_now: 'Why are you interested in this role?',
+      answer_reason_example: 'How do you prioritize when everything feels urgent?',
+    }),
+    []
+  )
+
   const [activeSlot, setActiveSlot] = useState<ActiveSlot>(null)
   const [completedSet, setCompletedSet] = useState<Set<number>>(new Set())
   const [passedSet, setPassedSet] = useState<Set<number>>(new Set())
@@ -84,8 +98,47 @@ export default function SubLessonRoadmap({
       : [{ question: originalQuestion, excerpt: originalAnswer }]
     ).filter((item) => item.question || item.excerpt)
 
-    return base.length > 0 ? base : [{ question: originalQuestion, excerpt: originalAnswer }]
-  }, [evidenceItems, originalAnswer, originalQuestion])
+    const normalizedBase = base.length > 0 ? base : [{ question: originalQuestion, excerpt: originalAnswer }]
+
+    if (bundle.rootCause !== 'poor_structure') return normalizedBase
+
+    const hasAnyUsableAnswer = normalizedBase.some((item) => {
+      const excerpt = (item.excerpt || '').trim().toLowerCase()
+      return Boolean(
+        excerpt &&
+        !excerpt.startsWith('no response provided') &&
+        excerpt !== 'hello' &&
+        excerpt !== 'hi'
+      )
+    })
+
+    if (hasAnyUsableAnswer) return normalizedBase
+
+    const templates: Array<'present_past_why_here' | 'star' | 'noticed_fit_now' | 'answer_reason_example'> = [
+      'present_past_why_here',
+      'star',
+      'noticed_fit_now',
+      'answer_reason_example',
+    ]
+
+    return templates.map((template) => {
+      const existing = normalizedBase.find(
+        (item) => detectAnswerStructureTemplate(item.question) === template
+      )
+
+      if (existing) return existing
+
+      return {
+        question: canonicalStructureQuestions[template],
+        excerpt: '',
+      }
+    })
+  }, [bundle.rootCause, canonicalStructureQuestions, evidenceItems, originalAnswer, originalQuestion])
+
+  const contextualBundles = useMemo(
+    () => questionRepairs.map((item) => getContextualPracticeBundle(bundle.rootCause, item.question)),
+    [bundle.rootCause, questionRepairs]
+  )
 
   const requiredSteps = useMemo(() => (
     questionRepairs.flatMap((item, index) => ([
@@ -167,7 +220,7 @@ export default function SubLessonRoadmap({
     const currentEvidence = requiredStep ? questionRepairs[requiredStep.evidenceIndex] : questionRepairs[0]
     const activeBundle = isOptional
       ? bundle
-      : getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question)
+      : contextualBundles[requiredStep.evidenceIndex] || getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question)
     const subLesson = isOptional
       ? bundle.lessons[optionalLessonIndex as number]
       : requiredStep?.type === 'lesson'
@@ -245,7 +298,7 @@ export default function SubLessonRoadmap({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
-                  <span>{getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question).displayName}</span>
+                  <span>{contextualBundles[requiredStep.evidenceIndex]?.displayName || bundle.displayName}</span>
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>Voice Re-Answer</span>
                 </div>

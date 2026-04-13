@@ -9,6 +9,7 @@ import LabelSortExercise from '@/components/exercises/LabelSortExercise'
 import WordBankExercise from '@/components/exercises/WordBankExercise'
 import TapSelectExercise from '@/components/exercises/TapSelectExercise'
 import ApplyToYourselfExercise from '@/components/exercises/ApplyToYourselfExercise'
+import SentenceBuilderExercise from '@/components/exercises/SentenceBuilderExercise'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -100,6 +101,11 @@ function randomizeExercise(exercise: Exercise): Exercise {
           .filter(index => index >= 0),
       }
     }
+    case 'sentence_builder':
+      return {
+        ...exercise,
+        options: shuffle(exercise.options),
+      }
     case 'label_sort':
       return {
         ...exercise,
@@ -133,9 +139,7 @@ export default function PracticeLessonFlow({
   )
 
   const coreExercises = useMemo(() => {
-    const quickDrills = shuffle(
-      randomizedExercises.filter((exercise) => exercise.type !== 'apply_to_yourself')
-    ).slice(0, 10)
+    const quickDrills = randomizedExercises.filter((exercise) => exercise.type !== 'apply_to_yourself')
     const applyExercise = randomizedExercises.find((exercise) => exercise.type === 'apply_to_yourself')
     return applyExercise ? [...quickDrills, applyExercise] : quickDrills
   }, [randomizedExercises])
@@ -324,6 +328,18 @@ export default function PracticeLessonFlow({
             instruction={exercise.instruction}
             items={exercise.items}
             correctIndices={exercise.correctIndices}
+            explanation={exercise.explanation}
+            onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
+          />
+        )
+      case 'sentence_builder':
+        return (
+          <SentenceBuilderExercise
+            key={key}
+            instruction={exercise.instruction}
+            slotLabels={exercise.slotLabels}
+            options={exercise.options}
+            correctOrder={exercise.correctOrder}
             explanation={exercise.explanation}
             onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />

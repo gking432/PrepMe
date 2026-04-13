@@ -216,6 +216,51 @@ export default function TeachCard({
         </div>
       ),
     },
+    ...(example.pairedAnnotatedAnswer ? [{
+      eyebrow: 'Grounding Detail',
+      title: 'What makes each part feel real',
+      preppi: 'Before memorizing the buckets, notice what makes each bucket credible. The statement gives the shape. The grounding detail is what makes it sound real.',
+      content: (
+        <div className="space-y-4">
+          {example.pairedAnnotatedAnswer.map((part) => {
+            const colors = annotationColors(part.label)
+            return (
+              <div
+                key={`${part.label}-pairing-early`}
+                className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
+              >
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                  {part.label}
+                </span>
+                <div className="mt-3 space-y-3">
+                  <div className={`rounded-xl ${colors.bg} px-3 py-3`}>
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      Statement
+                    </p>
+                    <p className={`mt-1 text-sm leading-relaxed ${colors.text}`}>
+                      {part.statement}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      Grounding Detail
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-800">
+                      {part.groundingDetail}
+                    </p>
+                  </div>
+                </div>
+                {part.note && (
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                    {part.note}
+                  </p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ),
+    }] : []),
     {
       eyebrow: 'The Fix',
       title,
@@ -337,51 +382,6 @@ export default function TeachCard({
               )
             })}
           </div>
-        </div>
-      ),
-    }] : []),
-    ...(example.pairedAnnotatedAnswer ? [{
-      eyebrow: 'Grounding Detail',
-      title: 'See what makes each part feel real',
-      preppi: 'The bucket gives the shape. The grounding detail is what makes the answer sound credible instead of generic.',
-      content: (
-        <div className="space-y-4">
-          {example.pairedAnnotatedAnswer.map((part) => {
-            const colors = annotationColors(part.label)
-            return (
-              <div
-                key={`${part.label}-pairing`}
-                className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
-              >
-                <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                  {part.label}
-                </span>
-                <div className="mt-3 space-y-3">
-                  <div className={`rounded-xl ${colors.bg} px-3 py-3`}>
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                      Statement
-                    </p>
-                    <p className={`mt-1 text-sm leading-relaxed ${colors.text}`}>
-                      {part.statement}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                      Grounding Detail
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-800">
-                      {part.groundingDetail}
-                    </p>
-                  </div>
-                </div>
-                {part.note && (
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                    {part.note}
-                  </p>
-                )}
-              </div>
-            )
-          })}
         </div>
       ),
     }] : []),

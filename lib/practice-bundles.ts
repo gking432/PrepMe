@@ -29,6 +29,15 @@ export interface TapSelectExercise {
   explanation: string
 }
 
+export interface SentenceBuilderExercise {
+  type: 'sentence_builder'
+  instruction: string
+  slotLabels: string[]
+  options: string[]
+  correctOrder: string[]
+  explanation: string
+}
+
 export interface ApplyToYourselfExercise {
   type: 'apply_to_yourself'
   instruction: string
@@ -49,6 +58,7 @@ export type Exercise =
   | LabelSortExercise
   | WordBankExercise
   | TapSelectExercise
+  | SentenceBuilderExercise
   | ApplyToYourselfExercise
 
 export interface SubLesson {
@@ -2822,6 +2832,41 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             ],
             correctIndices: [1, 3, 5],
             explanation: 'The statement gives the section its shape. The grounding detail is what makes that section sound real and specific.',
+          },
+          {
+            type: 'sentence_builder',
+            instruction: 'Build the strongest version of this intro answer using the best six pieces.',
+            slotLabels: [
+              'Present Statement',
+              'Present Grounding Detail',
+              'Past Statement',
+              'Past Grounding Detail',
+              'Why Here Statement',
+              'Why Here Grounding Detail',
+            ],
+            correctOrder: [
+              'Right now I work across operations and client delivery',
+              'with most of my recent work focused on keeping complex handoffs moving between teams',
+              'Before that, I built my foundation in service and project-based roles',
+              'where I had to turn unclear requests into organized execution',
+              'That is why this role stands out to me now',
+              'it is a chance to keep doing that kind of coordination work in a role where it matters every day',
+            ],
+            options: [
+              'Right now I work across operations and client delivery',
+              'with most of my recent work focused on keeping complex handoffs moving between teams',
+              'Before that, I built my foundation in service and project-based roles',
+              'where I had to turn unclear requests into organized execution',
+              'That is why this role stands out to me now',
+              'it is a chance to keep doing that kind of coordination work in a role where it matters every day',
+              'Right now I do a lot of different things',
+              'and I like solving problems',
+              'Before that, I worked in a few other jobs',
+              'where I learned a lot',
+              'I am looking for a full-time role',
+              'because I am ready for something new',
+            ],
+            explanation: 'A strong answer pairs each section statement with a grounding detail. The wrong pieces sound generic, interchangeable, or focused on wanting a job rather than showing fit.',
           },
           {
             type: 'multiple_choice',

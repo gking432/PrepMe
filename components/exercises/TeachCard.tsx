@@ -5,6 +5,7 @@ import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import Preppi from '@/components/Preppi'
 
 interface TeachCardProps {
+  criterion: string
   title: string
   explanation: string
   example: {
@@ -13,6 +14,8 @@ interface TeachCardProps {
     goodAnswer: string
     breakdown: Record<string, string>
   }
+  originalQuestion?: string
+  originalAnswer?: string
   onContinue: () => void
 }
 
@@ -44,39 +47,104 @@ function summarizeExplanation(explanation: string) {
 }
 
 export default function TeachCard({
+  criterion,
   title,
   explanation,
   example,
+  originalQuestion,
+  originalAnswer,
   onContinue,
 }: TeachCardProps) {
   const [step, setStep] = useState(0)
   const summary = useMemo(() => summarizeExplanation(explanation), [explanation])
+  const frameworkRows = useMemo(() => Object.entries(example.breakdown), [example.breakdown])
+
+  const whyMissed = useMemo(() => {
+    const key = criterion.toLowerCase()
+    if (key.includes('answer structure')) {
+      return 'This answer likely got flagged because it takes too long to get to the point, packs in too many side details, and does not land cleanly at the end.'
+    }
+    if (key.includes('specific examples')) {
+      return 'This answer likely got flagged because it stays general. The interviewer hears claims, but not enough proof.'
+    }
+    if (key.includes('company')) {
+      return 'This answer likely got flagged because it does not show real preparation or good judgment about the company and role.'
+    }
+    if (key.includes('uncertain')) {
+      return 'This answer likely got flagged because it does not show a calm first step, a decision process, or what happened next.'
+    }
+    if (key.includes('career goals') || key.includes('alignment')) {
+      return 'This answer likely got flagged because it does not clearly explain why this role makes sense for you now.'
+    }
+    if (key.includes('pace') || key.includes('conversation')) {
+      return 'This answer likely got flagged because the delivery does not feel clean and controlled yet.'
+    }
+    return 'This answer likely got flagged because the interviewer could not clearly hear the move you wanted them to hear.'
+  }, [criterion])
 
   const cards = useMemo(() => ([
     {
-      eyebrow: 'Technique',
+      eyebrow: 'Your Flagged Answer',
+      title: originalQuestion || example.question,
+      preppi: 'We should start with the exact miss first, not generic advice.',
+      content: (
+        <div className="space-y-4">
+          {originalAnswer ? (
+            <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+              <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-rose-600">
+                  Your original answer
+                </p>
+              </div>
+              <div className="px-4 py-4">
+                <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                  &ldquo;{originalAnswer}&rdquo;
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                We do not have the full original answer here, so we will use the flagged question and rebuild the move from there.
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-700">
+              Why it got flagged
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">
+              {whyMissed}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      eyebrow: 'The Fix',
       title,
-      preppi: 'Start with the pattern. Then we will compare weak and strong answers.',
+      preppi: 'Here is the repeatable move to use the next time this kind of question comes up.',
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-slate-600 md:text-base">
             {summary}
           </p>
 
-          <div className="space-y-2">
-            {Object.entries(example.breakdown).map(([key, value], index) => (
+          <div className="space-y-3">
+            {frameworkRows.map(([key, value], index) => (
               <div
                 key={key}
-                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3"
+                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
                   {formatBreakdownKey(key, index)}
                 </span>
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
                     {breakdownKeyLabel(key)}
                   </p>
-                  <p className="mt-1 text-sm leading-snug text-slate-700 md:text-[15px]">
+                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">
                     {value}
                   </p>
                 </div>
@@ -87,73 +155,68 @@ export default function TeachCard({
       ),
     },
     {
-      eyebrow: 'Interview Question',
-      title: example.question,
-      preppi: 'First, notice what a weak version sounds like.',
+      eyebrow: 'Compare',
+      title: 'See the difference',
+      preppi: 'This is where the fix becomes obvious. First the weak version, then the stronger one.',
       content: (
-        <div className="overflow-hidden rounded-2xl border-2 border-rose-200 bg-rose-50/70 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-rose-200 bg-rose-100/80 px-4 py-3">
-            <ThumbsDown className="h-4 w-4 text-rose-500" />
-            <span className="text-xs font-bold uppercase tracking-wide text-rose-600">
-              Weak answer
-            </span>
-          </div>
-          <div className="px-4 py-4">
-            <p className="text-base italic leading-relaxed text-rose-900">
-              &ldquo;{example.badAnswer}&rdquo;
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      eyebrow: 'Stronger Version',
-      title: 'Here is the same idea answered well',
-      preppi: 'Now compare it with a stronger version that actually proves what happened.',
-      content: (
-        <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
-            <ThumbsUp className="h-4 w-4 text-emerald-500" />
-            <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
-              Strong answer
-            </span>
-          </div>
-          <div className="px-4 py-4">
-            <p className="text-base leading-relaxed text-emerald-900">
-              &ldquo;{example.goodAnswer}&rdquo;
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      eyebrow: 'Breakdown',
-      title: 'Why the stronger answer works',
-      preppi: 'Last step. See how each part earns its place before you try it yourself.',
-      content: (
-        <div className="space-y-3">
-          {Object.entries(example.breakdown).map(([key, value], index) => (
-            <div
-              key={key}
-              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
-                {formatBreakdownKey(key, index)}
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-2xl border-2 border-rose-200 bg-rose-50/70 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+              <ThumbsDown className="h-4 w-4 text-rose-500" />
+              <span className="text-xs font-bold uppercase tracking-wide text-rose-600">
+                Weak version
               </span>
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
-                  {breakdownKeyLabel(key)}
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-base">
-                  {value}
-                </p>
-              </div>
             </div>
-          ))}
+            <div className="px-4 py-4">
+              <p className="text-base italic leading-relaxed text-rose-900">
+                &ldquo;{example.badAnswer}&rdquo;
+              </p>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
+              <ThumbsUp className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
+                Stronger version
+              </span>
+            </div>
+            <div className="px-4 py-4">
+              <p className="text-base leading-relaxed text-emerald-900">
+                &ldquo;{example.goodAnswer}&rdquo;
+              </p>
+            </div>
+          </div>
         </div>
       ),
     },
-  ]), [example, summary, title])
+    {
+      eyebrow: 'Use This Next Time',
+      title: 'What to remember',
+      preppi: 'You do not need to memorize a script. You do need to remember the move.',
+      content: (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
+              Next time, do this
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-violet-950 md:text-[15px]">
+              {frameworkRows
+                .map(([key]) => breakdownKeyLabel(key))
+                .join(' -> ')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+              Why this helps
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700 md:text-base">
+              The interviewer can follow your answer in real time. That makes you sound more prepared, more thoughtful, and easier to trust.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+  ]), [example, frameworkRows, originalAnswer, originalQuestion, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1
@@ -173,7 +236,7 @@ export default function TeachCard({
         <h2 className="text-xl font-extrabold text-slate-900 md:text-2xl">
           {currentCard.title}
         </h2>
-        {(step === 1 || step === 2) && (
+        {(step === 0 || step === 2) && (
           <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
               Interview question

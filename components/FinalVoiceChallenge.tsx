@@ -40,7 +40,7 @@ export default function FinalVoiceChallenge({
   const { ding } = useGameFeedback()
   const [recording, setRecording] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<{ score: number; passed: boolean; feedback: string } | null>(null)
+  const [result, setResult] = useState<{ score: number; passed: boolean; feedback: string; practiceAnswer?: string } | null>(null)
   const [confetti, setConfetti] = useState(false)
   const [xp, setXp] = useState(0)
 
@@ -68,7 +68,7 @@ export default function FinalVoiceChallenge({
       const passed = data.passed ?? score >= PASS_THRESHOLD
       const feedback = data.feedback || ''
 
-      setResult({ score, passed, feedback })
+      setResult({ score, passed, feedback, practiceAnswer: data.practiceAnswer || '' })
       if (passed) {
         setXp(XP_SUBMIT + XP_PASS)
         ding()
@@ -76,7 +76,7 @@ export default function FinalVoiceChallenge({
         setTimeout(() => setConfetti(false), 3000)
       }
     } catch {
-      setResult({ score: 5, passed: false, feedback: 'Scoring unavailable. Keep practicing!' })
+      setResult({ score: 5, passed: false, feedback: 'Scoring unavailable. Keep practicing!', practiceAnswer: '' })
     } finally {
       setSubmitting(false)
     }
@@ -200,7 +200,7 @@ function Inner({
 }: {
   question: string
   originalAnswer?: string
-  result: { score: number; passed: boolean; feedback: string } | null
+  result: { score: number; passed: boolean; feedback: string; practiceAnswer?: string } | null
   recording: boolean
   submitting: boolean
   xp: number
@@ -261,6 +261,34 @@ function Inner({
           {xp > 0 && (
             <p className="text-xs font-bold text-amber-600 mt-2">+{xp} XP earned</p>
           )}
+        </div>
+      )}
+
+      {result?.practiceAnswer && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {originalAnswer && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-500">Before</p>
+              <p className="mt-2 text-sm leading-relaxed text-rose-900">
+                &ldquo;{originalAnswer}&rdquo;
+              </p>
+            </div>
+          )}
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">After</p>
+            <p className="mt-2 text-sm leading-relaxed text-emerald-900">
+              &ldquo;{result.practiceAnswer}&rdquo;
+            </p>
+          </div>
+        </div>
+      )}
+
+      {result && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Keep this</p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            Keep the structure and key proof points from this stronger version in mind for similar interview questions. Use the pattern, not a word-for-word script.
+          </p>
         </div>
       )}
 

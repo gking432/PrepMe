@@ -15,11 +15,13 @@ interface PracticeLessonFlowProps {
   subLesson: SubLesson
   lessonNumber: number
   totalLessons: number
+  criterion: string
   originalQuestion?: string
   originalAnswer?: string
   onComplete: (passed: boolean, xpEarned: number) => void
   onClose: () => void
   embeddedDesktop?: boolean
+  mode?: 'core' | 'optional'
 }
 
 type FlowState = 'intro' | 'teach' | 'retry_intro' | `exercise_${number}` | 'complete'
@@ -117,18 +119,27 @@ export default function PracticeLessonFlow({
   subLesson,
   lessonNumber,
   totalLessons,
+  criterion,
   originalQuestion,
   originalAnswer,
   onComplete,
   onClose,
   embeddedDesktop = false,
+  mode = 'optional',
 }: PracticeLessonFlowProps) {
   const randomizedExercises = useMemo(
     () => subLesson.exercises.map(randomizeExercise),
     [subLesson.exercises]
   )
 
-  const exerciseCount = randomizedExercises.length
+  const coreExercises = useMemo(() => {
+    const applyExercise = randomizedExercises.find((exercise) => exercise.type === 'apply_to_yourself')
+    if (applyExercise) return [applyExercise]
+    return randomizedExercises.slice(0, Math.min(2, randomizedExercises.length))
+  }, [randomizedExercises])
+
+  const activeExercises = mode === 'core' ? coreExercises : randomizedExercises
+  const exerciseCount = activeExercises.length
 
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [round, setRound] = useState<'main' | 'retry'>('main')
@@ -141,7 +152,7 @@ export default function PracticeLessonFlow({
 
   const activeExerciseIndices = round === 'retry'
     ? retryExerciseIndices
-    : randomizedExercises.map((_, index) => index)
+    : activeExercises.map((_, index) => index)
 
   const currentStepIndex = useMemo(() => {
     if (flowState === 'intro') return -1
@@ -175,7 +186,7 @@ export default function PracticeLessonFlow({
   const advanceFromExercise = useCallback((queuePosition: number, correct: boolean) => {
     const queue = round === 'retry'
       ? retryExerciseIndices
-      : randomizedExercises.map((_, index) => index)
+      : activeExercises.map((_, index) => index)
     const exerciseIndex = queue[queuePosition]
 
     if (correct) {
@@ -203,7 +214,7 @@ export default function PracticeLessonFlow({
     }
 
     setFlowState('complete')
-  }, [addXp, randomizedExercises, retryExerciseIndices, round, triggerBurst])
+  }, [activeExercises, addXp, retryExerciseIndices, round, triggerBurst])
 
   const startRetryRound = useCallback(() => {
     if (retryExerciseIndices.length === 0) {
@@ -350,8 +361,14 @@ export default function PracticeLessonFlow({
               <BookOpen className="h-3.5 w-3.5 text-violet-700" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">4-step walkthrough</p>
-              <p className="text-xs text-gray-400">Learn the pattern before you answer anything</p>
+              <p className="text-sm font-semibold text-gray-800">
+                {mode === 'core' ? 'Real miss -> real fix' : 'Full lesson walkthrough'}
+              </p>
+              <p className="text-xs text-gray-400">
+                {mode === 'core'
+                  ? 'We will start from the flagged answer and rebuild it.'
+                  : 'Learn the pattern before you answer anything'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -359,14 +376,25 @@ export default function PracticeLessonFlow({
               <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">{exerciseCount} drills + a retry round</p>
-              <p className="text-xs text-gray-400">Misses come back after the full set, not immediately</p>
+              <p className="text-sm font-semibold text-gray-800">
+                {mode === 'core' ? `${exerciseCount} focused drill${exerciseCount === 1 ? '' : 's'}` : `${exerciseCount} drills + a retry round`}
+              </p>
+              <p className="text-xs text-gray-400">
+                {mode === 'core'
+                  ? 'Short on purpose so you can apply the fix right away.'
+                  : 'Misses come back after the full set, not immediately'}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="mb-6">
-          <Preppi message="We will learn the pattern first, then do the full round, then come back to anything you missed." size="md" />
+          <Preppi
+            message={mode === 'core'
+              ? 'First we will look at the exact answer that got flagged. Then we will rebuild it into something you can actually say in a real interview.'
+              : 'We will learn the pattern first, then do the full round, then come back to anything you missed.'}
+            size="md"
+          />
         </div>
       </div>
 
@@ -382,9 +410,12 @@ export default function PracticeLessonFlow({
   const renderTeach = () => (
     <div className="h-full animate-slide-up">
       <TeachCard
+        criterion={criterion}
         title={subLesson.teach.title}
         explanation={subLesson.teach.explanation}
         example={subLesson.teach.example}
+        originalQuestion={originalQuestion}
+        originalAnswer={originalAnswer}
         onContinue={advanceFromTeach}
       />
     </div>
@@ -428,7 +459,7 @@ export default function PracticeLessonFlow({
 
   const renderExerciseStep = (queuePosition: number) => {
     const exerciseIndex = activeExerciseIndices[queuePosition]
-    const exercise = randomizedExercises[exerciseIndex]
+    const exercise = activeExercises[exerciseIndex]
     if (!exercise) return null
 
     return (
@@ -462,7 +493,9 @@ export default function PracticeLessonFlow({
         >
           <CheckCircle className="h-10 w-10 text-white" />
         </div>
-        <h2 className="mb-2 text-2xl font-extrabold text-gray-900">Lesson {lessonNumber} Complete!</h2>
+        <h2 className="mb-2 text-2xl font-extrabold text-gray-900">
+          {mode === 'core' ? 'Core lesson complete' : `Lesson ${lessonNumber} Complete!`}
+        </h2>
         <div className="mb-8 flex items-center gap-6">
           <div className="text-center">
             <p className="text-2xl font-extrabold text-amber-600">{xp}</p>
@@ -475,7 +508,14 @@ export default function PracticeLessonFlow({
           </div>
         </div>
         <div className="mb-6">
-          <Preppi message={lessonNumber < totalLessons ? 'Good. Move to the next coaching step.' : 'The drills are done. Next is the voice re-answer.'} size="lg" />
+          <Preppi
+            message={mode === 'core'
+              ? 'Good. The next step is to answer the original interview question again out loud.'
+              : lessonNumber < totalLessons
+                ? 'Good. Move to the next coaching step.'
+                : 'The drills are done. Next is the voice re-answer.'}
+            size="lg"
+          />
         </div>
       </div>
 
@@ -484,7 +524,7 @@ export default function PracticeLessonFlow({
           onClick={() => onComplete(true, xp)}
           className="btn-coach-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4"
         >
-          {lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
+          {mode === 'core' ? 'Voice Re-Answer' : lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
           <ArrowRight className="h-5 w-5" />
         </button>
       </div>

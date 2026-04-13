@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { X, CheckCircle, RotateCcw, Trophy, ChevronRight, Mic, ArrowLeft, ChevronRight as CrumbChevron } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
@@ -51,9 +51,7 @@ interface SubLessonRoadmapProps {
   }) => void
 }
 
-type ActiveSlot = 0 | 1 | 2 | 3 | null
-
-const SLOT_DIFFICULTIES = ['Lesson 1', 'Lesson 2', 'Lesson 3', 'Final'] as const
+type ActiveSlot = number | null
 
 export default function SubLessonRoadmap({
   bundle,
@@ -73,14 +71,33 @@ export default function SubLessonRoadmap({
   const [activeSlot, setActiveSlot] = useState<ActiveSlot>(null)
   const [completedSet, setCompletedSet] = useState<Set<number>>(new Set())
   const [passedSet, setPassedSet] = useState<Set<number>>(new Set())
+  const [optionalCompletedSet, setOptionalCompletedSet] = useState<Set<number>>(new Set())
+  const [optionalPassedSet, setOptionalPassedSet] = useState<Set<number>>(new Set())
   const [sessionXp, setSessionXp] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
   const [miniBurstIdx, setMiniBurstIdx] = useState<number | null>(null)
-  const totalSlots = 4
+  const requiredSteps = useMemo(() => ([
+    {
+      label: 'Core lesson',
+      description: 'Start with the exact flagged answer, learn the fix, and do one focused drill.',
+      meta: 'Step 1',
+      type: 'lesson' as const,
+      lessonIndex: 0,
+    },
+    {
+      label: 'Voice re-answer',
+      description: 'Answer the original flagged question again out loud using the stronger structure.',
+      meta: 'Step 2',
+      type: 'voice' as const,
+      lessonIndex: null,
+    },
+  ]), [])
+  const optionalLessons = bundle.lessons.slice(1)
+  const totalSlots = requiredSteps.length
   const allDone = completedSet.size === totalSlots
 
-  const nextAvailable = [0, 1, 2, 3].find(i => !completedSet.has(i)) ?? null
-  const slotLabels = bundle.lessons.map(l => l.title).concat(['Voice Re-Answer'])
+  const nextAvailable = requiredSteps.findIndex((_, i) => !completedSet.has(i))
+  const nextRequired = nextAvailable >= 0 ? nextAvailable : null
 
   const handleSlotComplete = useCallback((slotIdx: number, passed: boolean, xp: number) => {
     setActiveSlot(null)
@@ -95,32 +112,52 @@ export default function SubLessonRoadmap({
     setTimeout(() => setMiniBurstIdx(null), 900)
 
     const newSize = completedSet.size + 1
-    if (newSize === totalSlots) {
+    if (slotIdx < totalSlots && newSize === totalSlots) {
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 3500)
       setTimeout(() => onAllComplete(priorXp + newXp), 2800)
     }
   }, [sessionXp, completedSet, totalSlots, ding, onAllComplete, priorXp])
 
+  const handleOptionalComplete = useCallback((lessonIdx: number, passed: boolean, xp: number) => {
+    setActiveSlot(null)
+    setOptionalCompletedSet(prev => { const n = new Set(prev); n.add(lessonIdx); return n })
+    if (passed) setOptionalPassedSet(prev => { const n = new Set(prev); n.add(lessonIdx); return n })
+
+    setSessionXp(prev => prev + xp)
+    setMiniBurstIdx(totalSlots + lessonIdx)
+    ding()
+    setTimeout(() => setMiniBurstIdx(null), 900)
+  }, [ding, totalSlots])
+
   useEffect(() => {
     if (!onContextChange) return
     onContextChange({
       title: bundle.displayName,
-      items: [0, 1, 2, 3].map((idx) => {
+      items: requiredSteps.map((step, idx) => {
         const isCompleted = completedSet.has(idx)
-        const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextAvailable && !allDone)
+        const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextRequired && !allDone)
         const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isCurrent
         return {
-          label: slotLabels[idx],
+          label: step.label,
           status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : isLocked ? 'locked' as const : 'upcoming' as const,
-          meta: SLOT_DIFFICULTIES[idx],
+          meta: step.meta,
         }
       }),
     })
-  }, [activeSlot, allDone, bundle.displayName, completedSet, nextAvailable, onContextChange, slotLabels])
+  }, [activeSlot, allDone, bundle.displayName, completedSet, nextRequired, onContextChange, requiredSteps])
 
-  if (activeSlot !== null && activeSlot < 3) {
-    const subLesson = bundle.lessons[activeSlot]
+  if (activeSlot !== null) {
+    const isOptional = activeSlot >= totalSlots
+    const requiredStep = !isOptional ? requiredSteps[activeSlot] : null
+    const optionalLessonIndex = isOptional ? activeSlot - totalSlots + 1 : null
+    const subLesson = isOptional
+      ? bundle.lessons[optionalLessonIndex as number]
+      : requiredStep?.type === 'lesson'
+        ? bundle.lessons[requiredStep.lessonIndex]
+        : null
+
+    if (subLesson) {
     return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
@@ -135,11 +172,13 @@ export default function SubLessonRoadmap({
                 <div className="mt-4 flex items-center gap-3">
                   <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{subLesson.title}</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                    Lesson {activeSlot + 1} of 3
+                    {isOptional ? `Optional ${optionalLessonIndex}` : 'Core lesson'}
                   </span>
                 </div>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
-                  Work through this drill, then return to the path for the next coaching step.
+                  {isOptional
+                    ? 'Extra reps if you want to keep sharpening the skill after the main retry.'
+                    : 'We will use your flagged answer, teach the fix, and get you ready to retry the real question.'}
                 </p>
               </div>
               <button
@@ -154,11 +193,11 @@ export default function SubLessonRoadmap({
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
-                  style={{ width: `${((activeSlot + 1) / 4) * 100}%` }}
+                  style={{ width: `${isOptional ? 100 : ((activeSlot + 1) / totalSlots) * 100}%` }}
                 />
               </div>
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                Step {activeSlot + 1} / 4
+                {isOptional ? 'Optional practice' : `Step ${activeSlot + 1} / ${totalSlots}`}
               </span>
             </div>
           </div>
@@ -166,20 +205,21 @@ export default function SubLessonRoadmap({
         <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <PracticeLessonFlow
             subLesson={subLesson}
-            lessonNumber={activeSlot + 1}
-            totalLessons={3}
+            lessonNumber={isOptional ? optionalLessonIndex as number : 1}
+            totalLessons={isOptional ? optionalLessons.length : 1}
+            criterion={criterion}
             originalQuestion={originalQuestion}
             originalAnswer={originalAnswer}
-            onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
+            onComplete={(passed, xp) => isOptional ? handleOptionalComplete(optionalLessonIndex as number, passed, xp) : handleSlotComplete(activeSlot, passed, xp)}
             onClose={() => setActiveSlot(null)}
             embeddedDesktop={embeddedDesktop}
+            mode={isOptional ? 'optional' : 'core'}
           />
         </div>
       </div>
     )
   }
-
-  if (activeSlot === 3) {
+    if (requiredStep?.type === 'voice') {
     return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
         {embeddedDesktop && (
@@ -194,11 +234,11 @@ export default function SubLessonRoadmap({
                 <div className="mt-4 flex items-center gap-3">
                   <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">Voice Re-Answer</h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                    Step 4 of 4
+                    Step 2 of 2
                   </span>
                 </div>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
-                  Final step. Re-answer the original question using the stronger structure you just practiced.
+                  Re-answer the original question using the stronger structure you just practiced.
                 </p>
               </div>
               <button
@@ -217,7 +257,7 @@ export default function SubLessonRoadmap({
                 />
               </div>
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                Step 4 / 4
+                Step 2 / 2
               </span>
             </div>
           </div>
@@ -229,7 +269,7 @@ export default function SubLessonRoadmap({
             sessionId={sessionId}
             currentStage={currentStage}
             criterion={criterion}
-            onComplete={(passed, xp) => handleSlotComplete(3, passed, xp)}
+            onComplete={(passed, xp) => handleSlotComplete(activeSlot, passed, xp)}
             onClose={() => setActiveSlot(null)}
             embeddedDesktop={embeddedDesktop}
           />
@@ -237,11 +277,12 @@ export default function SubLessonRoadmap({
       </div>
     )
   }
+  }
 
   const pathSummary = allDone
-    ? 'All four steps complete. You are ready to try the answer again.'
+    ? 'Core path complete. You can stop here or keep going with optional practice.'
     : completedSet.size === 0
-    ? 'Three focused drills, then one voice retry on the real question.'
+    ? 'One real lesson, then one voice retry on the real question.'
     : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
@@ -279,7 +320,7 @@ export default function SubLessonRoadmap({
                   <div className="mt-4 flex items-center gap-3">
                     <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{bundle.displayName}</h2>
                     <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                      4 steps
+                      2 steps
                     </span>
                   </div>
                   <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -317,22 +358,22 @@ export default function SubLessonRoadmap({
                   <p className="mt-1 text-sm text-slate-500">{bundle.displayName}</p>
                 </div>
                 <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-                  4 steps
+                  2 steps
                 </div>
               </div>
 
               <div className="space-y-4">
-                {[0, 1, 2, 3].map(idx => {
-                  const isFinal = idx === 3
+                {requiredSteps.map((step, idx) => {
+                  const isFinal = step.type === 'voice'
                   const isCompleted = completedSet.has(idx)
                   const isPassed = passedSet.has(idx)
-                  const isNext = idx === nextAvailable && !allDone
+                  const isNext = idx === nextRequired && !allDone
                   const isMini = miniBurstIdx === idx
                   const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isNext
 
                   return (
                     <div key={idx} className="relative">
-                      {idx < 3 && (
+                      {idx < totalSlots - 1 && (
                         <div className={`absolute left-6 top-14 h-[calc(100%+0.75rem)] w-[2px] ${
                           completedSet.has(idx) ? 'bg-emerald-400' : 'bg-slate-200'
                         }`} />
@@ -379,7 +420,7 @@ export default function SubLessonRoadmap({
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-black text-slate-900">{slotLabels[idx]}</p>
+                            <p className="text-sm font-black text-slate-900">{step.label}</p>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                               isCompleted && isPassed
                                 ? 'bg-emerald-100 text-emerald-700'
@@ -389,13 +430,11 @@ export default function SubLessonRoadmap({
                                 ? 'bg-violet-100 text-violet-700'
                                 : 'bg-slate-100 text-slate-500'
                             }`}>
-                              {isCompleted && isPassed ? 'Passed' : SLOT_DIFFICULTIES[idx]}
+                              {isCompleted && isPassed ? 'Passed' : step.meta}
                             </span>
                           </div>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
-                            {idx < 3
-                              ? 'Learn the tactic, drill it, then move to the next coaching step.'
-                              : 'Answer the original flagged question again with the new approach.'}
+                            {step.description}
                           </p>
                         </div>
 
@@ -412,7 +451,60 @@ export default function SubLessonRoadmap({
                     <Trophy className="h-3.5 w-3.5" />
                     Practice complete
                   </div>
-                  <p className="text-sm font-semibold text-emerald-800">You have completed all four coaching steps for this skill.</p>
+                  <p className="text-sm font-semibold text-emerald-800">You completed the core path. If you want more reps, the optional lessons are below.</p>
+                </div>
+              )}
+
+              {allDone && optionalLessons.length > 0 && (
+                <div className="mt-6 rounded-[1.6rem] border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="mb-4">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Optional practice</p>
+                    <h4 className="mt-1 text-lg font-black text-slate-900">More reps if you want them</h4>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      These are extra drills. Helpful if you want more reps, but not required to finish the module.
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    {optionalLessons.map((lesson, idx) => {
+                      const optionalKey = idx + 1
+                      const isCompleted = optionalCompletedSet.has(optionalKey)
+                      const isPassed = optionalPassedSet.has(optionalKey)
+                      const isMini = miniBurstIdx === totalSlots + optionalKey
+                      return (
+                        <div key={lesson.title} className="relative">
+                          <div className="absolute inset-0 pointer-events-none">
+                            <MiniConfettiBurst active={isMini} />
+                          </div>
+                          <button
+                            onClick={() => setActiveSlot(totalSlots + idx)}
+                            className={`flex w-full items-start gap-4 rounded-[1.35rem] border p-4 text-left transition-all hover:shadow-[0_18px_30px_rgba(15,23,42,0.08)] ${
+                              isCompleted && isPassed
+                                ? 'border-emerald-200 bg-emerald-50/90'
+                                : 'border-slate-200/80 bg-white/96'
+                            }`}
+                          >
+                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${
+                              isCompleted && isPassed ? 'bg-emerald-500 text-white' : 'bg-white text-violet-700 ring-1 ring-violet-200'
+                            }`}>
+                              {isCompleted && isPassed ? <CheckCircle className="h-6 w-6" /> : <span className="text-sm font-black">{optionalKey + 1}</span>}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-black text-slate-900">{lesson.title}</p>
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                                  Optional
+                                </span>
+                              </div>
+                              <p className="mt-1 text-sm leading-6 text-slate-600">
+                                Extra pattern work if you want more reps before your next interview.
+                              </p>
+                            </div>
+                            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>

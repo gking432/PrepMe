@@ -562,15 +562,6 @@ Use the question IDs and timestamps from this structured transcript when providi
           full_rubric: rubric, // Store complete rubric (includes hr_screen_six_areas)
         }
 
-        // Only add hr_screen_six_areas as separate column if it exists in schema
-        // If column doesn't exist, it's stored in full_rubric.hr_screen_six_areas anyway
-        // Try to add it, but don't fail if column doesn't exist
-        try {
-          insertData.hr_screen_six_areas = feedback.hr_screen_six_areas
-        } catch (e) {
-          console.warn('Could not add hr_screen_six_areas to insert (column may not exist), storing in full_rubric only')
-        }
-
         // Use supabaseAdmin to bypass RLS for insert
         let savedFeedback: any = null
         const { data: insertResult, error: dbError } = await supabaseAdmin
@@ -580,34 +571,11 @@ Use the question IDs and timestamps from this structured transcript when providi
           .single()
 
         if (dbError) {
-          // If error is about hr_screen_six_areas column, retry without it
-          if (dbError.message?.includes('hr_screen_six_areas')) {
-            console.warn('hr_screen_six_areas column not found, retrying without it (data stored in full_rubric)')
-            const insertDataWithoutColumn = { ...insertData }
-            delete insertDataWithoutColumn.hr_screen_six_areas
-            
-            const { data: retryResult, error: retryError } = await supabaseAdmin
-              .from('interview_feedback')
-              .insert(insertDataWithoutColumn)
-              .select()
-              .single()
-            
-            if (retryError) {
-              console.error('Error saving feedback to database (retry):', retryError)
-              return NextResponse.json(
-                { error: 'Failed to save feedback', details: retryError.message },
-                { status: 500 }
-              )
-            }
-            
-            savedFeedback = retryResult
-          } else {
-            console.error('Error saving feedback to database:', dbError)
-            return NextResponse.json(
-              { error: 'Failed to save feedback', details: dbError.message },
-              { status: 500 }
-            )
-          }
+          console.error('Error saving feedback to database:', dbError)
+          return NextResponse.json(
+            { error: 'Failed to save feedback', details: dbError.message },
+            { status: 500 }
+          )
         } else {
           savedFeedback = insertResult
         }
@@ -967,11 +935,6 @@ Use the question IDs and timestamps from this structured transcript when providi
       area_feedback: feedback.area_feedback || {},
     }
     
-    // Add hr_screen_six_areas for HR screen
-    if (stage === 'hr_screen' && feedback.hr_screen_six_areas) {
-      insertData.hr_screen_six_areas = feedback.hr_screen_six_areas
-    }
-    
     const { data: savedFeedback, error: dbError } = await supabase
       .from('interview_feedback')
       .insert(insertData)
@@ -1042,4 +1005,3 @@ Use the question IDs and timestamps from this structured transcript when providi
     )
   }
 }
-

@@ -76,6 +76,7 @@ export default function InterviewPage() {
   const interviewStartTimeRef = useRef<number | null>(null)
   const assistantSpeakingRef = useRef(false)
   const assistantSpeechResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const turnDetectionDisabledRef = useRef(false)
   const closingDetectedRef = useRef(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const supabase = createClient()
@@ -112,6 +113,31 @@ export default function InterviewPage() {
     stream.getAudioTracks().forEach((track) => {
       track.enabled = enabled
     })
+  }
+
+  const updateRealtimeTurnDetection = (enabled: boolean) => {
+    const dc = dcRef.current
+    if (!dc || dc.readyState !== 'open') return
+
+    if (enabled && !turnDetectionDisabledRef.current) return
+    if (!enabled && turnDetectionDisabledRef.current) return
+
+    dc.send(JSON.stringify({
+      type: 'session.update',
+      session: {
+        turn_detection: enabled
+          ? {
+              type: 'server_vad',
+              threshold: 0.8,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 900,
+            }
+          : null,
+      },
+    }))
+
+    turnDetectionDisabledRef.current = !enabled
+    console.log('[realtime] turn detection', enabled ? 'enabled' : 'disabled')
   }
 
   const markClosingAndFinish = () => {
@@ -573,6 +599,7 @@ export default function InterviewPage() {
           assistantSpeakingRef.current = true
           setIsPlayingAudio(true)
           setRealtimeMicEnabled(false)
+          updateRealtimeTurnDetection(false)
           console.log('[realtime] assistant speech started')
         }
         // Update current message as AI speaks
@@ -587,9 +614,10 @@ export default function InterviewPage() {
           assistantSpeakingRef.current = false
           setIsPlayingAudio(false)
           setRealtimeMicEnabled(true)
+          updateRealtimeTurnDetection(true)
           console.log('[realtime] assistant speech ended')
           assistantSpeechResetTimeoutRef.current = null
-        }, 350)
+        }, 700)
         // Final transcript
         const fullMessage = data.transcript || ''
         setCurrentMessage(fullMessage)
@@ -641,6 +669,7 @@ export default function InterviewPage() {
           console.log('[realtime] user transcript arrived while assistant marked as speaking', {
             userMessagePreview: userMessage.slice(0, 120),
           })
+          break
         }
         setTranscript((prev) => {
           const updated = [...prev, `You: ${userMessage}`]
@@ -685,6 +714,7 @@ export default function InterviewPage() {
       assistantSpeechResetTimeoutRef.current = null
     }
     assistantSpeakingRef.current = false
+    turnDetectionDisabledRef.current = false
     closingDetectedRef.current = false
     if (dcRef.current) {
       dcRef.current.close()

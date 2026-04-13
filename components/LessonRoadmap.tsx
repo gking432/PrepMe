@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { X, FileText, CheckCircle, ChevronRight, Lock } from 'lucide-react'
 import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
@@ -15,6 +15,9 @@ const ROOT_CAUSE_ICONS: Record<string, string> = {
   lack_of_specificity: '🎯',
   weak_communication: '💬',
   missing_knowledge: '🔍',
+  questions_about_company: '🏢',
+  handling_uncertainty: '🧩',
+  career_alignment: '🧭',
   off_topic: '🧭',
   too_short: '📏',
 }
@@ -63,14 +66,37 @@ export default function LessonRoadmap({
 }: LessonRoadmapProps) {
   const { ding } = useGameFeedback()
 
+  const roadmapWeaknesses = useMemo(() => {
+    const byRootCause = new Map<string, WeaknessArea>()
+
+    weaknesses.forEach((weakness) => {
+      const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+      const existing = byRootCause.get(rootCause)
+
+      if (!existing) {
+        byRootCause.set(rootCause, { ...weakness, rootCause })
+        return
+      }
+
+      const existingScore = existing.score ?? Number.POSITIVE_INFINITY
+      const currentScore = weakness.score ?? Number.POSITIVE_INFINITY
+
+      if (currentScore < existingScore) {
+        byRootCause.set(rootCause, { ...weakness, rootCause })
+      }
+    })
+
+    return Array.from(byRootCause.values())
+  }, [weaknesses])
+
   const [activeIdx, setActiveIdx] = useState<number | null>(null)
   const [completedSet, setCompletedSet] = useState<Set<number>>(new Set())
   const [passedSet, setPassedSet] = useState<Set<number>>(new Set())
   const [sessionXp, setSessionXp] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
 
-  const allDone = completedSet.size === weaknesses.length
-  const nextIdx = weaknesses.findIndex((_, idx) => !completedSet.has(idx))
+  const allDone = completedSet.size === roadmapWeaknesses.length
+  const nextIdx = roadmapWeaknesses.findIndex((_, idx) => !completedSet.has(idx))
 
   const handleLessonComplete = useCallback((passed: boolean, xp: number) => {
     if (activeIdx === null) return
@@ -84,18 +110,18 @@ export default function LessonRoadmap({
     ding()
 
     const newSize = completedSet.size + 1
-    if (newSize === weaknesses.length) {
+    if (newSize === roadmapWeaknesses.length) {
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 3500)
       setTimeout(() => onAllComplete(priorXp + newXp), 2800)
     }
-  }, [activeIdx, completedSet, sessionXp, weaknesses.length, ding, onAllComplete, priorXp])
+  }, [activeIdx, completedSet, sessionXp, roadmapWeaknesses.length, ding, onAllComplete, priorXp])
 
   useEffect(() => {
     if (!onContextChange) return
     onContextChange({
       title: '',
-      items: weaknesses.map((weakness, idx) => {
+      items: roadmapWeaknesses.map((weakness, idx) => {
         const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
         const bundle = getBundleForRootCause(rootCause)
         const isCompleted = completedSet.has(idx)
@@ -107,12 +133,12 @@ export default function LessonRoadmap({
         }
       }),
     })
-  }, [allDone, completedSet, nextIdx, onContextChange, weaknesses])
+  }, [allDone, completedSet, nextIdx, onContextChange, roadmapWeaknesses])
 
   // ── Open sub-lesson roadmap ───────────────────────────────────────────────
 
   if (activeIdx !== null) {
-    const weakness = weaknesses[activeIdx]
+    const weakness = roadmapWeaknesses[activeIdx]
     const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
     const bundle = getBundleForRootCause(rootCause)
     const evidence = weakness.evidence?.[0]
@@ -138,7 +164,7 @@ export default function LessonRoadmap({
     ? 'Every coaching path is complete. Review your feedback or retake the round.'
     : completedSet.size === 0
     ? 'Start with the highlighted module. You can come back here any time.'
-    : `${weaknesses.length - completedSet.size} coaching path${weaknesses.length - completedSet.size !== 1 ? 's' : ''} left.`
+    : `${roadmapWeaknesses.length - completedSet.size} coaching path${roadmapWeaknesses.length - completedSet.size !== 1 ? 's' : ''} left.`
 
   return (
     <div className={`${embeddedDesktop ? 'flex h-full flex-col bg-transparent' : 'fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]'}`}>
@@ -174,7 +200,7 @@ export default function LessonRoadmap({
               </div>
               <div className="rounded-[1.4rem] border border-slate-200 bg-white/88 px-5 py-3 shadow-[0_14px_28px_rgba(15,23,42,0.06)]">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Progress</p>
-                <p className="mt-1 text-sm font-bold text-slate-900">{completedSet.size} / {weaknesses.length} complete</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{completedSet.size} / {roadmapWeaknesses.length} complete</p>
               </div>
             </div>
           </div>
@@ -186,7 +212,7 @@ export default function LessonRoadmap({
 
                 <div className={`${embeddedDesktop ? 'absolute left-1/2 top-20 h-[62%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#d8ccff_0%,#dbe3ef_100%)] opacity-90' : 'absolute left-1/2 top-14 h-[68%] w-1 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,#c4b5fd_0%,#e2e8f0_100%)]'}`} />
 
-                {weaknesses.map((weakness, idx) => {
+                {roadmapWeaknesses.map((weakness, idx) => {
                   const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
                   const bundle = getBundleForRootCause(rootCause)
                   const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
@@ -194,7 +220,7 @@ export default function LessonRoadmap({
                   const isPassed = passedSet.has(idx)
                   const isRecommended = idx === nextIdx && !allDone
                   const side = idx % 2 === 0 ? 'left' : 'right'
-                  const topPercent = weaknesses.length > 1 ? 12 + (idx * (56 / Math.max(weaknesses.length - 1, 1))) : 28
+                  const topPercent = roadmapWeaknesses.length > 1 ? 12 + (idx * (56 / Math.max(roadmapWeaknesses.length - 1, 1))) : 28
 
                   return (
                     <div

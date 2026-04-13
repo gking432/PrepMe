@@ -67,6 +67,8 @@ export default function InterviewPage() {
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
+  const localAudioTrackRef = useRef<MediaStreamTrack | null>(null)
+  const localAudioSenderRef = useRef<RTCRtpSender | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null)
@@ -113,6 +115,20 @@ export default function InterviewPage() {
     stream.getAudioTracks().forEach((track) => {
       track.enabled = enabled
     })
+  }
+
+  const setRealtimeAudioInputEnabled = async (enabled: boolean) => {
+    const sender = localAudioSenderRef.current
+    const track = localAudioTrackRef.current
+
+    if (!sender) return
+
+    try {
+      await sender.replaceTrack(enabled ? track : null)
+      console.log('[realtime] audio sender', enabled ? 'attached' : 'detached')
+    } catch (error) {
+      console.error('[realtime] failed to toggle audio sender', error)
+    }
   }
 
   const updateRealtimeTurnDetection = (enabled: boolean) => {
@@ -464,7 +480,13 @@ export default function InterviewPage() {
 
       // Add local mic track — WebRTC handles encoding natively
       const stream = await getOrCreateInterviewMediaStream()
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream))
+      stream.getTracks().forEach((track) => {
+        const sender = pc.addTrack(track, stream)
+        if (track.kind === 'audio') {
+          localAudioTrackRef.current = track
+          localAudioSenderRef.current = sender
+        }
+      })
 
       // Data channel for control events
       const dc = pc.createDataChannel('oai-events')
@@ -599,6 +621,7 @@ export default function InterviewPage() {
           assistantSpeakingRef.current = true
           setIsPlayingAudio(true)
           setRealtimeMicEnabled(false)
+          void setRealtimeAudioInputEnabled(false)
           updateRealtimeTurnDetection(false)
           console.log('[realtime] assistant speech started')
         }
@@ -614,6 +637,7 @@ export default function InterviewPage() {
           assistantSpeakingRef.current = false
           setIsPlayingAudio(false)
           setRealtimeMicEnabled(true)
+          void setRealtimeAudioInputEnabled(true)
           updateRealtimeTurnDetection(true)
           console.log('[realtime] assistant speech ended')
           assistantSpeechResetTimeoutRef.current = null
@@ -716,6 +740,8 @@ export default function InterviewPage() {
     assistantSpeakingRef.current = false
     turnDetectionDisabledRef.current = false
     closingDetectedRef.current = false
+    localAudioSenderRef.current = null
+    localAudioTrackRef.current = null
     if (dcRef.current) {
       dcRef.current.close()
       dcRef.current = null

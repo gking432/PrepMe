@@ -1373,6 +1373,548 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
     ],
   },
   {
+    rootCause: 'handling_uncertainty',
+    displayName: 'Handling Uncertainty',
+    description: 'Your answers need to sound calmer and more grounded when the path is unclear.',
+    lessons: [
+      {
+        title: 'Stay Calm and Name Your First Step',
+        difficulty: 'easy',
+        teach: {
+          title: 'You do not need a perfect answer right away',
+          explanation:
+            'Good answers about uncertainty are simple. Briefly name the unclear situation, say what you did first to get grounded, and show how you moved forward.',
+          example: {
+            question: 'Tell me about a time you had to work through something unclear or uncertain.',
+            badAnswer:
+              'Yeah, that happens a lot. Usually I just stay flexible and figure it out as I go. I am pretty good under pressure, so I worked through it and made sure it got done.',
+            goodAnswer:
+              'One example was a project with a hard deadline but no clear process yet. I did not try to guess my way through it. My first step was to talk to the people involved, figure out what was actually fixed versus still open, and map the next few decisions from there. That helped me move the work forward without creating more confusion.',
+            breakdown: {
+              Ask: 'Can you stay composed when the path is not obvious?',
+              Miss: 'The weak version stays abstract and never shows a real move.',
+              WhyItWorks: 'The strong version names the uncertainty, then shows a calm first step.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What makes an uncertainty answer sound more credible?',
+            options: [
+              'It shows the first concrete step you took to reduce the unknowns.',
+              'It says you are naturally good under pressure.',
+              'It avoids admitting anything was unclear.',
+              'It focuses on staying positive more than what you actually did.',
+            ],
+            correctIndex: 0,
+            explanation: 'Interviewers trust grounded action more than self-description.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each part of this stronger answer.',
+            segments: [
+              { text: 'The project had a deadline, but the process and ownership were still fuzzy.', correctLabel: 'Unclear situation' },
+              { text: 'My first step was to clarify what had already been decided and what still needed input.', correctLabel: 'First grounding step' },
+              { text: 'That gave us a cleaner path forward and kept the team from making conflicting assumptions.', correctLabel: 'Why it helped' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best phrase to complete the sentence.',
+            sentenceWithBlank: 'When the situation was unclear, the first thing I did was [___] before trying to solve everything at once.',
+            options: [
+              'clarify what was known and what was still undecided',
+              'act quickly so I looked confident',
+              'wait for someone else to define the answer',
+              'talk broadly about how I handle ambiguity',
+            ],
+            correctIndex: 0,
+            explanation: 'Strong answers show how you reduced uncertainty, not how you described it.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the parts that improve credibility under uncertainty.',
+            items: [
+              'Admitting the situation was not fully clear',
+              'Naming a practical first step',
+              'Saying you just stayed calm and figured it out',
+              'Avoiding specifics so the answer sounds smoother',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'Calm honesty plus a real action sounds stronger than vague confidence language.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Rewrite your flagged answer so it clearly shows what was uncertain and what you did first.',
+            coachingTip: 'Do not jump straight to the ending. Start by naming what was unclear, then give the first step you took to get grounded.',
+            fields: [
+              {
+                label: 'What was actually unclear?',
+                placeholder: 'Describe what you did not know yet: priorities, ownership, timeline, information, process, or decision path.',
+                helper: 'Keep it concrete. What specifically was uncertain?',
+                minWords: 12,
+              },
+              {
+                label: 'What was your first step?',
+                placeholder: 'Describe the first thing you did to reduce uncertainty.',
+                helper: 'Choose a real action, not a personality trait.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Show Judgment, Not Just Activity',
+        difficulty: 'medium',
+        teach: {
+          title: 'Explain how you decided what mattered first',
+          explanation:
+            'A better uncertainty answer does more than list actions. It shows judgment. The interviewer wants to hear how you decided where to focus when you did not have full information.',
+          example: {
+            question: 'Tell me about a time you had to make progress without having all the information.',
+            badAnswer:
+              'I usually gather as much information as I can and keep pushing until things become clearer. In this case I talked to a lot of people, looked at the details, and did what made the most sense at the time.',
+            goodAnswer:
+              'I had a situation where we needed to move forward, but we did not have every answer yet. Instead of trying to solve everything at once, I focused on the few things that would change the decision most, got clarity on those first, and then made a call. That kept the work moving without pretending we knew more than we did.',
+            breakdown: {
+              Risk: 'The weak version sounds busy, but not thoughtful.',
+              Judgment: 'The strong version shows how you decided what mattered most.',
+              WhyItWorks: 'It turns uncertainty into a clear decision process.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer element best shows judgment under uncertainty?',
+            options: [
+              'Explaining how you decided which unknowns mattered most',
+              'Listing every step you took in order',
+              'Saying you kept working hard until it got resolved',
+              'Talking about how uncertainty is part of every job',
+            ],
+            correctIndex: 0,
+            explanation: 'Judgment comes through when you show how you prioritized, not when you sound busy.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label the parts of this stronger answer.',
+            segments: [
+              { text: 'We did not have complete information, and the team could have gone in a few directions.', correctLabel: 'Context' },
+              { text: 'I narrowed it down to the two questions that would affect the decision most.', correctLabel: 'Prioritization' },
+              { text: 'Once I had that clarity, I made a call and moved the work forward.', correctLabel: 'Decision' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best phrase to complete the sentence.',
+            sentenceWithBlank: 'Because we did not know everything yet, I focused first on [___] so we could make a reasonable decision.',
+            options: [
+              'the few unknowns that would actually change the outcome',
+              'collecting every possible data point',
+              'sounding confident in front of the team',
+              'avoiding a decision until the picture was perfect',
+            ],
+            correctIndex: 0,
+            explanation: 'Strong candidates show prioritization and decision quality, not endless information gathering.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the statements that make an uncertainty answer sound more thoughtful.',
+            items: [
+              'I focused on the unknowns that mattered most to the decision.',
+              'I did not have every answer, so I started by narrowing the problem.',
+              'I just worked really hard and stayed flexible.',
+              'I tried to gather as much information as possible from everyone.',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'The best statements show prioritization and decision-making, not just effort.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Improve your answer by making your judgment process explicit.',
+            coachingTip: 'Do not only describe motion. Describe how you decided what to focus on, what you ignored for the moment, and why.',
+            fields: [
+              {
+                label: 'What mattered most first?',
+                placeholder: 'Write the one or two unknowns you chose to focus on first.',
+                helper: 'Pick the factors that most affected the decision or next step.',
+                minWords: 12,
+              },
+              {
+                label: 'Why did you focus there?',
+                placeholder: 'Explain why those unknowns mattered more than the rest.',
+                helper: 'This is where your judgment becomes visible.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Finish With a Real Outcome and Lesson',
+        difficulty: 'hard',
+        teach: {
+          title: 'Close the loop without sounding defensive or overly polished',
+          explanation:
+            'The strongest answers do not stop at "I handled it." They end with what happened, what decision got made, or what you learned about handling uncertainty better the next time.',
+          example: {
+            question: 'Tell me about a time you had to make a decision without perfect information.',
+            badAnswer:
+              'It was definitely challenging, but I stayed calm and trusted my instincts. In the end it worked out, and I think it taught me that ambiguity is just part of business.',
+            goodAnswer:
+              'I did not have perfect information, but I got enough clarity to make a reasonable decision and explain the tradeoff behind it. We moved forward, avoided getting stuck, and the outcome was solid. The bigger lesson for me was that in uncertain situations, people do not expect you to know everything. They expect you to reduce risk, make a sound call, and communicate it clearly.',
+            breakdown: {
+              Miss: 'The weak version has no real outcome and no grounded lesson.',
+              WhyItWorks: 'The strong version ends with a decision, result, and practical takeaway.',
+              Tone: 'It sounds calm and credible without overselling.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What is the strongest way to end an answer about uncertainty?',
+            options: [
+              'State the outcome, the decision you made, and the lesson you took from it.',
+              'Say that everything worked out in the end.',
+              'Talk about how ambiguity is common in business.',
+              'Repeat that you stayed calm under pressure.',
+            ],
+            correctIndex: 0,
+            explanation: 'A strong ending proves the situation led to a real result and shows what you learned from it.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each part of this stronger ending.',
+            segments: [
+              { text: 'We made the decision once we had enough clarity to move responsibly.', correctLabel: 'Decision' },
+              { text: 'That kept the project from stalling and gave the team a clear direction.', correctLabel: 'Outcome' },
+              { text: 'It reinforced for me that under uncertainty, the goal is not certainty. It is sound judgment and clear communication.', correctLabel: 'Lesson' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the strongest phrase to complete the sentence.',
+            sentenceWithBlank: 'What I learned from that experience was [___], especially when the answer is not obvious right away.',
+            options: [
+              'to make the best grounded call you can and explain the reasoning clearly',
+              'to trust my instincts no matter what',
+              'that uncertainty is always stressful',
+              'to avoid decisions until everything is confirmed',
+            ],
+            correctIndex: 0,
+            explanation: 'The best lesson is practical, credible, and tied to judgment.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the parts that make the ending stronger.',
+            items: [
+              'A specific result of your approach',
+              'A lesson that sounds practical and earned',
+              'A vague line like "it all worked out"',
+              'A generic statement that ambiguity exists in every business',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'A strong close proves impact and shows maturity.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Finish your flagged answer with a stronger ending.',
+            coachingTip: 'Do not end on effort alone. Land on the call you made, what happened, and what it taught you about handling uncertainty well.',
+            fields: [
+              {
+                label: 'What happened because of your approach?',
+                placeholder: 'Write the outcome, decision, or practical result.',
+                helper: 'Even a modest outcome is better than a vague ending.',
+                minWords: 12,
+              },
+              {
+                label: 'What did you learn about handling uncertainty?',
+                placeholder: 'Write a lesson that sounds earned, specific, and useful.',
+                helper: 'Avoid generic lines about staying confident.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    rootCause: 'career_alignment',
+    displayName: 'Career Alignment',
+    description: 'Your answers need to explain more clearly why this role makes sense for you now.',
+    lessons: [
+      {
+        title: 'Explain Why This Role Makes Sense Now',
+        difficulty: 'easy',
+        teach: {
+          title: 'Give a clear next-step reason',
+          explanation:
+            'A strong answer does not need a big story. It should quickly explain what you have been doing, what you want more of next, and why this role fits that direction now.',
+          example: {
+            question: 'Why are you interested in this role?',
+            badAnswer:
+              'I am really open right now and this looked like a great opportunity. I think I could do well in a role like this, and I am excited to keep growing.',
+            goodAnswer:
+              'What makes this role interesting to me is that it feels like a natural next step from the work I have already been doing. I have been in roles where I had to balance execution, communication, and follow-through, and I want to keep building in that direction in a role where that is more central to the job.',
+            breakdown: {
+              Ask: 'Do you have a real reason this role fits now?',
+              Miss: 'The weak version sounds open-ended and generic.',
+              WhyItWorks: 'The strong version connects past work to a clear next step.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer sounds most intentional?',
+            options: [
+              'This role makes sense because it builds on work I have already done and moves me further in the direction I want to keep growing.',
+              'I am exploring a lot of options right now, and this one stood out.',
+              'It seems like a great opportunity and I am excited about anything that could be a good fit.',
+              'I think I could probably do a lot of different jobs at this point.',
+            ],
+            correctIndex: 0,
+            explanation: 'The best answer sounds chosen. It explains fit and direction, not general openness.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each part of this stronger answer.',
+            segments: [
+              { text: 'In my recent work, I have spent a lot of time coordinating across people and driving execution.', correctLabel: 'Relevant background' },
+              { text: 'What I want next is a role where that kind of work is more central.', correctLabel: 'Direction' },
+              { text: 'That is why this position feels like a logical next step for me.', correctLabel: 'Why this role now' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the best phrase to complete the answer.',
+            sentenceWithBlank: 'I am interested in this role because it feels like a [___] from the work I have already been doing.',
+            options: [
+              'natural next step',
+              'random new challenge',
+              'safe option for now',
+              'chance to try something totally unrelated',
+            ],
+            correctIndex: 0,
+            explanation: 'Career alignment sounds strongest when the role feels connected, not random.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the parts that improve career alignment.',
+            items: [
+              'A clear link to your recent experience',
+              'A believable reason this role fits now',
+              'A vague statement that you are open to anything',
+              'A generic line about wanting to grow',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'Strong alignment answers connect your background to a real next step.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Write a tighter answer to "Why are you interested in this role?"',
+            coachingTip: 'Keep it simple: what you have been doing, what you want more of, and why this role matches that now.',
+            fields: [
+              {
+                label: 'What have you been doing that connects to this role?',
+                placeholder: 'Describe the kind of work, responsibilities, or strengths you have already been using.',
+                helper: 'Use real work themes, not broad traits.',
+                minWords: 12,
+              },
+              {
+                label: 'Why does this role make sense as your next step?',
+                placeholder: 'Explain why this is a logical move from where you are now.',
+                helper: 'Show direction, not just interest.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Connect Your Background to the Actual Work',
+        difficulty: 'medium',
+        teach: {
+          title: 'Do not just say you are interested. Show the fit.',
+          explanation:
+            'A lot of weak answers talk about wanting the role without proving why the candidate fits it. A stronger answer points to experience that lines up with what the job actually requires.',
+          example: {
+            question: 'Why do you think this position is a good fit for you?',
+            badAnswer:
+              'I think my background could transfer well, and I am someone who learns quickly. I also think this would be a good place for me to continue developing professionally.',
+            goodAnswer:
+              'I think it fits because the role asks for someone who can manage details, communicate clearly, and keep work moving across people. That has already been a big part of how I have worked. So it does not feel like a stretch. It feels like applying strengths I already use in a role where they matter even more.',
+            breakdown: {
+              Fit: 'The strong version names the work, not just the title.',
+              Miss: 'The weak version leans on potential instead of evidence.',
+              WhyItWorks: 'It shows how past experience matches the job.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'What makes a fit answer more believable?',
+            options: [
+              'Showing how your past work matches the core demands of the role',
+              'Saying you are a fast learner and can adapt anywhere',
+              'Talking mostly about how much you want the opportunity',
+              'Keeping the answer broad so it can work in many interviews',
+            ],
+            correctIndex: 0,
+            explanation: 'Believable fit comes from matching your experience to the actual work.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label the parts of this stronger fit answer.',
+            segments: [
+              { text: 'This role seems to require someone who can coordinate work, communicate clearly, and stay organized.', correctLabel: 'What the job requires' },
+              { text: 'Those are all things I have had to do consistently in my recent roles.', correctLabel: 'Relevant evidence' },
+              { text: 'That is why it feels like a strong fit rather than a leap.', correctLabel: 'Fit conclusion' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the strongest phrase to complete the sentence.',
+            sentenceWithBlank: 'What makes this role feel like a fit is that it relies on [___], which I have already had to use in my recent work.',
+            options: [
+              'skills and responsibilities that overlap with my background',
+              'a company name I recognize',
+              'the fact that I am ready for something new',
+              'general business experience of any kind',
+            ],
+            correctIndex: 0,
+            explanation: 'Strong fit language points to overlap between your background and the role.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the statements that make a fit answer stronger.',
+            items: [
+              'This role depends on skills I have already had to use consistently.',
+              'The work itself lines up with how I have been operating.',
+              'I am confident I could learn anything if given a chance.',
+              'I just feel like this would be a good experience.',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'The best answers show evidence-based fit, not just optimism.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Make your fit answer sound more grounded and specific.',
+            coachingTip: 'Name the actual work in the job, then connect it to work you have already done well.',
+            fields: [
+              {
+                label: 'What does this role seem to require?',
+                placeholder: 'List the main work themes or responsibilities you see in the role.',
+                helper: 'Focus on the actual job, not the company.',
+                minWords: 12,
+              },
+              {
+                label: 'Where have you already done similar work?',
+                placeholder: 'Explain which parts of your background line up with those demands.',
+                helper: 'This is the proof behind your fit.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Make Your Motivation Sound Chosen, Not Reactive',
+        difficulty: 'hard',
+        teach: {
+          title: 'Frame the move as direction, not escape',
+          explanation:
+            'Sometimes candidates sound interested in a role mainly because they want out of their current situation. A stronger answer shifts the focus toward what they are moving toward and why that next move is credible.',
+          example: {
+            question: 'Why are you looking to make a move right now?',
+            badAnswer:
+              'Honestly, I have been ready for a change for a while. I feel like I have outgrown my current situation, and I want something better with more opportunity.',
+            goodAnswer:
+              'I am looking now because I have a clearer sense of the kind of work I want to keep building toward. I have learned a lot from my current situation, but I want my next role to make fuller use of the parts of the job I am strongest in. That is what made this opportunity stand out to me.',
+            breakdown: {
+              Risk: 'The weak version sounds like escape.',
+              Timing: 'The strong version explains why now makes sense.',
+              Credibility: 'It focuses on direction and fit, not frustration.',
+            },
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which answer sounds most credible when explaining why now is the right time to move?',
+            options: [
+              'I have gotten clearer on the kind of work I want to keep building toward, and this role lines up with that direction.',
+              'I just know it is time for a change and want something better.',
+              'I have been unhappy for a while, so I am looking around.',
+              'I feel like any new opportunity would probably be a step up.',
+            ],
+            correctIndex: 0,
+            explanation: 'A strong answer frames the move around direction and fit, not dissatisfaction.',
+          },
+          {
+            type: 'label_sort',
+            instruction: 'Label each part of this stronger answer.',
+            segments: [
+              { text: 'My recent experience helped clarify the kind of work I want to keep doing.', correctLabel: 'Why now' },
+              { text: 'I want a role that makes fuller use of those strengths.', correctLabel: 'What I am moving toward' },
+              { text: 'That is why this opportunity feels like a sensible next step.', correctLabel: 'Why this move is credible' },
+            ],
+          },
+          {
+            type: 'word_bank',
+            instruction: 'Choose the strongest phrase to complete the sentence.',
+            sentenceWithBlank: 'The reason I am exploring this move now is that I have a clearer sense of [___] in my next role.',
+            options: [
+              'the kind of work I want to keep building toward',
+              'how badly I need a change',
+              'why I want to leave my current team',
+              'why almost anything different would help',
+            ],
+            correctIndex: 0,
+            explanation: 'Strong timing answers point toward a direction, not away from a problem.',
+          },
+          {
+            type: 'tap_select',
+            instruction: 'Tap the statements that improve a "why now" answer.',
+            items: [
+              'I have gotten clearer on where I add the most value.',
+              'This move is about getting closer to the kind of work I want to keep doing.',
+              'I am mostly trying to get out of my current situation.',
+              'I just need a fresh start somewhere else.',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'The strongest answers sound intentional and forward-looking.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Rewrite your "why now" answer so it sounds directional, not reactive.',
+            coachingTip: 'Talk about what you are moving toward, what you have learned about your fit, and why this role makes sense now.',
+            fields: [
+              {
+                label: 'Why is now the right time for this move?',
+                placeholder: 'Explain what has become clearer for you about your next step.',
+                helper: 'Focus on direction, not frustration.',
+                minWords: 12,
+              },
+              {
+                label: 'What are you moving toward in this role?',
+                placeholder: 'Describe the kind of work or contribution you want more of next.',
+                helper: 'Make the next step sound chosen and believable.',
+                minWords: 12,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
     rootCause: 'off_topic',
     displayName: 'Answering the Real Question',
     description: "You're answering what you want to say, not what was asked.",
@@ -1899,8 +2441,8 @@ export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
   'Specific Examples and Evidence': 'lack_of_specificity',
   'Pace and Conversation Flow': 'weak_communication',
   'Questions Asked About Role/Company': 'questions_about_company',
-  'Alignment of Career Goals with Position': 'missing_knowledge',
-  'Handling Uncertain/Difficult Questions': 'off_topic',
+  'Alignment of Career Goals with Position': 'career_alignment',
+  'Handling Uncertain/Difficult Questions': 'handling_uncertainty',
   'Technical Depth': 'lack_of_specificity',
   'Problem-Solving': 'poor_structure',
   'Experience Storytelling (STAR)': 'poor_structure',

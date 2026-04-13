@@ -76,7 +76,7 @@ export interface PracticeBundle {
 export const PRACTICE_BUNDLES: PracticeBundle[] = [
   {
     rootCause: 'poor_structure',
-    displayName: 'Answer Structure and Conciseness',
+    displayName: 'Answer Structure',
     description: "Your answers lacked clear structure. Let's fix that.",
     lessons: [
       {
@@ -332,7 +332,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'lack_of_specificity',
-    displayName: 'Specific Examples and Evidence',
+    displayName: 'Specific Examples',
     description: "Your answers were too vague. Let's make every claim provable.",
     lessons: [
       {
@@ -595,7 +595,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'weak_communication',
-    displayName: 'Pace and Conversation Flow',
+    displayName: 'Pace & Flow',
     description: "Hedge words are killing your credibility. Let's cut them.",
     lessons: [
       {
@@ -1103,7 +1103,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'questions_about_company',
-    displayName: 'Questions Asked About Role/Company',
+    displayName: 'Company Questions',
     description: 'Weak company prep and weak end-of-interview questions make you sound underprepared.',
     lessons: [
       {
@@ -1374,7 +1374,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'handling_uncertainty',
-    displayName: 'Handling Uncertain/Difficult Questions',
+    displayName: 'Handling Uncertainty',
     description: 'Your answers need to sound calmer and more grounded when the path is unclear.',
     lessons: [
       {
@@ -1645,7 +1645,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'career_alignment',
-    displayName: 'Alignment of Career Goals with Position',
+    displayName: 'Career Alignment',
     description: 'Your answers need to explain more clearly why this role makes sense for you now.',
     lessons: [
       {
@@ -2441,6 +2441,7 @@ export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
   'Specific Examples and Evidence': 'lack_of_specificity',
   'Pace and Conversation Flow': 'weak_communication',
   'Questions Asked About Role/Company': 'questions_about_company',
+  'Questions Asked About the Role/Company': 'questions_about_company',
   'Alignment of Career Goals with Position': 'career_alignment',
   'Handling Uncertain/Difficult Questions': 'handling_uncertainty',
   'Technical Depth': 'lack_of_specificity',

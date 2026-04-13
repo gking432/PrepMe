@@ -163,6 +163,54 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           },
           {
             type: 'multiple_choice',
+            question: 'Select the Situation.',
+            options: [
+              'I needed to shorten the setup timeline without creating more work for HR or IT',
+              'The old onboarding flow had duplicate approvals and too many handoffs',
+              'I removed two extra sign-offs and created one shared request form',
+              'Setup time dropped from nine business days to three',
+            ],
+            correctIndex: 1,
+            explanation: 'Situation is the context or problem the answer starts from.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Select the Task.',
+            options: [
+              'New hires started contributing in their first week instead of waiting for access',
+              'I mapped the blockers and built one shared request form',
+              'I was responsible for shortening the setup timeline without adding more work for HR or IT',
+              'The old onboarding flow had duplicate approvals and too many handoffs',
+            ],
+            correctIndex: 2,
+            explanation: 'Task is the responsibility, goal, or problem you personally had to solve.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Select the Action.',
+            options: [
+              'I removed two extra sign-offs and created one shared request form',
+              'I was responsible for improving the process',
+              'The process had too many handoffs',
+              'Onboarding time dropped to three days',
+            ],
+            correctIndex: 0,
+            explanation: 'Action is what you actually did, not just what needed to happen.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Select the Result.',
+            options: [
+              'I owned shortening the setup timeline',
+              'The process had duplicate approvals and too many handoffs',
+              'I mapped the blockers across HR and IT',
+              'Onboarding time dropped from nine business days to three',
+            ],
+            correctIndex: 3,
+            explanation: 'Result is the outcome that proves the work changed something.',
+          },
+          {
+            type: 'multiple_choice',
             question: 'What should the middle of a strong answer do?',
             options: [
               'List every background detail you remember so nothing gets left out',

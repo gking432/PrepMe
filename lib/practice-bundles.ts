@@ -99,7 +99,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months. The old process had duplicate approvals and too many handoffs, and I was responsible for shortening the setup timeline without making more work for HR or IT. I mapped the blockers, removed two extra sign-offs, and created one shared request form. That cut onboarding time from about nine business days to three. It also meant new hires could start contributing in their first week instead of waiting around for access.',
             breakdown: {
               Lead: 'Open with the answer so the interviewer knows your point right away.',
-              Support: 'Use a tight STAR middle: enough context, what you owned, what you did.',
+              Support: 'Use STAR in the middle: Situation for context, Task for what you owned, Action for what you did, and Result for what changed.',
               Land: 'Close on the result so the answer feels finished and believable.',
             },
             annotatedStrongAnswer: [

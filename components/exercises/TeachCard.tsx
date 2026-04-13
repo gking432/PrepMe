@@ -51,6 +51,52 @@ function summarizeExplanation(explanation: string) {
   return firstSentence || explanation
 }
 
+function annotationColors(label: string) {
+  const key = label.toLowerCase()
+  if (key === 'lead') return {
+    text: 'text-sky-900',
+    bg: 'bg-sky-100',
+    border: 'border-sky-200',
+    chip: 'bg-sky-100 text-sky-700',
+    highlight: 'bg-sky-100/80',
+  }
+  if (key === 'situation') return {
+    text: 'text-emerald-900',
+    bg: 'bg-emerald-100',
+    border: 'border-emerald-200',
+    chip: 'bg-emerald-100 text-emerald-700',
+    highlight: 'bg-emerald-100/80',
+  }
+  if (key === 'task') return {
+    text: 'text-amber-900',
+    bg: 'bg-amber-100',
+    border: 'border-amber-200',
+    chip: 'bg-amber-100 text-amber-700',
+    highlight: 'bg-amber-100/80',
+  }
+  if (key === 'action') return {
+    text: 'text-violet-900',
+    bg: 'bg-violet-100',
+    border: 'border-violet-200',
+    chip: 'bg-violet-100 text-violet-700',
+    highlight: 'bg-violet-100/80',
+  }
+  if (key === 'result') return {
+    text: 'text-rose-900',
+    bg: 'bg-rose-100',
+    border: 'border-rose-200',
+    chip: 'bg-rose-100 text-rose-700',
+    highlight: 'bg-rose-100/80',
+  }
+  return {
+    text: 'text-slate-900',
+    bg: 'bg-slate-100',
+    border: 'border-slate-200',
+    chip: 'bg-slate-100 text-slate-700',
+    highlight: 'bg-slate-100',
+  }
+}
+
 function normalizeQuestion(text?: string) {
   return (text || '')
     .trim()
@@ -232,57 +278,59 @@ export default function TeachCard({
         </div>
       ),
     },
-    {
-      eyebrow: 'Use This Next Time',
-      title: 'What to remember',
-      preppi: 'You do not need to memorize a script. You do need to remember the move.',
-      content: (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-violet-700">
-              Next time, do this
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-violet-950 md:text-[15px]">
-              {frameworkRows
-                .map(([key]) => breakdownKeyLabel(key))
-                .join(' -> ')}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              Why this helps
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-700 md:text-base">
-              The interviewer can follow your answer in real time. That makes you sound more prepared, more thoughtful, and easier to trust.
-            </p>
-          </div>
-        </div>
-      ),
-    },
     ...(example.annotatedStrongAnswer ? [{
       eyebrow: 'Label The Strong Answer',
       title: 'See exactly where each part lives',
       preppi: 'If we teach a structure, we should be able to point to each piece inside the stronger answer.',
       content: (
-        <div className="space-y-3">
-          {example.annotatedStrongAnswer.map((part) => (
-            <div
-              key={`${part.label}-${part.text}`}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
-            >
-              <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
-                {part.label}
-              </p>
-              <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-900 md:text-[15px]">
-                {part.text}
-              </p>
-              {part.detail && (
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  {part.detail}
-                </p>
-              )}
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
+              <ThumbsUp className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
+                Stronger version
+              </span>
             </div>
-          ))}
+            <div className="px-4 py-4">
+              <p className="text-base leading-relaxed text-slate-900">
+                &ldquo;
+                {example.annotatedStrongAnswer.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <span
+                      key={`${part.label}-${index}`}
+                      className={`rounded px-1.5 py-0.5 ${colors.highlight}`}
+                    >
+                      {part.text}
+                      {index < example.annotatedStrongAnswer!.length - 1 ? ' ' : ''}
+                    </span>
+                  )
+                })}
+                &rdquo;
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {example.annotatedStrongAnswer.map((part) => {
+              const colors = annotationColors(part.label)
+              return (
+                <div
+                  key={`${part.label}-legend`}
+                  className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
+                >
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                    {part.label}
+                  </span>
+                  {part.detail && (
+                    <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                      {part.detail}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       ),
     }] : []),

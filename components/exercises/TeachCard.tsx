@@ -59,12 +59,37 @@ function summarizeExplanation(explanation: string) {
 
 function annotationColors(label: string) {
   const key = label.toLowerCase()
+  if (key.startsWith('present')) return {
+    text: 'text-sky-900',
+    bg: 'bg-sky-100',
+    border: 'border-sky-200',
+    chip: 'bg-sky-100 text-sky-700',
+    highlight: 'bg-sky-100/80',
+    subtle: 'bg-sky-50',
+  }
+  if (key.startsWith('past')) return {
+    text: 'text-emerald-900',
+    bg: 'bg-emerald-100',
+    border: 'border-emerald-200',
+    chip: 'bg-emerald-100 text-emerald-700',
+    highlight: 'bg-emerald-100/80',
+    subtle: 'bg-emerald-50',
+  }
+  if (key.startsWith('why here')) return {
+    text: 'text-amber-900',
+    bg: 'bg-amber-100',
+    border: 'border-amber-200',
+    chip: 'bg-amber-100 text-amber-700',
+    highlight: 'bg-amber-100/80',
+    subtle: 'bg-amber-50',
+  }
   if (key === 'lead') return {
     text: 'text-sky-900',
     bg: 'bg-sky-100',
     border: 'border-sky-200',
     chip: 'bg-sky-100 text-sky-700',
     highlight: 'bg-sky-100/80',
+    subtle: 'bg-sky-50',
   }
   if (key === 'situation') return {
     text: 'text-emerald-900',
@@ -72,6 +97,7 @@ function annotationColors(label: string) {
     border: 'border-emerald-200',
     chip: 'bg-emerald-100 text-emerald-700',
     highlight: 'bg-emerald-100/80',
+    subtle: 'bg-emerald-50',
   }
   if (key === 'task') return {
     text: 'text-amber-900',
@@ -79,6 +105,7 @@ function annotationColors(label: string) {
     border: 'border-amber-200',
     chip: 'bg-amber-100 text-amber-700',
     highlight: 'bg-amber-100/80',
+    subtle: 'bg-amber-50',
   }
   if (key === 'action') return {
     text: 'text-violet-900',
@@ -86,6 +113,7 @@ function annotationColors(label: string) {
     border: 'border-violet-200',
     chip: 'bg-violet-100 text-violet-700',
     highlight: 'bg-violet-100/80',
+    subtle: 'bg-violet-50',
   }
   if (key === 'result') return {
     text: 'text-rose-900',
@@ -93,6 +121,7 @@ function annotationColors(label: string) {
     border: 'border-rose-200',
     chip: 'bg-rose-100 text-rose-700',
     highlight: 'bg-rose-100/80',
+    subtle: 'bg-rose-50',
   }
   return {
     text: 'text-slate-900',
@@ -100,6 +129,7 @@ function annotationColors(label: string) {
     border: 'border-slate-200',
     chip: 'bg-slate-100 text-slate-700',
     highlight: 'bg-slate-100',
+    subtle: 'bg-slate-50',
   }
 }
 
@@ -217,52 +247,84 @@ export default function TeachCard({
       ),
     },
     ...(example.pairedAnnotatedAnswer ? [{
-      eyebrow: 'Grounding Detail',
-      title: 'What makes each part feel real',
-      preppi: 'Before memorizing the buckets, notice what makes each bucket credible. The statement gives the shape. The grounding detail is what makes it sound real.',
+      eyebrow: 'The Concept',
+      title: 'See the stronger answer the right way',
+      preppi: 'This is the actual concept. Each section has a statement, then a grounding detail that makes it believable.',
       content: (
         <div className="space-y-4">
-          {example.pairedAnnotatedAnswer.map((part) => {
-            const colors = annotationColors(part.label)
-            return (
-              <div
-                key={`${part.label}-pairing-early`}
-                className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
-              >
-                <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                  {part.label}
-                </span>
-                <div className="mt-3 space-y-3">
-                  <div className={`rounded-xl ${colors.bg} px-3 py-3`}>
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                      Statement
-                    </p>
-                    <p className={`mt-1 text-sm leading-relaxed ${colors.text}`}>
-                      {part.statement}
-                    </p>
+          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
+              <ThumbsUp className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
+                Stronger version
+              </span>
+            </div>
+            <div className="px-4 py-4">
+              <p className="text-base leading-relaxed text-slate-900">
+                &ldquo;
+                {example.pairedAnnotatedAnswer.flatMap((part) => ([
+                  { key: `${part.label}-statement`, text: part.statement, kind: 'statement', label: part.label },
+                  { key: `${part.label}-detail`, text: part.groundingDetail, kind: 'detail', label: part.label },
+                ])).map((segment, index, array) => {
+                  const colors = annotationColors(segment.label)
+                  return (
+                    <span
+                      key={segment.key}
+                      className={`rounded px-1.5 py-0.5 ${segment.kind === 'statement' ? colors.highlight : colors.subtle}`}
+                    >
+                      {segment.text}
+                      {index < array.length - 1 ? ' ' : ''}
+                    </span>
+                  )
+                })}
+                &rdquo;
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {example.pairedAnnotatedAnswer.map((part) => {
+              const colors = annotationColors(part.label)
+              return (
+                <div
+                  key={`${part.label}-concept`}
+                  className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
+                >
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                    {part.label}
+                  </span>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div className={`rounded-xl ${colors.bg} px-3 py-3`}>
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                        Statement
+                      </p>
+                      <p className={`mt-1 text-sm leading-relaxed ${colors.text}`}>
+                        {part.statement}
+                      </p>
+                    </div>
+                    <div className={`rounded-xl ${colors.subtle} border ${colors.border} px-3 py-3`}>
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                        Grounding Detail
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-800">
+                        {part.groundingDetail}
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                      Grounding Detail
+                  {part.note && (
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                      {part.note}
                     </p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-800">
-                      {part.groundingDetail}
-                    </p>
-                  </div>
+                  )}
                 </div>
-                {part.note && (
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                    {part.note}
-                  </p>
-                )}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       ),
     }] : []),
     {
-      eyebrow: 'The Fix',
+      eyebrow: 'The Rule',
       title,
       preppi: 'Here is the repeatable move to use the next time this kind of question comes up.',
       content: (
@@ -329,7 +391,54 @@ export default function TeachCard({
         </div>
       ),
     },
-    ...(example.annotatedStrongAnswer ? [{
+    ...(example.pairedAnnotatedAnswer ? [{
+      eyebrow: 'Build The Answer',
+      title: 'See every piece in order',
+      preppi: 'This is the full build. Present statement, grounding detail, Past statement, grounding detail, Why Here statement, grounding detail.',
+      content: (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+            <div className="flex flex-wrap gap-2">
+              {example.pairedAnnotatedAnswer.flatMap((part) => ([
+                { key: `${part.label}-statement-pill`, text: `${part.label} Statement`, label: part.label, kind: 'statement' },
+                { key: `${part.label}-detail-pill`, text: `${part.label} Grounding Detail`, label: part.label, kind: 'detail' },
+              ])).map((segment) => {
+                const colors = annotationColors(segment.label)
+                return (
+                  <span
+                    key={segment.key}
+                    className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${
+                      segment.kind === 'statement' ? colors.chip : `${colors.border} border ${colors.text} ${colors.subtle}`
+                    }`}
+                  >
+                    {segment.text}
+                  </span>
+                )
+              })}
+            </div>
+            <p className="mt-4 text-base leading-relaxed text-slate-900">
+              &ldquo;
+              {example.pairedAnnotatedAnswer.flatMap((part) => ([
+                { key: `${part.label}-statement-inline`, text: part.statement, label: part.label, kind: 'statement' },
+                { key: `${part.label}-detail-inline`, text: part.groundingDetail, label: part.label, kind: 'detail' },
+              ])).map((segment, index, array) => {
+                const colors = annotationColors(segment.label)
+                return (
+                  <span
+                    key={segment.key}
+                    className={`rounded px-1.5 py-0.5 ${segment.kind === 'statement' ? colors.highlight : colors.subtle}`}
+                  >
+                    {segment.text}
+                    {index < array.length - 1 ? ' ' : ''}
+                  </span>
+                )
+              })}
+              &rdquo;
+            </p>
+          </div>
+        </div>
+      ),
+    }] : example.annotatedStrongAnswer ? [{
       eyebrow: 'Label The Strong Answer',
       title: 'See exactly where each part lives',
       preppi: 'If we teach a structure, we should be able to point to each piece inside the stronger answer.',
@@ -360,27 +469,6 @@ export default function TeachCard({
                 &rdquo;
               </p>
             </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            {example.annotatedStrongAnswer.map((part) => {
-              const colors = annotationColors(part.label)
-              return (
-                <div
-                  key={`${part.label}-legend`}
-                  className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
-                >
-                  <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                    {part.label}
-                  </span>
-                  {part.detail && (
-                    <p className="mt-3 text-sm leading-relaxed text-slate-700">
-                      {part.detail}
-                    </p>
-                  )}
-                </div>
-              )
-            })}
           </div>
         </div>
       ),

@@ -2770,9 +2770,9 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
               WhyHere: 'Tie that through-line to this exact role now.',
             },
             annotatedStrongAnswer: [
-              { label: 'Present (descriptor)', text: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving.', detail: 'The key is not just the title. It tells you the lane, the kind of work, and the scope.' },
-              { label: 'Past (descriptor)', text: 'Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution.', detail: 'This is not a resume list. It explains the pattern behind the candidate’s background.' },
-              { label: 'Why Here (descriptor)', text: 'That is why this role stands out to me now. It is a chance to keep doing that kind of work in a position where it is central to the job.', detail: 'This is strong because it connects the story to the role itself, not just to getting hired.' },
+              { label: 'Present', text: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving.', detail: 'The key is not just the title. It tells you the lane, the kind of work, and the scope.' },
+              { label: 'Past', text: 'Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution.', detail: 'This is not a resume list. It explains the pattern behind the candidate’s background.' },
+              { label: 'Why Here', text: 'That is why this role stands out to me now. It is a chance to keep doing that kind of work in a position where it is central to the job.', detail: 'This is strong because it connects the story to the role itself, not just to getting hired.' },
             ],
             pairedAnnotatedAnswer: [
               {
@@ -2892,10 +2892,42 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             correctIndex: 1,
             explanation: 'Grounding detail is what turns a bucket label into a believable answer.',
           },
-          { type: 'multiple_choice', question: 'Select the "Present" sentence.', options: ['Before that, I spent several years in agency roles building execution discipline.', 'That is why this role feels like a natural next step now.', 'Right now I lead projects that sit between marketing, operations, and analytics.', 'Those experiences taught me how to work across teams.'], correctIndex: 2, explanation: 'Present tells the interviewer where you are now.' },
-          { type: 'multiple_choice', question: 'Select the "Past" sentence.', options: ['That is why I am excited about this role now.', 'Right now I manage cross-functional launches.', 'Before that, I built my foundation in agency and in-house marketing roles.', 'This role lines up with how I work best.'], correctIndex: 2, explanation: 'Past gives the relevant path that led to the present.' },
-          { type: 'multiple_choice', question: 'Select the "Why Here" sentence.', options: ['Right now I work in lifecycle marketing.', 'Before that, I worked across agency and in-house teams.', 'That is why this role stands out to me now.', 'I have worked in several industries.'], correctIndex: 2, explanation: 'Why Here connects your story to this role.' },
-          { type: 'word_bank', instruction: 'Complete the pattern.', sentenceWithBlank: 'Present -> Past -> [___]', options: ['Why Here', 'Compensation', 'Disclaimer', 'Reflection'], correctIndex: 0, explanation: 'A strong intro answer ends by linking your story to the role.' },
+          {
+            type: 'multiple_choice',
+            question: 'Which full answer is strongest for a candidate moving into a field-service coordinator role?',
+            options: [
+              'Right now I work in service. Before that, I had some other jobs. That is why I think this could be a good next step for me.',
+              'Right now I coordinate repair scheduling and customer follow-up for a regional service team. Before that, I built my foundation in dispatch and office support roles where I had to keep moving pieces organized under pressure. That is why this role stands out to me now. It is a chance to keep doing that kind of coordination work in a position with more ownership.',
+              'Before that, I worked in a few different industries, and right now I am looking for a full-time role with more opportunity.',
+              'I have done a lot of things over the years, and I think that broad experience would probably help here.',
+            ],
+            correctIndex: 1,
+            explanation: 'The strongest answer is the one with a clear present lane, a meaningful through-line, and a role-specific reason for the move.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which "Past" line actually explains a through-line instead of just naming background?',
+            options: [
+              'Before that, I worked in a few different industries.',
+              'Before that, I held several roles across operations and support.',
+              'Before that, I built my foundation in support and scheduling roles where I had to keep requests organized and moving under pressure.',
+              'Before that, I learned a lot in earlier jobs.',
+            ],
+            correctIndex: 2,
+            explanation: 'The strongest Past line explains what those earlier roles taught you and why that matters now.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which "Why Here" line is the most convincing for an IT support candidate?',
+            options: [
+              'I am looking for a full-time role where I can use my skills.',
+              'That is why this role stands out to me now. It would let me keep doing hands-on support work in an environment where ticket ownership and follow-through are central to the job.',
+              'I think this would be a good next step because it sounds interesting.',
+              'I am ready for something different at this point.',
+            ],
+            correctIndex: 1,
+            explanation: 'A strong Why Here line names what this role would let you keep doing and why that fit matters.',
+          },
           { type: 'tap_select', instruction: 'Tap the moves that strengthen a tell-me-about-yourself answer.', items: ['Start with where you are now', 'Add one useful descriptor to make each section sound real', 'Walk through every job in order', 'Close by tying your story to the role'], correctIndices: [0, 1, 3], explanation: 'The strongest version is selective, specific, and role-relevant.' },
           {
             type: 'apply_to_yourself',

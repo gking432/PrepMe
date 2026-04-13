@@ -2457,6 +2457,8 @@ export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
 }
 
 export function getRootCauseForCriterion(criterion: string, explicitRootCause?: string): string {
+  const mappedRootCause = CRITERION_TO_ROOT_CAUSE[criterion]
+  if (mappedRootCause) return mappedRootCause
   if (explicitRootCause) return explicitRootCause
-  return CRITERION_TO_ROOT_CAUSE[criterion] || 'poor_structure'
+  return 'poor_structure'
 }

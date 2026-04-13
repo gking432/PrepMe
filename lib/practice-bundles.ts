@@ -150,6 +150,78 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             explanation: 'The strongest opening leads with the point right away instead of circling around it.',
           },
           {
+            type: 'multiple_choice',
+            question: 'Which sentence is the clearest Lead for a proud-project answer?',
+            options: [
+              'One thing that comes to mind is this project that was pretty interesting to work on.',
+              'I have had a lot of projects over the years, but one that stands out is probably this onboarding work.',
+              'A project I am proud of was redesigning our onboarding workflow because it fixed a major bottleneck.',
+              'There are a few ways I could answer that because a lot of projects were meaningful to me.',
+            ],
+            correctIndex: 2,
+            explanation: 'A strong Lead answers the question immediately and names the project directly.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What should the middle of a strong answer do?',
+            options: [
+              'List every background detail you remember so nothing gets left out',
+              'Use STAR: explain the Situation, your Task, the Action you took, and the Result',
+              'Stay broad so you can reuse the answer for different questions',
+              'Focus mostly on how proud or excited you felt',
+            ],
+            correctIndex: 1,
+            explanation: 'The middle of the answer needs real structure underneath it, and STAR is the clearest way to do that.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which version of the middle is strongest?',
+            options: [
+              'It was a complicated project with a lot of people involved, and we all worked hard on it.',
+              'The process had duplicate approvals, I owned shortening the setup timeline, and I removed two extra sign-offs and built one shared request form.',
+              'There were a lot of moving pieces, so I stayed flexible and tried to help where I could.',
+              'It was definitely a challenge, but we learned a lot and things improved over time.',
+            ],
+            correctIndex: 1,
+            explanation: 'That version gives context, ownership, and action instead of vague commentary.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which ending lands the answer best?',
+            options: [
+              'Overall it went well and I was proud of how it turned out.',
+              'People were really happy with the changes.',
+              'That cut onboarding time from nine business days to three and got new hires contributing in their first week.',
+              'It taught me a lot about communication and teamwork.',
+            ],
+            correctIndex: 2,
+            explanation: 'A strong ending closes with a concrete result and why it mattered.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the biggest problem with this answer? "There were a lot of moving parts, I worked with different teams, and it ended up being better in the end."',
+            options: [
+              'It has no numbers anywhere',
+              'It sounds too formal',
+              'It stays vague about ownership, action, and result',
+              'It is too short to understand',
+            ],
+            correctIndex: 2,
+            explanation: 'The listener still does not know what you owned, what you did, or what changed.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer best combines clear spoken flow with STAR underneath?',
+            options: [
+              'A project I am proud of was fixing our onboarding bottleneck. The process had duplicate approvals, I owned shortening the timeline, I removed two sign-offs and created one shared form, and setup time dropped from nine days to three.',
+              'One project that maybe stands out was onboarding, and there were a lot of things happening, but overall it ended up much better after we worked on it.',
+              'I have done a lot of work over the years, so it is hard to choose just one example.',
+              'The project was complex, cross-functional, and definitely a strong learning experience for me.',
+            ],
+            correctIndex: 0,
+            explanation: 'This one opens clearly, walks through the STAR middle, and closes on a real outcome.',
+          },
+          {
             type: 'label_sort',
             instruction: 'Label each part of the answer with the role it plays.',
             segments: [
@@ -177,6 +249,18 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
             correctIndices: [0, 1, 3],
             explanation: 'The middle works when it still has a STAR backbone instead of turning into a ramble.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'If you only changed one thing to make a messy answer better, what should you do first?',
+            options: [
+              'Add more detail so the interviewer sees how much work it was',
+              'Open with a direct Lead sentence that answers the question immediately',
+              'Use bigger words so the answer sounds more polished',
+              'Save the real result for the very end without mentioning the project up front',
+            ],
+            correctIndex: 1,
+            explanation: 'The biggest immediate improvement is making the answer easy to follow from the first sentence.',
           },
           {
             type: 'apply_to_yourself',

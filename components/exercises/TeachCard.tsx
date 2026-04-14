@@ -392,53 +392,59 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'Action',
-          title: 'What strong Action sounds like',
-          preppi: 'This is where most candidates either sound credible or forgettable.',
+          eyebrow: 'See It In Action',
+          title: 'See the strong answer with STAR applied',
+          preppi: 'Now the concept is laid onto the stronger answer itself. This is the proof of what each section is doing.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Action</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">
-                  &ldquo;I communicated with the team and helped keep things moving.&rdquo;
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span
+                        key={`${part.label}-pill-${index}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}
+                      >
+                        {part.label}
+                      </span>
+                    )
+                  })}
+                </div>
+                <p className="mt-4 text-base leading-relaxed text-slate-900">
+                  &ldquo;
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span
+                        key={`${part.label}-highlight-${index}`}
+                        className={`rounded px-1.5 py-0.5 ${colors.highlight}`}
+                      >
+                        {part.text}
+                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
+                      </span>
+                    )
+                  })}
+                  &rdquo;
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Strong Action</p>
-                <p className="mt-2 text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  &ldquo;I created a tracker for open issues, assigned owners, and set short check-ins to catch blockers early.&rdquo;
-                </p>
-              </div>
-              <div className="rounded-2xl border border-violet-200 bg-white px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  Good Action shows visible steps, decisions, and ownership.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Result',
-          title: 'What strong Result sounds like',
-          preppi: 'A Result does not need a perfect metric, but it does need consequence.',
-          content: (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Result</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">
-                  &ldquo;In the end, it worked out.&rdquo;
-                </p>
-              </div>
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Strong Result</p>
-                <p className="mt-2 text-sm font-semibold leading-relaxed text-emerald-900 md:text-[15px]">
-                  &ldquo;We met the deadline, and the process reduced confusion on later projects too.&rdquo;
-                </p>
-              </div>
-              <div className="rounded-2xl border border-emerald-200 bg-white px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  A strong Result shows what changed, improved, or got delivered.
-                </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                {example.annotatedStrongAnswer?.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <div
+                      key={`${part.label}-detail-${index}`}
+                      className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
+                    >
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                        {part.detail}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ),

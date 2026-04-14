@@ -134,7 +134,7 @@ export default function PracticeLessonFlow({
   mode = 'optional',
 }: PracticeLessonFlowProps) {
   const randomizedExercises = useMemo(
-    () => shuffle(subLesson.exercises.map(randomizeExercise)),
+    () => subLesson.exercises.map(randomizeExercise),
     [subLesson.exercises]
   )
 

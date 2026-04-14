@@ -2869,6 +2869,18 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             explanation: 'The Present and Future sections are at least qualified. The Past section is still just a summary with no through-line.',
           },
           {
+            type: 'label_sort',
+            instruction: 'Label each section of the stronger answer by the job it is doing.',
+            segments: [
+              { text: 'Right now I work at the intersection of marketing execution and operations', correctLabel: 'Present' },
+              { text: 'with a lot of my recent work focused on keeping cross-functional projects moving', correctLabel: 'Present Qualifier' },
+              { text: 'Before that, I built my foundation across agency and in-house roles', correctLabel: 'Past' },
+              { text: 'where I had to turn messy requirements into clean execution', correctLabel: 'Past Qualifier' },
+              { text: 'Going forward, I want to keep building in work like that', correctLabel: 'Future' },
+              { text: 'and this role fits because it makes that kind of cross-functional execution more central to the job', correctLabel: 'Future Qualifier' },
+            ],
+          },
+          {
             type: 'sentence_builder',
             instruction: 'Build the strongest Present, Past, Future answer by choosing six fragments in order.',
             slotLabels: [
@@ -2903,18 +2915,6 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             ],
             explanation: 'The strongest build uses all six fragments in the right order: section, qualifier, section, qualifier, section, qualifier. The weaker fragments sound generic even when the shape looks close.',
             displayMode: 'sequence',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each section of the stronger answer by the job it is doing.',
-            segments: [
-              { text: 'Right now I work at the intersection of marketing execution and operations', correctLabel: 'Present' },
-              { text: 'with a lot of my recent work focused on keeping cross-functional projects moving', correctLabel: 'Present Qualifier' },
-              { text: 'Before that, I built my foundation across agency and in-house roles', correctLabel: 'Past' },
-              { text: 'where I had to turn messy requirements into clean execution', correctLabel: 'Past Qualifier' },
-              { text: 'Going forward, I want to keep building in work like that', correctLabel: 'Future' },
-              { text: 'and this role fits because it makes that kind of cross-functional execution more central to the job', correctLabel: 'Future Qualifier' },
-            ],
           },
           {
             type: 'apply_to_yourself',

@@ -66,44 +66,19 @@ export default function SentenceBuilderExercise({
       </p>
 
       {displayMode === 'sequence' ? (
-        <div className={`rounded-2xl border-2 px-4 py-4 transition ${
-          checked
-            ? correct
-              ? 'border-emerald-300 bg-emerald-50'
-              : 'border-amber-300 bg-amber-50'
-            : 'border-slate-200 bg-white'
-        }`}>
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
           <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
             Build the answer
           </p>
-          <div className="mt-3 flex min-h-[160px] flex-wrap content-start gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3">
+          <div className="mt-3 min-h-[160px] rounded-xl border border-slate-200 bg-white px-4 py-4">
             {selectedParts.length === 0 ? (
-              <p className="text-sm italic text-slate-400">
+              <p className="text-sm italic leading-7 text-slate-400">
                 Select six fragments to build your answer.
               </p>
             ) : (
-              selectedParts.map((part, index) => {
-                const isCorrect = checked && part === correctOrder[index]
-                const isWrong = checked && part !== correctOrder[index]
-                return (
-                  <button
-                    key={`${part}-${index}`}
-                    onClick={() => removePart(index)}
-                    disabled={checked}
-                    className={`rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${
-                      checked
-                        ? isCorrect
-                          ? 'bg-emerald-100 text-emerald-900'
-                          : isWrong
-                          ? 'bg-red-100 text-red-900'
-                          : 'bg-slate-100 text-slate-800'
-                        : 'bg-violet-100 text-violet-900 hover:bg-violet-200'
-                    }`}
-                  >
-                    {part}
-                  </button>
-                )
-              })
+              <p className="text-base leading-8 text-slate-900">
+                {selectedParts.join(' ')}
+              </p>
             )}
           </div>
         </div>
@@ -167,7 +142,7 @@ export default function SentenceBuilderExercise({
               key={option}
               onClick={() => addPart(option)}
               disabled={checked || allFilled}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:bg-violet-50 disabled:opacity-40"
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-40"
             >
               {option}
             </button>

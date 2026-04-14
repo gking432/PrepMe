@@ -276,9 +276,38 @@ export default function TeachCard({
     if (isPresentPastFutureLesson) {
       return [
         {
-          eyebrow: 'When To Use It',
-          title: 'When to use this structure',
-          preppi: 'This framework is for background walkthrough questions, not motivation or behavioral stories.',
+          eyebrow: 'Your Flagged Answer',
+          title: originalQuestion || example.question,
+          preppi: 'We should start with the exact miss first, not generic advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Question Type',
+          title: 'What kind of question this is',
+          preppi: 'This is a background question. A strong answer usually follows Present, Past, Future.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
@@ -532,8 +561,8 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'The Problem',
-          title: 'Why this kind of answer gets flagged',
+          eyebrow: 'Question Type',
+          title: 'What kind of question this is',
           preppi: 'Start by knowing when to use STAR. Then the rest of the lesson has the right frame.',
           content: (
             <div className="space-y-4">
@@ -805,8 +834,8 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'When To Use It',
-          title: 'When to use this structure',
+          eyebrow: 'Question Type',
+          title: 'What kind of question this is',
           preppi: 'This framework is for motivation and alignment questions, not background questions.',
           content: (
             <div className="space-y-4">
@@ -1078,8 +1107,8 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'When To Use It',
-          title: 'When to use this structure',
+          eyebrow: 'Question Type',
+          title: 'What kind of question this is',
           preppi: 'This framework is for judgment, preference, and approach questions that do not need a full story.',
           content: (
             <div className="space-y-4">

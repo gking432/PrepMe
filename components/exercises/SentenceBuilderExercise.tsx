@@ -9,6 +9,7 @@ interface SentenceBuilderExerciseProps {
   options: string[]
   correctOrder: string[]
   explanation: string
+  displayMode?: 'slots' | 'sequence'
   onComplete: (correct: boolean) => void
 }
 
@@ -27,6 +28,7 @@ export default function SentenceBuilderExercise({
   options,
   correctOrder,
   explanation,
+  displayMode = 'slots',
   onComplete,
 }: SentenceBuilderExerciseProps) {
   const shuffledOptions = useMemo(() => shuffle(options), [options])
@@ -34,7 +36,7 @@ export default function SentenceBuilderExercise({
   const [checked, setChecked] = useState(false)
 
   const availableOptions = shuffledOptions.filter((option) => !selectedParts.includes(option))
-  const allFilled = selectedParts.length === slotLabels.length
+  const allFilled = selectedParts.length === correctOrder.length
   const correct = allFilled && selectedParts.every((part, index) => part === correctOrder[index])
 
   const addPart = (part: string) => {
@@ -63,43 +65,87 @@ export default function SentenceBuilderExercise({
         {instruction}
       </p>
 
-      <div className="space-y-3">
-        {slotLabels.map((label, index) => {
-          const chosen = selectedParts[index]
-          const isCorrect = checked && chosen === correctOrder[index]
-          const isWrong = checked && chosen && chosen !== correctOrder[index]
-
-          return (
-            <button
-              key={label}
-              onClick={() => chosen && removePart(index)}
-              disabled={!chosen || checked}
-              className={`w-full rounded-2xl border-2 px-4 py-4 text-left transition ${
-                checked
-                  ? isCorrect
-                    ? 'border-emerald-300 bg-emerald-50'
-                    : isWrong
-                    ? 'border-red-300 bg-red-50'
-                    : 'border-slate-200 bg-slate-50'
-                  : chosen
-                  ? 'border-violet-300 bg-violet-50 hover:border-violet-400'
-                  : 'border-slate-200 bg-white'
-              }`}
-            >
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                {label}
+      {displayMode === 'sequence' ? (
+        <div className={`rounded-2xl border-2 px-4 py-4 transition ${
+          checked
+            ? correct
+              ? 'border-emerald-300 bg-emerald-50'
+              : 'border-amber-300 bg-amber-50'
+            : 'border-slate-200 bg-white'
+        }`}>
+          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+            Build the answer
+          </p>
+          <div className="mt-3 flex min-h-[160px] flex-wrap content-start gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3">
+            {selectedParts.length === 0 ? (
+              <p className="text-sm italic text-slate-400">
+                Select six fragments to build your answer.
               </p>
-              <div className="mt-2 flex items-start gap-2">
-                {checked && isCorrect ? <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> : null}
-                {checked && isWrong ? <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" /> : null}
-                <p className={`text-sm leading-relaxed ${chosen ? 'text-slate-900' : 'text-slate-400 italic'}`}>
-                  {chosen || 'Choose the best fragment for this slot'}
+            ) : (
+              selectedParts.map((part, index) => {
+                const isCorrect = checked && part === correctOrder[index]
+                const isWrong = checked && part !== correctOrder[index]
+                return (
+                  <button
+                    key={`${part}-${index}`}
+                    onClick={() => removePart(index)}
+                    disabled={checked}
+                    className={`rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${
+                      checked
+                        ? isCorrect
+                          ? 'bg-emerald-100 text-emerald-900'
+                          : isWrong
+                          ? 'bg-red-100 text-red-900'
+                          : 'bg-slate-100 text-slate-800'
+                        : 'bg-violet-100 text-violet-900 hover:bg-violet-200'
+                    }`}
+                  >
+                    {part}
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {slotLabels.map((label, index) => {
+            const chosen = selectedParts[index]
+            const isCorrect = checked && chosen === correctOrder[index]
+            const isWrong = checked && chosen && chosen !== correctOrder[index]
+
+            return (
+              <button
+                key={label}
+                onClick={() => chosen && removePart(index)}
+                disabled={!chosen || checked}
+                className={`w-full rounded-2xl border-2 px-4 py-4 text-left transition ${
+                  checked
+                    ? isCorrect
+                      ? 'border-emerald-300 bg-emerald-50'
+                      : isWrong
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-slate-200 bg-slate-50'
+                    : chosen
+                    ? 'border-violet-300 bg-violet-50 hover:border-violet-400'
+                    : 'border-slate-200 bg-white'
+                }`}
+              >
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                  {label}
                 </p>
-              </div>
-            </button>
-          )
-        })}
-      </div>
+                <div className="mt-2 flex items-start gap-2">
+                  {checked && isCorrect ? <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" /> : null}
+                  {checked && isWrong ? <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" /> : null}
+                  <p className={`text-sm leading-relaxed ${chosen ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                    {chosen || 'Choose the best fragment for this slot'}
+                  </p>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
         <div className="mb-3 flex items-center justify-between">

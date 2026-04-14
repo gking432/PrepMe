@@ -75,7 +75,7 @@ function annotationColors(label: string) {
     highlight: 'bg-emerald-100/80',
     subtle: 'bg-emerald-50',
   }
-  if (key.startsWith('why here') || key.startsWith('now')) return {
+  if (key.startsWith('why here') || key.startsWith('now') || key.startsWith('future')) return {
     text: 'text-amber-900',
     bg: 'bg-amber-100',
     border: 'border-amber-200',

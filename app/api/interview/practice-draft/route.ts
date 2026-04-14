@@ -9,7 +9,7 @@ function getOpenAI() {
 
 const FRAMEWORK_GUIDANCE: Record<string, string> = {
   star: 'Evaluate whether the draft correctly uses STAR: Situation, Task, Action, Result.',
-  present_past_now: 'Evaluate whether the draft correctly uses Present, Past, Now. Be strict about generic language. A weak draft can have the right structure but still fail because each section is only a label with no qualifier. A strong draft needs a real lane in Present, a real through-line in Past, and a real fit-and-timing explanation in Now. Reject answers that say things like "I work in operations" or "I worked in different roles" or "this is a good next step" without a concrete qualifier that makes the section believable.',
+  present_past_future: 'Evaluate whether the draft correctly uses Present, Past, Future. Be strict about generic language. A weak draft can have the right structure but still fail because each section is only a label with no qualifier. A strong draft needs a real lane in Present, a real through-line in Past, and a real direction-and-fit explanation in Future. Reject answers that say things like "I work in operations" or "I worked in different roles" or "I want a good next step" without a concrete qualifier that makes the section believable.',
   noticed_fit_now: 'Evaluate whether the draft correctly uses What I noticed, Why it fits, Why now.',
   answer_reason_example: 'Evaluate whether the draft correctly uses Answer, Reason, Example.',
 }

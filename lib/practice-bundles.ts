@@ -36,6 +36,7 @@ export interface SentenceBuilderExercise {
   options: string[]
   correctOrder: string[]
   explanation: string
+  displayMode?: 'slots' | 'sequence'
 }
 
 export interface ApplyToYourselfExercise {
@@ -2707,7 +2708,7 @@ export function getRootCauseForCriterion(criterion: string, explicitRootCause?: 
 
 export type AnswerStructureTemplate =
   | 'star'
-  | 'present_past_now'
+  | 'present_past_future'
   | 'noticed_fit_now'
   | 'answer_reason_example'
 
@@ -2720,7 +2721,7 @@ export function detectAnswerStructureTemplate(question?: string): AnswerStructur
     normalized.includes('briefly introduce yourself') ||
     normalized.includes('walk me through your resume')
   ) {
-    return 'present_past_now'
+    return 'present_past_future'
   }
 
   if (
@@ -2753,29 +2754,29 @@ export function detectAnswerStructureTemplate(question?: string): AnswerStructur
 
 function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesson {
   switch (template) {
-    case 'present_past_now':
+    case 'present_past_future':
       return {
         title: 'Tell your story with real qualifiers',
         difficulty: 'easy',
         teach: {
-          title: 'Use Present, Past, Now with a qualifier in each section',
-          explanation: 'Structure helps, but structure alone is not enough. A candidate can use the right order and still sound vague. Present should say what you do now and what kind of work that actually is. Past should say what built that foundation and what pattern connects it. Now should explain why this role makes sense now and why the move is logical, not random.',
+          title: 'Use Present, Past, Future with a qualifier in each section',
+          explanation: 'Structure helps, but structure alone is not enough. A candidate can use the right order and still sound vague. Present should say what you do now and what kind of work that actually is. Past should say what built that foundation and what pattern connects it. Future should explain what you want to keep building toward and why this role fits that direction.',
           example: {
             question: 'Can you tell me about yourself?',
             badAnswer: 'Sure. I started out doing a lot of different marketing work, and over the years I have touched a bunch of industries and learned a lot. I have worked with agencies and internal teams and done everything from content to operations, so there is a lot I could get into.',
-            goodAnswer: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving. Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution. That is why this role makes sense now. It lets me keep doing that kind of work in a position where it is more central to the job.',
+            goodAnswer: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving. Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution. Going forward, I want to keep building in work like that, and this role fits because it makes that kind of cross-functional execution more central to the job.',
             breakdown: {
               Present: 'Say what you do now, then add the qualifier that shows what kind of work it really is.',
               Past: 'Say what built that foundation, then add the qualifier that explains the through-line.',
-              Now: 'Say why this move makes sense now, then add the qualifier that makes the timing and fit believable.',
+              Future: 'Say what you want to keep building toward, then add the qualifier that shows why this role fits that direction.',
             },
             annotatedStrongAnswer: [
               { label: 'Present', text: 'Right now I work at the intersection of marketing execution and operations,', detail: 'This is the section statement. It names the current lane.' },
               { label: 'Present Qualifier', text: 'with a lot of my recent work focused on keeping cross-functional projects moving.', detail: 'This is the qualifier. It explains what kind of work that actually is.' },
               { label: 'Past', text: 'Before that, I built my foundation across agency and in-house roles', detail: 'This is the section statement. It names the foundation.' },
               { label: 'Past Qualifier', text: 'where I had to turn messy requirements into clean execution.', detail: 'This is the qualifier. It explains the repeated pattern that matters now.' },
-              { label: 'Now', text: 'That is why this role makes sense now.', detail: 'This is the section statement. It marks the move.' },
-              { label: 'Now Qualifier', text: 'It lets me keep doing that kind of work in a position where it is more central to the job.', detail: 'This is the qualifier. It makes the timing and fit sound logical instead of generic.' },
+              { label: 'Future', text: 'Going forward, I want to keep building in work like that,', detail: 'This is the section statement. It shows the direction the candidate wants to keep moving toward.' },
+              { label: 'Future Qualifier', text: 'and this role fits because it makes that kind of cross-functional execution more central to the job.', detail: 'This is the qualifier. It makes the direction and fit sound intentional instead of random.' },
             ],
             pairedAnnotatedAnswer: [
               {
@@ -2791,10 +2792,10 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
                 note: 'The section statement gives the background. The qualifier explains the through-line that makes the background relevant.',
               },
               {
-                label: 'Now',
-                statement: 'That is why this role makes sense now',
-                groundingDetail: 'It lets me keep doing that kind of work in a position where it is more central to the job',
-                note: 'The section statement signals the move. The qualifier is what makes the timing and fit feel logical and chosen.',
+                label: 'Future',
+                statement: 'Going forward, I want to keep building in work like that',
+                groundingDetail: 'and this role fits because it makes that kind of cross-functional execution more central to the job',
+                note: 'The section statement shows direction. The qualifier is what makes that direction feel logical and tied to this role.',
               },
             ],
           },
@@ -2805,8 +2806,8 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             question: 'Which answer is the strongest?',
             options: [
               'I have worked in a lot of different roles and learned a lot along the way. I think those experiences have prepared me for this opportunity.',
-              'Right now I work in operations. Before that, I worked in support roles. That is why this role makes sense for me now.',
-              'Right now I work in operations, mostly in situations where keeping work organized and moving across people or priorities is important. Before that, I built my foundation in support roles where I had to stay organized, follow through, and make sure things did not get missed. That is why this role makes sense now. It lets me keep doing that kind of work in a role where it is more central.',
+              'Right now I work in operations. Before that, I worked in support roles. Going forward, I want a role like this.',
+              'Right now I work in operations, mostly in situations where keeping work organized and moving across people or priorities is important. Before that, I built my foundation in support roles where I had to stay organized, follow through, and make sure things did not get missed. Going forward, I want to keep building in that kind of work, and this role fits because it makes it more central.',
               'Right now I do a lot of different work. Before that, I gained experience in a few other jobs. That is why this opportunity interests me.',
             ],
             correctIndex: 2,
@@ -2818,7 +2819,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             options: [
               'Right now I work in client support, mostly handling work that requires careful follow-through.',
               'Before that, I built my foundation in roles where I had to keep requests organized and moving.',
-              'That is why this role makes sense now. It builds on the kind of work I have already been doing.',
+              'Going forward, I want to keep building in this kind of work.',
               'Right now I work in project coordination.',
             ],
             correctIndex: 3,
@@ -2850,48 +2851,58 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
           },
           {
             type: 'multiple_choice',
-            question: 'Which revision best improves this Now line: "That is why this role makes sense for me now."',
+            question: 'Which revision best improves this Future line: "Going forward, I want to keep building in this kind of work."',
             options: [
-              'That is why this role makes sense for me now, and I think it would be a great next step.',
-              'That is why this role makes sense for me now. It feels like a good opportunity to continue growing.',
-              'That is why this role makes sense for me now. It lets me keep doing this kind of coordination work in a role where it is more central.',
-              'That is why this role makes sense for me now, and I am excited to learn more.',
+              'Going forward, I want to keep building in this kind of work, and I think that would be great for me.',
+              'Going forward, I want to keep building in this kind of work because it feels like a good opportunity to continue growing.',
+              'Going forward, I want to keep building in this kind of coordination work, and this role fits because it makes that work more central to the job.',
+              'Going forward, I want to keep building in this kind of work, and I am excited to learn more.',
             ],
             correctIndex: 2,
-            explanation: 'The Now section should explain why the move is logical now, not just that you want growth.',
+            explanation: 'The Future section should explain direction and fit, not just growth language.',
           },
           {
             type: 'multiple_choice',
-            question: 'Which section is weakest in this answer? "Right now I work in administrative support, mostly helping keep scheduling, communication, and follow-through organized. Before that, I worked in a few different roles. That is why this role makes sense now. It builds on the kind of work I have already been doing."',
-            options: ['Present', 'Past', 'Now', 'None of them'],
+            question: 'Which section is weakest in this answer? "Right now I work in administrative support, mostly helping keep scheduling, communication, and follow-through organized. Before that, I worked in a few different roles. Going forward, I want to keep building in work like this, and this role fits that direction."',
+            options: ['Present', 'Past', 'Future', 'None of them'],
             correctIndex: 1,
-            explanation: 'The Present and Now sections are at least qualified. The Past section is still just a summary with no through-line.',
+            explanation: 'The Present and Future sections are at least qualified. The Past section is still just a summary with no through-line.',
           },
           {
             type: 'sentence_builder',
-            instruction: 'Build the strongest answer using one Present line, one Past line, and one Now line.',
+            instruction: 'Build the strongest Present, Past, Future answer by choosing six fragments in order.',
             slotLabels: [
               'Present',
+              'Present Qualifier',
               'Past',
-              'Now',
+              'Past Qualifier',
+              'Future',
+              'Future Qualifier',
             ],
             correctOrder: [
-              'Right now I work in operations, mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned.',
-              'Before that, I built my foundation in roles where I had to keep work organized, respond to changing needs, and make sure things stayed on track.',
-              'That is why this role makes sense now. It lets me keep doing that kind of work in a role with more direct ownership.',
+              'Right now I work in operations',
+              'mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned',
+              'Before that, I built my foundation in roles',
+              'where I had to keep work organized, respond to changing needs, and make sure things stayed on track',
+              'Going forward, I want to keep building in work like that',
+              'and this role fits because it offers more direct ownership of that kind of coordination',
             ],
             options: [
-              'Right now I work in operations.',
-              'Right now I work in operations, mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned.',
-              'Right now I have experience in operations and related work.',
-              'Before that, I worked in a few different roles.',
-              'Before that, I built my foundation in roles where I had to keep work organized, respond to changing needs, and make sure things stayed on track.',
-              'Before that, I learned a lot from different environments.',
-              'That is why this role makes sense now.',
-              'That is why this role makes sense now. It lets me keep doing that kind of work in a role with more direct ownership.',
-              'That is why I think this would be a good next step.',
+              'Right now I work in operations',
+              'mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned',
+              'Before that, I built my foundation in roles',
+              'where I had to keep work organized, respond to changing needs, and make sure things stayed on track',
+              'Going forward, I want to keep building in work like that',
+              'and this role fits because it offers more direct ownership of that kind of coordination',
+              'Right now I do a lot of different things',
+              'and I enjoy staying busy',
+              'Before that, I worked in a few different jobs',
+              'where I learned a lot',
+              'Going forward, I want a good next step',
+              'and this role seems interesting to me',
             ],
-            explanation: 'The strongest build uses the right section and the qualifier that makes it believable. The weaker pieces sound generic even when the structure is technically right.',
+            explanation: 'The strongest build uses all six fragments in the right order: section, qualifier, section, qualifier, section, qualifier. The weaker fragments sound generic even when the shape looks close.',
+            displayMode: 'sequence',
           },
           {
             type: 'label_sort',
@@ -2901,22 +2912,22 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
               { text: 'with a lot of my recent work focused on keeping cross-functional projects moving', correctLabel: 'Present Qualifier' },
               { text: 'Before that, I built my foundation across agency and in-house roles', correctLabel: 'Past' },
               { text: 'where I had to turn messy requirements into clean execution', correctLabel: 'Past Qualifier' },
-              { text: 'That is why this role makes sense now', correctLabel: 'Now' },
-              { text: 'It lets me keep doing that kind of work in a position where it is more central to the job', correctLabel: 'Now Qualifier' },
+              { text: 'Going forward, I want to keep building in work like that', correctLabel: 'Future' },
+              { text: 'and this role fits because it makes that kind of cross-functional execution more central to the job', correctLabel: 'Future Qualifier' },
             ],
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Draft your answer using Present, Past, Now. Do not stop at the section label. Add a qualifier to each one.',
-            coachingTip: 'A stronger answer does not just hit the right order. Each section needs a qualifier that makes it believable. Present should define your current lane, Past should explain the pattern behind your background, and Now should show why this move makes sense at this moment.',
-            evaluationType: 'present_past_now',
+            instruction: 'Draft your answer using Present, Past, Future. Do not stop at the section label. Add a qualifier to each one.',
+            coachingTip: 'A stronger answer does not just hit the right order. Each section needs a qualifier that makes it believable. Present should define your current lane, Past should explain the pattern behind your background, and Future should show what you want to keep building toward and why this role fits that direction.',
+            evaluationType: 'present_past_future',
             fields: [
               { label: 'Present', placeholder: 'What do you do now?', helper: 'Name your current lane clearly.', minWords: 5, avoidWords: ['something', 'stuff', 'various things', 'a lot of things'] },
               { label: 'Present Qualifier', placeholder: 'What kind of work is it really? What defines it?', helper: 'Add the qualifier that makes the Present section believable.', minWords: 8, avoidWords: ['learned a lot', 'busy', 'many things'] },
               { label: 'Past', placeholder: 'What earlier background built this?', helper: 'Name the foundation, not your whole resume.', minWords: 5, avoidWords: ['a few different roles', 'many jobs', 'different industries'] },
               { label: 'Past Qualifier', placeholder: 'What repeated skill or pattern came from that experience?', helper: 'Show the through-line that still matters now.', minWords: 8, avoidWords: ['valuable experience', 'learned a lot', 'grew professionally'] },
-              { label: 'Now', placeholder: 'Why does this role make sense now?', helper: 'State the move clearly.', minWords: 5, avoidWords: ['good opportunity', 'next step', 'sounds interesting'] },
-              { label: 'Now Qualifier', placeholder: 'Why is this a logical next move, not just a job you want?', helper: 'Make the timing and fit feel specific and earned.', minWords: 8, avoidWords: ['full-time role', 'something new', 'continue growing'] },
+              { label: 'Future', placeholder: 'What do you want to keep building toward next?', helper: 'State the direction clearly.', minWords: 5, avoidWords: ['good opportunity', 'next step', 'sounds interesting'] },
+              { label: 'Future Qualifier', placeholder: 'Why does this role fit that direction specifically?', helper: 'Make the fit feel specific and earned.', minWords: 8, avoidWords: ['full-time role', 'something new', 'continue growing'] },
             ],
           },
         ],

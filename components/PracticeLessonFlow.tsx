@@ -341,6 +341,7 @@ export default function PracticeLessonFlow({
             options={exercise.options}
             correctOrder={exercise.correctOrder}
             explanation={exercise.explanation}
+            displayMode={exercise.displayMode}
             onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )

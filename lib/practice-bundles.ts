@@ -71,6 +71,7 @@ export interface SubLesson {
     example: {
       question: string
       badAnswer: string
+      mediumAnswer?: string
       goodAnswer: string
       breakdown: Record<string, string>
       annotatedStrongAnswer?: Array<{
@@ -113,6 +114,8 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             question: 'Tell me about a time you had to solve a problem under pressure.',
             badAnswer:
               'There was a time when things were moving quickly and a lot was going on. I had to step up and help, and it was a good learning experience for me.',
+            mediumAnswer:
+              'In one role, a project was falling behind close to a deadline. My responsibility was to help get things back on track. I worked with the team to improve communication and stay organized, and in the end we were able to finish successfully.',
             goodAnswer:
               'In one role, a key deliverable was at risk a few days before deadline because ownership across teams was unclear. I was responsible for pulling the work back into a clear plan and making sure nothing critical got missed. I mapped the remaining tasks, reassigned open items to the right owners, and set short check-ins so issues surfaced early instead of the deadline. We submitted on time, and the process we used became the model for the next project.',
             breakdown: {
@@ -2918,6 +2921,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
           example: {
             question: 'Tell me about a time you had to solve a problem under pressure.',
             badAnswer: 'There was a time when things were moving quickly and a lot was going on. I had to step up and help, and it was a good learning experience for me.',
+            mediumAnswer: 'In one role, a project was falling behind close to a deadline. My responsibility was to help get things back on track. I worked with the team to improve communication and stay organized, and in the end we were able to finish successfully.',
             goodAnswer: 'In one role, a key deliverable was at risk a few days before deadline because ownership across teams was unclear. I was responsible for pulling the work back into a clear plan and making sure nothing critical got missed. I mapped the remaining tasks, reassigned open items to the right owners, and set short check-ins so issues surfaced early instead of the deadline. We submitted on time, and the process we used became the model for the next project.',
             breakdown: {
               Situation: 'Give only the context the interviewer needs. Do not let the setup eat the answer.',

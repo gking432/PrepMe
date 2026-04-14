@@ -11,6 +11,7 @@ interface TeachCardProps {
   example: {
     question: string
     badAnswer: string
+    mediumAnswer?: string
     goodAnswer: string
     breakdown: Record<string, string>
     annotatedStrongAnswer?: Array<{
@@ -159,6 +160,10 @@ export default function TeachCard({
   const [step, setStep] = useState(0)
   const summary = useMemo(() => summarizeExplanation(explanation), [explanation])
   const frameworkRows = useMemo(() => Object.entries(example.breakdown), [example.breakdown])
+  const isStarLesson = useMemo(() => {
+    const keys = frameworkRows.map(([key]) => key.toLowerCase())
+    return ['situation', 'task', 'action', 'result'].every((key) => keys.includes(key))
+  }, [frameworkRows])
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
   const placeholderMatchesQuestion = useMemo(() => {
@@ -207,7 +212,267 @@ export default function TeachCard({
     return 'This answer likely got flagged because the interviewer could not clearly hear the move you wanted them to hear.'
   }, [criterion, originalAnswerMissing, placeholderMatchesQuestion, placeholderQuestion, safeOriginalAnswer])
 
-  const cards = useMemo(() => ([
+  const cards = useMemo(() => {
+    if (isStarLesson) {
+      return [
+        {
+          eyebrow: 'Your Flagged Answer',
+          title: originalQuestion || example.question,
+          preppi: 'We should start with the exact miss first, not generic advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'The Problem',
+          title: 'Why this kind of answer gets flagged',
+          preppi: 'Before the framework, we need the failure modes. That makes the drills feel fair instead of random.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                Behavioral answers usually miss for one of three reasons: they take too long to get started, stay vague about what you did, or end without a clear outcome.
+              </p>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  STAR helps you make the story clear, specific, and easier to trust.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Scoring Logic',
+          title: 'What interviewers are actually listening for',
+          preppi: 'They are not grading the acronym. They are listening for ownership and judgment.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'what happened',
+                  'what you were responsible for',
+                  'what you did',
+                  'what changed because of your actions',
+                ].map((line, index) => (
+                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  They are not grading the acronym. They are listening for ownership and judgment.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'The Structure',
+          title: 'The STAR structure',
+          preppi: 'This is the framework itself. Keep it simple before we talk about what makes it strong.',
+          content: (
+            <div className="space-y-3">
+              {frameworkRows.map(([key, value], index) => (
+                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                    {formatBreakdownKey(key, index)}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  The structure helps. The details inside each section are what make the answer strong.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Weighting',
+          title: 'Not all four parts should be the same size',
+          preppi: 'This is one of the highest-value fixes. Most people over-explain the setup and under-explain the Action.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  ['Situation', 'Keep it short.'],
+                  ['Task', 'Keep it clear, but brief.'],
+                  ['Action', 'Put most of the detail here.'],
+                  ['Result', 'Close with a real outcome.'],
+                ].map(([label, text]) => {
+                  const colors = annotationColors(label)
+                  return (
+                    <div key={label} className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>{label}</span>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">{text}</p>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  In a strong STAR answer, the Action carries the most weight.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Most Common Mistake',
+          title: 'The most common STAR mistake',
+          preppi: 'This is the exact teaching point behind the “Situation is too long” drill.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                Most people spend too long on the setup and not enough time on the Action. That creates an answer that is organized, but still weak.
+              </p>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-amber-900 md:text-[15px]">
+                  Get to the point faster. Put the detail where it matters.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Compare',
+          title: 'Weak vs better vs strong',
+          preppi: 'The middle tier matters. STAR-shaped is not the same thing as strong.',
+          content: (
+            <div className="space-y-4">
+              {[
+                ['Weak', example.badAnswer, 'rose', 'Unclear, generic, and light on ownership.'],
+                ['Structured but weak', example.mediumAnswer || '', 'amber', 'The shape is there, but the Action is vague and the Result is soft.'],
+                ['Strong', example.goodAnswer, 'emerald', 'Specific, owned, and easy to believe.'],
+              ].map(([label, answer, tone, note]) => {
+                const styles = tone === 'rose'
+                  ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
+                  : tone === 'amber'
+                  ? ['border-amber-200', 'bg-amber-50/70', 'border-amber-200 bg-amber-100/80', 'text-amber-700', 'text-amber-900']
+                  : ['border-emerald-200', 'bg-emerald-50/70', 'border-emerald-200 bg-emerald-100/80', 'text-emerald-600', 'text-emerald-900']
+                return (
+                  <div key={label} className={`overflow-hidden rounded-2xl border-2 ${styles[0]} ${styles[1]} shadow-sm`}>
+                    <div className={`px-4 py-3 ${styles[2]}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${styles[3]}`}>{label}</span>
+                    </div>
+                    <div className="space-y-3 px-4 py-4">
+                      <p className={`text-base leading-relaxed ${styles[4]}`}>&ldquo;{answer}&rdquo;</p>
+                      <p className="text-sm leading-relaxed text-slate-600">{note}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Action',
+          title: 'What strong Action sounds like',
+          preppi: 'This is where most candidates either sound credible or forgettable.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Action</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">
+                  &ldquo;I communicated with the team and helped keep things moving.&rdquo;
+                </p>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Strong Action</p>
+                <p className="mt-2 text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  &ldquo;I created a tracker for open issues, assigned owners, and set short check-ins to catch blockers early.&rdquo;
+                </p>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-white px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  Good Action shows visible steps, decisions, and ownership.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Result',
+          title: 'What strong Result sounds like',
+          preppi: 'A Result does not need a perfect metric, but it does need consequence.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Result</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">
+                  &ldquo;In the end, it worked out.&rdquo;
+                </p>
+              </div>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Strong Result</p>
+                <p className="mt-2 text-sm font-semibold leading-relaxed text-emerald-900 md:text-[15px]">
+                  &ldquo;We met the deadline, and the process reduced confusion on later projects too.&rdquo;
+                </p>
+              </div>
+              <div className="rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  A strong Result shows what changed, improved, or got delivered.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you answer again',
+          preppi: 'This is the editing lens to keep in your head while you practice.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'Did I get to the point quickly?',
+                  'Is my responsibility clear?',
+                  'Did I say what I actually did?',
+                  'Did I show what changed?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  That is the standard you will practice next.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ]
+    }
+
+    return [
     {
       eyebrow: 'Your Flagged Answer',
       title: originalQuestion || example.question,
@@ -441,7 +706,8 @@ export default function TeachCard({
         </div>
       ),
     }] : []),
-  ]), [example, frameworkRows, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+    ]
+  }, [example, frameworkRows, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

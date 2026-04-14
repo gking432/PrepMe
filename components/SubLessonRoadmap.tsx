@@ -77,10 +77,20 @@ export default function SubLessonRoadmap({
 
   const canonicalStructureQuestions = useMemo(
     () => ({
-      present_past_why_here: 'Can you tell me about yourself and walk me through your background briefly?',
+      present_past_future: 'Can you tell me about yourself and walk me through your background briefly?',
       star: 'Tell me about a project you are proud of.',
       noticed_fit_now: 'Why are you interested in this role?',
       answer_reason_example: 'How do you prioritize when everything feels urgent?',
+    }),
+    []
+  )
+
+  const structureStepNames = useMemo(
+    () => ({
+      present_past_future: 'Present, Past, Future',
+      star: 'STAR',
+      noticed_fit_now: 'Observation, Fit, Timing',
+      answer_reason_example: 'Answer, Reason, Example',
     }),
     []
   )
@@ -116,8 +126,8 @@ export default function SubLessonRoadmap({
 
     if (hasAnyUsableAnswer) return normalizedBase
 
-    const templates: Array<'present_past_why_here' | 'star' | 'noticed_fit_now' | 'answer_reason_example'> = [
-      'present_past_why_here',
+    const templates: Array<'present_past_future' | 'star' | 'noticed_fit_now' | 'answer_reason_example'> = [
+      'present_past_future',
       'star',
       'noticed_fit_now',
       'answer_reason_example',
@@ -143,13 +153,16 @@ export default function SubLessonRoadmap({
   )
 
   const requiredSteps = useMemo(() => (
-    questionRepairs.map((item, index) => ({
-      label: `Repair ${index + 1}`,
-      description: `Write and then re-answer: ${item.question || 'this flagged question'}`,
-      meta: `Question ${index + 1}`,
-      evidenceIndex: index,
-    }))
-  ), [questionRepairs])
+    questionRepairs.map((item, index) => {
+      const template = detectAnswerStructureTemplate(item.question)
+      return {
+        label: structureStepNames[template] || contextualBundles[index]?.lessons[0]?.title || `Repair ${index + 1}`,
+        description: `Write and then re-answer: ${item.question || 'this flagged question'}`,
+        meta: `Question ${index + 1}`,
+        evidenceIndex: index,
+      }
+    })
+  ), [contextualBundles, questionRepairs, structureStepNames])
   const optionalLessons = bundle.rootCause === 'poor_structure' ? [] : bundle.lessons.slice(1)
   const totalSlots = requiredSteps.length
   const allDone = completedSet.size === totalSlots
@@ -197,7 +210,7 @@ export default function SubLessonRoadmap({
       items: requiredSteps.map((step, idx) => {
         const isCompleted = completedSet.has(idx)
         const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextRequired && !allDone)
-        const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isCurrent
+        const isLocked = false
         return {
           label: step.label,
           status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : isLocked ? 'locked' as const : 'upcoming' as const,
@@ -456,7 +469,7 @@ export default function SubLessonRoadmap({
                   const isPassed = passedSet.has(idx)
                   const isNext = idx === nextRequired && !allDone
                   const isMini = miniBurstIdx === idx
-                  const isLocked = idx > 0 && !completedSet.has(idx - 1) && !isNext
+                  const isLocked = false
 
                   return (
                     <div key={idx} className="relative">

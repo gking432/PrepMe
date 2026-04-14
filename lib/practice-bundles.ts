@@ -2637,7 +2637,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
   switch (template) {
     case 'present_past_future':
       return {
-        title: 'Tell your story with real qualifiers',
+        title: 'Present, Past, Future',
         difficulty: 'easy',
         teach: {
           title: 'Use Present, Past, Future with a qualifier in each section',
@@ -2815,7 +2815,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
       }
     case 'noticed_fit_now':
       return {
-        title: 'Make motivation sound chosen',
+        title: 'Observation, Fit, Timing',
         difficulty: 'easy',
         teach: {
           title: 'Use What I noticed, Why it fits, Why now',
@@ -2862,7 +2862,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
       }
     case 'answer_reason_example':
       return {
-        title: 'Make judgment answers easy to follow',
+        title: 'Answer, Reason, Example',
         difficulty: 'easy',
         teach: {
           title: 'Use Answer, Reason, Example',
@@ -2910,52 +2910,47 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
     case 'star':
     default:
       return {
-        title: 'Build the story with STAR',
+        title: 'STAR',
         difficulty: 'easy',
         teach: {
-          title: 'Lead clearly, then use STAR in the middle',
-          explanation: 'Behavioral answers should be easy to follow out loud and specific underneath. Lead with the project or challenge, walk through Situation, Task, Action, and Result, then land on why the outcome mattered.',
+          title: 'Use STAR, but put the weight in the right place',
+          explanation: 'STAR helps only if each part does its job. Situation should be short. Task should make your responsibility clear. Action should carry the most weight because that is where interviewers decide whether you are credible. Result should show what changed because of your actions.',
           example: {
-            question: 'Tell me about a project you are proud of.',
-            badAnswer: 'There are a few I could talk about. One was this onboarding work I did, and there were a lot of moving pieces around approvals and handoffs. I worked with different teams on it and changed some parts of the process, and overall it ended up being better for everyone involved.',
-            goodAnswer: 'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months. The old process had duplicate approvals and too many handoffs, and I was responsible for shortening the setup timeline without making more work for HR or IT. I mapped the blockers, removed two extra sign-offs, and created one shared request form. That cut onboarding time from about nine business days to three. It also meant new hires could start contributing in their first week instead of waiting around for access.',
+            question: 'Tell me about a time you had to solve a problem under pressure.',
+            badAnswer: 'There was a time when things were moving quickly and a lot was going on. I had to step up and help, and it was a good learning experience for me.',
+            goodAnswer: 'In one role, a key deliverable was at risk a few days before deadline because ownership across teams was unclear. I was responsible for pulling the work back into a clear plan and making sure nothing critical got missed. I mapped the remaining tasks, reassigned open items to the right owners, and set short check-ins so issues surfaced early instead of the deadline. We submitted on time, and the process we used became the model for the next project.',
             breakdown: {
-              Lead: 'Open with the answer so the interviewer knows your point right away.',
-              Support: 'Use STAR in the middle: Situation for context, Task for what you owned, Action for what you did, and Result for what changed.',
-              Land: 'Close on the result so the answer feels finished and believable.',
+              Situation: 'Give only the context the interviewer needs. Do not let the setup eat the answer.',
+              Task: 'Make your responsibility clear so the interviewer knows what you owned.',
+              Action: 'This is the engine of the answer. Show what you noticed, decided, changed, or prioritized.',
+              Result: 'Close on the outcome or consequence so the story proves value.',
             },
             annotatedStrongAnswer: [
-              { label: 'Lead', text: 'A project I am proud of was rebuilding our onboarding workflow because it fixed a bottleneck the team had been dealing with for months.', detail: 'This answers the question immediately and tells the interviewer where the story is going.' },
-              { label: 'Situation', text: 'The old process had duplicate approvals and too many handoffs,', detail: 'This gives just enough context to understand the problem.' },
-              { label: 'Task', text: 'and I was responsible for shortening the setup timeline without making more work for HR or IT.', detail: 'This makes your responsibility clear instead of leaving ownership vague.' },
-              { label: 'Action', text: 'I mapped the blockers, removed two extra sign-offs, and created one shared request form.', detail: 'This is the execution. It should sound like real moves, not generic effort.' },
-              { label: 'Result', text: 'That cut onboarding time from about nine business days to three.', detail: 'This proves the change worked.' },
-              { label: 'Land', text: 'It also meant new hires could start contributing in their first week instead of waiting around for access.', detail: 'This closes the answer with why the result mattered.' },
+              { label: 'Situation', text: 'In one role, a key deliverable was at risk a few days before deadline because ownership across teams was unclear.', detail: 'This is enough context to understand the pressure without spending too long in setup.' },
+              { label: 'Task', text: 'I was responsible for pulling the work back into a clear plan and making sure nothing critical got missed.', detail: 'This makes ownership clear and tells the interviewer what problem you had to solve.' },
+              { label: 'Action', text: 'I mapped the remaining tasks, reassigned open items to the right owners, and set short check-ins so issues surfaced early instead of the deadline.', detail: 'This is the most important part. It shows concrete decisions and execution that sound owned.' },
+              { label: 'Result', text: 'We submitted on time, and the process we used became the model for the next project.', detail: 'This shows consequence. It did not just work out. Something changed because of the action.' },
             ],
           },
         },
         exercises: [
-          { type: 'multiple_choice', question: 'Which opening makes the answer easiest to follow?', options: ['There are a few things I could mention, but one project was kind of interesting.', 'A project I am proud of was rebuilding our onboarding workflow because it solved a concrete team problem.', 'So this was a pretty complex situation with a lot of pieces, and I can walk through all of them.', 'I have worked on a lot of projects, and they all taught me different things.'], correctIndex: 1, explanation: 'The strongest opening leads with the point right away instead of circling around it.' },
-          { type: 'multiple_choice', question: 'Select the Situation.', options: ['I needed to shorten the setup timeline without creating more work for HR or IT', 'The old onboarding flow had duplicate approvals and too many handoffs', 'I removed two extra sign-offs and created one shared request form', 'Setup time dropped from nine business days to three'], correctIndex: 1, explanation: 'Situation is the context or problem the answer starts from.' },
-          { type: 'multiple_choice', question: 'Select the Task.', options: ['New hires started contributing in their first week instead of waiting for access', 'I mapped the blockers and built one shared request form', 'I was responsible for shortening the setup timeline without adding more work for HR or IT', 'The old onboarding flow had duplicate approvals and too many handoffs'], correctIndex: 2, explanation: 'Task is the responsibility, goal, or problem you personally had to solve.' },
-          { type: 'multiple_choice', question: 'Select the Action.', options: ['I removed two extra sign-offs and created one shared request form', 'I was responsible for improving the process', 'The process had too many handoffs', 'Onboarding time dropped to three days'], correctIndex: 0, explanation: 'Action is what you actually did, not just what needed to happen.' },
-          { type: 'multiple_choice', question: 'Select the Result.', options: ['I owned shortening the setup timeline', 'The process had duplicate approvals and too many handoffs', 'I mapped the blockers across HR and IT', 'Onboarding time dropped from nine business days to three'], correctIndex: 3, explanation: 'Result is the outcome that proves the work changed something.' },
-          { type: 'multiple_choice', question: 'Which ending lands the answer best?', options: ['Overall it went well and I was proud of how it turned out.', 'People were really happy with the changes.', 'That cut onboarding time from nine business days to three and got new hires contributing in their first week.', 'It taught me a lot about communication and teamwork.'], correctIndex: 2, explanation: 'A strong ending closes with a concrete result and why it mattered.' },
-          { type: 'multiple_choice', question: 'What is the biggest problem with this answer? "There were a lot of moving parts, I worked with different teams, and it ended up being better in the end."', options: ['It has no numbers anywhere', 'It sounds too formal', 'It stays vague about ownership, action, and result', 'It is too short to understand'], correctIndex: 2, explanation: 'The listener still does not know what you owned, what you did, or what changed.' },
-          { type: 'multiple_choice', question: 'Which answer best combines clear spoken flow with STAR underneath?', options: ['A project I am proud of was fixing our onboarding bottleneck. The process had duplicate approvals, I owned shortening the timeline, I removed two sign-offs and created one shared form, and setup time dropped from nine days to three.', 'One project that maybe stands out was onboarding, and there were a lot of things happening, but overall it ended up much better after we worked on it.', 'I have done a lot of work over the years, so it is hard to choose just one example.', 'The project was complex, cross-functional, and definitely a strong learning experience for me.'], correctIndex: 0, explanation: 'This one opens clearly, walks through STAR, and closes on an outcome.' },
-          { type: 'word_bank', instruction: 'Complete the structure rule.', sentenceWithBlank: 'Lead with the point, use STAR in the middle, then [___].', options: ['land on the outcome', 'restart the story', 'add every side detail', 'repeat the setup'], correctIndex: 0, explanation: 'A strong answer feels complete because it ends on what happened or why it mattered.' },
-          { type: 'tap_select', instruction: 'Tap the moves that make the middle of the answer stronger.', items: ['Give just enough context to orient the interviewer', 'State what you were responsible for', 'Jump around between details as you remember them', 'Name the concrete action you took'], correctIndices: [0, 1, 3], explanation: 'The middle works when it still has a STAR backbone instead of turning into a ramble.' },
-          { type: 'multiple_choice', question: 'If you only changed one thing to make a messy answer better, what should you do first?', options: ['Add more detail so the interviewer sees how much work it was', 'Open with a direct Lead sentence that answers the question immediately', 'Use bigger words so the answer sounds more polished', 'Save the real result for the very end without mentioning the project up front'], correctIndex: 1, explanation: 'The biggest immediate improvement is making the answer easy to follow from the first sentence.' },
+          { type: 'multiple_choice', question: 'Which answer is the strongest response to: "Tell me about a time you had to solve a problem under pressure."', options: ['There was a time when things were moving quickly and a lot was going on. I had to step up and help, and it was a good learning experience for me.', 'In one role, a project was falling behind close to a deadline. My responsibility was to help get things back on track. I worked with the team to improve communication and stay organized, and in the end we were able to finish successfully.', 'In one role, a key deliverable was at risk a few days before deadline because ownership across teams was unclear. I was responsible for pulling the work back into a clear plan and making sure nothing critical got missed. I mapped the remaining tasks, reassigned open items to the right owners, and set short check-ins so issues surfaced early instead of at the deadline. We submitted on time, and the process we used became the model for the next project.'], correctIndex: 2, explanation: 'A is weak, B is structured but weak, and C is strong because the Action is specific and the Result shows consequence.' },
+          { type: 'multiple_choice', question: 'What is the biggest weakness in this answer? "In one role, a client request changed late in the process. My job was to help the team respond. I communicated with everyone involved and worked hard to keep things moving. In the end, the client was happy."', options: ['The Situation is too short', 'The Task is too specific', 'The Action is too vague', 'The Result is too long'], correctIndex: 2, explanation: 'Communicated and worked hard do not tell the interviewer what the candidate actually did.' },
+          { type: 'multiple_choice', question: 'What is the biggest weakness in this answer? "At one point, our team was handling several overlapping requests during a busy period, and one project became more complicated when priorities shifted and more people got involved than expected. I was responsible for helping the team manage the situation. I created a clearer handoff process and flagged blockers earlier. The work moved forward more smoothly after that."', options: ['The Situation is too long', 'The Task is too vague', 'The Action is missing', 'The Result is unrealistic'], correctIndex: 0, explanation: 'The setup is not terrible, but it takes too long to get to the point. Situation and Task should not eat the clock.' },
+          { type: 'multiple_choice', question: 'Which revision best improves the Action section?', options: ['I stayed involved and made sure we all stayed in touch throughout the process.', 'I tried to be proactive and support the group however I could.', 'I created a simple tracker for open issues, assigned clear owners, and set short daily check-ins so decisions did not stall.', 'I focused on teamwork and kept a positive attitude while we worked through it.'], correctIndex: 2, explanation: 'Strong Action sounds owned. It shows decisions and steps another person could not have described generically.' },
+          { type: 'multiple_choice', question: 'Which revision best improves the Result section?', options: ['In the end, everyone felt good about the outcome.', 'In the end, the work was completed on time, and the process reduced confusion on similar projects afterward.', 'In the end, it was a valuable experience for all of us.', 'In the end, we learned a lot from the situation.'], correctIndex: 1, explanation: 'A good Result shows consequence, not just positive vibes.' },
+          { type: 'multiple_choice', question: 'Which Action best proves ownership in this situation? Situation: A deadline was at risk because work across several people was not clearly owned. Task: You were responsible for getting the project back on track.', options: ['I stayed calm, worked hard, and communicated with the team.', 'I checked in with everyone and did my best to support the process.', 'I identified the unfinished work, reassigned each item to a clear owner, and created short check-ins to catch blockers before they delayed the timeline.'], correctIndex: 2, explanation: 'The Action section carries the answer. This one sounds operational, specific, and clearly owned.' },
+          { type: 'sentence_builder', instruction: 'Build the strongest answer by choosing one Situation, one Task, one Action, and one Result.', slotLabels: ['Situation', 'Task', 'Action', 'Result'], correctOrder: ['A deliverable was at risk because responsibilities across several people were unclear.', 'I was responsible for bringing structure to the remaining work and making sure critical items were covered.', 'I created a list of open items, assigned owners, and used short check-ins to surface blockers early.', 'We met the deadline, and the clearer ownership reduced confusion in later work too.'], options: ['A project became stressful near the deadline.', 'A deliverable was at risk because responsibilities across several people were unclear.', 'There was a lot going on and the team was under pressure.', 'I needed to help however I could.', 'I was responsible for bringing structure to the remaining work and making sure critical items were covered.', 'My role was to stay involved and support the team.', 'I communicated often and tried to keep everyone aligned.', 'I created a list of open items, assigned owners, and used short check-ins to surface blockers early.', 'I worked hard and stayed organized throughout the process.', 'In the end, things worked out.', 'We met the deadline, and the clearer ownership reduced confusion in later work too.', 'Everyone appreciated the effort.'], explanation: 'A strong STAR answer keeps the setup short, makes ownership clear, puts the most detail into Action, and closes on a meaningful Result.' },
           {
             type: 'apply_to_yourself',
-            instruction: 'Build your answer as STAR.',
-            coachingTip: 'Do not write a long paragraph. Write one clean line for the Situation, one for the Task, one for the Action, and one for the Result.',
+            instruction: 'Draft your own STAR answer. Keep the setup short. Put the most detail into the Action.',
+            coachingTip: 'Situation and Task should be brief. Action is the engine of the answer. If someone else could have said your Action, it is probably too vague. Result should show what changed because of your actions.',
             evaluationType: 'star',
             fields: [
-              { label: 'Situation', placeholder: 'What was happening? Give only the context the interviewer needs.', helper: 'Keep this short. Just orient the listener.', minWords: 5 },
-              { label: 'Task', placeholder: 'What did you own or need to solve?', helper: 'Make your responsibility explicit.', minWords: 5 },
-              { label: 'Action', placeholder: 'What did you actually do?', helper: 'Use real execution steps, not general effort words.', minWords: 8 },
-              { label: 'Result', placeholder: 'What changed because of your work?', helper: 'Use a concrete result if you can.', minWords: 8, shouldIncludeNumber: true },
+              { label: 'Situation', placeholder: 'What was happening?', helper: 'Keep this short. Give only the context the interviewer needs.', minWords: 5, avoidWords: ['a lot was going on', 'it was busy', 'things were moving quickly'] },
+              { label: 'Task', placeholder: 'What were you responsible for?', helper: 'Make your responsibility explicit.', minWords: 5, avoidWords: ['help however i could', 'support the team', 'do my part'] },
+              { label: 'Action', placeholder: 'What did you actually do? Be specific.', helper: 'Use real decisions and steps, not generic effort words.', minWords: 8, avoidWords: ['worked hard', 'communicated', 'helped the team', 'stayed organized'] },
+              { label: 'Result', placeholder: 'What changed because of your actions?', helper: 'Show outcome or consequence, not just that it went well.', minWords: 8, avoidWords: ['it worked out', 'it went well', 'everyone was happy', 'we learned a lot'] },
             ],
           },
         ],

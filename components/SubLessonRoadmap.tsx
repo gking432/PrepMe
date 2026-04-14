@@ -156,8 +156,9 @@ export default function SubLessonRoadmap({
     questionRepairs.map((item, index) => {
       const template = detectAnswerStructureTemplate(item.question)
       return {
-        label: structureStepNames[template] || contextualBundles[index]?.lessons[0]?.title || `Repair ${index + 1}`,
-        description: `Write and then re-answer: ${item.question || 'this flagged question'}`,
+        frameworkLabel: structureStepNames[template] || contextualBundles[index]?.lessons[0]?.title || `Repair ${index + 1}`,
+        label: `Repair ${index + 1}`,
+        description: item.question || 'this flagged question',
         meta: `Question ${index + 1}`,
         evidenceIndex: index,
       }
@@ -212,7 +213,7 @@ export default function SubLessonRoadmap({
         const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextRequired && !allDone)
         const isLocked = false
         return {
-          label: step.label,
+          label: step.frameworkLabel || step.label,
           status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : isLocked ? 'locked' as const : 'upcoming' as const,
           meta: step.meta,
         }
@@ -516,19 +517,24 @@ export default function SubLessonRoadmap({
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-black text-slate-900">{step.label}</p>
+                            <p className="text-sm font-black text-slate-900">{step.frameworkLabel || step.label}</p>
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                               isCompleted && isPassed
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : isCompleted
                                 ? 'bg-amber-100 text-amber-700'
-                                : 'bg-slate-100 text-slate-500'
+                                : 'bg-violet-100 text-violet-700'
                             }`}>
-                              {isCompleted && isPassed ? 'Passed' : step.meta}
+                              {isCompleted && isPassed ? 'Passed' : isCompleted ? step.meta : 'Open'}
                             </span>
+                            {!isCompleted && (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                                {step.meta}
+                              </span>
+                            )}
                           </div>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
-                            {step.description}
+                            Write and then re-answer: {step.description}
                           </p>
                         </div>
 

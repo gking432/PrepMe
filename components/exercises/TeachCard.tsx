@@ -75,7 +75,7 @@ function annotationColors(label: string) {
     highlight: 'bg-emerald-100/80',
     subtle: 'bg-emerald-50',
   }
-  if (key.startsWith('why here')) return {
+  if (key.startsWith('why here') || key.startsWith('now')) return {
     text: 'text-amber-900',
     bg: 'bg-amber-100',
     border: 'border-amber-200',
@@ -248,39 +248,13 @@ export default function TeachCard({
     },
     ...(example.pairedAnnotatedAnswer ? [{
       eyebrow: 'The Concept',
-      title: 'See the stronger answer the right way',
-      preppi: 'This is the actual concept. Each section has a statement, then a grounding detail that makes it believable.',
+      title: 'Get the shape and the qualifier right',
+      preppi: 'This card should teach the concept itself. First the section, then the qualifier that makes it believable.',
       content: (
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
-              <ThumbsUp className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
-                Stronger version
-              </span>
-            </div>
-            <div className="px-4 py-4">
-              <p className="text-base leading-relaxed text-slate-900">
-                &ldquo;
-                {example.pairedAnnotatedAnswer.flatMap((part) => ([
-                  { key: `${part.label}-statement`, text: part.statement, kind: 'statement', label: part.label },
-                  { key: `${part.label}-detail`, text: part.groundingDetail, kind: 'detail', label: part.label },
-                ])).map((segment, index, array) => {
-                  const colors = annotationColors(segment.label)
-                  return (
-                    <span
-                      key={segment.key}
-                      className={`rounded px-1.5 py-0.5 ${segment.kind === 'statement' ? colors.highlight : colors.subtle}`}
-                    >
-                      {segment.text}
-                      {index < array.length - 1 ? ' ' : ''}
-                    </span>
-                  )
-                })}
-                &rdquo;
-              </p>
-            </div>
-          </div>
+          <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+            {summary}
+          </p>
 
           <div className="grid gap-3">
             {example.pairedAnnotatedAnswer.map((part) => {
@@ -296,34 +270,28 @@ export default function TeachCard({
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     <div className={`rounded-xl ${colors.bg} px-3 py-3`}>
                       <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                        Statement
+                        Section
                       </p>
                       <p className={`mt-1 text-sm leading-relaxed ${colors.text}`}>
-                        {part.statement}
+                        {frameworkRows.find(([key]) => key.toLowerCase() === part.label.toLowerCase())?.[1] || part.statement}
                       </p>
                     </div>
                     <div className={`rounded-xl ${colors.subtle} border ${colors.border} px-3 py-3`}>
                       <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                        Grounding Detail
+                        Qualifier
                       </p>
                       <p className="mt-1 text-sm leading-relaxed text-slate-800">
-                        {part.groundingDetail}
+                        {part.note}
                       </p>
                     </div>
                   </div>
-                  {part.note && (
-                    <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                      {part.note}
-                    </p>
-                  )}
                 </div>
               )
             })}
           </div>
         </div>
       ),
-    }] : []),
-    {
+    }] : [{
       eyebrow: 'The Rule',
       title,
       preppi: 'Here is the repeatable move to use the next time this kind of question comes up.',
@@ -355,7 +323,7 @@ export default function TeachCard({
           </div>
         </div>
       ),
-    },
+    }]),
     {
       eyebrow: 'Compare',
       title: 'See the difference',
@@ -392,16 +360,16 @@ export default function TeachCard({
       ),
     },
     ...(example.pairedAnnotatedAnswer ? [{
-      eyebrow: 'Build The Answer',
-      title: 'See every piece in order',
-      preppi: 'This is the full build. Present statement, grounding detail, Past statement, grounding detail, Why Here statement, grounding detail.',
+      eyebrow: 'See It In Action',
+      title: 'See the strong answer with the concept applied',
+      preppi: 'Now the concept is laid onto the stronger answer itself. This is the proof of what each section and qualifier is doing.',
       content: (
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
             <div className="flex flex-wrap gap-2">
               {example.pairedAnnotatedAnswer.flatMap((part) => ([
-                { key: `${part.label}-statement-pill`, text: `${part.label} Statement`, label: part.label, kind: 'statement' },
-                { key: `${part.label}-detail-pill`, text: `${part.label} Grounding Detail`, label: part.label, kind: 'detail' },
+                { key: `${part.label}-statement-pill`, text: part.label, label: part.label, kind: 'statement' },
+                { key: `${part.label}-detail-pill`, text: `${part.label} Qualifier`, label: part.label, kind: 'detail' },
               ])).map((segment) => {
                 const colors = annotationColors(segment.label)
                 return (

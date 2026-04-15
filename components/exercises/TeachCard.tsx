@@ -1405,63 +1405,36 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'Question Type',
-          title: 'What kind of question this is',
-          preppi: 'These are the kinds of questions where the interviewer wants proof, not just a trait label.',
+          eyebrow: 'Missing Piece',
+          title: 'What this answer was missing',
+          preppi: 'This module fixes weak proof, not weak structure.',
           content: (
             <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'What are your strengths?',
-                  'How would your coworkers describe you?',
-                  'What makes you good at prioritizing?',
-                  'You mentioned being organized — can you give me an example?',
-                ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  This answer made a point, but it did not prove it strongly enough. When you describe a strength, skill, or work style, the interviewer needs evidence that feels real and believable.
+                </p>
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Best use: strengths, self-description, follow-up proof, and evidence-based answers.
+                  This module helps you move from claim to proof.
                 </p>
               </div>
             </div>
           ),
         },
         {
-          eyebrow: 'The Structure',
-          title: 'What kind of answer this needed',
-          preppi: 'This answer needed more than a claim. It needed proof the interviewer could believe.',
-          content: (
-            <div className="space-y-3">
-              {frameworkRows.map(([key, value], index) => (
-                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ),
-        },
-        {
           eyebrow: 'Scoring Logic',
-          title: 'What interviewers are actually listening for',
-          preppi: 'A claim without proof is hard to trust.',
+          title: 'What strong proof does differently',
+          preppi: 'The goal is not more words. The goal is more believable proof.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
-                  'what you are claiming',
-                  'what real example supports it',
-                  'what detail makes it believable',
-                  'what the example shows about you',
+                  'makes a clear claim',
+                  'uses a real example',
+                  'adds concrete detail',
+                  'shows what the example proves',
                 ].map((line, index) => (
                   <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
@@ -1471,7 +1444,7 @@ export default function TeachCard({
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  A claim without proof is hard to trust.
+                  The goal is not more words. The goal is more believable proof.
                 </p>
               </div>
             </div>
@@ -1480,7 +1453,7 @@ export default function TeachCard({
         {
           eyebrow: 'Compare',
           title: 'Weak vs better vs strong',
-          preppi: 'The difference here is evidence quality. Structured is not enough if the proof still sounds broad.',
+          preppi: 'This is where the difference becomes obvious.',
           content: (
             <div className="space-y-4">
               {[
@@ -1509,66 +1482,126 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'See It In Action',
-          title: 'See the strong answer with the framework applied',
-          preppi: 'This is the proof of concept. The strong answer works because each part does a different job.',
+          eyebrow: 'Core Principle',
+          title: 'A claim is not proof',
+          preppi: 'This needs to be said plainly.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                <div className="flex flex-wrap gap-2">
-                  {example.annotatedStrongAnswer?.map((part, index) => {
-                    const colors = annotationColors(part.label)
-                    return (
-                      <span key={`${part.label}-pill-${index}`} className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                        {part.label}
-                      </span>
-                    )
-                  })}
-                </div>
-                <p className="mt-4 text-base leading-relaxed text-slate-900">
-                  &ldquo;
-                  {example.annotatedStrongAnswer?.map((part, index) => {
-                    const colors = annotationColors(part.label)
-                    return (
-                      <span key={`${part.label}-highlight-${index}`} className={`rounded px-1.5 py-0.5 ${colors.highlight}`}>
-                        {part.text}
-                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
-                      </span>
-                    )
-                  })}
-                  &rdquo;
-                </p>
+              <div className="grid gap-3">
+                {[
+                  'I am organized.',
+                  'I am proactive.',
+                  'I am good under pressure.',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {example.annotatedStrongAnswer?.map((part, index) => {
-                  const colors = annotationColors(part.label)
-                  return (
-                    <div key={`${part.label}-detail-${index}`} className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                        {part.label}
-                      </span>
-                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">{part.detail}</p>
-                    </div>
-                  )
-                })}
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Those are claims. The interviewer still needs a reason to believe them.
+                </p>
               </div>
             </div>
           ),
         },
         {
-          eyebrow: 'Common Mistake',
-          title: 'The most common mistake',
-          preppi: 'Many answers sound polished, but still weak.',
+          eyebrow: 'Core Principle',
+          title: 'Use a real example',
+          preppi: 'Real examples are easier to trust than broad summaries.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak proof</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “I have done that in different roles.”
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger proof</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “In my last role, I handled scheduling changes during a busy launch week.”
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  The best proof comes from a real moment or a clear pattern of work.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Concrete detail makes proof believable',
+          preppi: 'Specifics make the answer credible.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'what was happening',
+                  'what made it difficult',
+                  'what you handled',
+                  'what you did',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  You do not need a huge story. You need enough detail to make the example feel true.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'You do not need a long story',
+          preppi: 'Aim for concrete, not long.',
           content: (
             <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
                 <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  They make a claim, add a vague example, and never include the detail that makes the story feel true.
+                  More detail is not always better. You only need enough detail to make the example believable and relevant.
                 </p>
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Do not stop at “for example.” Make the proof concrete.
+                  Enough detail to trust you. Not so much detail that the answer loses shape.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'End by showing what the example proves',
+          preppi: 'Do not just tell the example and stop.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak ending</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “That was a valuable experience.”
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger ending</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “That is a good example of how I create structure when priorities start shifting.”
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Make clear what the example shows and why it supports the claim you made.
                 </p>
               </div>
             </div>
@@ -1577,7 +1610,7 @@ export default function TeachCard({
         {
           eyebrow: 'Self Check',
           title: 'Use this check before you answer again',
-          preppi: 'This is the standard to keep in your head while you practice.',
+          preppi: 'This is the standard you will practice next.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">

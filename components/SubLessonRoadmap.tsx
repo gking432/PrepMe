@@ -155,17 +155,21 @@ export default function SubLessonRoadmap({
   const requiredSteps = useMemo(() => (
     questionRepairs.map((item, index) => {
       const template = detectAnswerStructureTemplate(item.question)
+      const contextualTitle = contextualBundles[index]?.lessons[0]?.title || bundle.lessons[0]?.title
       return {
-        frameworkLabel: structureStepNames[template] || contextualBundles[index]?.lessons[0]?.title || `Repair ${index + 1}`,
+        frameworkLabel: bundle.rootCause === 'poor_structure'
+          ? structureStepNames[template] || contextualTitle || `Repair ${index + 1}`
+          : contextualTitle || `Repair ${index + 1}`,
         label: `Repair ${index + 1}`,
         description: item.question || 'this flagged question',
         meta: `Question ${index + 1}`,
         evidenceIndex: index,
       }
     })
-  ), [contextualBundles, questionRepairs, structureStepNames])
+  ), [bundle.lessons, bundle.rootCause, contextualBundles, questionRepairs, structureStepNames])
   const optionalLessons = bundle.rootCause === 'poor_structure' ? [] : bundle.lessons.slice(1)
   const totalSlots = requiredSteps.length
+  const visibleLessonCount = totalSlots + optionalLessons.length
   const allDone = completedSet.size === totalSlots
 
   const nextAvailable = requiredSteps.findIndex((_, i) => !completedSet.has(i))
@@ -422,7 +426,7 @@ export default function SubLessonRoadmap({
                   <div className="mt-4 flex items-center gap-3">
                     <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{bundle.displayName}</h2>
                     <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                      {totalSlots} steps
+                      {visibleLessonCount} {visibleLessonCount === 1 ? 'lesson' : 'lessons'}
                     </span>
                   </div>
                   <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -460,7 +464,7 @@ export default function SubLessonRoadmap({
                   <p className="mt-1 text-sm text-slate-500">{bundle.displayName}</p>
                 </div>
                 <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-                  {totalSlots} steps
+                  {visibleLessonCount} {visibleLessonCount === 1 ? 'lesson' : 'lessons'}
                 </div>
               </div>
 
@@ -555,13 +559,13 @@ export default function SubLessonRoadmap({
                 </div>
               )}
 
-              {allDone && optionalLessons.length > 0 && (
+              {optionalLessons.length > 0 && (
                 <div className="mt-6 rounded-[1.6rem] border border-slate-200 bg-slate-50/80 p-4">
                   <div className="mb-4">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Optional practice</p>
                     <h4 className="mt-1 text-lg font-black text-slate-900">More reps if you want them</h4>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      These are extra drills. Helpful if you want more reps, but not required to finish the module.
+                      These are separate lessons under this module. Helpful if you want more reps, but not required to finish the core repair.
                     </p>
                   </div>
                   <div className="space-y-3">

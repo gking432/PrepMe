@@ -196,6 +196,30 @@ function annotationColors(label: string) {
     highlight: 'bg-rose-100/80',
     subtle: 'bg-rose-50',
   }
+  if (key === 'know') return {
+    text: 'text-sky-900',
+    bg: 'bg-sky-100',
+    border: 'border-sky-200',
+    chip: 'bg-sky-100 text-sky-700',
+    highlight: 'bg-sky-100/80',
+    subtle: 'bg-sky-50',
+  }
+  if (key === 'connect') return {
+    text: 'text-emerald-900',
+    bg: 'bg-emerald-100',
+    border: 'border-emerald-200',
+    chip: 'bg-emerald-100 text-emerald-700',
+    highlight: 'bg-emerald-100/80',
+    subtle: 'bg-emerald-50',
+  }
+  if (key === 'ask') return {
+    text: 'text-amber-900',
+    bg: 'bg-amber-100',
+    border: 'border-amber-200',
+    chip: 'bg-amber-100 text-amber-700',
+    highlight: 'bg-amber-100/80',
+    subtle: 'bg-amber-50',
+  }
   return {
     text: 'text-slate-900',
     bg: 'bg-slate-100',
@@ -251,6 +275,10 @@ export default function TeachCard({
   const isClaimExampleDetailImpactLesson = useMemo(() => {
     const keys = frameworkRows.map(([key]) => key.toLowerCase())
     return ['claim', 'example', 'detail', 'impact'].every((key) => keys.includes(key))
+  }, [frameworkRows])
+  const isKnowConnectAskLesson = useMemo(() => {
+    const keys = frameworkRows.map(([key]) => key.toLowerCase())
+    return ['know', 'connect', 'ask'].every((key) => keys.includes(key))
   }, [frameworkRows])
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
@@ -1575,6 +1603,245 @@ export default function TeachCard({
       ]
     }
 
+    if (isKnowConnectAskLesson) {
+      return [
+        {
+          eyebrow: 'Your Flagged Answer',
+          title: originalQuestion || example.question,
+          preppi: 'We should start with the exact miss first, not generic advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Question Type',
+          title: 'What kind of answer this needed',
+          preppi: 'This moment needed more than a generic answer. It needed evidence that you prepared and that your interest is real.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'What do you know about our company?',
+                  'What stood out to you in your research?',
+                  'What questions do you have for us?',
+                  'What would you like to know before moving forward?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Best use: company research, role interest, end-of-interview questions, and HR screens.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Scoring Logic',
+          title: 'What interviewers are actually listening for',
+          preppi: 'The goal is not perfect knowledge. The goal is informed curiosity.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'you did some homework',
+                  'you understand the basics',
+                  'you are genuinely interested',
+                  'you are thinking beyond just your own needs',
+                ].map((line, index) => (
+                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  The goal is not perfect knowledge. The goal is informed curiosity.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'The Structure',
+          title: 'The structure',
+          preppi: 'Know the basics. Connect your interest. Ask something meaningful.',
+          content: (
+            <div className="space-y-3">
+              {frameworkRows.map(([key, value], index) => (
+                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Compare',
+          title: 'Weak vs better vs strong',
+          preppi: 'A little preparation is better than none, but generic praise still sounds weak.',
+          content: (
+            <div className="space-y-4">
+              {[
+                ['Weak', example.badAnswer, 'rose', 'This signals little real preparation.'],
+                ['Better but weak', example.mediumAnswer || '', 'amber', 'There is some effort here, but it still sounds broad and generic.'],
+                ['Strong', example.goodAnswer, 'emerald', 'This is informed, connected, and curious.'],
+              ].map(([label, answer, tone, note]) => {
+                const styles = tone === 'rose'
+                  ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
+                  : tone === 'amber'
+                    ? ['border-amber-200', 'bg-amber-50/70', 'border-amber-200 bg-amber-100/80', 'text-amber-700', 'text-amber-900']
+                    : ['border-emerald-200', 'bg-emerald-50/70', 'border-emerald-200 bg-emerald-100/80', 'text-emerald-600', 'text-emerald-900']
+                return (
+                  <div key={label} className={`overflow-hidden rounded-2xl border-2 ${styles[0]} ${styles[1]} shadow-sm`}>
+                    <div className={`px-4 py-3 ${styles[2]}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${styles[3]}`}>{label}</span>
+                    </div>
+                    <div className="space-y-3 px-4 py-4">
+                      <p className={`text-base leading-relaxed ${styles[4]}`}>&ldquo;{answer}&rdquo;</p>
+                      <p className="text-sm leading-relaxed text-slate-600">{note}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'See It In Action',
+          title: 'See the strong answer with the framework applied',
+          preppi: 'The strong version works because it shows preparation, explains interest, and adds curiosity.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span key={`${part.label}-pill-${index}`} className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                    )
+                  })}
+                </div>
+                <p className="mt-4 text-base leading-relaxed text-slate-900">
+                  &ldquo;
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span key={`${part.label}-highlight-${index}`} className={`rounded px-1.5 py-0.5 ${colors.highlight}`}>
+                        {part.text}
+                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
+                      </span>
+                    )
+                  })}
+                  &rdquo;
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {example.annotatedStrongAnswer?.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <div key={`${part.label}-detail-${index}`} className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">{part.detail}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Good Curiosity',
+          title: 'What strong curiosity sounds like',
+          preppi: 'A logistics question is not wrong, but it should not be your only signal of interest in an early screen.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak as your only question</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “What is the salary?” or “Is it remote?”
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger question</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “What tends to make someone successful in this role during the first few months?”
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  A good question shows interest in the work, team, company, or culture in practice.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you answer again',
+          preppi: 'This is the standard you want in your head before the next screen.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'Can I say 1–2 real things about the company?',
+                  'Can I explain what stood out to me?',
+                  'Can I connect that to my interest?',
+                  'Can I ask a question that shows genuine curiosity?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  That is the standard you will practice next.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ]
+    }
+
     return [
     {
       eyebrow: 'Your Flagged Answer',
@@ -1810,7 +2077,7 @@ export default function TeachCard({
       ),
     }] : []),
     ]
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isKnowConnectAskLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

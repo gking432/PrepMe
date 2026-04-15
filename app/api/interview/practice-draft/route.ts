@@ -13,6 +13,7 @@ const FRAMEWORK_GUIDANCE: Record<string, string> = {
   noticed_fit_now: 'Evaluate whether the draft correctly uses What I noticed, Why it fits, Why now.',
   answer_reason_example: 'Evaluate whether the draft correctly uses Answer, Reason, Example.',
   claim_example_detail_impact: 'Evaluate whether the draft correctly uses Claim, Example, Detail, Impact. Be strict about evidence quality. A weak draft can name a trait and even mention an example, but still fail if the proof stays vague. A strong draft needs a clear claim, a real example, a concrete detail that makes the example believable, and an impact line that explains what the example proves. Reject answers that rely on phrases like "I have done that before," "I stayed organized," or "that shows I care" without concrete proof.',
+  know_connect_ask: 'Evaluate whether the draft correctly uses Know, Connect, Ask. Be strict about preparation quality and curiosity quality. A strong draft should show 1–2 real things the candidate knows about the company, explain what stands out and why it matters to them, and ask thoughtful questions about the work, team, company, or culture. Reject vague praise like "great company" or "strong reputation." Do not fail logistics questions by themselves, but do fail drafts where logistics are the only signal of interest.',
 }
 
 export async function POST(request: NextRequest) {

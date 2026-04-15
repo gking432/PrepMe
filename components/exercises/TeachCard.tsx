@@ -286,8 +286,8 @@ export default function TeachCard({
     () => lessonTitle === 'Ask Better Questions',
     [lessonTitle]
   )
-  const isHandlingDifficultQuestionsLesson = useMemo(
-    () => lessonTitle === 'Stay Calm, Answer Clearly',
+  const isHandlingUncertaintyLesson = useMemo(
+    () => lessonTitle === 'Stay Grounded When You Are Unsure',
     [lessonTitle]
   )
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
@@ -2021,7 +2021,7 @@ export default function TeachCard({
       ]
     }
 
-    if (isHandlingDifficultQuestionsLesson) {
+    if (isHandlingUncertaintyLesson) {
       return [
         {
           eyebrow: 'Flagged Moment',
@@ -2055,17 +2055,17 @@ export default function TeachCard({
         {
           eyebrow: 'Missing Piece',
           title: 'What this answer was missing',
-          preppi: 'This lesson is about recovery and control, not perfection.',
+          preppi: 'This lesson is about steadiness, not perfection.',
           content: (
             <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
                 <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  This answer needed more control. When a question feels difficult, unclear, or unexpected, the goal is not to answer perfectly right away. The goal is to stay calm and respond clearly.
+                  This answer needed more steadiness. When you do not have a great answer right away, the goal is not to fill the space. The goal is to stay calm and respond in a way that feels honest and grounded.
                 </p>
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Best use: difficult questions, uncertain questions, awkward follow-ups, and pressure moments.
+                  Best use: uncertain questions, unclear follow-ups, and moments when the answer is not obvious yet.
                 </p>
               </div>
             </div>
@@ -2074,15 +2074,15 @@ export default function TeachCard({
         {
           eyebrow: 'Scoring Logic',
           title: 'What interviewers are actually listening for',
-          preppi: 'They are watching how you handle pressure, not just whether you sound polished.',
+          preppi: 'They are not expecting instant perfection.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
-                  'composure under pressure',
-                  'clarity',
-                  'judgment',
+                  'calm judgment',
                   'honesty',
+                  'clarity',
+                  'grounded thinking',
                 ].map((line, index) => (
                   <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
@@ -2092,7 +2092,7 @@ export default function TeachCard({
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  They are not always looking for a perfect answer. They are looking at how you handle pressure.
+                  They are not expecting instant perfection. They are listening for how you handle uncertainty.
                 </p>
               </div>
             </div>
@@ -2100,16 +2100,16 @@ export default function TeachCard({
         },
         {
           eyebrow: 'Failure Mode',
-          title: 'Why hard questions go wrong',
-          preppi: 'The problem is usually not the question. It is losing control of the answer.',
+          title: 'Why uncertain answers go wrong',
+          preppi: 'Uncertainty is not the problem. Spiraling is.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
-                  'starts talking before thinking',
-                  'tries to answer every angle at once',
-                  'gets vague under pressure',
-                  'never lands on a clear point',
+                  'starts talking before knowing the point',
+                  'hedges too much',
+                  'pretends to know more than they do',
+                  'never says what they would actually do next',
                 ].map((line) => (
                   <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
@@ -2122,15 +2122,16 @@ export default function TeachCard({
         {
           eyebrow: 'Recovery Move',
           title: 'What strong answers do differently',
-          preppi: 'Calm first. Clear point second.',
+          preppi: 'You do not need the full answer right away. You do need a steady one.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
                   'pauses briefly',
-                  'answers the main part clearly',
-                  'adds only helpful detail',
-                  'ends with a real point',
+                  'makes one clear point',
+                  'stays honest about what is unclear',
+                  'names the first step',
+                  'ends on a grounded principle',
                 ].map((line) => (
                   <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
@@ -2143,20 +2144,20 @@ export default function TeachCard({
         {
           eyebrow: 'Core Principle',
           title: 'Start with a clear point',
-          preppi: 'Do not think out loud for too long.',
+          preppi: 'Do not circle while you think. Give the interviewer one point to follow.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak start</p>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “That&apos;s a good question, and I think there are a lot of ways to look at it...”
+                    “That&apos;s a good question, and I think there are probably a lot of ways to think about it...”
                   </p>
                 </div>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger start</p>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “The main way I&apos;d approach that is...”
+                    “The main thing I&apos;d do first is...”
                   </p>
                 </div>
               </div>
@@ -2165,13 +2166,13 @@ export default function TeachCard({
         },
         {
           eyebrow: 'Core Principle',
-          title: 'Add only what helps',
-          preppi: 'Relevant support is useful. Extra talking is not.',
+          title: 'Be honest about what is unclear',
+          preppi: 'Honest caution sounds better than bluffing.',
           content: (
             <div className="space-y-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
                 <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  A hard answer gets weaker when you add filler, over-explain, or defend yourself in too many directions. Helpful detail should support your point, not bury it.
+                  You do not have to sound completely certain. A stronger answer can acknowledge uncertainty without losing control: “I&apos;d want to understand the situation a little better first, but my starting point would be...”
                 </p>
               </div>
             </div>
@@ -2179,21 +2180,41 @@ export default function TeachCard({
         },
         {
           eyebrow: 'Core Principle',
-          title: 'End cleanly',
-          preppi: 'Land on the principle, decision, or takeaway.',
+          title: 'Name the first step',
+          preppi: 'The first step shows judgment.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'what you would check first',
+                  'who you would talk to first',
+                  'what you would want to understand first',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'End on a grounded takeaway',
+          preppi: 'Even if the answer is not perfect, the ending should feel settled.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak ending</p>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “So yeah, I think it probably depends a lot and there are different ways to look at it.”
+                    “So yeah, I think it would depend a lot and I&apos;d just kind of see what made sense.”
                   </p>
                 </div>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger ending</p>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “The main thing is handling it directly and professionally without creating confusion.”
+                    “The main thing is staying calm, getting clear on the situation, and taking the first useful step.”
                   </p>
                 </div>
               </div>
@@ -2203,15 +2224,16 @@ export default function TeachCard({
         {
           eyebrow: 'Self Check',
           title: 'Use this check before you answer again',
-          preppi: 'This is the standard you will practice next.',
+          preppi: 'That is the standard you will practice next.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
                   'Did I pause before answering?',
-                  'Did I make a clear point early?',
-                  'Did I add only helpful detail?',
-                  'Did I end on a clear takeaway?',
+                  'Did I make one clear point early?',
+                  'Was I honest about what was unclear?',
+                  'Did I name the first step I would take?',
+                  'Did I end on a grounded principle?',
                 ].map((line) => (
                   <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
@@ -2459,7 +2481,7 @@ export default function TeachCard({
       ),
     }] : []),
     ]
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingDifficultQuestionsLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

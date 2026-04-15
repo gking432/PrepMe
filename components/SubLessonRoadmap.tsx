@@ -99,6 +99,8 @@ export default function SubLessonRoadmap({
   const [activeRequiredPhase, setActiveRequiredPhase] = useState<RequiredStepPhase>('lesson')
   const [completedSet, setCompletedSet] = useState<Set<number>>(new Set())
   const [passedSet, setPassedSet] = useState<Set<number>>(new Set())
+  const [supplementalCompletedSet, setSupplementalCompletedSet] = useState<Set<number>>(new Set())
+  const [supplementalPassedSet, setSupplementalPassedSet] = useState<Set<number>>(new Set())
   const [optionalCompletedSet, setOptionalCompletedSet] = useState<Set<number>>(new Set())
   const [optionalPassedSet, setOptionalPassedSet] = useState<Set<number>>(new Set())
   const [sessionXp, setSessionXp] = useState(0)
@@ -167,10 +169,18 @@ export default function SubLessonRoadmap({
       }
     })
   ), [bundle.lessons, bundle.rootCause, contextualBundles, questionRepairs, structureStepNames])
-  const optionalLessons = bundle.rootCause === 'poor_structure' ? [] : bundle.lessons.slice(1)
+  const supplementalCoreLessons = useMemo(
+    () => (bundle.rootCause === 'questions_about_company' ? bundle.lessons.slice(1) : []),
+    [bundle.lessons, bundle.rootCause]
+  )
+  const optionalLessons = useMemo(
+    () => (bundle.rootCause === 'poor_structure' || bundle.rootCause === 'questions_about_company' ? [] : bundle.lessons.slice(1)),
+    [bundle.lessons, bundle.rootCause]
+  )
   const totalSlots = requiredSteps.length
-  const visibleLessonCount = totalSlots + optionalLessons.length
-  const allDone = completedSet.size === totalSlots
+  const totalCoreItems = totalSlots + supplementalCoreLessons.length
+  const visibleLessonCount = totalCoreItems + optionalLessons.length
+  const allDone = completedSet.size === totalSlots && supplementalCompletedSet.size === supplementalCoreLessons.length
 
   const nextAvailable = requiredSteps.findIndex((_, i) => !completedSet.has(i))
   const nextRequired = nextAvailable >= 0 ? nextAvailable : null
@@ -189,12 +199,33 @@ export default function SubLessonRoadmap({
     setTimeout(() => setMiniBurstIdx(null), 900)
 
     const newSize = completedSet.size + 1
-    if (slotIdx < totalSlots && newSize === totalSlots) {
+    if (slotIdx < totalSlots && newSize === totalSlots && supplementalCompletedSet.size === supplementalCoreLessons.length) {
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 3500)
       setTimeout(() => onAllComplete(priorXp + newXp), 2800)
     }
-  }, [sessionXp, completedSet, totalSlots, ding, onAllComplete, priorXp])
+  }, [sessionXp, completedSet, supplementalCompletedSet.size, supplementalCoreLessons.length, totalSlots, ding, onAllComplete, priorXp])
+
+  const handleSupplementalCoreComplete = useCallback((lessonIdx: number, passed: boolean, xp: number) => {
+    setActiveSlot(null)
+    setActiveRequiredPhase('lesson')
+    setSupplementalCompletedSet(prev => { const n = new Set(prev); n.add(lessonIdx); return n })
+    if (passed) setSupplementalPassedSet(prev => { const n = new Set(prev); n.add(lessonIdx); return n })
+
+    const newXp = sessionXp + xp
+    setSessionXp(newXp)
+
+    setMiniBurstIdx(totalSlots + lessonIdx)
+    ding()
+    setTimeout(() => setMiniBurstIdx(null), 900)
+
+    const newSupplementalCount = supplementalCompletedSet.size + 1
+    if (completedSet.size === totalSlots && newSupplementalCount === supplementalCoreLessons.length) {
+      setShowConfetti(true)
+      setTimeout(() => setShowConfetti(false), 3500)
+      setTimeout(() => onAllComplete(priorXp + newXp), 2800)
+    }
+  }, [completedSet.size, ding, onAllComplete, priorXp, sessionXp, supplementalCompletedSet.size, supplementalCoreLessons.length, totalSlots])
 
   const handleOptionalComplete = useCallback((lessonIdx: number, passed: boolean, xp: number) => {
     setActiveSlot(null)
@@ -203,38 +234,55 @@ export default function SubLessonRoadmap({
     if (passed) setOptionalPassedSet(prev => { const n = new Set(prev); n.add(lessonIdx); return n })
 
     setSessionXp(prev => prev + xp)
-    setMiniBurstIdx(totalSlots + lessonIdx)
+    setMiniBurstIdx(totalSlots + supplementalCoreLessons.length + lessonIdx)
     ding()
     setTimeout(() => setMiniBurstIdx(null), 900)
-  }, [ding, totalSlots])
+  }, [ding, supplementalCoreLessons.length, totalSlots])
 
   useEffect(() => {
     if (!onContextChange) return
     onContextChange({
       title: bundle.displayName,
-      items: requiredSteps.map((step, idx) => {
-        const isCompleted = completedSet.has(idx)
-        const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextRequired && !allDone)
-        const isLocked = false
-        return {
-          label: step.frameworkLabel || step.label,
-          status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : isLocked ? 'locked' as const : 'upcoming' as const,
-          meta: step.meta,
-        }
-      }),
+      items: [
+        ...requiredSteps.map((step, idx) => {
+          const isCompleted = completedSet.has(idx)
+          const isCurrent = activeSlot === idx || (activeSlot === null && idx === nextRequired && !allDone)
+          const isLocked = false
+          return {
+            label: step.frameworkLabel || step.label,
+            status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : isLocked ? 'locked' as const : 'upcoming' as const,
+            meta: step.meta,
+          }
+        }),
+        ...supplementalCoreLessons.map((lesson, idx) => {
+          const slotIndex = totalSlots + idx
+          const lessonKey = idx + 1
+          const isCompleted = supplementalCompletedSet.has(lessonKey)
+          const isCurrent = activeSlot === slotIndex
+          return {
+            label: lesson.title,
+            status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : 'upcoming' as const,
+            meta: 'Core',
+          }
+        }),
+      ],
     })
-  }, [activeSlot, allDone, bundle.displayName, completedSet, nextRequired, onContextChange, requiredSteps])
+  }, [activeSlot, allDone, bundle.displayName, completedSet, nextRequired, onContextChange, requiredSteps, supplementalCompletedSet, supplementalCoreLessons, totalSlots])
 
   if (activeSlot !== null) {
-    const isOptional = activeSlot >= totalSlots
-    const requiredStep = !isOptional ? requiredSteps[activeSlot] : null
-    const optionalLessonIndex = isOptional ? activeSlot - totalSlots + 1 : null
+    const isSupplementalCore = activeSlot >= totalSlots && activeSlot < totalSlots + supplementalCoreLessons.length
+    const isOptional = activeSlot >= totalSlots + supplementalCoreLessons.length
+    const requiredStep = !isSupplementalCore && !isOptional ? requiredSteps[activeSlot] : null
+    const supplementalLessonIndex = isSupplementalCore ? activeSlot - totalSlots + 1 : null
+    const optionalLessonIndex = isOptional ? activeSlot - totalSlots - supplementalCoreLessons.length + 1 : null
     const currentEvidence = requiredStep ? questionRepairs[requiredStep.evidenceIndex] : questionRepairs[0]
-    const activeBundle = isOptional
+    const activeBundle = isOptional || isSupplementalCore
       ? bundle
       : contextualBundles[requiredStep.evidenceIndex] || getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question)
     const subLesson = isOptional
       ? bundle.lessons[optionalLessonIndex as number]
+      : isSupplementalCore
+        ? supplementalCoreLessons[supplementalLessonIndex as number - 1]
       : activeRequiredPhase === 'lesson'
         ? activeBundle.lessons[0]
         : null
@@ -256,12 +304,14 @@ export default function SubLessonRoadmap({
                     {activeRequiredPhase === 'lesson' ? subLesson.title : 'Voice Re-Answer'}
                   </h2>
                   <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                    {isOptional ? `Optional ${optionalLessonIndex}` : 'Draft + voice'}
+                    {isOptional ? `Optional ${optionalLessonIndex}` : isSupplementalCore ? `Core lesson ${supplementalLessonIndex}` : 'Draft + voice'}
                   </span>
                 </div>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
                   {isOptional
                     ? 'Extra reps if you want to keep sharpening the skill after the main retry.'
+                    : isSupplementalCore
+                      ? 'This lesson is part of the required repair path for this flagged area.'
                     : activeRequiredPhase === 'lesson'
                       ? 'We will use your flagged answer, teach the fix, and build the script for the retry.'
                       : 'Now say the repaired version out loud while it is still fresh.'}
@@ -282,11 +332,11 @@ export default function SubLessonRoadmap({
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
-                  style={{ width: `${isOptional ? 100 : ((activeSlot + 1) / totalSlots) * 100}%` }}
+                  style={{ width: `${isOptional || isSupplementalCore ? 100 : ((activeSlot + 1) / totalSlots) * 100}%` }}
                 />
               </div>
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                {isOptional ? 'Optional practice' : `Step ${activeSlot + 1} / ${totalSlots}`}
+                {isOptional ? 'Optional practice' : isSupplementalCore ? `Core lesson ${supplementalLessonIndex}` : `Step ${activeSlot + 1} / ${totalSlots}`}
               </span>
             </div>
           </div>
@@ -294,14 +344,18 @@ export default function SubLessonRoadmap({
         <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl flex-1 rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : ''}`}>
           <PracticeLessonFlow
             subLesson={subLesson}
-            lessonNumber={isOptional ? optionalLessonIndex as number : 1}
-            totalLessons={isOptional ? optionalLessons.length : 1}
+            lessonNumber={isOptional ? optionalLessonIndex as number : isSupplementalCore ? supplementalLessonIndex as number : 1}
+            totalLessons={isOptional ? optionalLessons.length : isSupplementalCore ? supplementalCoreLessons.length : 1}
             criterion={criterion}
             originalQuestion={currentEvidence?.question}
             originalAnswer={currentEvidence?.excerpt}
             onComplete={(passed, xp) => {
               if (isOptional) {
                 handleOptionalComplete(optionalLessonIndex as number, passed, xp)
+                return
+              }
+              if (isSupplementalCore) {
+                handleSupplementalCoreComplete(supplementalLessonIndex as number, passed, xp)
                 return
               }
               setSessionXp((prev) => prev + xp)
@@ -318,7 +372,7 @@ export default function SubLessonRoadmap({
       </div>
       )
     }
-    if (!isOptional && activeRequiredPhase === 'voice' && requiredStep) {
+    if (!isOptional && !isSupplementalCore && activeRequiredPhase === 'voice' && requiredStep) {
       const currentEvidence = questionRepairs[requiredStep.evidenceIndex]
       return (
       <div className={`${embeddedDesktop ? 'flex h-full flex-col px-8 pb-7 pt-3' : 'mx-auto h-full max-w-4xl px-4 py-8'}`}>
@@ -387,9 +441,9 @@ export default function SubLessonRoadmap({
 
   const pathSummary = allDone
     ? 'Core path complete. You can stop here or keep going with optional practice.'
-    : completedSet.size === 0
+    : completedSet.size + supplementalCompletedSet.size === 0
     ? `${questionRepairs.length} flagged question${questionRepairs.length === 1 ? '' : 's'} to repair. Each one gets one repair loop: draft, then voice retry.`
-    : `${totalSlots - completedSet.size} step${totalSlots - completedSet.size !== 1 ? 's' : ''} left. Stay with it.`
+    : `${totalCoreItems - (completedSet.size + supplementalCompletedSet.size)} step${totalCoreItems - (completedSet.size + supplementalCompletedSet.size) !== 1 ? 's' : ''} left. Stay with it.`
 
   return (
     <div className={`${embeddedDesktop ? 'flex h-full flex-col bg-transparent' : 'fixed inset-0 z-50 flex flex-col bg-[linear-gradient(180deg,#faf7ff_0%,#f4f7ff_48%,#eef4fb_100%)]'}`}>
@@ -426,7 +480,7 @@ export default function SubLessonRoadmap({
                   <div className="mt-4 flex items-center gap-3">
                     <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{bundle.displayName}</h2>
                     <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
-                      {visibleLessonCount} {visibleLessonCount === 1 ? 'lesson' : 'lessons'}
+                      {totalCoreItems} {totalCoreItems === 1 ? 'core lesson' : 'core lessons'}
                     </span>
                   </div>
                   <p className="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -445,11 +499,11 @@ export default function SubLessonRoadmap({
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]"
-                    style={{ width: `${(completedSet.size / totalSlots) * 100}%` }}
+                    style={{ width: `${totalCoreItems ? ((completedSet.size + supplementalCompletedSet.size) / totalCoreItems) * 100 : 0}%` }}
                   />
                 </div>
                 <span className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                  {completedSet.size} / {totalSlots} complete
+                  {completedSet.size + supplementalCompletedSet.size} / {totalCoreItems} complete
                 </span>
               </div>
             </div>
@@ -464,7 +518,7 @@ export default function SubLessonRoadmap({
                   <p className="mt-1 text-sm text-slate-500">{bundle.displayName}</p>
                 </div>
                 <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-                  {visibleLessonCount} {visibleLessonCount === 1 ? 'lesson' : 'lessons'}
+                  {totalCoreItems} {totalCoreItems === 1 ? 'core lesson' : 'core lessons'}
                 </div>
               </div>
 
@@ -556,6 +610,61 @@ export default function SubLessonRoadmap({
                     Practice complete
                   </div>
                   <p className="text-sm font-semibold text-emerald-800">You completed the core path. If you want more reps, the optional lessons are below.</p>
+                </div>
+              )}
+
+              {supplementalCoreLessons.length > 0 && (
+                <div className="mt-6 rounded-[1.6rem] border border-slate-200 bg-slate-50/80 p-4">
+                  <div className="mb-4">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Core lessons</p>
+                    <h4 className="mt-1 text-lg font-black text-slate-900">Finish the full repair</h4>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      These lessons are part of the required repair for this flagged area.
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    {supplementalCoreLessons.map((lesson, idx) => {
+                      const lessonKey = idx + 1
+                      const isCompleted = supplementalCompletedSet.has(lessonKey)
+                      const isPassed = supplementalPassedSet.has(lessonKey)
+                      const isMini = miniBurstIdx === totalSlots + lessonKey
+                      return (
+                        <div key={lesson.title} className="relative">
+                          <div className="absolute inset-0 pointer-events-none">
+                            <MiniConfettiBurst active={isMini} />
+                          </div>
+                          <button
+                            onClick={() => setActiveSlot(totalSlots + idx)}
+                            className={`flex w-full items-start gap-4 rounded-[1.35rem] border p-4 text-left transition-all hover:shadow-[0_18px_30px_rgba(15,23,42,0.08)] ${
+                              isCompleted && isPassed
+                                ? 'border-emerald-200 bg-emerald-50/90'
+                                : 'border-slate-200/80 bg-white/96'
+                            }`}
+                          >
+                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${
+                              isCompleted && isPassed ? 'bg-emerald-500 text-white' : 'bg-white text-violet-700 ring-1 ring-violet-200'
+                            }`}>
+                              {isCompleted && isPassed ? <CheckCircle className="h-6 w-6" /> : <span className="text-sm font-black">{totalSlots + lessonKey}</span>}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-black text-slate-900">{lesson.title}</p>
+                                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                  isCompleted && isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-violet-100 text-violet-700'
+                                }`}>
+                                  {isCompleted && isPassed ? 'Passed' : 'Core'}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-sm leading-6 text-slate-600">
+                                This lesson is part of the required path for this flagged area.
+                              </p>
+                            </div>
+                            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 

@@ -433,6 +433,7 @@ export default function PracticeLessonFlow({
       <TeachCard
         criterion={criterion}
         title={subLesson.teach.title}
+        lessonTitle={subLesson.title}
         explanation={subLesson.teach.explanation}
         example={subLesson.teach.example}
         originalQuestion={originalQuestion}

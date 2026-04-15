@@ -7,6 +7,7 @@ import Preppi from '@/components/Preppi'
 interface TeachCardProps {
   criterion: string
   title: string
+  lessonTitle?: string
   explanation: string
   example: {
     question: string
@@ -247,6 +248,7 @@ function extractPlaceholderQuestion(answer?: string) {
 export default function TeachCard({
   criterion,
   title,
+  lessonTitle,
   explanation,
   example,
   originalQuestion,
@@ -272,12 +274,18 @@ export default function TeachCard({
     const keys = frameworkRows.map(([key]) => key.toLowerCase())
     return ['answer', 'reason', 'example'].every((key) => keys.includes(key))
   }, [frameworkRows])
-  const isClaimExampleDetailImpactLesson = useMemo(() => {
-    const keys = frameworkRows.map(([key]) => key.toLowerCase())
-    return ['claim', 'example', 'detail', 'impact'].every((key) => keys.includes(key))
-  }, [frameworkRows])
-  const isCompanyKnowledgeLesson = useMemo(() => title === 'Show You Prepared', [title])
-  const isMeaningfulQuestionsLesson = useMemo(() => title === 'Ask Better Questions', [title])
+  const isClaimExampleDetailImpactLesson = useMemo(
+    () => lessonTitle === 'Strengthen Weak Proof',
+    [lessonTitle]
+  )
+  const isCompanyKnowledgeLesson = useMemo(
+    () => lessonTitle === 'Show You Prepared',
+    [lessonTitle]
+  )
+  const isMeaningfulQuestionsLesson = useMemo(
+    () => lessonTitle === 'Ask Better Questions',
+    [lessonTitle]
+  )
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
   const placeholderMatchesQuestion = useMemo(() => {

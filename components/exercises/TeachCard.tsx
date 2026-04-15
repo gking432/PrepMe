@@ -276,10 +276,8 @@ export default function TeachCard({
     const keys = frameworkRows.map(([key]) => key.toLowerCase())
     return ['claim', 'example', 'detail', 'impact'].every((key) => keys.includes(key))
   }, [frameworkRows])
-  const isKnowConnectAskLesson = useMemo(() => {
-    const keys = frameworkRows.map(([key]) => key.toLowerCase())
-    return ['know', 'connect', 'ask'].every((key) => keys.includes(key))
-  }, [frameworkRows])
+  const isCompanyKnowledgeLesson = useMemo(() => title === 'Show You Prepared', [title])
+  const isMeaningfulQuestionsLesson = useMemo(() => title === 'Ask Better Questions', [title])
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
   const placeholderMatchesQuestion = useMemo(() => {
@@ -1636,7 +1634,7 @@ export default function TeachCard({
       ]
     }
 
-    if (isKnowConnectAskLesson) {
+    if (isCompanyKnowledgeLesson) {
       return [
         {
           eyebrow: 'Your Flagged Answer',
@@ -1668,17 +1666,35 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'Question Type',
-          title: 'What kind of answer this needed',
-          preppi: 'This moment needed more than a generic answer. It needed evidence that you prepared and that your interest is real.',
+          eyebrow: 'Lesson Focus',
+          title: 'What this lesson is about',
+          preppi: 'This lesson is about preparation, not perfect recall.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  This lesson helps you answer company knowledge questions more credibly. In an HR screen, the interviewer is usually checking whether you did basic homework and whether your interest feels real.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Best use: “What do you know about our company?” “What stood out to you?” “Why this company?”
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'What “enough research” usually looks like',
+          preppi: 'You do not need deep research. You do need the basics.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
-                  'What do you know about our company?',
-                  'What stood out to you in your research?',
-                  'What questions do you have for us?',
-                  'What would you like to know before moving forward?',
+                  'what the company does',
+                  'who it serves',
+                  'one thing that stood out to you',
                 ].map((line) => (
                   <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
@@ -1687,69 +1703,80 @@ export default function TeachCard({
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Best use: company research, role interest, end-of-interview questions, and HR screens.
+                  Before an HR screen, that is usually enough.
                 </p>
               </div>
             </div>
           ),
         },
         {
-          eyebrow: 'Scoring Logic',
-          title: 'What interviewers are actually listening for',
-          preppi: 'The goal is not perfect knowledge. The goal is informed curiosity.',
+          eyebrow: 'Core Principle',
+          title: 'Generic praise is weak',
+          preppi: 'Flattery is not research.',
           content: (
             <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'you did some homework',
-                  'you understand the basics',
-                  'you are genuinely interested',
-                  'you are thinking beyond just your own needs',
-                ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak answer</p>
+                <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                  “You seem like a great company with a strong reputation.”
+                </p>
               </div>
               <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  The goal is not perfect knowledge. The goal is informed curiosity.
+                  That sounds positive, but it does not show real preparation.
                 </p>
               </div>
             </div>
           ),
         },
         {
-          eyebrow: 'The Structure',
-          title: 'The structure',
-          preppi: 'Know the basics. Connect your interest. Ask something meaningful.',
+          eyebrow: 'Core Principle',
+          title: 'Say something real',
+          preppi: 'A strong answer includes something real and specific.',
           content: (
-            <div className="space-y-3">
-              {frameworkRows.map(([key, value], index) => (
-                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
-                  </div>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger answer</p>
+                <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                  “From what I saw, the company works with [customer type] and seems focused on [product, service, or business area].”
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Do not stop at the fact',
+          preppi: 'Say what you noticed, then say why it matters.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Not enough</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “I saw the company is growing.”
+                  </p>
                 </div>
-              ))}
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Better</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “That stood out to me because it suggests a fast-moving environment where this role can have real impact.”
+                  </p>
+                </div>
+              </div>
             </div>
           ),
         },
         {
           eyebrow: 'Compare',
           title: 'Weak vs better vs strong',
-          preppi: 'A little preparation is better than none, but generic praise still sounds weak.',
+          preppi: 'The goal is not to know everything. The goal is to sound informed and interested.',
           content: (
             <div className="space-y-4">
               {[
-                ['Weak', example.badAnswer, 'rose', 'This signals little real preparation.'],
-                ['Better but weak', example.mediumAnswer || '', 'amber', 'There is some effort here, but it still sounds broad and generic.'],
-                ['Strong', example.goodAnswer, 'emerald', 'This is informed, connected, and curious.'],
+                ['Weak', example.badAnswer, 'rose', 'This shows very little research.'],
+                ['Better', example.mediumAnswer || '', 'amber', 'There is some preparation here, but it still sounds generic.'],
+                ['Strong', example.goodAnswer, 'emerald', 'This shows something real and explains what stood out.'],
               ].map(([label, answer, tone, note]) => {
                 const styles = tone === 'rose'
                   ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
@@ -1772,92 +1799,199 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'See It In Action',
-          title: 'See the strong answer with the framework applied',
-          preppi: 'The strong version works because it shows preparation, explains interest, and adds curiosity.',
-          content: (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                <div className="flex flex-wrap gap-2">
-                  {example.annotatedStrongAnswer?.map((part, index) => {
-                    const colors = annotationColors(part.label)
-                    return (
-                      <span key={`${part.label}-pill-${index}`} className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                        {part.label}
-                      </span>
-                    )
-                  })}
-                </div>
-                <p className="mt-4 text-base leading-relaxed text-slate-900">
-                  &ldquo;
-                  {example.annotatedStrongAnswer?.map((part, index) => {
-                    const colors = annotationColors(part.label)
-                    return (
-                      <span key={`${part.label}-highlight-${index}`} className={`rounded px-1.5 py-0.5 ${colors.highlight}`}>
-                        {part.text}
-                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
-                      </span>
-                    )
-                  })}
-                  &rdquo;
-                </p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                {example.annotatedStrongAnswer?.map((part, index) => {
-                  const colors = annotationColors(part.label)
-                  return (
-                    <div key={`${part.label}-detail-${index}`} className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
-                        {part.label}
-                      </span>
-                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">{part.detail}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Good Curiosity',
-          title: 'What strong curiosity sounds like',
-          preppi: 'A logistics question is not wrong, but it should not be your only signal of interest in an early screen.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak as your only question</p>
-                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “What is the salary?” or “Is it remote?”
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger question</p>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “What tends to make someone successful in this role during the first few months?”
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  A good question shows interest in the work, team, company, or culture in practice.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
           eyebrow: 'Self Check',
-          title: 'Use this check before you answer again',
-          preppi: 'This is the standard you want in your head before the next screen.',
+          title: 'Use this check before your next interview',
+          preppi: 'This is the standard you will practice next.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
                 {[
                   'Can I say 1–2 real things about the company?',
                   'Can I explain what stood out to me?',
-                  'Can I connect that to my interest?',
-                  'Can I ask a question that shows genuine curiosity?',
+                  'Did I avoid generic praise?',
+                  'Does my interest sound informed?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  That is the standard you will practice next.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ]
+    }
+
+    if (isMeaningfulQuestionsLesson) {
+      return [
+        {
+          eyebrow: 'Flagged Moment',
+          title: originalQuestion || example.question,
+          preppi: 'We should start with the exact miss first, not generic advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Lesson Focus',
+          title: 'What this lesson is about',
+          preppi: 'This lesson is about asking questions that show genuine interest.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  This lesson helps you ask better questions at the end of an HR screen. Your questions should show that you are thoughtful, interested, and paying attention to the opportunity.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Best use: “What questions do you have for me?” “What would you like to know?”
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Be ready with questions',
+          preppi: 'Having no questions can make your interest feel weak.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  Do not wait until the moment to think of something. Before the interview, prepare 1–2 questions you would genuinely want answered.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Good questions focus on the work',
+          preppi: 'Good questions help you understand what the job is really like.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'success in the role',
+                  'team priorities',
+                  'how the team works',
+                  'culture in practice',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Good questions show real curiosity',
+          preppi: 'A strong question shows interest in the work, not just the logistics.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak question</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “What are the hours?”
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger question</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “What tends to make someone successful in this role in the first few months?”
+                  </p>
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Be careful with self-focused questions',
+          preppi: 'Lead with curiosity about the role, team, or company.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  Questions about salary, PTO, remote work, or promotion can matter. But if those are your only questions in an HR screen, they can make your interest feel shallow.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Compare',
+          title: 'Weak vs better vs strong',
+          preppi: 'The goal is not just to ask a question. The goal is to ask a meaningful one.',
+          content: (
+            <div className="space-y-4">
+              {[
+                ['Weak', example.badAnswer, 'rose', 'This is only about convenience.'],
+                ['Better', example.mediumAnswer || '', 'amber', 'This is relevant, but still too broad.'],
+                ['Strong', example.goodAnswer, 'emerald', 'These questions help you understand the work and the team more clearly.'],
+              ].map(([label, answer, tone, note]) => {
+                const styles = tone === 'rose'
+                  ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
+                  : tone === 'amber'
+                    ? ['border-amber-200', 'bg-amber-50/70', 'border-amber-200 bg-amber-100/80', 'text-amber-700', 'text-amber-900']
+                    : ['border-emerald-200', 'bg-emerald-50/70', 'border-emerald-200 bg-emerald-100/80', 'text-emerald-600', 'text-emerald-900']
+                return (
+                  <div key={label} className={`overflow-hidden rounded-2xl border-2 ${styles[0]} ${styles[1]} shadow-sm`}>
+                    <div className={`px-4 py-3 ${styles[2]}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${styles[3]}`}>{label}</span>
+                    </div>
+                    <div className="space-y-3 px-4 py-4">
+                      <p className={`text-base leading-relaxed ${styles[4]}`}>&ldquo;{answer}&rdquo;</p>
+                      <p className="text-sm leading-relaxed text-slate-600">{note}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you ask again',
+          preppi: 'This is the standard you will practice next.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'Do I have 1–2 questions ready?',
+                  'Do my questions focus on the role, team, company, or culture?',
+                  'Will the answer help me understand the opportunity better?',
+                  'Do my questions show genuine interest?',
                 ].map((line) => (
                   <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
@@ -2110,7 +2244,7 @@ export default function TeachCard({
       ),
     }] : []),
     ]
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isKnowConnectAskLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

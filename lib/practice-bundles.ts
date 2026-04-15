@@ -1130,44 +1130,39 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'questions_about_company',
-    displayName: 'Company Questions',
+    displayName: 'Preparation and Curiosity',
     description: 'Weak company prep and weak end-of-interview questions make you sound underprepared.',
     lessons: [
       {
-        title: 'Know, Connect, Ask',
+        title: 'Show You Prepared',
         difficulty: 'easy',
         teach: {
-          title: 'Show that you prepared, then ask something that proves you care',
+          title: 'Show you did enough homework to sound informed',
           explanation:
-            'A strong company answer is not a strategy memo and it is not empty praise. It shows basic company understanding, connects that understanding to your interest, and asks thoughtful questions that show real curiosity about the work, team, or company.',
+            'In an HR screen, the interviewer is usually checking whether you did basic homework and whether your interest feels real. You do not need deep research. You do need to know what the company does, who it serves, and one thing that stood out to you.',
           example: {
             question: 'What do you know about our company?',
             badAnswer:
-              'I know you are a strong company in the industry, and that is one of the reasons I was excited about the role.',
+              'You seem like a great company with a strong reputation, which is one reason I was excited about the role.',
             mediumAnswer:
-              'I know the company is in this industry and seems to be growing. That stood out to me because I am interested in strong opportunities.',
+              'I know the company is in this space and seems to be growing, which stood out to me as a good opportunity.',
             goodAnswer:
-              'From what I saw, the company works with mid-market operations teams and seems focused on helping them reduce friction in day-to-day workflows. What stood out to me is how often execution and follow-through came up in the role and in how the company talks about the team, because that is closely tied to the kind of work I have done best. I would also love to understand what tends to make someone successful in this role during the first few months.',
+              'From what I saw, the company works with mid-market operations teams and seems focused on helping them reduce friction in day-to-day workflows. What stood out to me is how often execution and follow-through came up in the role and company materials, because that seems closely tied to the kind of work I am most interested in.',
             breakdown: {
-              Know: 'What do you know about the company?',
-              Connect: 'What stood out, and why does it interest you?',
-              Ask: 'What thoughtful question can you ask that shows real curiosity?',
+              Basics: 'Know what the company does, who it serves, and one thing that stood out.',
+              NoGenericPraise: 'Saying the company seems great is not the same as showing preparation.',
+              ConnectInterest: 'Say what stood out, then explain why it matters to you.',
             },
             annotatedStrongAnswer: [
               {
                 label: 'Know',
                 text: 'From what I saw, the company works with mid-market operations teams and seems focused on helping them reduce friction in day-to-day workflows.',
-                detail: 'Show 1–2 real things you know. You do not need perfect knowledge, but you do need something more than a compliment.',
+                detail: 'This works because it includes something real about the company, not just a flattering label.',
               },
               {
                 label: 'Connect',
-                text: 'What stood out to me is how often execution and follow-through came up in the role and in how the company talks about the team, because that is closely tied to the kind of work I have done best.',
-                detail: 'Do not stop at research. Explain why what you noticed matters to you.',
-              },
-              {
-                label: 'Ask',
-                text: 'I would also love to understand what tends to make someone successful in this role during the first few months.',
-                detail: 'A good question shows interest in the work, team, or company, not just your own convenience.',
+                text: 'What stood out to me is how often execution and follow-through came up in the role and company materials, because that seems closely tied to the kind of work I am most interested in.',
+                detail: 'Research matters more when you explain what stood out and why it matters to you.',
               },
             ],
           },
@@ -1212,70 +1207,157 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           },
           {
             type: 'multiple_choice',
-            question: 'Which question best shows meaningful curiosity at the end of an HR screen?',
+            question: 'Which follow-up does the best job of explaining what stood out?',
             options: [
-              'What is the PTO policy?',
-              'How quickly can someone get promoted?',
-              'What tends to make someone successful in this role during the first few months?',
-              'Is the interview process long?',
+              'That seemed interesting to me.',
+              'That felt like a good opportunity.',
+              'That stood out because the role seems closely tied to work I enjoy doing most.',
+              'That made me want to apply.',
             ],
             correctIndex: 2,
-            explanation: 'This question shows interest in the work and expectations, not just candidate convenience.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each line as Know, Connect, or Ask.',
-            segments: [
-              { text: 'From what I saw, the company works closely with operations teams that need cleaner workflow coordination.', correctLabel: 'Know' },
-              { text: 'That stood out to me because a lot of my best work has involved reducing friction across handoffs and priorities.', correctLabel: 'Connect' },
-              { text: 'What has the team been focused on most recently?', correctLabel: 'Ask' },
-            ],
-          },
-          {
-            type: 'multiple_choice',
-            question: 'Which question is weakest to ask as your only question at the end of an HR screen?',
-            options: [
-              'How would you describe the company culture in practice?',
-              'What are the biggest priorities for this role early on?',
-              'What does success usually look like in the first few months?',
-              'When would I be eligible for a raise?',
-            ],
-            correctIndex: 3,
-            explanation: 'That can be a valid question later, but as your only HR-screen question it makes you sound overly focused on your own upside.',
+            explanation: 'A stronger answer does not stop at the fact. It explains why that point actually matters to you.',
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Prepare one short company-knowledge answer and two thoughtful questions.',
-            coachingTip: 'Enough usually means: know what the company does, know one thing that stood out, and have one or two thoughtful questions ready. You do not need deep research or a strategy memo.',
-            evaluationType: 'know_connect_ask',
+            instruction: 'Before you answer again, prepare a short company knowledge response.',
+            coachingTip: 'Keep it short. You only need the basics plus one real point of interest.',
+            evaluationType: 'company_knowledge',
             fields: [
               {
-                label: 'What do you know?',
-                placeholder: 'Write 1–2 real things you know about the company.',
-                helper: 'Show basic research. Avoid vague praise like "great reputation" or "seems like a strong company."',
-                minWords: 10,
-                avoidWords: ['great company', 'strong reputation', 'seems nice', 'looks interesting'],
-              },
-              {
-                label: 'What stands out?',
-                placeholder: 'What about that connects to your interest?',
-                helper: 'Explain why what you noticed matters to you. Do not stop at "that seemed interesting."',
-                minWords: 10,
-                avoidWords: ['seemed interesting', 'good next step', 'exciting opportunity'],
-              },
-              {
-                label: 'Question 1',
-                placeholder: 'Ask one thoughtful question about the role, team, company, or culture.',
-                helper: 'Aim for success, priorities, team reality, or culture in practice.',
+                label: 'What does the company do?',
+                placeholder: 'Write a short line explaining what the company does.',
+                helper: 'Keep it basic and real. No flattery.',
                 minWords: 6,
-                avoidWords: ['pto', 'salary', 'raise', 'vacation days'],
+                avoidWords: ['great company', 'strong reputation', 'seems nice'],
               },
               {
-                label: 'Question 2',
-                placeholder: 'Ask one more question that shows genuine curiosity.',
-                helper: 'A logistics question is not wrong, but it should not be your only signal of interest in an HR screen.',
+                label: 'Who does it serve?',
+                placeholder: 'Who is the company for or what part of the market does it serve?',
+                helper: 'You only need a simple, credible answer.',
+                minWords: 4,
+              },
+              {
+                label: 'What stood out to you?',
+                placeholder: 'What real thing stood out in your research?',
+                helper: 'Avoid generic praise.',
                 minWords: 6,
-                avoidWords: ['pto', 'salary', 'raise', 'vacation days'],
+                avoidWords: ['great company', 'seemed interesting', 'exciting opportunity'],
+              },
+              {
+                label: 'Why does that matter to you?',
+                placeholder: 'Explain why that point caught your attention.',
+                helper: 'Connect what you noticed to your actual interest.',
+                minWords: 6,
+                avoidWords: ['good opportunity', 'seems nice', 'great reputation'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Ask Better Questions',
+        difficulty: 'easy',
+        teach: {
+          title: 'Ask questions that help you understand the opportunity',
+          explanation:
+            'Your end-of-interview questions should show that you are thoughtful, interested, and paying attention to the opportunity. Good questions help you understand the work, team, priorities, or culture in practice. Weak questions are often only about convenience or are too broad to reveal anything useful.',
+          example: {
+            question: 'What questions do you have for me?',
+            badAnswer:
+              'What are the hours?',
+            mediumAnswer:
+              'How would you describe the company?',
+            goodAnswer:
+              'What tends to make someone successful in this role in the first few months? And what has the team been focused on most recently?',
+            breakdown: {
+              BeReady: 'Have 1–2 questions ready before the interview starts.',
+              FocusOnWork: 'Strong questions focus on the role, team, culture, or company priorities.',
+              AvoidOnlySelfFocus: 'Questions about salary, PTO, or remote work can matter, but they should not be your only questions early on.',
+            },
+            annotatedStrongAnswer: [
+              {
+                label: 'Ask',
+                text: 'What tends to make someone successful in this role in the first few months?',
+                detail: 'This helps you understand expectations and success in the role.',
+              },
+              {
+                label: 'Ask',
+                text: 'And what has the team been focused on most recently?',
+                detail: 'This shows interest in real team priorities, not just your own convenience.',
+              },
+            ],
+          },
+        },
+        exercises: [
+          {
+            type: 'multiple_choice',
+            question: 'Which question best shows meaningful curiosity in an HR screen?',
+            options: [
+              'What are the hours?',
+              'How quickly can someone get promoted?',
+              'What tends to make someone successful in this role in the first few months?',
+              'What is the PTO policy?',
+            ],
+            correctIndex: 2,
+            explanation: 'This question is about the work and expectations, which is a stronger early signal than a convenience question.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the biggest problem with this as your only question? "Is the role remote?"',
+            options: ['It is too detailed', 'It is too self-focused', 'It is too company-specific', 'It is too difficult to answer'],
+            correctIndex: 1,
+            explanation: 'That question can matter, but as your only question in an HR screen it makes your interest look too centered on convenience.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'What is the biggest weakness in this question? "How would you describe the company?"',
+            options: ['It is too thoughtful', 'It is too broad', 'It is too self-focused', 'It is too formal'],
+            correctIndex: 1,
+            explanation: 'It is relevant, but it is so broad that it is unlikely to reveal anything specific or useful.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which revision best improves this question? "How would you describe the company?"',
+            options: [
+              'Do people like working here?',
+              'How would you describe the culture in practice on this team?',
+              'Would you say the company is successful?',
+              'Is it a good environment?',
+            ],
+            correctIndex: 1,
+            explanation: 'This turns a broad question into one that is more grounded and more likely to produce a useful answer.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which question best shows interest in team priorities?',
+            options: [
+              'What are the benefits like?',
+              'What has the team been focused on most recently?',
+              'When would I be eligible for a raise?',
+              'Is there flexibility in the schedule?',
+            ],
+            correctIndex: 1,
+            explanation: 'It shows interest in what the team is actually working on, which is a stronger early signal.',
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Before you answer again, prepare two thoughtful questions.',
+            coachingTip: 'Pick questions that help you understand the work, not just the perks.',
+            evaluationType: 'meaningful_questions',
+            fields: [
+              {
+                label: 'Question 1 about the role',
+                placeholder: 'Write a question about success in the role or early expectations.',
+                helper: 'This should help you understand what doing the job well actually looks like.',
+                minWords: 6,
+                avoidWords: ['salary', 'pto', 'raise', 'vacation days'],
+              },
+              {
+                label: 'Question 2 about the team or company',
+                placeholder: 'Write a question about the team, company, or culture in practice.',
+                helper: 'Ask something that gives you a better picture of the opportunity.',
+                minWords: 6,
+                avoidWords: ['salary', 'pto', 'raise', 'vacation days'],
               },
             ],
           },

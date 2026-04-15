@@ -1378,8 +1378,8 @@ export default function TeachCard({
         },
         {
           eyebrow: 'Question Type',
-          title: 'What kind of answer this needed',
-          preppi: 'This answer needed more than a claim. It needed proof the interviewer could believe.',
+          title: 'What kind of question this is',
+          preppi: 'These are the kinds of questions where the interviewer wants proof, not just a trait label.',
           content: (
             <div className="space-y-4">
               <div className="grid gap-3">
@@ -1399,6 +1399,26 @@ export default function TeachCard({
                   Best use: strengths, self-description, follow-up proof, and evidence-based answers.
                 </p>
               </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'The Structure',
+          title: 'What kind of answer this needed',
+          preppi: 'This answer needed more than a claim. It needed proof the interviewer could believe.',
+          content: (
+            <div className="space-y-3">
+              {frameworkRows.map(([key, value], index) => (
+                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           ),
         },
@@ -1426,26 +1446,6 @@ export default function TeachCard({
                   A claim without proof is hard to trust.
                 </p>
               </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'The Structure',
-          title: 'The structure',
-          preppi: 'The goal is not just to sound good. The goal is to sound believable.',
-          content: (
-            <div className="space-y-3">
-              {frameworkRows.map(([key, value], index) => (
-                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           ),
         },

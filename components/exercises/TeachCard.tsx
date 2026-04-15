@@ -286,6 +286,10 @@ export default function TeachCard({
     () => lessonTitle === 'Ask Better Questions',
     [lessonTitle]
   )
+  const isHandlingDifficultQuestionsLesson = useMemo(
+    () => lessonTitle === 'Stay Calm, Answer Clearly',
+    [lessonTitle]
+  )
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
   const placeholderMatchesQuestion = useMemo(() => {
@@ -2017,6 +2021,209 @@ export default function TeachCard({
       ]
     }
 
+    if (isHandlingDifficultQuestionsLesson) {
+      return [
+        {
+          eyebrow: 'Flagged Moment',
+          title: originalQuestion || example.question,
+          preppi: 'We should start with the exact miss first, not generic advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Missing Piece',
+          title: 'What this answer was missing',
+          preppi: 'This lesson is about recovery and control, not perfection.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  This answer needed more control. When a question feels difficult, unclear, or unexpected, the goal is not to answer perfectly right away. The goal is to stay calm and respond clearly.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Best use: difficult questions, uncertain questions, awkward follow-ups, and pressure moments.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Scoring Logic',
+          title: 'What interviewers are actually listening for',
+          preppi: 'They are watching how you handle pressure, not just whether you sound polished.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'composure under pressure',
+                  'clarity',
+                  'judgment',
+                  'honesty',
+                ].map((line, index) => (
+                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  They are not always looking for a perfect answer. They are looking at how you handle pressure.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Failure Mode',
+          title: 'Why hard questions go wrong',
+          preppi: 'The problem is usually not the question. It is losing control of the answer.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'starts talking before thinking',
+                  'tries to answer every angle at once',
+                  'gets vague under pressure',
+                  'never lands on a clear point',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Recovery Move',
+          title: 'What strong answers do differently',
+          preppi: 'Calm first. Clear point second.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'pauses briefly',
+                  'answers the main part clearly',
+                  'adds only helpful detail',
+                  'ends with a real point',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Start with a clear point',
+          preppi: 'Do not think out loud for too long.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak start</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “That&apos;s a good question, and I think there are a lot of ways to look at it...”
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger start</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “The main way I&apos;d approach that is...”
+                  </p>
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'Add only what helps',
+          preppi: 'Relevant support is useful. Extra talking is not.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  A hard answer gets weaker when you add filler, over-explain, or defend yourself in too many directions. Helpful detail should support your point, not bury it.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Core Principle',
+          title: 'End cleanly',
+          preppi: 'Land on the principle, decision, or takeaway.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak ending</p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
+                    “So yeah, I think it probably depends a lot and there are different ways to look at it.”
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger ending</p>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
+                    “The main thing is handling it directly and professionally without creating confusion.”
+                  </p>
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you answer again',
+          preppi: 'This is the standard you will practice next.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'Did I pause before answering?',
+                  'Did I make a clear point early?',
+                  'Did I add only helpful detail?',
+                  'Did I end on a clear takeaway?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        },
+      ]
+    }
+
     return [
     {
       eyebrow: 'Your Flagged Answer',
@@ -2252,7 +2459,7 @@ export default function TeachCard({
       ),
     }] : []),
     ]
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingDifficultQuestionsLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

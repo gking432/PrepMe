@@ -1367,268 +1367,125 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   },
   {
     rootCause: 'handling_uncertainty',
-    displayName: 'Handling Uncertainty',
-    description: 'Your answers need to sound calmer and more grounded when the path is unclear.',
+    displayName: 'Handling Difficult Questions',
+    description: 'When a question feels hard, the goal is to stay calm, make a clear point, and land somewhere solid.',
     lessons: [
       {
-        title: 'Stay Calm and Name Your First Step',
+        title: 'Stay Calm, Answer Clearly',
         difficulty: 'easy',
         teach: {
-          title: 'You do not need a perfect answer right away',
+          title: 'Stay calm, answer clearly, and land on a real point',
           explanation:
-            'Good answers about uncertainty are simple. Briefly name the unclear situation, say what you did first to get grounded, and show how you moved forward.',
+            'When a question feels difficult, unclear, or uncomfortable, the goal is not to answer perfectly right away. The goal is to stay calm under pressure, make a clear point, add only helpful detail, and end on a real takeaway.',
           example: {
-            question: 'Tell me about a time you had to work through something unclear or uncertain.',
+            question: 'How would you handle a difficult disagreement at work?',
             badAnswer:
-              'Yeah, that happens a lot. Usually I just stay flexible and figure it out as I go. I am pretty good under pressure, so I worked through it and made sure it got done.',
+              'That is a good question, and I think there are a lot of ways to look at it because every situation is different. I would want to be careful there and make sure I understood everything first before doing anything too quickly.',
+            mediumAnswer:
+              'I would probably try to talk to the person and be thoughtful about it, because communication matters a lot and I would not want the situation to get worse.',
             goodAnswer:
-              'One example was a project with a hard deadline but no clear process yet. I did not try to guess my way through it. My first step was to talk to the people involved, figure out what was actually fixed versus still open, and map the next few decisions from there. That helped me move the work forward without creating more confusion.',
+              'The main thing I would do is handle it directly and professionally. I would make sure I understood the issue clearly, then address it early so it did not create confusion or drag on. The key is staying calm and dealing with it in a way that keeps the team aligned.',
             breakdown: {
-              Ask: 'Can you stay composed when the path is not obvious?',
-              Miss: 'The weak version stays abstract and never shows a real move.',
-              WhyItWorks: 'The strong version names the uncertainty, then shows a calm first step.',
+              Composure: 'Stay calm enough to think before you talk.',
+              ClearPoint: 'Give the interviewer a clear point to follow early.',
+              HelpfulDetail: 'Add only the detail that supports the point.',
+              ClearTakeaway: 'End on the principle, decision, or takeaway.',
             },
+            annotatedStrongAnswer: [
+              {
+                label: 'Clear Point',
+                text: 'The main thing I would do is handle it directly and professionally.',
+                detail: 'This gives the interviewer a settled starting point instead of a long hedge-filled opening.',
+              },
+              {
+                label: 'Helpful Detail',
+                text: 'I would make sure I understood the issue clearly, then address it early so it did not create confusion or drag on.',
+                detail: 'This adds only the detail that helps explain the answer. It supports the point without burying it.',
+              },
+              {
+                label: 'Takeaway',
+                text: 'The key is staying calm and dealing with it in a way that keeps the team aligned.',
+                detail: 'This lands on a clear principle instead of drifting back into uncertainty.',
+              },
+            ],
           },
         },
         exercises: [
           {
+            type: 'tap_select',
+            instruction: 'Tap the parts of this answer that make it feel flustered or unclear.',
+            items: [
+              'there are probably a few ways to think about it',
+              'every situation is different',
+              'I would want to avoid reacting too quickly',
+              'the main thing would be to understand the issue clearly and address it directly',
+            ],
+            correctIndices: [0, 1],
+            explanation: 'The weak parts are the hedge-heavy phrases that circle the question. Reasonable caution is fine when it still leads to a clear point.',
+          },
+          {
             type: 'multiple_choice',
-            question: 'What makes an uncertainty answer sound more credible?',
+            question: 'Which opening gives the clearest starting point for a difficult question?',
             options: [
-              'It shows the first concrete step you took to reduce the unknowns.',
-              'It says you are naturally good under pressure.',
-              'It avoids admitting anything was unclear.',
-              'It focuses on staying positive more than what you actually did.',
+              'That is a really interesting question, and I think there are different ways to look at it.',
+              'The main thing I would say is that I would handle it directly and professionally.',
+              'It probably depends a lot on the context, honestly.',
+              'I have thought about situations like that before, and there are a lot of variables.',
             ],
-            correctIndex: 0,
-            explanation: 'Interviewers trust grounded action more than self-description.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each part of this stronger answer.',
-            segments: [
-              { text: 'The project had a deadline, but the process and ownership were still fuzzy.', correctLabel: 'Unclear situation' },
-              { text: 'My first step was to clarify what had already been decided and what still needed input.', correctLabel: 'First grounding step' },
-              { text: 'That gave us a cleaner path forward and kept the team from making conflicting assumptions.', correctLabel: 'Why it helped' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the best phrase to complete the sentence.',
-            sentenceWithBlank: 'When the situation was unclear, the first thing I did was [___] before trying to solve everything at once.',
-            options: [
-              'clarify what was known and what was still undecided',
-              'act quickly so I looked confident',
-              'wait for someone else to define the answer',
-              'talk broadly about how I handle ambiguity',
-            ],
-            correctIndex: 0,
-            explanation: 'Strong answers show how you reduced uncertainty, not how you described it.',
+            correctIndex: 1,
+            explanation: 'A strong opening gives the interviewer a point to follow early instead of circling the topic.',
           },
           {
             type: 'tap_select',
-            instruction: 'Tap the parts that improve credibility under uncertainty.',
+            instruction: 'Remove the two lines that add the least value.',
             items: [
-              'Admitting the situation was not fully clear',
-              'Naming a practical first step',
-              'Saying you just stayed calm and figured it out',
-              'Avoiding specifics so the answer sounds smoother',
+              'I would start by making sure I understood the issue clearly.',
+              'I think every situation has a lot of nuance, and there are usually a lot of emotions involved.',
+              'If it was a disagreement about execution, I would share my perspective directly and then align once a decision was made.',
+              'I have always believed communication is important in all kinds of situations.',
+              'The main thing is not letting the disagreement create confusion for the team.',
             ],
-            correctIndices: [0, 1],
-            explanation: 'Calm honesty plus a real action sounds stronger than vague confidence language.',
+            correctIndices: [1, 3],
+            explanation: 'Those lines sound reasonable, but they do not move the answer forward or make the point clearer.',
           },
-          {
-            type: 'apply_to_yourself',
-            instruction: 'Rewrite your flagged answer so it clearly shows what was uncertain and what you did first.',
-            coachingTip: 'Do not jump straight to the ending. Start by naming what was unclear, then give the first step you took to get grounded.',
-            fields: [
-              {
-                label: 'What was actually unclear?',
-                placeholder: 'Describe what you did not know yet: priorities, ownership, timeline, information, process, or decision path.',
-                helper: 'Keep it concrete. What specifically was uncertain?',
-                minWords: 12,
-              },
-              {
-                label: 'What was your first step?',
-                placeholder: 'Describe the first thing you did to reduce uncertainty.',
-                helper: 'Choose a real action, not a personality trait.',
-                minWords: 12,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        title: 'Show Judgment, Not Just Activity',
-        difficulty: 'medium',
-        teach: {
-          title: 'Explain how you decided what mattered first',
-          explanation:
-            'A better uncertainty answer does more than list actions. It shows judgment. The interviewer wants to hear how you decided where to focus when you did not have full information.',
-          example: {
-            question: 'Tell me about a time you had to make progress without having all the information.',
-            badAnswer:
-              'I usually gather as much information as I can and keep pushing until things become clearer. In this case I talked to a lot of people, looked at the details, and did what made the most sense at the time.',
-            goodAnswer:
-              'I had a situation where we needed to move forward, but we did not have every answer yet. Instead of trying to solve everything at once, I focused on the few things that would change the decision most, got clarity on those first, and then made a call. That kept the work moving without pretending we knew more than we did.',
-            breakdown: {
-              Risk: 'The weak version sounds busy, but not thoughtful.',
-              Judgment: 'The strong version shows how you decided what mattered most.',
-              WhyItWorks: 'It turns uncertainty into a clear decision process.',
-            },
-          },
-        },
-        exercises: [
           {
             type: 'multiple_choice',
-            question: 'Which answer element best shows judgment under uncertainty?',
+            question: 'Which ending lands the answer most clearly?',
             options: [
-              'Explaining how you decided which unknowns mattered most',
-              'Listing every step you took in order',
-              'Saying you kept working hard until it got resolved',
-              'Talking about how uncertainty is part of every job',
+              'So that is probably how I would think about it, but obviously every situation is different.',
+              'So yeah, I think there are a lot of ways you could handle that.',
+              'The main thing is addressing it directly without letting it create confusion or drag on.',
+              'That would be my first instinct, at least.',
             ],
-            correctIndex: 0,
-            explanation: 'Judgment comes through when you show how you prioritized, not when you sound busy.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label the parts of this stronger answer.',
-            segments: [
-              { text: 'We did not have complete information, and the team could have gone in a few directions.', correctLabel: 'Context' },
-              { text: 'I narrowed it down to the two questions that would affect the decision most.', correctLabel: 'Prioritization' },
-              { text: 'Once I had that clarity, I made a call and moved the work forward.', correctLabel: 'Decision' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the best phrase to complete the sentence.',
-            sentenceWithBlank: 'Because we did not know everything yet, I focused first on [___] so we could make a reasonable decision.',
-            options: [
-              'the few unknowns that would actually change the outcome',
-              'collecting every possible data point',
-              'sounding confident in front of the team',
-              'avoiding a decision until the picture was perfect',
-            ],
-            correctIndex: 0,
-            explanation: 'Strong candidates show prioritization and decision quality, not endless information gathering.',
-          },
-          {
-            type: 'tap_select',
-            instruction: 'Tap the statements that make an uncertainty answer sound more thoughtful.',
-            items: [
-              'I focused on the unknowns that mattered most to the decision.',
-              'I did not have every answer, so I started by narrowing the problem.',
-              'I just worked really hard and stayed flexible.',
-              'I tried to gather as much information as possible from everyone.',
-            ],
-            correctIndices: [0, 1],
-            explanation: 'The best statements show prioritization and decision-making, not just effort.',
+            correctIndex: 2,
+            explanation: 'The strongest ending sounds settled and clear instead of drifting back into uncertainty.',
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Improve your answer by making your judgment process explicit.',
-            coachingTip: 'Do not only describe motion. Describe how you decided what to focus on, what you ignored for the moment, and why.',
+            instruction: 'Rewrite this kind of answer with more control. Keep it under 3 sentences.',
+            coachingTip: 'Start with your main point. Add one helpful detail. End on the principle you would follow.',
+            evaluationType: 'handling_difficult_questions',
             fields: [
               {
-                label: 'What mattered most first?',
-                placeholder: 'Write the one or two unknowns you chose to focus on first.',
-                helper: 'Pick the factors that most affected the decision or next step.',
-                minWords: 12,
+                label: 'Main point',
+                placeholder: 'What is the clearest point you want to make first?',
+                helper: 'Give the interviewer a point to follow early.',
+                minWords: 6,
+                avoidWords: ['it depends', 'a lot of ways', 'every situation is different'],
               },
               {
-                label: 'Why did you focus there?',
-                placeholder: 'Explain why those unknowns mattered more than the rest.',
-                helper: 'This is where your judgment becomes visible.',
-                minWords: 12,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        title: 'Finish With a Real Outcome and Lesson',
-        difficulty: 'hard',
-        teach: {
-          title: 'Close the loop without sounding defensive or overly polished',
-          explanation:
-            'The strongest answers do not stop at "I handled it." They end with what happened, what decision got made, or what you learned about handling uncertainty better the next time.',
-          example: {
-            question: 'Tell me about a time you had to make a decision without perfect information.',
-            badAnswer:
-              'It was definitely challenging, but I stayed calm and trusted my instincts. In the end it worked out, and I think it taught me that ambiguity is just part of business.',
-            goodAnswer:
-              'I did not have perfect information, but I got enough clarity to make a reasonable decision and explain the tradeoff behind it. We moved forward, avoided getting stuck, and the outcome was solid. The bigger lesson for me was that in uncertain situations, people do not expect you to know everything. They expect you to reduce risk, make a sound call, and communicate it clearly.',
-            breakdown: {
-              Miss: 'The weak version has no real outcome and no grounded lesson.',
-              WhyItWorks: 'The strong version ends with a decision, result, and practical takeaway.',
-              Tone: 'It sounds calm and credible without overselling.',
-            },
-          },
-        },
-        exercises: [
-          {
-            type: 'multiple_choice',
-            question: 'What is the strongest way to end an answer about uncertainty?',
-            options: [
-              'State the outcome, the decision you made, and the lesson you took from it.',
-              'Say that everything worked out in the end.',
-              'Talk about how ambiguity is common in business.',
-              'Repeat that you stayed calm under pressure.',
-            ],
-            correctIndex: 0,
-            explanation: 'A strong ending proves the situation led to a real result and shows what you learned from it.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each part of this stronger ending.',
-            segments: [
-              { text: 'We made the decision once we had enough clarity to move responsibly.', correctLabel: 'Decision' },
-              { text: 'That kept the project from stalling and gave the team a clear direction.', correctLabel: 'Outcome' },
-              { text: 'It reinforced for me that under uncertainty, the goal is not certainty. It is sound judgment and clear communication.', correctLabel: 'Lesson' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the strongest phrase to complete the sentence.',
-            sentenceWithBlank: 'What I learned from that experience was [___], especially when the answer is not obvious right away.',
-            options: [
-              'to make the best grounded call you can and explain the reasoning clearly',
-              'to trust my instincts no matter what',
-              'that uncertainty is always stressful',
-              'to avoid decisions until everything is confirmed',
-            ],
-            correctIndex: 0,
-            explanation: 'The best lesson is practical, credible, and tied to judgment.',
-          },
-          {
-            type: 'tap_select',
-            instruction: 'Tap the parts that make the ending stronger.',
-            items: [
-              'A specific result of your approach',
-              'A lesson that sounds practical and earned',
-              'A vague line like "it all worked out"',
-              'A generic statement that ambiguity exists in every business',
-            ],
-            correctIndices: [0, 1],
-            explanation: 'A strong close proves impact and shows maturity.',
-          },
-          {
-            type: 'apply_to_yourself',
-            instruction: 'Finish your flagged answer with a stronger ending.',
-            coachingTip: 'Do not end on effort alone. Land on the call you made, what happened, and what it taught you about handling uncertainty well.',
-            fields: [
-              {
-                label: 'What happened because of your approach?',
-                placeholder: 'Write the outcome, decision, or practical result.',
-                helper: 'Even a modest outcome is better than a vague ending.',
-                minWords: 12,
+                label: 'Helpful detail',
+                placeholder: 'Add one detail that supports your point.',
+                helper: 'Support the answer without over-explaining.',
+                minWords: 8,
+                avoidWords: ['a lot of nuance', 'a lot of emotions', 'communication matters a lot'],
               },
               {
-                label: 'What did you learn about handling uncertainty?',
-                placeholder: 'Write a lesson that sounds earned, specific, and useful.',
-                helper: 'Avoid generic lines about staying confident.',
-                minWords: 12,
+                label: 'Clear takeaway',
+                placeholder: 'How do you want to land the answer?',
+                helper: 'End on a principle, decision, or takeaway.',
+                minWords: 6,
+                avoidWords: ['there are different ways', 'it depends a lot', 'that would be my instinct'],
               },
             ],
           },

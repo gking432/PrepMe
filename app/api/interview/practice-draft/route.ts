@@ -12,6 +12,7 @@ const FRAMEWORK_GUIDANCE: Record<string, string> = {
   present_past_future: 'Evaluate whether the draft correctly uses Present, Past, Future. Be strict about generic language. A weak draft can have the right structure but still fail because each section is only a label with no qualifier. A strong draft needs a real lane in Present, a real through-line in Past, and a real direction-and-fit explanation in Future. Reject answers that say things like "I work in operations" or "I worked in different roles" or "I want a good next step" without a concrete qualifier that makes the section believable.',
   noticed_fit_now: 'Evaluate whether the draft correctly uses What I noticed, Why it fits, Why now.',
   answer_reason_example: 'Evaluate whether the draft correctly uses Answer, Reason, Example.',
+  claim_example_detail_impact: 'Evaluate whether the draft correctly uses Claim, Example, Detail, Impact. Be strict about evidence quality. A weak draft can name a trait and even mention an example, but still fail if the proof stays vague. A strong draft needs a clear claim, a real example, a concrete detail that makes the example believable, and an impact line that explains what the example proves. Reject answers that rely on phrases like "I have done that before," "I stayed organized," or "that shows I care" without concrete proof.',
 }
 
 export async function POST(request: NextRequest) {

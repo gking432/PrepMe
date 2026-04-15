@@ -172,6 +172,30 @@ function annotationColors(label: string) {
     highlight: 'bg-amber-100/80',
     subtle: 'bg-amber-50',
   }
+  if (key === 'claim') return {
+    text: 'text-sky-900',
+    bg: 'bg-sky-100',
+    border: 'border-sky-200',
+    chip: 'bg-sky-100 text-sky-700',
+    highlight: 'bg-sky-100/80',
+    subtle: 'bg-sky-50',
+  }
+  if (key === 'detail') return {
+    text: 'text-violet-900',
+    bg: 'bg-violet-100',
+    border: 'border-violet-200',
+    chip: 'bg-violet-100 text-violet-700',
+    highlight: 'bg-violet-100/80',
+    subtle: 'bg-violet-50',
+  }
+  if (key === 'impact') return {
+    text: 'text-rose-900',
+    bg: 'bg-rose-100',
+    border: 'border-rose-200',
+    chip: 'bg-rose-100 text-rose-700',
+    highlight: 'bg-rose-100/80',
+    subtle: 'bg-rose-50',
+  }
   return {
     text: 'text-slate-900',
     bg: 'bg-slate-100',
@@ -223,6 +247,10 @@ export default function TeachCard({
   const isAnswerReasonExampleLesson = useMemo(() => {
     const keys = frameworkRows.map(([key]) => key.toLowerCase())
     return ['answer', 'reason', 'example'].every((key) => keys.includes(key))
+  }, [frameworkRows])
+  const isClaimExampleDetailImpactLesson = useMemo(() => {
+    const keys = frameworkRows.map(([key]) => key.toLowerCase())
+    return ['claim', 'example', 'detail', 'impact'].every((key) => keys.includes(key))
   }, [frameworkRows])
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
@@ -1317,6 +1345,236 @@ export default function TeachCard({
       ]
     }
 
+    if (isClaimExampleDetailImpactLesson) {
+      return [
+        {
+          eyebrow: 'Your Flagged Answer',
+          title: originalQuestion || example.question,
+          preppi: 'We should start with the exact miss first, not generic advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Question Type',
+          title: 'What kind of answer this needed',
+          preppi: 'This answer needed more than a claim. It needed proof the interviewer could believe.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'What are your strengths?',
+                  'How would your coworkers describe you?',
+                  'What makes you good at prioritizing?',
+                  'You mentioned being organized — can you give me an example?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Best use: strengths, self-description, follow-up proof, and evidence-based answers.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Scoring Logic',
+          title: 'What interviewers are actually listening for',
+          preppi: 'A claim without proof is hard to trust.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'what you are claiming',
+                  'what real example supports it',
+                  'what detail makes it believable',
+                  'what the example shows about you',
+                ].map((line, index) => (
+                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  A claim without proof is hard to trust.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'The Structure',
+          title: 'The structure',
+          preppi: 'The goal is not just to sound good. The goal is to sound believable.',
+          content: (
+            <div className="space-y-3">
+              {frameworkRows.map(([key, value], index) => (
+                <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Compare',
+          title: 'Weak vs better vs strong',
+          preppi: 'The difference here is evidence quality. Structured is not enough if the proof still sounds broad.',
+          content: (
+            <div className="space-y-4">
+              {[
+                ['Weak', example.badAnswer, 'rose', 'This makes a claim and leaves it unsupported.'],
+                ['Better but still weak', example.mediumAnswer || '', 'amber', 'There is some shape, but the proof is still too broad.'],
+                ['Strong', example.goodAnswer, 'emerald', 'This gives real proof, concrete detail, and a clear takeaway.'],
+              ].map(([label, answer, tone, note]) => {
+                const styles = tone === 'rose'
+                  ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
+                  : tone === 'amber'
+                    ? ['border-amber-200', 'bg-amber-50/70', 'border-amber-200 bg-amber-100/80', 'text-amber-700', 'text-amber-900']
+                    : ['border-emerald-200', 'bg-emerald-50/70', 'border-emerald-200 bg-emerald-100/80', 'text-emerald-600', 'text-emerald-900']
+                return (
+                  <div key={label} className={`overflow-hidden rounded-2xl border-2 ${styles[0]} ${styles[1]} shadow-sm`}>
+                    <div className={`px-4 py-3 ${styles[2]}`}>
+                      <span className={`text-xs font-bold uppercase tracking-wide ${styles[3]}`}>{label}</span>
+                    </div>
+                    <div className="space-y-3 px-4 py-4">
+                      <p className={`text-base leading-relaxed ${styles[4]}`}>&ldquo;{answer}&rdquo;</p>
+                      <p className="text-sm leading-relaxed text-slate-600">{note}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'See It In Action',
+          title: 'See the strong answer with the framework applied',
+          preppi: 'This is the proof of concept. The strong answer works because each part does a different job.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                <div className="flex flex-wrap gap-2">
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span key={`${part.label}-pill-${index}`} className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                    )
+                  })}
+                </div>
+                <p className="mt-4 text-base leading-relaxed text-slate-900">
+                  &ldquo;
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span key={`${part.label}-highlight-${index}`} className={`rounded px-1.5 py-0.5 ${colors.highlight}`}>
+                        {part.text}
+                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
+                      </span>
+                    )
+                  })}
+                  &rdquo;
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {example.annotatedStrongAnswer?.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <div key={`${part.label}-detail-${index}`} className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">{part.detail}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Common Mistake',
+          title: 'The most common mistake',
+          preppi: 'Many answers sound polished, but still weak.',
+          content: (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  They make a claim, add a vague example, and never include the detail that makes the story feel true.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Do not stop at “for example.” Make the proof concrete.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you answer again',
+          preppi: 'This is the standard to keep in your head while you practice.',
+          content: (
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                {[
+                  'Did I make a clear claim?',
+                  'Did I give a real example?',
+                  'Did I add a concrete detail?',
+                  'Did I explain what that example shows?',
+                ].map((line) => (
+                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  That is the standard you will practice next.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ]
+    }
+
     return [
     {
       eyebrow: 'Your Flagged Answer',
@@ -1552,7 +1810,7 @@ export default function TeachCard({
       ),
     }] : []),
     ]
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

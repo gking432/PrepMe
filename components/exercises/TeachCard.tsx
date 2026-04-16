@@ -349,6 +349,10 @@ export default function TeachCard({
     () => lessonTitle === 'Career Alignment',
     [lessonTitle]
   )
+  const isPaceAndFlowLesson = useMemo(
+    () => lessonTitle === 'Pace and Flow',
+    [lessonTitle]
+  )
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
   const placeholderMatchesQuestion = useMemo(() => {
@@ -1399,6 +1403,231 @@ export default function TeachCard({
                   'Did I connect it to my background?',
                   'Did I explain why this move makes sense now?',
                   'Does this sound intentional, not generic?',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  That is the standard you will practice next.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ])
+    }
+
+    if (isPaceAndFlowLesson) {
+      return withIntro([
+        {
+          eyebrow: 'Your Flagged Answer',
+          title: originalQuestion || example.question,
+          preppi: 'Start with the flagged moment so the coaching stays tied to the real interaction, not abstract speaking advice.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the interaction from there.
+                  </p>
+                </div>
+              )}
+              <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Conversation Quality',
+          title: 'What this answer was missing',
+          preppi: 'This is about interview rhythm, not just answer content.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                This answer needed better pace and flow.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                Even strong content can feel awkward if the conversation has long silences, interruptions, rushed answers, or abrupt transitions.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  This lesson helps your interview sound more natural and easier to follow.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Scoring Logic',
+          title: 'What interviewers are actually listening for',
+          preppi: 'They are not just listening for good answers. They are also noticing how the interaction feels.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'natural',
+                  'attentive',
+                  'easy to follow',
+                  'conversational',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  They are not just listening for good answers. They are also noticing how the interaction feels.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Pauses',
+          title: 'Short pauses are fine',
+          preppi: 'Not every pause is a problem.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                A short pause to think is normal.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                In many interviews, a brief pause sounds more thoughtful than jumping in too fast.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Not every pause is a problem.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Dead Air',
+          title: 'Long silence changes the energy',
+          preppi: 'A thoughtful pause is fine. A long dead-air pause changes the tone.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                If the pause stretches too long, the conversation can start to feel stalled or uncertain.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                That makes it harder for the interview to keep a natural rhythm.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  A thoughtful pause is fine. A long dead-air pause changes the tone.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Pacing',
+          title: 'Do not rush the answer',
+          preppi: 'Fast is not the same as strong.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                Rushed answers often sound nervous or over-rehearsed.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                A strong pace gives the interviewer time to follow your point and makes you sound more settled.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Fast is not the same as strong.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Turn Taking',
+          title: 'Let the interviewer finish',
+          preppi: 'Good timing shows attentiveness.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                Interrupting can break the flow of the conversation, even if you are trying to sound enthusiastic.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                Wait until the interviewer finishes the question before you begin.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Good timing shows attentiveness.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Transitions',
+          title: 'Use simple transitions',
+          preppi: 'Transitions help the conversation move smoothly.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  '“The main thing I’d say is…”',
+                  '“What stands out most is…”',
+                  '“A good example of that is…”',
+                  '“The reason I mention that is…”',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Transitions help the conversation move smoothly.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Back And Forth',
+          title: 'Good interviews feel like back-and-forth',
+          preppi: 'The goal is not just to respond. The goal is to interact well.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'an interrogation',
+                  'a speech',
+                  'a race to answer',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                A strong interview should not feel like any of those. It should feel like a real conversation with clear back-and-forth.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  The goal is not just to respond. The goal is to interact well.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you answer again',
+          preppi: 'This is the editing lens to keep in your head while you practice.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'Did I pause naturally without disappearing?',
+                  'Did I avoid rushing?',
+                  'Did I let the interviewer finish?',
+                  'Did my answer sound conversational?',
+                  'Did the exchange feel like back-and-forth?',
                 ]}
               />
               <div className="border-t border-violet-100 pt-3">
@@ -2665,7 +2894,7 @@ export default function TeachCard({
       ),
     }] : []),
     ])
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isCareerAlignmentLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isCareerAlignmentLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPaceAndFlowLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

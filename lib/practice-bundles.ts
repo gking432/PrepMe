@@ -623,249 +623,138 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
   {
     rootCause: 'weak_communication',
     displayName: 'Pace & Flow',
-    description: "Hedge words are killing your credibility. Let's cut them.",
+    description: 'Your interview should sound natural, attentive, and easy to follow.',
     lessons: [
       {
-        title: 'Recognizing Hedge Words',
+        title: 'Pace and Flow',
         difficulty: 'easy',
         teach: {
-          title: 'Cut the Hedges',
+          title: 'Make the conversation feel natural and easy to follow',
           explanation:
-            'Confident delivery uses three habits: remove hedge words, lead with the answer, and use active voice. Hedge words like "maybe," "kind of," or "I think" make a solid point sound uncertain. Start with the claim, then support it directly.',
+            'A strong interview does not just depend on what you say. It also depends on how the conversation feels. Good pace and flow make your answers easier to follow and make the interview feel more natural.',
           example: {
-            question: 'Why should we hire you?',
+            question: 'Why are you interested in this role?',
             badAnswer:
-              'I think I would probably be a pretty good fit because I have kind of done similar work before and I guess I learn quickly.',
+              'Yeah definitely so I’m interested because I’ve done similar work before and I think it’s a great opportunity and I’m ready for something new and I think I could contribute quickly because I’ve worked cross-functionally and I really like fast-moving environments.',
+            mediumAnswer:
+              'I’m interested in the role because I’ve done similar work before and I think it’s a good opportunity and I want to keep growing and I think I’d be a strong fit because I’ve worked across teams and I like fast-moving work.',
             goodAnswer:
-              'You should hire me because I have already done this work at scale. I led a process redesign that cut response time by 35%, and I can bring that same operational discipline to this role.',
+              'The main thing that interests me is how closely the role sits to the kind of cross-functional work I’ve been doing already. I’ve worked in fast-moving environments before, and I’m looking for a role where that kind of coordination is more central to the job.',
             breakdown: {
-              NoHedges: 'The weak version wobbles with "I think," "probably," and "kind of."',
-              LeadWithAnswer: 'The strong version starts with the answer right away.',
-              ActiveVoice: 'It says "I led" instead of hiding behind vague phrasing.',
+              Rhythm: 'A strong answer should sound calm and easy to track.',
+              Transition: 'One simple transition helps the answer begin naturally.',
+              Flow: 'The ideas should build clearly instead of piling up too fast.',
             },
+            annotatedStrongAnswer: [
+              {
+                label: 'Transition',
+                text: 'The main thing that interests me is how closely the role sits to the kind of cross-functional work I’ve been doing already.',
+                detail: 'This starts smoothly and gives the interviewer one clear point to follow.',
+              },
+              {
+                label: 'Steady pace',
+                text: 'I’ve worked in fast-moving environments before, and I’m looking for a role where that kind of coordination is more central to the job.',
+                detail: 'The answer unfolds in clear pieces instead of rushing through every idea at once.',
+              },
+            ],
           },
         },
         exercises: [
           {
             type: 'multiple_choice',
-            question: 'Which phrase is a hedge word?',
-            options: ['I led the rollout', 'We shipped on time', 'I think we improved it', 'Revenue rose 12%'],
-            correctIndex: 2,
-            explanation: '"I think" weakens certainty and sounds less credible.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each segment with the communication habit it best represents.',
-            segments: [
-              { text: 'You should hire me because I have managed this exact type of launch.', correctLabel: 'Lead with the answer' },
-              { text: 'I removed the manual approval step.', correctLabel: 'Active voice' },
-              { text: 'I probably could help here.', correctLabel: 'Hedge word' },
-              { text: 'I owned the customer handoff design.', correctLabel: 'Active voice' },
+            question: 'Which response sounds more natural in an interview?',
+            options: [
+              'Interviewer: "What interests you about this role?" Candidate: pauses briefly, then says, "What stands out most to me is how closely the role sits to cross-functional execution."',
+              'Interviewer: "What interests you about this role?" Candidate: long silence, then says, "Sorry, give me one more second... I’m still thinking... okay..."',
             ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the missing word.',
-            sentenceWithBlank: 'To sound more confident, cut [___] words like "maybe" and "sort of."',
-            options: ['hedge', 'transition', 'technical', 'filler'],
             correctIndex: 0,
-            explanation: 'Hedge words soften the statement and reduce confidence.',
+            explanation: 'A short pause often sounds thoughtful. A long, extended silence starts to break the conversational rhythm.',
           },
           {
             type: 'tap_select',
-            instruction: 'Tap all hedge words.',
-            items: ['maybe', 'probably', 'led', 'kind of', 'delivered'],
+            instruction: 'Tap the parts that make this answer feel too fast or abrupt.',
+            items: [
+              'No pause or transition at the start',
+              'A pileup of “and” clauses',
+              'One clear main point early',
+              'The answer never settles on one main point',
+            ],
             correctIndices: [0, 1, 3],
-            explanation: 'The hedge words are "maybe," "probably," and "kind of."',
+            explanation: 'Rushed answers get harder to follow when they stack ideas too quickly and never settle on a clear point.',
           },
           {
             type: 'multiple_choice',
-            question: 'Which answer leads with the answer?',
+            question: 'Which opening makes this answer feel most conversational?',
             options: [
-              'Well, there are a few ways to think about it.',
-              'I guess one thing I would say is that communication matters.',
-              'Yes. My strongest fit is stakeholder management in fast-moving teams.',
-              'It probably depends on the situation.',
-            ],
-            correctIndex: 2,
-            explanation: 'It answers directly first, then leaves room to support the claim.',
-          },
-        ],
-      },
-      {
-        title: 'Replacing Soft Language',
-        difficulty: 'medium',
-        teach: {
-          title: 'The hard part is cutting soft openers without sounding robotic',
-          explanation:
-            'You do not need to sound aggressive. You need to sound clear. Replace soft openers with direct claims and use active verbs that show ownership.',
-          example: {
-            question: 'What is your leadership style?',
-            badAnswer:
-              'I would say I am probably pretty collaborative, and I try to help the team where I can.',
-            goodAnswer:
-              'My leadership style is collaborative and direct. I set clear priorities, remove blockers early, and give teams enough context to move without waiting on me.',
-            breakdown: {
-              DirectClaim: 'The first sentence answers the question immediately.',
-              ActiveVerbs: 'Set, remove, and give make the answer sound owned.',
-              Tone: 'The delivery is clear without sounding aggressive.',
-            },
-          },
-        },
-        exercises: [
-          {
-            type: 'multiple_choice',
-            question: 'Which revision is most confident without sounding arrogant?',
-            options: [
-              'I guess I am sort of good at managing projects.',
-              'I am the best project manager you will ever meet.',
-              'I manage projects by setting milestones, clarifying owners, and tracking risks early.',
-              'Project work is something I have maybe done a little.',
-            ],
-            correctIndex: 2,
-            explanation: 'It is direct, specific, and grounded without exaggeration.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each phrase by the communication habit it illustrates.',
-            segments: [
-              { text: 'Yes. I enjoy mentoring because I like turning ambiguity into clear next steps.', correctLabel: 'Lead with the answer' },
-              { text: 'The process was redesigned by me.', correctLabel: 'Passive voice' },
-              { text: 'I kind of helped with the launch.', correctLabel: 'Hedge word' },
-              { text: 'I redesigned the launch checklist.', correctLabel: 'Active voice' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Pick the strongest replacement.',
-            sentenceWithBlank: 'Replace "I think I could help" with "[___] can help by reducing response time and clarifying ownership."',
-            options: ['I', 'maybe I', 'I guess I', 'sort of I'],
-            correctIndex: 0,
-            explanation: 'A direct first-person subject removes the hedge and keeps the sentence clean.',
-          },
-          {
-            type: 'tap_select',
-            instruction: 'Tap the phrases that weaken credibility.',
-            items: [
-              'I probably would approach it this way.',
-              'I led the rollout across three teams.',
-              'I guess the result was positive.',
-              'I reduced rework by 20%.',
-            ],
-            correctIndices: [0, 2],
-            explanation: 'The correct choices hedge. The other two are direct and credible.',
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the missing habit.',
-            sentenceWithBlank: 'If your sentence starts with "Well, it depends," you probably failed to [___].',
-            options: ['lead with the answer', 'use a bigger metric', 'add more context', 'tell a longer story'],
-            correctIndex: 0,
-            explanation: 'You should answer first, then explain nuance if needed.',
-          },
-        ],
-      },
-      {
-        title: 'Sounding Clear in Edge Cases',
-        difficulty: 'hard',
-        teach: {
-          title: 'Confidence is clarity, not overclaiming',
-          explanation:
-            'Edge case: some candidates remove hedges by making claims that are too absolute. The goal is a direct answer that is still accurate. State the answer clearly, then qualify with evidence instead of verbal wobbling.',
-          example: {
-            question: 'How do you handle conflict?',
-            badAnswer:
-              'I never really have conflict, and I am always able to fix it right away.',
-            goodAnswer:
-              'I address conflict early and directly. I start by clarifying the disagreement, align on the decision needed, and document next steps so the issue does not keep resurfacing.',
-            breakdown: {
-              EdgeCase: 'Do not replace hedging with fake certainty like "always" or "never."',
-              ClearClaim: 'Start with a direct statement of how you handle conflict.',
-              Support: 'Back the claim with process instead of exaggeration.',
-            },
-          },
-        },
-        exercises: [
-          {
-            type: 'multiple_choice',
-            question: 'Which answer is confident and credible?',
-            options: [
-              'I never make mistakes in communication.',
-              'I probably communicate well most of the time.',
-              'I communicate directly, summarize decisions in writing, and confirm owners before work starts.',
-              'Maybe I am strong at communication depending on the team.',
-            ],
-            correctIndex: 2,
-            explanation: 'It is direct, specific, and believable without overclaiming.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each phrase with the best fit.',
-            segments: [
-              { text: 'I always solve every stakeholder issue instantly.', correctLabel: 'Overclaim' },
-              { text: 'I address stakeholder issues early and clarify decision owners.', correctLabel: 'Lead with the answer' },
-              { text: 'The escalation was resolved by me.', correctLabel: 'Passive voice' },
-              { text: 'I resolved the escalation within one business day.', correctLabel: 'Active voice' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Complete the coaching sentence.',
-            sentenceWithBlank: 'The safest way to sound confident is to make a direct claim and support it with [___].',
-            options: ['evidence', 'hedges', 'jokes', 'volume'],
-            correctIndex: 0,
-            explanation: 'Evidence keeps the answer confident without drifting into exaggeration.',
-          },
-          {
-            type: 'tap_select',
-            instruction: 'Tap the phrases that should be cut or revised.',
-            items: [
-              'always',
-              'never',
-              'I led the migration',
-              'sort of',
-              'probably',
-            ],
-            correctIndices: [0, 1, 3, 4],
-            explanation: '"Always" and "never" often overclaim; "sort of" and "probably" hedge. "I led the migration" is strong.',
-          },
-          {
-            type: 'multiple_choice',
-            question: 'What is the best opening to a difficult answer?',
-            options: [
-              'That is a great question and there are a lot of ways to think about it.',
-              'Yes. The main risk was timing, so I reduced it by sequencing the rollout in phases.',
-              'I guess I would maybe start by saying it was complicated.',
-              'It always works out when people communicate.',
+              'Yeah definitely so I think there are a lot of reasons honestly...',
+              'The main thing I’d say is that the role sits close to the kind of work I’ve been doing already.',
+              'I guess I’d probably say maybe the opportunity itself is strong.',
+              'There are a few things and I’ll just kind of jump in.',
             ],
             correctIndex: 1,
-            explanation: 'It leads with a clear answer and stays grounded in a real action.',
+            explanation: 'A simple transition helps the answer start naturally and gives the interviewer something clear to follow.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which interaction has better flow?',
+            options: [
+              'Interviewer: "Tell me a bit about your background." Candidate: "Sure—right now I work in operations, mostly around coordination and follow-through across teams..."',
+              'Interviewer: "Tell me a bit about your background." Candidate: "Yeah and actually before I answer that I just wanted to say—" Interviewer: "Go ahead." Candidate: "Right, sorry—so basically..."',
+            ],
+            correctIndex: 0,
+            explanation: 'The stronger interaction respects turn-taking and moves into the answer smoothly.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which line does the best job of showing grounded rhythm without pretending we can measure exact timing from text alone?',
+            options: [
+              'I’d just start talking so there’s no silence.',
+              'I’d pause briefly, then start with one clear point.',
+              'I’d wait until I felt completely ready before saying anything.',
+              'I’d answer as fast as possible so it sounds confident.',
+            ],
+            correctIndex: 1,
+            explanation: 'The goal is recognizable interview rhythm: a natural pause, then a clear starting point. We are not coaching stopwatch precision from text alone.',
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Apply it to yourself. Draft a confident answer without hedging.',
-            coachingTip: 'Lead with the answer. Cut soft qualifiers. Then support the claim with one specific proof point.',
+            instruction: 'Rewrite this answer so it sounds calmer and more conversational.',
+            coachingTip: 'Use one simple transition, focus on one main point first, and make the answer easier to follow out loud. We are not coaching perfect vocal delivery here. We are coaching recognizable interview rhythm: cleaner starts, smoother flow, and better back-and-forth.',
+            evaluationType: 'pace_and_flow',
             fields: [
               {
-                label: 'Direct opening',
-                placeholder: 'Write the first sentence the interviewer should hear.',
-                helper: 'Lead with the answer instead of circling around it.',
-                minWords: 6,
-                avoidWords: ['maybe', 'probably', 'kind of', 'sort of', 'i think', 'i guess'],
+                label: 'Smoother opening',
+                placeholder: 'Start with one simple transition and one clear point.',
+                helper: 'Avoid abrupt starts like “yeah definitely so...”',
+                minWords: 8,
+                avoidWords: ['yeah definitely so', 'there are a lot of reasons', 'i’ll just jump in'],
               },
               {
-                label: 'Supporting proof',
-                placeholder: 'Add one concrete line that backs up your claim.',
-                helper: 'Use active voice and direct ownership.',
-                minWords: 10,
-                avoidWords: ['maybe', 'probably', 'kind of', 'sort of', 'i think', 'i guess'],
+                label: 'Clearer flow',
+                placeholder: 'Rewrite the middle so the ideas build instead of piling up.',
+                helper: 'Break the answer into clear pieces the interviewer can follow.',
+                minWords: 12,
+                avoidWords: ['and i', 'and i think', 'and also', 'kind of'],
               },
               {
-                label: 'Tight close',
-                placeholder: 'Write a concise closing line that sounds clear and credible.',
-                helper: 'No overclaiming. No wobbling.',
-                minWords: 6,
-                avoidWords: ['always', 'never', 'maybe', 'probably', 'kind of', 'sort of'],
+                label: 'More settled ending',
+                placeholder: 'End on one clear sentence that sounds easy to follow.',
+                helper: 'Keep it conversational, not robotic.',
+                minWords: 8,
+              },
+            ],
+          },
+          {
+            type: 'apply_to_yourself',
+            instruction: 'Answer the flagged question again with better pace and flow.',
+            coachingTip: 'Pause naturally, do not rush the first sentence, use one simple transition, and aim for conversation instead of speed.',
+            evaluationType: 'pace_and_flow',
+            fields: [
+              {
+                label: 'Retry answer',
+                placeholder: 'Answer the flagged question again in a way that sounds easier to follow and more conversational.',
+                helper: 'The goal is not to sound robotic or perfectly polished. The goal is to sound natural and easy to talk through.',
+                minWords: 20,
               },
             ],
           },

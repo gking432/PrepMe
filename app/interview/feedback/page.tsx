@@ -22,6 +22,16 @@ import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
+function parseSessionRoleContext(jobDescriptionText?: string | null) {
+  if (!jobDescriptionText) return { role: '', company: '' }
+  const companyMatch = jobDescriptionText.match(/^Company:\s*(.+)$/m)
+  const positionMatch = jobDescriptionText.match(/^Position:\s*(.+)$/m)
+  return {
+    role: positionMatch?.[1]?.trim() || '',
+    company: companyMatch?.[1]?.trim() || '',
+  }
+}
+
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('results')
   const [isPremium, setIsPremium] = useState(false)
@@ -308,7 +318,7 @@ export default function InterviewDashboard() {
       if (sessionIdFromUrl) {
         const { data: sessionById } = await supabase
           .from('interview_sessions')
-          .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
+          .select('id, stage, completed_at, created_at, duration_seconds, user_interview_data_id')
           .eq('id', sessionIdFromUrl)
           .maybeSingle()
         
@@ -323,7 +333,7 @@ export default function InterviewDashboard() {
       if (!sessionData && session) {
         const { data: sessionByUser } = await supabase
           .from('interview_sessions')
-          .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
+          .select('id, stage, completed_at, created_at, duration_seconds, user_interview_data_id')
           .eq('user_id', session.user.id)
           .eq('status', 'completed')
           .order('completed_at', { ascending: false })
@@ -344,7 +354,7 @@ export default function InterviewDashboard() {
           // Load feedback by session ID (works for both logged-in and anonymous users)
           const { data: sessionById } = await supabase
             .from('interview_sessions')
-            .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
+            .select('id, stage, completed_at, created_at, duration_seconds, user_interview_data_id')
             .eq('id', lastSessionId)
             .eq('status', 'completed')
             .maybeSingle()
@@ -362,7 +372,7 @@ export default function InterviewDashboard() {
       if (!sessionData) {
         const { data: anySession } = await supabase
           .from('interview_sessions')
-          .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
+          .select('id, stage, completed_at, created_at, duration_seconds, user_interview_data_id')
           .eq('status', 'completed')
           .order('completed_at', { ascending: false })
           .limit(1)
@@ -376,6 +386,24 @@ export default function InterviewDashboard() {
 
       if (sessionData) {
         console.log('Found session data:', sessionData.id)
+
+        if (!sessionData.job_title && !sessionData.company_name && sessionData.user_interview_data_id) {
+          const { data: linkedInterviewData } = await supabase
+            .from('user_interview_data')
+            .select('job_description_text')
+            .eq('id', sessionData.user_interview_data_id)
+            .maybeSingle()
+
+          if (linkedInterviewData?.job_description_text) {
+            const context = parseSessionRoleContext(linkedInterviewData.job_description_text)
+            sessionData = {
+              ...sessionData,
+              job_title: context.role,
+              company_name: context.company,
+            }
+          }
+        }
+
         setCurrentSessionData(sessionData) // Store session data in state
         
         // Set default tab to the most recent completed interview

@@ -345,6 +345,10 @@ export default function TeachCard({
     () => lessonTitle === 'Stay Grounded When You Are Unsure',
     [lessonTitle]
   )
+  const isCareerAlignmentLesson = useMemo(
+    () => lessonTitle === 'Career Alignment',
+    [lessonTitle]
+  )
   const placeholderQuestion = useMemo(() => extractPlaceholderQuestion(originalAnswer), [originalAnswer])
   const originalAnswerMissing = useMemo(() => /^No response provided to:/i.test((originalAnswer || '').trim()), [originalAnswer])
   const placeholderMatchesQuestion = useMemo(() => {
@@ -1203,6 +1207,200 @@ export default function TeachCard({
                   </div>
                 ))}
               </div>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  That is the standard you will practice next.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ])
+    }
+
+    if (isCareerAlignmentLesson) {
+      return withIntro([
+        {
+          eyebrow: 'Your Flagged Answer',
+          title: originalQuestion || example.question,
+          preppi: 'Start with the exact answer that got flagged so the coaching stays anchored in the real miss.',
+          content: (
+            <div className="space-y-4">
+              {safeOriginalAnswer ? (
+                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
+                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
+                  </div>
+                  <div className="px-4 py-4">
+                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
+                  </p>
+                </div>
+              )}
+              <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
+                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Alignment',
+          title: 'What this answer was missing',
+          preppi: 'The goal here is not just to sound interested. The move needs to make sense.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                This answer needed a stronger sense of alignment.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                When you answer &ldquo;Why this role?&rdquo; the goal is not just to sound interested. The goal is to make the move feel logical and intentional.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Best use: &ldquo;Why this role?&rdquo; &ldquo;Why this position?&rdquo; &ldquo;What&apos;s prompting the move?&rdquo; &ldquo;Why now?&rdquo;
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Scoring Logic',
+          title: 'What interviewers are actually listening for',
+          preppi: 'They are not just asking whether you want the role. They are asking whether the move makes sense.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'specific interest',
+                  'relevance to your background',
+                  'clear timing',
+                  'a logical next step',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  They are not just asking whether you want the role. They are asking whether the move makes sense.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Generic Interest',
+          title: 'Weak alignment usually sounds generic',
+          preppi: 'Positive language is not enough if it could apply to almost any job.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  '“It seems like a great opportunity.”',
+                  '“I’m ready for a new challenge.”',
+                  '“I want to use my skills in a new role.”',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  Generic interest is not enough.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Connection',
+          title: 'Strong alignment connects the role to your background',
+          preppi: 'A stronger answer should make the fit feel natural, not aspirational.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'what part of the role stands out',
+                  'how it fits the work you have been doing',
+                  'why that makes this move feel natural',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  The role should connect to your direction, not just your desire for change.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Timing',
+          title: 'Timing should sound intentional',
+          preppi: 'This is one of the easiest places for the answer to slip back into generic job-seeking.',
+          content: (
+            <ContrastText
+              weakLabel="Weak timing"
+              weakText="I’m ready for something new."
+              strongLabel="Stronger timing"
+              strongText="The timing makes sense because I’m looking for a role where this kind of work is more central to what I do."
+            />
+          ),
+        },
+        {
+          eyebrow: 'Specificity',
+          title: 'Do not sound like you would take anything',
+          preppi: 'If the answer could work in every interview, it does not sound aligned yet.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                A weak answer can make your interest sound broad or unfocused.
+              </p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                If your answer could apply to almost any role, it does not sound aligned yet.
+              </p>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  A strong answer should feel specific enough that it could not be copied into every interview.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Landing',
+          title: 'Strong answers land on a clear next step',
+          preppi: 'By the end, the interviewer should understand why this move is coherent.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'why this role fits your background',
+                  'why it stands out to you',
+                  'why this move makes sense now',
+                ]}
+              />
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  The goal is to make the next step feel coherent.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Self Check',
+          title: 'Use this check before you answer again',
+          preppi: 'This is the editing lens to keep in your head while you practice.',
+          content: (
+            <div className="space-y-4">
+              <TeachingList
+                items={[
+                  'Did I say what specifically interests me here?',
+                  'Did I connect it to my background?',
+                  'Did I explain why this move makes sense now?',
+                  'Does this sound intentional, not generic?',
+                ]}
+              />
               <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
@@ -2467,7 +2665,7 @@ export default function TeachCard({
       ),
     }] : []),
     ])
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isCareerAlignmentLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

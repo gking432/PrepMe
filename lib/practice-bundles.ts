@@ -1517,264 +1517,141 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
     description: 'Your answers need to explain more clearly why this role makes sense for you now.',
     lessons: [
       {
-        title: 'Explain Why This Role Makes Sense Now',
+        title: 'Career Alignment',
         difficulty: 'easy',
         teach: {
-          title: 'Give a clear next-step reason',
+          title: 'Make the move feel logical and intentional',
           explanation:
-            'A strong answer does not need a big story. It should quickly explain what you have been doing, what you want more of next, and why this role fits that direction now.',
+            'When you answer “Why this role?” the interviewer is not just listening for interest. They are listening for whether the move makes sense. A strong answer should sound specific, connected to your background, and clear on why now.',
           example: {
             question: 'Why are you interested in this role?',
             badAnswer:
-              'I am really open right now and this looked like a great opportunity. I think I could do well in a role like this, and I am excited to keep growing.',
+              'I’m interested in this role because it seems like a good opportunity, and I think it would be a strong next step for me. I’m ready for a new challenge and I think I could bring a lot to the position.',
+            mediumAnswer:
+              'What stood out to me is that the role seems fast-paced and cross-functional. I’ve done work like that before, and that definitely interests me.',
             goodAnswer:
-              'What makes this role interesting to me is that it feels like a natural next step from the work I have already been doing. I have been in roles where I had to balance execution, communication, and follow-through, and I want to keep building in that direction in a role where that is more central to the job.',
+              'What stands out to me is that this role sits close to the kind of coordination and follow-through work I’ve been doing already. That fits well with my background, because a lot of my recent work has involved keeping cross-functional work moving. The timing makes sense because I’m looking for a role where that work is more central and more directly owned.',
             breakdown: {
-              Ask: 'Do you have a real reason this role fits now?',
-              Miss: 'The weak version sounds open-ended and generic.',
-              WhyItWorks: 'The strong version connects past work to a clear next step.',
+              SpecificInterest: 'Say what specifically stands out about the role.',
+              Connection: 'Connect that interest to the work you have already been doing.',
+              Timing: 'Explain why this move makes sense now, not just why you want change.',
             },
+            annotatedStrongAnswer: [
+              {
+                label: 'Specific interest',
+                text: 'What stands out to me is that this role sits close to the kind of coordination and follow-through work I’ve been doing already.',
+                detail: 'This points to something real about the role instead of relying on generic praise.',
+              },
+              {
+                label: 'Connection',
+                text: 'That fits well with my background, because a lot of my recent work has involved keeping cross-functional work moving.',
+                detail: 'This explains why the role fits by connecting it to real background, not just broad potential.',
+              },
+              {
+                label: 'Timing',
+                text: 'The timing makes sense because I’m looking for a role where that work is more central and more directly owned.',
+                detail: 'This makes the move sound intentional and logical, not just job-seeking.',
+              },
+            ],
           },
         },
         exercises: [
           {
             type: 'multiple_choice',
-            question: 'Which answer sounds most intentional?',
+            question: 'Which answer sounds more aligned?',
             options: [
-              'This role makes sense because it builds on work I have already done and moves me further in the direction I want to keep growing.',
-              'I am exploring a lot of options right now, and this one stood out.',
-              'It seems like a great opportunity and I am excited about anything that could be a good fit.',
-              'I think I could probably do a lot of different jobs at this point.',
+              'I’m interested in this role because it seems like a great opportunity and I’m ready for a new challenge.',
+              'I’m interested in this role because it sits close to the kind of coordination and follow-through work I’ve been doing already, and I’m looking for a role where that work is more central to what I do.',
             ],
-            correctIndex: 0,
-            explanation: 'The best answer sounds chosen. It explains fit and direction, not general openness.',
+            correctIndex: 1,
+            explanation: 'It connects the role to the candidate’s background and explains why the move makes sense now.',
           },
-          {
-            type: 'label_sort',
-            instruction: 'Label each part of this stronger answer.',
-            segments: [
-              { text: 'In my recent work, I have spent a lot of time coordinating across people and driving execution.', correctLabel: 'Relevant background' },
-              { text: 'What I want next is a role where that kind of work is more central.', correctLabel: 'Direction' },
-              { text: 'That is why this position feels like a logical next step for me.', correctLabel: 'Why this role now' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the best phrase to complete the answer.',
-            sentenceWithBlank: 'I am interested in this role because it feels like a [___] from the work I have already been doing.',
-            options: [
-              'natural next step',
-              'random new challenge',
-              'safe option for now',
-              'chance to try something totally unrelated',
-            ],
-            correctIndex: 0,
-            explanation: 'Career alignment sounds strongest when the role feels connected, not random.',
-          },
-          {
-            type: 'tap_select',
-            instruction: 'Tap the parts that improve career alignment.',
-            items: [
-              'A clear link to your recent experience',
-              'A believable reason this role fits now',
-              'A vague statement that you are open to anything',
-              'A generic line about wanting to grow',
-            ],
-            correctIndices: [0, 1],
-            explanation: 'Strong alignment answers connect your background to a real next step.',
-          },
-          {
-            type: 'apply_to_yourself',
-            instruction: 'Write a tighter answer to "Why are you interested in this role?"',
-            coachingTip: 'Keep it simple: what you have been doing, what you want more of, and why this role matches that now.',
-            fields: [
-              {
-                label: 'What have you been doing that connects to this role?',
-                placeholder: 'Describe the kind of work, responsibilities, or strengths you have already been using.',
-                helper: 'Use real work themes, not broad traits.',
-                minWords: 12,
-              },
-              {
-                label: 'Why does this role make sense as your next step?',
-                placeholder: 'Explain why this is a logical move from where you are now.',
-                helper: 'Show direction, not just interest.',
-                minWords: 12,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        title: 'Connect Your Background to the Actual Work',
-        difficulty: 'medium',
-        teach: {
-          title: 'Do not just say you are interested. Show the fit.',
-          explanation:
-            'A lot of weak answers talk about wanting the role without proving why the candidate fits it. A stronger answer points to experience that lines up with what the job actually requires.',
-          example: {
-            question: 'Why do you think this position is a good fit for you?',
-            badAnswer:
-              'I think my background could transfer well, and I am someone who learns quickly. I also think this would be a good place for me to continue developing professionally.',
-            goodAnswer:
-              'I think it fits because the role asks for someone who can manage details, communicate clearly, and keep work moving across people. That has already been a big part of how I have worked. So it does not feel like a stretch. It feels like applying strengths I already use in a role where they matter even more.',
-            breakdown: {
-              Fit: 'The strong version names the work, not just the title.',
-              Miss: 'The weak version leans on potential instead of evidence.',
-              WhyItWorks: 'It shows how past experience matches the job.',
-            },
-          },
-        },
-        exercises: [
           {
             type: 'multiple_choice',
-            question: 'What makes a fit answer more believable?',
+            question: 'What is the biggest problem with this answer? “I’m interested in this role because it seems like a great next step and I think it would be a strong opportunity for growth.”',
             options: [
-              'Showing how your past work matches the core demands of the role',
-              'Saying you are a fast learner and can adapt anywhere',
-              'Talking mostly about how much you want the opportunity',
-              'Keeping the answer broad so it can work in many interviews',
+              'It sounds too detailed',
+              'It sounds too narrow',
+              'It sounds too generic',
+              'It sounds too honest',
             ],
-            correctIndex: 0,
-            explanation: 'Believable fit comes from matching your experience to the actual work.',
+            correctIndex: 2,
+            explanation: 'The answer sounds positive, but it could apply to almost any role.',
           },
-          {
-            type: 'label_sort',
-            instruction: 'Label the parts of this stronger fit answer.',
-            segments: [
-              { text: 'This role seems to require someone who can coordinate work, communicate clearly, and stay organized.', correctLabel: 'What the job requires' },
-              { text: 'Those are all things I have had to do consistently in my recent roles.', correctLabel: 'Relevant evidence' },
-              { text: 'That is why it feels like a strong fit rather than a leap.', correctLabel: 'Fit conclusion' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the strongest phrase to complete the sentence.',
-            sentenceWithBlank: 'What makes this role feel like a fit is that it relies on [___], which I have already had to use in my recent work.',
-            options: [
-              'skills and responsibilities that overlap with my background',
-              'a company name I recognize',
-              'the fact that I am ready for something new',
-              'general business experience of any kind',
-            ],
-            correctIndex: 0,
-            explanation: 'Strong fit language points to overlap between your background and the role.',
-          },
-          {
-            type: 'tap_select',
-            instruction: 'Tap the statements that make a fit answer stronger.',
-            items: [
-              'This role depends on skills I have already had to use consistently.',
-              'The work itself lines up with how I have been operating.',
-              'I am confident I could learn anything if given a chance.',
-              'I just feel like this would be a good experience.',
-            ],
-            correctIndices: [0, 1],
-            explanation: 'The best answers show evidence-based fit, not just optimism.',
-          },
-          {
-            type: 'apply_to_yourself',
-            instruction: 'Make your fit answer sound more grounded and specific.',
-            coachingTip: 'Name the actual work in the job, then connect it to work you have already done well.',
-            fields: [
-              {
-                label: 'What does this role seem to require?',
-                placeholder: 'List the main work themes or responsibilities you see in the role.',
-                helper: 'Focus on the actual job, not the company.',
-                minWords: 12,
-              },
-              {
-                label: 'Where have you already done similar work?',
-                placeholder: 'Explain which parts of your background line up with those demands.',
-                helper: 'This is the proof behind your fit.',
-                minWords: 12,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        title: 'Make Your Motivation Sound Chosen, Not Reactive',
-        difficulty: 'hard',
-        teach: {
-          title: 'Frame the move as direction, not escape',
-          explanation:
-            'Sometimes candidates sound interested in a role mainly because they want out of their current situation. A stronger answer shifts the focus toward what they are moving toward and why that next move is credible.',
-          example: {
-            question: 'Why are you looking to make a move right now?',
-            badAnswer:
-              'Honestly, I have been ready for a change for a while. I feel like I have outgrown my current situation, and I want something better with more opportunity.',
-            goodAnswer:
-              'I am looking now because I have a clearer sense of the kind of work I want to keep building toward. I have learned a lot from my current situation, but I want my next role to make fuller use of the parts of the job I am strongest in. That is what made this opportunity stand out to me.',
-            breakdown: {
-              Risk: 'The weak version sounds like escape.',
-              Timing: 'The strong version explains why now makes sense.',
-              Credibility: 'It focuses on direction and fit, not frustration.',
-            },
-          },
-        },
-        exercises: [
           {
             type: 'multiple_choice',
-            question: 'Which answer sounds most credible when explaining why now is the right time to move?',
+            question: 'What is missing here? “What stood out to me is that the role seems fast-paced and cross-functional. I’ve done work like that before, and that definitely interests me.”',
             options: [
-              'I have gotten clearer on the kind of work I want to keep building toward, and this role lines up with that direction.',
-              'I just know it is time for a change and want something better.',
-              'I have been unhappy for a while, so I am looking around.',
-              'I feel like any new opportunity would probably be a step up.',
+              'A clearer reason why now',
+              'More company history',
+              'A longer explanation of strengths',
+              'A more formal tone',
             ],
             correctIndex: 0,
-            explanation: 'A strong answer frames the move around direction and fit, not dissatisfaction.',
+            explanation: 'The answer gestures toward fit, but it does not explain why this move makes sense now.',
           },
           {
-            type: 'label_sort',
-            instruction: 'Label each part of this stronger answer.',
-            segments: [
-              { text: 'My recent experience helped clarify the kind of work I want to keep doing.', correctLabel: 'Why now' },
-              { text: 'I want a role that makes fuller use of those strengths.', correctLabel: 'What I am moving toward' },
-              { text: 'That is why this opportunity feels like a sensible next step.', correctLabel: 'Why this move is credible' },
-            ],
-          },
-          {
-            type: 'word_bank',
-            instruction: 'Choose the strongest phrase to complete the sentence.',
-            sentenceWithBlank: 'The reason I am exploring this move now is that I have a clearer sense of [___] in my next role.',
+            type: 'multiple_choice',
+            question: 'Which revision creates a stronger connection to background?',
             options: [
-              'the kind of work I want to keep building toward',
-              'how badly I need a change',
-              'why I want to leave my current team',
-              'why almost anything different would help',
+              'I think I’d be a strong candidate for this kind of opportunity.',
+              'That connects well to my background, because a lot of my recent work has involved keeping moving pieces aligned across teams.',
+              'I believe I have the right skills to grow in this position.',
+              'That seems like a role where I could contribute quickly.',
             ],
-            correctIndex: 0,
-            explanation: 'Strong timing answers point toward a direction, not away from a problem.',
+            correctIndex: 1,
+            explanation: 'It makes the fit concrete instead of just claiming transferability.',
           },
           {
-            type: 'tap_select',
-            instruction: 'Tap the statements that improve a "why now" answer.',
-            items: [
-              'I have gotten clearer on where I add the most value.',
-              'This move is about getting closer to the kind of work I want to keep doing.',
-              'I am mostly trying to get out of my current situation.',
-              'I just need a fresh start somewhere else.',
+            type: 'multiple_choice',
+            question: 'Which revision makes the timing sound more intentional?',
+            options: [
+              'I’m excited to take the next step in my career.',
+              'The timing makes sense because I’m looking for a role where this kind of work is more central and more directly owned.',
+              'I feel like it’s time for me to grow.',
+              'I’m ready to move into something new.',
             ],
-            correctIndices: [0, 1],
-            explanation: 'The strongest answers sound intentional and forward-looking.',
+            correctIndex: 1,
+            explanation: 'It explains why the move makes sense now instead of just expressing restlessness.',
+          },
+          {
+            type: 'multiple_choice',
+            question: 'Which answer sounds least like you would take anything?',
+            options: [
+              'I’m looking for a strong next opportunity where I can keep growing.',
+              'This feels like a logical next step because it builds directly on the kind of work I’ve already been doing.',
+              'I’m open to a lot of roles right now, and this one stood out.',
+              'I think this would be a good challenge for me at this point.',
+            ],
+            correctIndex: 1,
+            explanation: 'A stronger answer sounds chosen and specific, not broadly job-seeking.',
           },
           {
             type: 'apply_to_yourself',
-            instruction: 'Rewrite your "why now" answer so it sounds directional, not reactive.',
-            coachingTip: 'Talk about what you are moving toward, what you have learned about your fit, and why this role makes sense now.',
+            instruction: 'Rewrite the answer so the move sounds more specific, connected, and intentional.',
+            coachingTip: 'Say what specifically stands out about the role, connect it to your background, and explain why the timing makes sense now. This is a place where answer structure can help. A simple shape like Observation / Fit / Timing can organize the answer, but the substance still needs to feel specific and believable.',
+            evaluationType: 'career_alignment',
             fields: [
               {
-                label: 'Why is now the right time for this move?',
-                placeholder: 'Explain what has become clearer for you about your next step.',
-                helper: 'Focus on direction, not frustration.',
-                minWords: 12,
+                label: 'What specifically stands out about the role?',
+                placeholder: 'Point to something real about the role that interests you.',
+                helper: 'Avoid generic praise or broad language that could apply anywhere.',
+                minWords: 10,
+                avoidWords: ['great opportunity', 'strong next step', 'new challenge'],
               },
               {
-                label: 'What are you moving toward in this role?',
-                placeholder: 'Describe the kind of work or contribution you want more of next.',
-                helper: 'Make the next step sound chosen and believable.',
+                label: 'How does that connect to your background?',
+                placeholder: 'Explain how your recent work or strengths line up with that part of the role.',
+                helper: 'Make the connection concrete instead of just claiming your skills transfer.',
                 minWords: 12,
+                avoidWords: ['my skills would transfer', 'strong candidate', 'learn quickly'],
+              },
+              {
+                label: 'Why does this move make sense now?',
+                placeholder: 'Explain why the timing feels intentional and logical.',
+                helper: 'Make this sound like a coherent next step, not broad job-seeking.',
+                minWords: 12,
+                avoidWords: ['ready for something new', 'next challenge', 'time for me to grow'],
               },
             ],
           },

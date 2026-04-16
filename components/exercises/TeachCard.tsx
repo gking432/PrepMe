@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import Preppi from '@/components/Preppi'
 
@@ -245,6 +245,61 @@ function extractPlaceholderQuestion(answer?: string) {
   return match?.[1] || null
 }
 
+function TeachingList({
+  items,
+  numbered = false,
+}: {
+  items: string[]
+  numbered?: boolean
+}) {
+  return (
+    <div className="space-y-4">
+      {items.map((line, index) => (
+        <div key={`${line}-${index}`} className="flex items-start gap-3">
+          {numbered ? (
+            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">
+              {index + 1}
+            </span>
+          ) : (
+            <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-violet-400" />
+          )}
+          <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">{line}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ContrastText({
+  weakLabel = 'Weak',
+  weakText,
+  strongLabel = 'Stronger',
+  strongText,
+}: {
+  weakLabel?: string
+  weakText: string
+  strongLabel?: string
+  strongText: string
+}) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-rose-500">{weakLabel}</p>
+        <p className="mt-2 text-base leading-relaxed text-rose-700 md:text-[17px]">
+          &ldquo;{weakText}&rdquo;
+        </p>
+      </div>
+      <div className="h-px bg-slate-200" />
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">{strongLabel}</p>
+        <p className="mt-2 text-base leading-relaxed text-emerald-700 md:text-[17px]">
+          &ldquo;{strongText}&rdquo;
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function TeachCard({
   criterion,
   title,
@@ -338,9 +393,27 @@ export default function TeachCard({
     return 'This answer likely got flagged because the interviewer could not clearly hear the move you wanted them to hear.'
   }, [criterion, originalAnswerMissing, placeholderMatchesQuestion, placeholderQuestion, safeOriginalAnswer])
 
+  const withIntro = useCallback(
+    (lessonCards: Array<{ eyebrow: string; title: string; preppi: string; content: JSX.Element }>) => [
+      {
+        eyebrow: 'Lesson Intro',
+        title: "What you're about to learn",
+        preppi: 'Start with the lesson goal. Then move into the flagged moment and the teaching sequence.',
+        content: (
+          <div className="space-y-4">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-500">This is what you&apos;re about to learn</p>
+            <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">{summary}</p>
+          </div>
+        ),
+      },
+      ...lessonCards,
+    ],
+    [summary]
+  )
+
   const cards = useMemo(() => {
     if (isPresentPastFutureLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
@@ -592,11 +665,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isStarLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
@@ -865,11 +938,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isObservationLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
@@ -1138,11 +1211,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isAnswerReasonExampleLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
@@ -1380,11 +1453,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isClaimExampleDetailImpactLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
@@ -1643,11 +1716,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isCompanyKnowledgeLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
@@ -1836,11 +1909,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isMeaningfulQuestionsLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Flagged Moment',
           title: originalQuestion || example.question,
@@ -2018,11 +2091,11 @@ export default function TeachCard({
             </div>
           ),
         },
-      ]
+      ])
     }
 
     if (isHandlingUncertaintyLesson) {
-      return [
+      return withIntro([
         {
           eyebrow: 'Flagged Moment',
           title: originalQuestion || example.question,
@@ -2058,16 +2131,12 @@ export default function TeachCard({
           preppi: 'This lesson is about recovery, not perfection.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  This answer needed more steadiness. Sometimes the question is fine, but you do not have a strong answer right away. In that moment, do not fill the space with rambling. Slow down and regain control.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  This lesson helps when you are unsure how to answer, not just when the question feels hard.
-                </p>
-              </div>
+              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">
+                This answer needed more steadiness. Sometimes the question is fine, but you do not have a strong answer right away. In that moment, do not fill the space with rambling. Slow down and regain control.
+              </p>
+              <p className="text-sm font-semibold leading-relaxed text-violet-700 md:text-[15px]">
+                This lesson helps when you are unsure how to answer, not just when the question feels hard.
+              </p>
             </div>
           ),
         },
@@ -2077,24 +2146,18 @@ export default function TeachCard({
           preppi: 'They are not expecting instant perfection.',
           content: (
             <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
+              <TeachingList
+                items={[
                   'calm judgment',
                   'honesty',
                   'clarity',
                   'grounded thinking',
-                ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  They are not expecting instant perfection. They are listening for how you recover.
-                </p>
-              </div>
+                ]}
+                numbered
+              />
+              <p className="text-sm font-semibold leading-relaxed text-violet-700 md:text-[15px]">
+                They are not expecting instant perfection. They are listening for how you recover.
+              </p>
             </div>
           ),
         },
@@ -2103,20 +2166,14 @@ export default function TeachCard({
           title: 'How weak uncertain answers usually sound',
           preppi: 'Uncertainty is normal. Spiraling is the problem.',
           content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'start talking before the point is clear',
-                  'hedges too much',
-                  'circle without answering',
-                  'sound more lost than honest',
-                ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TeachingList
+              items={[
+                'start talking before the point is clear',
+                'hedge too much',
+                'circle without answering',
+                'sound more lost than honest',
+              ]}
+            />
           ),
         },
         {
@@ -2124,21 +2181,15 @@ export default function TeachCard({
           title: 'What stronger uncertain answers do differently',
           preppi: 'You do not need the full answer right away. You do need a steady one.',
           content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'pauses briefly',
-                  'makes one clear point',
-                  'stays honest about what is unclear',
-                  'gives the first useful move',
-                  'ends somewhere settled',
-                ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TeachingList
+              items={[
+                'pauses briefly',
+                'makes one clear point',
+                'stays honest about what is unclear',
+                'gives the first useful move',
+                'ends somewhere settled',
+              ]}
+            />
           ),
         },
         {
@@ -2146,26 +2197,12 @@ export default function TeachCard({
           title: 'Start with one point, not a cloud of hedges',
           preppi: 'Do not talk in circles while you search for the answer.',
           content: (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak start</p>
-                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “There are probably a lot of ways to think about that, and I think it would depend...”
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger start</p>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “The main thing I&apos;d do first is...”
-                    <br />
-                    or
-                    <br />
-                    “My starting point would be...”
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ContrastText
+              weakLabel="Weak start"
+              weakText="There are probably a lot of ways to think about that, and I think it would depend..."
+              strongLabel="Stronger start"
+              strongText="The main thing I’d do first is... or My starting point would be..."
+            />
           ),
         },
         {
@@ -2174,16 +2211,12 @@ export default function TeachCard({
           preppi: 'You do not have to sound completely certain.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  A stronger answer can say: “I&apos;d want to understand the situation a little better first, but my starting point would be...”
-                </p>
-              </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Honest caution sounds stronger than pretending to know more than you do.
-                </p>
-              </div>
+              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">
+                A stronger answer can say: <span className="text-violet-700">&ldquo;I&apos;d want to understand the situation a little better first, but my starting point would be...&rdquo;</span>
+              </p>
+              <p className="text-sm font-semibold leading-relaxed text-violet-700 md:text-[15px]">
+                Honest caution sounds stronger than pretending to know more than you do.
+              </p>
             </div>
           ),
         },
@@ -2193,23 +2226,17 @@ export default function TeachCard({
           preppi: 'The first move shows judgment.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  When the full answer is not obvious yet, name the next grounded step.
-                </p>
-              </div>
-              <div className="grid gap-3">
-                {[
+              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">
+                When the full answer is not obvious yet, name the next grounded step.
+              </p>
+              <TeachingList
+                items={[
                   'getting clear on the situation',
                   'checking what matters most',
                   'talking to the right person',
                   'confirming the facts before acting',
-                ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
+                ]}
+              />
             </div>
           ),
         },
@@ -2218,22 +2245,12 @@ export default function TeachCard({
           title: 'End somewhere settled',
           preppi: 'Even if the answer is not perfect, the ending should feel grounded.',
           content: (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak ending</p>
-                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “So yeah, I think it would depend a lot and I&apos;d kind of figure it out from there.”
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger ending</p>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “The main thing is staying calm, getting clear on the situation, and taking the first useful step.”
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ContrastText
+              weakLabel="Weak ending"
+              weakText="So yeah, I think it would depend a lot and I’d kind of figure it out from there."
+              strongLabel="Stronger ending"
+              strongText="The main thing is staying calm, getting clear on the situation, and taking the first useful step."
+            />
           ),
         },
         {
@@ -2241,27 +2258,21 @@ export default function TeachCard({
           title: 'Use this check before you answer again',
           preppi: 'That is the standard you will practice next.',
           content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'Did I pause instead of filling space?',
-                  'Did I make one clear point early?',
-                  'Was I honest without sounding lost?',
-                  'Did I name the first useful move?',
-                  'Did I end somewhere settled?',
-                ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TeachingList
+              items={[
+                'Did I pause instead of filling space?',
+                'Did I make one clear point early?',
+                'Was I honest without sounding lost?',
+                'Did I name the first useful move?',
+                'Did I end somewhere settled?',
+              ]}
+            />
           ),
         },
-      ]
+      ])
     }
 
-    return [
+    return withIntro([
     {
       eyebrow: 'Your Flagged Answer',
       title: originalQuestion || example.question,
@@ -2355,23 +2366,20 @@ export default function TeachCard({
             {summary}
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-5">
             {frameworkRows.map(([key, value], index) => (
-              <div
-                key={key}
-                className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
-                  {formatBreakdownKey(key, index)}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wide text-violet-600">
+              <div key={key} className="border-l-2 border-violet-200 pl-4">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-extrabold text-violet-700">
+                    {formatBreakdownKey(key, index)}
+                  </span>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-600">
                     {breakdownKeyLabel(key)}
                   </p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                    {value}
-                  </p>
                 </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                  {value}
+                </p>
               </div>
             ))}
           </div>
@@ -2383,34 +2391,7 @@ export default function TeachCard({
       title: 'See the difference',
       preppi: 'This is where the fix becomes obvious. First the weak version, then the stronger one.',
       content: (
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border-2 border-rose-200 bg-rose-50/70 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-rose-200 bg-rose-100/80 px-4 py-3">
-              <ThumbsDown className="h-4 w-4 text-rose-500" />
-              <span className="text-xs font-bold uppercase tracking-wide text-rose-600">
-                Weak version
-              </span>
-            </div>
-            <div className="px-4 py-4">
-              <p className="text-base italic leading-relaxed text-rose-900">
-                &ldquo;{example.badAnswer}&rdquo;
-              </p>
-            </div>
-          </div>
-          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
-              <ThumbsUp className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
-                Stronger version
-              </span>
-            </div>
-            <div className="px-4 py-4">
-              <p className="text-base leading-relaxed text-emerald-900">
-                &ldquo;{example.goodAnswer}&rdquo;
-              </p>
-            </div>
-          </div>
-        </div>
+        <ContrastText weakText={example.badAnswer} strongText={example.goodAnswer} />
       ),
     },
     ...(example.pairedAnnotatedAnswer ? [{
@@ -2466,37 +2447,27 @@ export default function TeachCard({
       preppi: 'If we teach a structure, we should be able to point to each piece inside the stronger answer.',
       content: (
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 bg-emerald-50/70 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-100/80 px-4 py-3">
-              <ThumbsUp className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-bold uppercase tracking-wide text-emerald-600">
-                Stronger version
-              </span>
-            </div>
-            <div className="px-4 py-4">
-              <p className="text-base leading-relaxed text-slate-900">
-                &ldquo;
-                {example.annotatedStrongAnswer.map((part, index) => {
-                  const colors = annotationColors(part.label)
-                  return (
-                    <span
-                      key={`${part.label}-${index}`}
-                      className={`rounded px-1.5 py-0.5 ${colors.highlight}`}
-                    >
-                      {part.text}
-                      {index < example.annotatedStrongAnswer!.length - 1 ? ' ' : ''}
-                    </span>
-                  )
-                })}
-                &rdquo;
-              </p>
-            </div>
-          </div>
+          <p className="text-base leading-relaxed text-slate-900">
+            &ldquo;
+            {example.annotatedStrongAnswer.map((part, index) => {
+              const colors = annotationColors(part.label)
+              return (
+                <span
+                  key={`${part.label}-${index}`}
+                  className={`rounded px-1.5 py-0.5 ${colors.highlight}`}
+                >
+                  {part.text}
+                  {index < example.annotatedStrongAnswer!.length - 1 ? ' ' : ''}
+                </span>
+              )
+            })}
+            &rdquo;
+          </p>
         </div>
       ),
     }] : []),
-    ]
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed])
+    ])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1
@@ -2512,12 +2483,12 @@ export default function TeachCard({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 rounded-[2rem] border border-violet-100 bg-white/95 p-6 shadow-[0_20px_40px_rgba(15,23,42,0.08)] md:p-7">
-        <h2 className="text-xl font-extrabold text-slate-900 md:text-2xl">
+      <div className="min-h-0 flex-1 rounded-[2rem] bg-white px-6 py-7 md:px-8 md:py-8">
+        <h2 className="max-w-3xl text-xl font-extrabold leading-tight text-slate-900 md:text-[2rem]">
           {currentCard.title}
         </h2>
-        {(step === 0 || step === 2) && (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+        {currentCard.eyebrow === 'Flagged Moment' && (
+          <div className="mt-5 border-l-2 border-slate-200 pl-4">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
               Interview question
             </p>
@@ -2526,7 +2497,7 @@ export default function TeachCard({
             </p>
           </div>
         )}
-        <div className="mt-5">{currentCard.content}</div>
+        <div className="mt-6 max-w-3xl">{currentCard.content}</div>
       </div>
 
       <div className="mt-auto shrink-0 flex items-end justify-between gap-3 border-t border-slate-200/80 pt-5">

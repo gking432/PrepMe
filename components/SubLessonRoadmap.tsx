@@ -509,13 +509,14 @@ export default function SubLessonRoadmap({
             </div>
           )}
 
-            <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/92 px-7 py-6 shadow-[0_16px_34px_rgba(15,23,42,0.06)] backdrop-blur-sm' : 'premium-panel overflow-hidden p-5 sm:p-6'}`}>
+            <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl px-1 py-2' : 'p-0'}`}>
             <div className={`${embeddedDesktop ? '' : ''}`}>
-              <div className="mb-5 flex items-center justify-between">
+              <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-500">Coaching Path</p>
-                  <h3 className="mt-1 text-xl font-black text-slate-900">{criterion}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{bundle.displayName}</p>
+                  <h3 className="text-2xl font-black tracking-tight text-slate-900">{criterion}</h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                    {bundle.displayName}
+                  </p>
                 </div>
                 <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
                   {totalCoreItems} {totalCoreItems === 1 ? 'core lesson' : 'core lessons'}

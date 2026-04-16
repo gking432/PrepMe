@@ -214,9 +214,9 @@ export default function LessonRoadmap({
           <div className={`mx-auto w-full ${embeddedDesktop ? 'max-w-5xl' : ''}`}>
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice Hub</p>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-violet-600">Practice</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                  Pick the next module and keep moving.
+                  Repair your flagged areas
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
                   {preppiMessage}

@@ -436,7 +436,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -455,12 +455,12 @@ export default function TeachCard({
                   'Walk me through your background briefly',
                   'I see you were at [Company] as a [Role] — could you tell me a bit more about that?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Best use: background walkthrough, role history, transitions, where you&apos;re headed.
                 </p>
@@ -480,13 +480,13 @@ export default function TeachCard({
                   'what shaped your background',
                   'why this next move makes sense',
                 ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   They are not looking for your full resume. They are listening for a clear through-line.
                 </p>
@@ -514,7 +514,7 @@ export default function TeachCard({
                   </div>
                 )
               })}
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+              <div className="border-t border-slate-200 pt-4">
                 <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
                   Each section should be short, clear, and connected to the next.
                 </p>
@@ -568,12 +568,12 @@ export default function TeachCard({
                   'what pattern connects your past',
                   'why this move makes sense next',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Structure helps. Qualifiers make it believable.
                 </p>
@@ -591,7 +591,7 @@ export default function TeachCard({
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Present</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">&ldquo;Right now I work in operations.&rdquo;</p>
               </div>
-              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Strong Present</p>
                 <p className="mt-2 text-sm font-semibold leading-relaxed text-sky-900 md:text-[15px]">
                   &ldquo;Right now I work in operations, mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned.&rdquo;
@@ -615,7 +615,7 @@ export default function TeachCard({
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Past</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">&ldquo;Before that, I worked in a few different roles.&rdquo;</p>
               </div>
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Strong Past</p>
                 <p className="mt-2 text-sm font-semibold leading-relaxed text-emerald-900 md:text-[15px]">
                   &ldquo;Before that, I built my foundation in roles where I had to keep work organized, respond to changing needs, and make sure things stayed on track.&rdquo;
@@ -625,13 +625,13 @@ export default function TeachCard({
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Future</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">&ldquo;I&apos;m looking for a new opportunity.&rdquo;</p>
               </div>
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Strong Future</p>
                 <p className="mt-2 text-sm font-semibold leading-relaxed text-amber-900 md:text-[15px]">
                   &ldquo;That is why this next move makes sense. It lets me keep doing that kind of work in a role with more direct ownership.&rdquo;
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Past should show the pattern. Future should show the logic of the move.
                 </p>
@@ -652,12 +652,12 @@ export default function TeachCard({
                   'Did I explain why this next move makes sense?',
                   'Does each section sound specific, not generic?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -692,7 +692,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -711,12 +711,12 @@ export default function TeachCard({
                   'Tell me about a time you didn’t have the answer right away or the path forward wasn’t clear',
                   'Tell me about a challenge you faced and how you handled it',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Best use: accomplishment, challenge, uncertainty, problem-solving, ownership stories.
                 </p>
@@ -737,13 +737,13 @@ export default function TeachCard({
                   'what you did',
                   'what changed because of your actions',
                 ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   They are not grading the acronym. They are listening for ownership and judgment.
                 </p>
@@ -768,7 +768,7 @@ export default function TeachCard({
                   </div>
                 </div>
               ))}
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+              <div className="border-t border-slate-200 pt-4">
                 <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
                   The structure helps. The details inside each section are what make the answer strong.
                 </p>
@@ -798,7 +798,7 @@ export default function TeachCard({
                   )
                 })}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   In a strong STAR answer, the Action carries the most weight.
                 </p>
@@ -815,7 +815,7 @@ export default function TeachCard({
               <p className="text-sm leading-relaxed text-slate-600 md:text-base">
                 Most people spend too long on the setup and not enough time on the Action. That creates an answer that is organized, but still weak.
               </p>
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-sm font-semibold leading-relaxed text-amber-900 md:text-[15px]">
                   Get to the point faster. Put the detail where it matters.
                 </p>
@@ -860,7 +860,7 @@ export default function TeachCard({
           preppi: 'Now the concept is laid onto the stronger answer itself. This is the proof of what each section is doing.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div className="border-t border-slate-200 pt-4">
                 <div className="flex flex-wrap gap-2">
                   {example.annotatedStrongAnswer?.map((part, index) => {
                     const colors = annotationColors(part.label)
@@ -925,12 +925,12 @@ export default function TeachCard({
                   'Did I say what I actually did?',
                   'Did I show what changed?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -965,7 +965,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -986,12 +986,12 @@ export default function TeachCard({
                   'Why now?',
                   'Why are you interested in this position?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Best use: role/company interest, alignment, why now.
                 </p>
@@ -1006,25 +1006,25 @@ export default function TeachCard({
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Present, Past, Future</p>
                   <p className="mt-2 text-sm leading-relaxed text-sky-900 md:text-[15px]">
                     Explains your background.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Observation, Fit, Timing</p>
                   <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">
                     Explains why you want this opportunity.
                   </p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+              <div className="border-t border-slate-200 pt-4">
                 <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
                   Start with your story for “Tell me about yourself.” Start with the opportunity for “Why this role?” or “Why this company?”
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">That is the key difference.</p>
               </div>
             </div>
@@ -1042,13 +1042,13 @@ export default function TeachCard({
                   'why it fits your background',
                   'why the timing makes sense now',
                 ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   They are not looking for enthusiasm alone. They are listening for logic.
                 </p>
@@ -1091,12 +1091,12 @@ export default function TeachCard({
                   'why it fits their background',
                   'why now makes sense',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-sm font-semibold leading-relaxed text-amber-900 md:text-[15px]">
                   Interest is not enough. The answer has to feel logical.
                 </p>
@@ -1141,7 +1141,7 @@ export default function TeachCard({
           preppi: 'Now the concept is laid onto the stronger answer itself. This is the proof of what each section is doing.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div className="border-t border-slate-200 pt-4">
                 <div className="flex flex-wrap gap-2">
                   {example.annotatedStrongAnswer?.map((part, index) => {
                     const colors = annotationColors(part.label)
@@ -1198,12 +1198,12 @@ export default function TeachCard({
                   'Did I explain why now?',
                   'Does this sound specific, not flattering?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -1238,7 +1238,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -1259,12 +1259,12 @@ export default function TeachCard({
                   'Do you require sponsorship?',
                   'What do you know about our company?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Best use: direct, concise, recruiter-style answers where a full story would be too much.
                 </p>
@@ -1279,20 +1279,20 @@ export default function TeachCard({
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+                <div className="border-t border-violet-100 pt-3">
                   <p className="text-xs font-bold uppercase tracking-wide text-violet-700">STAR</p>
                   <p className="mt-2 text-sm leading-relaxed text-violet-900 md:text-[15px]">
                     Use this when the question asks for a specific story.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Answer / Reason / Example</p>
                   <p className="mt-2 text-sm leading-relaxed text-sky-900 md:text-[15px]">
                     Use this when the question asks what you think, prefer, or usually do.
                   </p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   If the question does not need a full story, do not force one.
                 </p>
@@ -1312,13 +1312,13 @@ export default function TeachCard({
                   'your logic',
                   'your proof',
                 ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   They are not looking for a long explanation. They are looking for clear thinking.
                 </p>
@@ -1343,7 +1343,7 @@ export default function TeachCard({
                   </div>
                 </div>
               ))}
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">Direct first. Then support it.</p>
               </div>
             </div>
@@ -1386,7 +1386,7 @@ export default function TeachCard({
           preppi: 'Now the concept is laid onto the stronger answer itself. This is the proof of what each section is doing.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+              <div className="border-t border-slate-200 pt-4">
                 <div className="flex flex-wrap gap-2">
                   {example.annotatedStrongAnswer?.map((part, index) => {
                     const colors = annotationColors(part.label)
@@ -1440,12 +1440,12 @@ export default function TeachCard({
                   'Did I give a short proof or example?',
                   'Does this sound clear, not rambling?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -1480,7 +1480,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -1498,7 +1498,7 @@ export default function TeachCard({
                   This answer made a point, but it did not prove it strongly enough. When you describe a strength, skill, or work style, the interviewer needs evidence that feels real and believable.
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   This module helps you move from claim to proof.
                 </p>
@@ -1519,13 +1519,13 @@ export default function TeachCard({
                   'adds concrete detail',
                   'shows what the example proves',
                 ].map((line, index) => (
-                  <div key={line} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   The goal is not more words. The goal is more believable proof.
                 </p>
@@ -1576,12 +1576,12 @@ export default function TeachCard({
                   'I am proactive.',
                   'I am good under pressure.',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Those are claims. The interviewer still needs a reason to believe them.
                 </p>
@@ -1596,20 +1596,20 @@ export default function TeachCard({
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak proof</p>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
                     “I have done that in different roles.”
                   </p>
                 </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger proof</p>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
                     “In my last role, I handled scheduling changes during a busy launch week.”
                   </p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   The best proof comes from a real moment or a clear pattern of work.
                 </p>
@@ -1630,12 +1630,12 @@ export default function TeachCard({
                   'what you handled',
                   'what you did',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   You do not need a huge story. You need enough detail to make the example feel true.
                 </p>
@@ -1654,7 +1654,7 @@ export default function TeachCard({
                   More detail is not always better. You only need enough detail to make the example believable and relevant.
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Enough detail to trust you. Not so much detail that the answer loses shape.
                 </p>
@@ -1669,20 +1669,20 @@ export default function TeachCard({
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak ending</p>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
                     “That was a valuable experience.”
                   </p>
                 </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger ending</p>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
                     “That is a good example of how I create structure when priorities start shifting.”
                   </p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Make clear what the example shows and why it supports the claim you made.
                 </p>
@@ -1703,12 +1703,12 @@ export default function TeachCard({
                   'Did I add a concrete detail?',
                   'Did I explain what that example shows?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -1743,7 +1743,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -1761,7 +1761,7 @@ export default function TeachCard({
                   This lesson helps you answer company knowledge questions more credibly. In an HR screen, the interviewer is usually checking whether you did basic homework and whether your interest feels real.
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Best use: “What do you know about our company?” “What stood out to you?” “Why this company?”
                 </p>
@@ -1781,12 +1781,12 @@ export default function TeachCard({
                   'who it serves',
                   'one thing that stood out to you',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Before an HR screen, that is usually enough.
                 </p>
@@ -1800,13 +1800,13 @@ export default function TeachCard({
           preppi: 'Flattery is not research.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak answer</p>
                 <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
                   “You seem like a great company with a strong reputation.”
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That sounds positive, but it does not show real preparation.
                 </p>
@@ -1820,7 +1820,7 @@ export default function TeachCard({
           preppi: 'A strong answer includes something real and specific.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger answer</p>
                 <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
                   “From what I saw, the company works with [customer type] and seems focused on [product, service, or business area].”
@@ -1836,13 +1836,13 @@ export default function TeachCard({
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Not enough</p>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
                     “I saw the company is growing.”
                   </p>
                 </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Better</p>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
                     “That stood out to me because it suggests a fast-moving environment where this role can have real impact.”
@@ -1896,12 +1896,12 @@ export default function TeachCard({
                   'Did I avoid generic praise?',
                   'Does my interest sound informed?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -1936,7 +1936,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -1954,7 +1954,7 @@ export default function TeachCard({
                   This lesson helps you ask better questions at the end of an HR screen. Your questions should show that you are thoughtful, interested, and paying attention to the opportunity.
                 </p>
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   Best use: “What questions do you have for me?” “What would you like to know?”
                 </p>
@@ -1989,7 +1989,7 @@ export default function TeachCard({
                   'how the team works',
                   'culture in practice',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
@@ -2004,13 +2004,13 @@ export default function TeachCard({
           content: (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak question</p>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
                     “What are the hours?”
                   </p>
                 </div>
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <div className="space-y-1">
                   <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger question</p>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
                     “What tends to make someone successful in this role in the first few months?”
@@ -2078,12 +2078,12 @@ export default function TeachCard({
                   'Will the answer help me understand the opportunity better?',
                   'Do my questions show genuine interest?',
                 ].map((line) => (
-                  <div key={line} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+                  <div key={line} className="border-l-2 border-violet-200 pl-4">
                     <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
+              <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   That is the standard you will practice next.
                 </p>
@@ -2118,7 +2118,7 @@ export default function TeachCard({
                   </p>
                 </div>
               )}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
                 <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
               </div>
@@ -2300,7 +2300,7 @@ export default function TeachCard({
             </div>
           )}
 
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+          <div className="space-y-1">
             <p className="text-xs font-bold uppercase tracking-wide text-amber-700">
               Why it got flagged
             </p>
@@ -2400,7 +2400,7 @@ export default function TeachCard({
       preppi: 'Now the concept is laid onto the stronger answer itself. This is the proof of what each section and qualifier is doing.',
       content: (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+          <div className="border-t border-slate-200 pt-4">
             <div className="flex flex-wrap gap-2">
               {example.pairedAnnotatedAnswer.flatMap((part) => ([
                 { key: `${part.label}-statement-pill`, text: part.label, label: part.label, kind: 'statement' },

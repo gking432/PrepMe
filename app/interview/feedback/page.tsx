@@ -2014,6 +2014,7 @@ export default function InterviewDashboard() {
   }
   const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#fbfcfe_0%,#f6f8fb_42%,#eef3f8_100%)]"
   const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#fcfdff_0%,#f6f8fb_40%,#eef3f8_100%)]"
+  const centeredLaneClasses = "mx-auto w-full max-w-[1040px] px-4 sm:px-6 lg:px-8"
   const prepareRailCards = [
     {
       title: 'Review Progress',
@@ -2334,22 +2335,24 @@ export default function InterviewDashboard() {
         />
         <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
         <div className={shellCenterClasses}>
-          <CoachReportWorkspace
-            feedback={feedback}
-            currentSessionData={currentSessionData}
-            currentStage={currentStage}
-            onRetakeInterview={handleRetakeInterview}
-            onUnlockNextStage={() => setShowPurchaseFlow(true)}
-            artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
-            onPrintArtifact={() => window.print()}
-            onStartPractice={() => {
-              setShowRubricModal(false)
-              dismissFeedbackTutorial()
-              setShowLessonRoadmap(true)
-            }}
-            tutorialActive={walkthroughActive}
-            onDismissTutorial={dismissFeedbackTutorial}
-          />
+          <div className={centeredLaneClasses}>
+            <CoachReportWorkspace
+              feedback={feedback}
+              currentSessionData={currentSessionData}
+              currentStage={currentStage}
+              onRetakeInterview={handleRetakeInterview}
+              onUnlockNextStage={() => setShowPurchaseFlow(true)}
+              artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
+              onPrintArtifact={() => window.print()}
+              onStartPractice={() => {
+                setShowRubricModal(false)
+                dismissFeedbackTutorial()
+                setShowLessonRoadmap(true)
+              }}
+              tutorialActive={walkthroughActive}
+              onDismissTutorial={dismissFeedbackTutorial}
+            />
+          </div>
         </div>
       </div>
     )
@@ -2374,24 +2377,26 @@ export default function InterviewDashboard() {
         />
         <AppProgressRail cards={practiceRailCards} theme="light" header={processHeader} />
         <div className={shellCenterClasses}>
-          <LessonRoadmap
-            embeddedDesktop
-            weaknesses={weaknesses}
-            sessionId={currentSessionData?.id}
-            currentStage={currentStage}
-            onContextChange={({ title, items }) => {
-              setPracticeSidebarTitle(title)
-              setPracticeSidebarItems(items)
-            }}
-            onAllComplete={() => {
-              setPracticeSidebarTitle('Practice Complete')
-            }}
-            onViewReport={() => {
-              setShowLessonRoadmap(false)
-              dismissFeedbackTutorial()
-            }}
-            onClose={() => setShowLessonRoadmap(false)}
-          />
+          <div className={centeredLaneClasses}>
+            <LessonRoadmap
+              embeddedDesktop
+              weaknesses={weaknesses}
+              sessionId={currentSessionData?.id}
+              currentStage={currentStage}
+              onContextChange={({ title, items }) => {
+                setPracticeSidebarTitle(title)
+                setPracticeSidebarItems(items)
+              }}
+              onAllComplete={() => {
+                setPracticeSidebarTitle('Practice Complete')
+              }}
+              onViewReport={() => {
+                setShowLessonRoadmap(false)
+                dismissFeedbackTutorial()
+              }}
+              onClose={() => setShowLessonRoadmap(false)}
+            />
+          </div>
         </div>
       </div>
     )

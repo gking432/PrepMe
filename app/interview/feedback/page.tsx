@@ -1950,7 +1950,7 @@ export default function InterviewDashboard() {
   })
   const railCards = [
     {
-      title: 'This Round',
+      title: 'Session',
       items: [
         { label: 'Score', value: hasFeedback ? `${overallScore}/10` : 'Pending', progress: hasFeedback ? overallScore * 10 : 0, tone: overallScore >= 7 ? 'success' as const : overallScore >= 5 ? 'warning' as const : 'brand' as const },
         { label: 'Strong Areas', value: `${wentWellAreas.length || 0}` },
@@ -1967,7 +1967,7 @@ export default function InterviewDashboard() {
     },
   ]
   const processRailCard = {
-    title: 'Interview Process',
+    title: 'Track',
     items: processStages.map((stage) => ({
       label: stage.label,
       value: stage.status === 'current' ? 'Current' : stage.status === 'complete' ? 'Done' : 'Up next',
@@ -1976,7 +1976,7 @@ export default function InterviewDashboard() {
     })),
   }
   const processHeader = {
-    eyebrow: 'Interview Process',
+    eyebrow: 'Progress',
     title: currentSessionData?.job_title || 'Target Role',
     subtitle: currentSessionData?.company_name ? `at ${currentSessionData.company_name}` : 'Current interview track',
   }
@@ -2003,7 +2003,7 @@ export default function InterviewDashboard() {
   ]
   const practiceRailCards = [
     {
-      title: 'Practice Hub',
+      title: 'Progress',
       items: [
         { label: 'Modules', value: `${uniquePracticeModuleCount || 0}` },
         { label: 'Completed', value: `${passedCriteria.length}`, progress: uniquePracticeModuleCount ? (passedCriteria.length / uniquePracticeModuleCount) * 100 : 0, tone: 'success' as const },

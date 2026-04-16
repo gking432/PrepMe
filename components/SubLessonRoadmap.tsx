@@ -511,13 +511,7 @@ export default function SubLessonRoadmap({
 
             <div className={`${embeddedDesktop ? 'mx-auto min-h-0 w-full max-w-5xl px-1 py-2' : 'p-0'}`}>
             <div className={`${embeddedDesktop ? '' : ''}`}>
-              <div className="mb-5 flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-2xl font-black tracking-tight text-slate-900">{criterion}</h3>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                    {bundle.displayName}
-                  </p>
-                </div>
+              <div className="mb-4 flex justify-end">
                 <div className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
                   {totalCoreItems} {totalCoreItems === 1 ? 'core lesson' : 'core lessons'}
                 </div>

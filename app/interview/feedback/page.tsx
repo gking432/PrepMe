@@ -308,7 +308,7 @@ export default function InterviewDashboard() {
       if (sessionIdFromUrl) {
         const { data: sessionById } = await supabase
           .from('interview_sessions')
-          .select('id, stage, completed_at, created_at, duration_seconds')
+          .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
           .eq('id', sessionIdFromUrl)
           .maybeSingle()
         
@@ -323,7 +323,7 @@ export default function InterviewDashboard() {
       if (!sessionData && session) {
         const { data: sessionByUser } = await supabase
           .from('interview_sessions')
-          .select('id, stage, completed_at')
+          .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
           .eq('user_id', session.user.id)
           .eq('status', 'completed')
           .order('completed_at', { ascending: false })
@@ -344,7 +344,7 @@ export default function InterviewDashboard() {
           // Load feedback by session ID (works for both logged-in and anonymous users)
           const { data: sessionById } = await supabase
             .from('interview_sessions')
-            .select('id, stage, completed_at, created_at, duration_seconds')
+            .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
             .eq('id', lastSessionId)
             .eq('status', 'completed')
             .maybeSingle()
@@ -362,7 +362,7 @@ export default function InterviewDashboard() {
       if (!sessionData) {
         const { data: anySession } = await supabase
           .from('interview_sessions')
-          .select('id, stage, completed_at, created_at, duration_seconds')
+          .select('id, stage, completed_at, created_at, duration_seconds, job_title, company_name')
           .eq('status', 'completed')
           .order('completed_at', { ascending: false })
           .limit(1)
@@ -1953,8 +1953,8 @@ export default function InterviewDashboard() {
       title: 'Session',
       items: [
         { label: 'Score', value: hasFeedback ? `${overallScore}/10` : 'Pending', progress: hasFeedback ? overallScore * 10 : 0, tone: overallScore >= 7 ? 'success' as const : overallScore >= 5 ? 'warning' as const : 'brand' as const },
-        { label: 'Strong Areas', value: `${wentWellAreas.length || 0}` },
-        { label: 'Needs Work', value: `${needsImproveAreas.length || 0}` },
+        { label: 'Strong areas', value: `${wentWellAreas.length || 0}`, progress: totalAreas ? ((wentWellAreas.length || 0) / totalAreas) * 100 : 0, tone: 'success' as const },
+        { label: 'Needs work', value: `${needsImproveAreas.length || 0}`, progress: totalAreas ? ((needsImproveAreas.length || 0) / totalAreas) * 100 : 0, tone: 'warning' as const },
       ],
     },
     {
@@ -1975,10 +1975,14 @@ export default function InterviewDashboard() {
       tone: stage.status === 'complete' ? 'success' as const : stage.status === 'current' ? 'brand' as const : 'default' as const,
     })),
   }
+  const completedModules = Math.min(passedCriteria.length, uniquePracticeModuleCount || 0)
+  const remainingModules = Math.max(uniquePracticeModuleCount - completedModules, 0)
+  const practicedModules = Math.min(practicedCriteria.length, uniquePracticeModuleCount || 0)
+  const currentFocusLabel = practiceSidebarItems.find(item => item.status === 'current')?.label || 'Pick a module'
   const processHeader = {
     eyebrow: 'Progress',
-    title: currentSessionData?.job_title || 'Target Role',
-    subtitle: currentSessionData?.company_name ? `at ${currentSessionData.company_name}` : 'Current interview track',
+    title: currentSessionData?.job_title || currentStageKey.replace('_', ' '),
+    subtitle: currentSessionData?.company_name || 'Current interview track',
   }
   const shellClasses = "app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#fbfcfe_0%,#f6f8fb_42%,#eef3f8_100%)]"
   const shellCenterClasses = "lg:order-2 lg:min-h-screen lg:bg-[linear-gradient(180deg,#fcfdff_0%,#f6f8fb_40%,#eef3f8_100%)]"
@@ -2005,9 +2009,10 @@ export default function InterviewDashboard() {
     {
       title: 'Progress',
       items: [
-        { label: 'Modules', value: `${uniquePracticeModuleCount || 0}` },
-        { label: 'Completed', value: `${passedCriteria.length}`, progress: uniquePracticeModuleCount ? (passedCriteria.length / uniquePracticeModuleCount) * 100 : 0, tone: 'success' as const },
-        { label: 'Focus', value: practiceSidebarItems.find(item => item.status === 'current')?.label || 'Pick a module' },
+        { label: 'Modules completed', value: `${completedModules}/${uniquePracticeModuleCount || 0}`, progress: uniquePracticeModuleCount ? (completedModules / uniquePracticeModuleCount) * 100 : 0, tone: 'success' as const },
+        { label: 'Modules practiced', value: `${practicedModules}/${uniquePracticeModuleCount || 0}`, progress: uniquePracticeModuleCount ? (practicedModules / uniquePracticeModuleCount) * 100 : 0, tone: 'brand' as const },
+        { label: 'Current focus', value: currentFocusLabel },
+        { label: 'Remaining', value: `${remainingModules}`, progress: uniquePracticeModuleCount ? ((uniquePracticeModuleCount - remainingModules) / uniquePracticeModuleCount) * 100 : 0, tone: 'warning' as const },
       ],
     },
     railCards[0],

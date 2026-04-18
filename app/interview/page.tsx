@@ -78,6 +78,7 @@ export default function InterviewPage() {
   const interviewStartTimeRef = useRef<number | null>(null)
   const assistantSpeakingRef = useRef(false)
   const assistantSpeechResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const assistantSpeechFailsafeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const turnDetectionDisabledRef = useRef(false)
   const closingDetectedRef = useRef(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -171,6 +172,63 @@ export default function InterviewPage() {
       endInterview()
       closeTimerRef.current = null
     }, 3200)
+  }
+
+  const startRealtimeAssistantSpeech = () => {
+    if (assistantSpeechResetTimeoutRef.current) {
+      clearTimeout(assistantSpeechResetTimeoutRef.current)
+      assistantSpeechResetTimeoutRef.current = null
+    }
+    if (assistantSpeechFailsafeRef.current) {
+      clearTimeout(assistantSpeechFailsafeRef.current)
+      assistantSpeechFailsafeRef.current = null
+    }
+    if (!assistantSpeakingRef.current) {
+      assistantSpeakingRef.current = true
+      setIsPlayingAudio(true)
+      setRealtimeMicEnabled(false)
+      void setRealtimeAudioInputEnabled(false)
+      updateRealtimeTurnDetection(false)
+      console.log('[realtime] assistant speech started')
+    }
+  }
+
+  const finishRealtimeAssistantSpeech = (reason: string) => {
+    if (assistantSpeechResetTimeoutRef.current) {
+      clearTimeout(assistantSpeechResetTimeoutRef.current)
+      assistantSpeechResetTimeoutRef.current = null
+    }
+    if (assistantSpeechFailsafeRef.current) {
+      clearTimeout(assistantSpeechFailsafeRef.current)
+      assistantSpeechFailsafeRef.current = null
+    }
+
+    assistantSpeakingRef.current = false
+    setIsPlayingAudio(false)
+
+    if (!closingDetectedRef.current) {
+      setRealtimeMicEnabled(true)
+      void setRealtimeAudioInputEnabled(true)
+      updateRealtimeTurnDetection(true)
+    }
+
+    console.log('[realtime] assistant speech ended', { reason })
+  }
+
+  const scheduleRealtimeAssistantSpeechFailsafe = () => {
+    if (assistantSpeechFailsafeRef.current) {
+      clearTimeout(assistantSpeechFailsafeRef.current)
+    }
+
+    // Transcript completion can arrive before audio playback has actually drained.
+    // Keep listening disabled until a real audio-finished signal arrives, but recover
+    // eventually if those events never show up.
+    assistantSpeechFailsafeRef.current = setTimeout(() => {
+      if (assistantSpeakingRef.current) {
+        finishRealtimeAssistantSpeech('failsafe')
+      }
+      assistantSpeechFailsafeRef.current = null
+    }, 6000)
   }
 
   useEffect(() => {
@@ -604,7 +662,12 @@ export default function InterviewPage() {
   const handleRealtimeMessage = (data: any) => {
     if (
       data.type === 'response.audio_transcript.delta' ||
+      data.type === 'response.output_audio_transcript.delta' ||
       data.type === 'response.audio_transcript.done' ||
+      data.type === 'response.output_audio_transcript.done' ||
+      data.type === 'output_audio_buffer.started' ||
+      data.type === 'output_audio_buffer.stopped' ||
+      data.type === 'response.output_audio.done' ||
       data.type === 'conversation.item.input_audio_transcription.completed' ||
       data.type === 'error'
     ) {
@@ -617,31 +680,28 @@ export default function InterviewPage() {
 
     switch (data.type) {
       case 'response.audio_transcript.delta':
-        if (!assistantSpeakingRef.current) {
-          assistantSpeakingRef.current = true
-          setIsPlayingAudio(true)
-          setRealtimeMicEnabled(false)
-          void setRealtimeAudioInputEnabled(false)
-          updateRealtimeTurnDetection(false)
-          console.log('[realtime] assistant speech started')
-        }
+      case 'response.output_audio_transcript.delta':
+        startRealtimeAssistantSpeech()
         // Update current message as AI speaks
         setCurrentMessage((prev) => (prev + (data.delta || '')).trim())
         break
 
-      case 'response.audio_transcript.done':
-        if (assistantSpeechResetTimeoutRef.current) {
-          clearTimeout(assistantSpeechResetTimeoutRef.current)
-        }
+      case 'output_audio_buffer.started':
+        startRealtimeAssistantSpeech()
+        break
+
+      case 'output_audio_buffer.stopped':
+      case 'response.output_audio.done':
         assistantSpeechResetTimeoutRef.current = setTimeout(() => {
-          assistantSpeakingRef.current = false
-          setIsPlayingAudio(false)
-          setRealtimeMicEnabled(true)
-          void setRealtimeAudioInputEnabled(true)
-          updateRealtimeTurnDetection(true)
-          console.log('[realtime] assistant speech ended')
+          finishRealtimeAssistantSpeech(data.type)
           assistantSpeechResetTimeoutRef.current = null
-        }, 700)
+        }, 150)
+        break
+
+      case 'response.audio_transcript.done':
+      case 'response.output_audio_transcript.done':
+        startRealtimeAssistantSpeech()
+        scheduleRealtimeAssistantSpeechFailsafe()
         // Final transcript
         const fullMessage = data.transcript || ''
         setCurrentMessage(fullMessage)
@@ -736,6 +796,10 @@ export default function InterviewPage() {
     if (assistantSpeechResetTimeoutRef.current) {
       clearTimeout(assistantSpeechResetTimeoutRef.current)
       assistantSpeechResetTimeoutRef.current = null
+    }
+    if (assistantSpeechFailsafeRef.current) {
+      clearTimeout(assistantSpeechFailsafeRef.current)
+      assistantSpeechFailsafeRef.current = null
     }
     assistantSpeakingRef.current = false
     turnDetectionDisabledRef.current = false

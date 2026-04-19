@@ -660,6 +660,42 @@ export default function InterviewPage() {
     }
   }
 
+  const updateRealtimeTranscript = (
+    line: string,
+    speaker: 'user' | 'interviewer',
+    options?: { insertBeforeTrailingInterviewerTurns?: boolean }
+  ) => {
+    const cleanedLine = line.trim()
+    if (!cleanedLine) return
+
+    setTranscript((prev) => {
+      let updated = [...prev]
+
+      if (speaker === 'user' && options?.insertBeforeTrailingInterviewerTurns) {
+        let insertAt = updated.length
+        while (insertAt > 0 && updated[insertAt - 1].startsWith('Interviewer:')) {
+          insertAt -= 1
+        }
+
+        const previousLine = updated[insertAt - 1]
+        const nextLine = updated[insertAt]
+        if (previousLine === cleanedLine || nextLine === cleanedLine) {
+          return prev
+        }
+
+        updated.splice(insertAt, 0, cleanedLine)
+      } else {
+        if (updated[updated.length - 1] === cleanedLine) {
+          return prev
+        }
+        updated.push(cleanedLine)
+      }
+
+      saveTranscriptToDatabase(updated).catch((err) => console.error('Error saving transcript:', err))
+      return updated
+    })
+  }
+
   const handleRealtimeMessage = (data: any) => {
     if (
       data.type === 'response.audio_transcript.delta' ||
@@ -706,12 +742,7 @@ export default function InterviewPage() {
         // Final transcript
         const fullMessage = data.transcript || ''
         setCurrentMessage(fullMessage)
-        setTranscript((prev) => {
-          const updated = [...prev, `Interviewer: ${fullMessage}`]
-          // Save to database asynchronously (don't block UI)
-          saveTranscriptToDatabase(updated).catch(err => console.error('Error saving transcript:', err))
-          return updated
-        })
+        updateRealtimeTranscript(`Interviewer: ${fullMessage}`, 'interviewer')
         setTurnCount((prev) => prev + 1)
         
         // HR Screen specific: only end after an explicit recruiter closing.
@@ -754,13 +785,9 @@ export default function InterviewPage() {
           console.log('[realtime] user transcript arrived while assistant marked as speaking', {
             userMessagePreview: userMessage.slice(0, 120),
           })
-          break
         }
-        setTranscript((prev) => {
-          const updated = [...prev, `You: ${userMessage}`]
-          // Save to database asynchronously (don't block UI)
-          saveTranscriptToDatabase(updated).catch(err => console.error('Error saving transcript:', err))
-          return updated
+        updateRealtimeTranscript(`You: ${userMessage}`, 'user', {
+          insertBeforeTrailingInterviewerTurns: assistantSpeakingRef.current,
         })
         break
 

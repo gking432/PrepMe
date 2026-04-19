@@ -221,15 +221,14 @@ export default function InterviewPage() {
       clearTimeout(assistantSpeechFailsafeRef.current)
     }
 
-    // Transcript completion can arrive before audio playback has actually drained.
-    // Keep listening disabled until a real audio-finished signal arrives, but recover
-    // eventually if those events never show up.
+    // Only use this as a last-resort recovery if the client never receives an
+    // audio-buffer completion signal. Give long interviewer turns plenty of room.
     assistantSpeechFailsafeRef.current = setTimeout(() => {
       if (assistantSpeakingRef.current) {
         finishRealtimeAssistantSpeech('failsafe')
       }
       assistantSpeechFailsafeRef.current = null
-    }, 6000)
+    }, 15000)
   }
 
   useEffect(() => {
@@ -725,6 +724,7 @@ export default function InterviewPage() {
 
       case 'output_audio_buffer.started':
         startRealtimeAssistantSpeech()
+        scheduleRealtimeAssistantSpeechFailsafe()
         break
 
       case 'output_audio_buffer.stopped':
@@ -737,8 +737,6 @@ export default function InterviewPage() {
 
       case 'response.audio_transcript.done':
       case 'response.output_audio_transcript.done':
-        startRealtimeAssistantSpeech()
-        scheduleRealtimeAssistantSpeechFailsafe()
         // Final transcript
         const fullMessage = data.transcript || ''
         setCurrentMessage(fullMessage)

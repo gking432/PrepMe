@@ -143,11 +143,6 @@ export default function InterviewPage() {
     dc.send(JSON.stringify({
       type: 'session.update',
       session: {
-        audio: {
-          input: {
-            noise_reduction: { type: 'far_field' },
-          },
-        },
         turn_detection: enabled
           ? {
               type: 'server_vad',
@@ -563,11 +558,6 @@ export default function InterviewPage() {
           session: {
             modalities: ['text', 'audio'],
             instructions: instructions || '',
-            audio: {
-              input: {
-                noise_reduction: { type: 'far_field' },
-              },
-            },
             input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
             turn_detection: {
               type: 'server_vad',

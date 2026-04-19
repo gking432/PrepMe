@@ -186,10 +186,12 @@ Current status: open bug
   - explicitly set `turn_detection.interrupt_response: false`
   - explicitly set `turn_detection.create_response: true`
   - tightened HR candidate-question answering guidance:
-    - 1-2 short sentences
-    - roughly 35 words when possible
+    - one short complete thought
+    - roughly 25-30 words
     - shortest truthful summary, not long explanation
+    - either "Does that help?" or move to close
     - defer detailed follow-up to the hiring team when needed
+  - reduced realtime `max_response_output_tokens` from `400` to `220`
 - Why:
   - long recruiter answers during candidate Q&A were getting cut off
   - logs and docs suggest a likely cause is automatic response interruption on detected user speech while the assistant is still speaking
@@ -197,6 +199,7 @@ Current status: open bug
 - Expected effect:
   - reduce or eliminate assistant answer cancellation during Q&A
   - keep HR answers brief enough that they do not run long unnecessarily
+  - reduce awkward mid-thought generation endings
 
 ## Working conclusions
 
@@ -209,24 +212,11 @@ Current status: open bug
 
 ### Still unsafe / unresolved
 
-- initial interviewer auto-start is not fully reliable
-- Q&A answers can still be truncated
-- close detection is still too brittle
+- Q&A answers may still be too long or may still truncate; this latest change is a mitigation and needs validation
 
 ## Next fixes to make
 
-1. Initial prompt start:
-   - move the first `response.create` behind `session.updated`
-   - ensure it only fires once per interview start
-
-2. Closing behavior:
-   - expand close detection phrases
-   - finish cleanly on common recruiter endings like:
-     - “thanks for your questions”
-     - “goodbye”
-     - “take care”
-
-3. Q&A cutoff:
+1. Q&A cutoff:
    - inspect whether long assistant answers are being interrupted by overlapping input handling
    - specifically review whether late user-turn completion during assistant speech can still trigger server-side interruption behavior
 

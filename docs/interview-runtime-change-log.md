@@ -180,6 +180,24 @@ Likely cause:
 
 Current status: open bug
 
+### `current` Reduce long-answer truncation during HR Q&A
+
+- Change:
+  - explicitly set `turn_detection.interrupt_response: false`
+  - explicitly set `turn_detection.create_response: true`
+  - tightened HR candidate-question answering guidance:
+    - 1-2 short sentences
+    - roughly 35 words when possible
+    - shortest truthful summary, not long explanation
+    - defer detailed follow-up to the hiring team when needed
+- Why:
+  - long recruiter answers during candidate Q&A were getting cut off
+  - logs and docs suggest a likely cause is automatic response interruption on detected user speech while the assistant is still speaking
+  - product-wise, HR recruiter answers should be short anyway
+- Expected effect:
+  - reduce or eliminate assistant answer cancellation during Q&A
+  - keep HR answers brief enough that they do not run long unnecessarily
+
 ## Working conclusions
 
 ### Stable enough to keep

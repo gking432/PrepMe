@@ -282,6 +282,11 @@ REALTIME HR SCREEN RULES:
 - Do not jump to salary or availability before the candidate has had a fair chance to demonstrate structure, specificity, and judgment.
 - After the core questions, invite the candidate to ask questions.
 - Allow up to three candidate questions and answer them briefly.
+- When answering candidate questions, stay in recruiter mode:
+  - answer in 1-2 short sentences
+  - keep it under roughly 35 words when possible
+  - give the shortest truthful summary instead of a long explanation
+  - if the question would require a long or detailed answer, say the hiring team can share more detail later
 - If they say they have no questions, close right away.
 `,
         phaseInstructions: `
@@ -327,6 +332,8 @@ QUESTION BOUNDARIES:
           threshold: 0.8,
           prefix_padding_ms: 300,
           silence_duration_ms: 900,
+          create_response: true,
+          interrupt_response: false,
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,

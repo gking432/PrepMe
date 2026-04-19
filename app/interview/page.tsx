@@ -150,6 +150,8 @@ export default function InterviewPage() {
               threshold: 0.8,
               prefix_padding_ms: 300,
               silence_duration_ms: 900,
+              create_response: true,
+              interrupt_response: false,
             }
           : null,
       },
@@ -564,6 +566,8 @@ export default function InterviewPage() {
               threshold: 0.8,
               prefix_padding_ms: 300,
               silence_duration_ms: 900,
+              create_response: true,
+              interrupt_response: false,
             },
             temperature: 0.7,
             max_response_output_tokens: 400,

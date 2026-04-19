@@ -82,6 +82,7 @@ export default function InterviewPage() {
   const turnDetectionDisabledRef = useRef(false)
   const closingDetectedRef = useRef(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initialRealtimePromptSentRef = useRef(false)
   const supabase = createClient()
 
   const getOrCreateInterviewMediaStream = async () => {
@@ -570,8 +571,6 @@ export default function InterviewPage() {
         }))
         setIsConnected(true)
         setIsListening(true)
-        // Trigger the interviewer to speak first — without this the AI waits for VAD
-        dc.send(JSON.stringify({ type: 'response.create' }))
       }
 
       dc.onmessage = (e) => {
@@ -754,8 +753,14 @@ export default function InterviewPage() {
             'someone will be in touch about next steps',
             'thanks for your time',
             'thanks again for your time',
+            'thanks for your questions',
+            'thank you for your questions',
             'we\'ll wrap up here',
-            'we can wrap up here'
+            'we can wrap up here',
+            'goodbye',
+            'take care',
+            'have a great day',
+            'have a good day'
           ]
 
           const hasClosingSignal = closingSignals.some(keyword => lowerMessage.includes(keyword))
@@ -810,6 +815,11 @@ export default function InterviewPage() {
         
       case 'session.updated':
         console.log('Session updated successfully')
+        if (!initialRealtimePromptSentRef.current && dcRef.current?.readyState === 'open') {
+          initialRealtimePromptSentRef.current = true
+          console.log('[realtime] triggering initial interviewer turn')
+          dcRef.current.send(JSON.stringify({ type: 'response.create' }))
+        }
         break
     }
   }
@@ -828,6 +838,7 @@ export default function InterviewPage() {
       assistantSpeechFailsafeRef.current = null
     }
     assistantSpeakingRef.current = false
+    initialRealtimePromptSentRef.current = false
     turnDetectionDisabledRef.current = false
     closingDetectedRef.current = false
     localAudioSenderRef.current = null

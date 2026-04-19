@@ -2,13 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { CheckCircle2, Lock, Crown, ChevronDown, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare } from 'lucide-react'
+import { CheckCircle2, Lock, Crown, ChevronDown, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare, Archive, RotateCcw } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
@@ -29,6 +29,21 @@ interface InterviewGroup {
       overallScore: number | null
     }
   }
+}
+
+function getGroupKey(group: InterviewGroup) {
+  return `${group.companyName ?? ''}::${group.positionTitle ?? ''}`
+}
+
+function getGroupLatestDate(group: InterviewGroup) {
+  let latest = 0
+  ;(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).forEach((stage) => {
+    const session = group.stages[stage]?.latestSession
+    if (!session) return
+    const timestamp = new Date(session.completed_at || session.created_at).getTime()
+    if (timestamp > latest) latest = timestamp
+  })
+  return latest
 }
 
 const STAGE_CONFIG: Record<InterviewStage, {
@@ -71,6 +86,8 @@ export default function DashboardPage() {
   }>({ email: null, name: null, phone: null })
   const [savedResumes, setSavedResumes] = useState<{ id: string; label: string; resume_text: string }[]>([])
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
+  const [processTab, setProcessTab] = useState<'active' | 'finished' | 'archived'>('active')
+  const [archivedProcessKeys, setArchivedProcessKeys] = useState<string[]>([])
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -92,6 +109,21 @@ export default function DashboardPage() {
     checkUser()
     loadInterviewData()
   }, [forceNewProcess])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const stored = localStorage.getItem(`prepme_archived_processes_${user.id}`)
+    if (!stored) {
+      setArchivedProcessKeys([])
+      return
+    }
+    try {
+      const parsed = JSON.parse(stored)
+      setArchivedProcessKeys(Array.isArray(parsed) ? parsed : [])
+    } catch {
+      setArchivedProcessKeys([])
+    }
+  }, [user?.id])
 
   useEffect(() => {
     const loadResumes = async () => {
@@ -375,8 +407,13 @@ export default function DashboardPage() {
     const stage = sessionRow.stage === 'team_interview' ? 'culture_fit' : sessionRow.stage === 'final_interview' ? 'final' : sessionRow.stage
     return `/interview/feedback?sessionId=${sessionRow.id}&stage=${stage}`
   }
-  const activeInterviewGroups = interviewGroups.filter((group) => getCompletedCount(group) < 4)
-  const completedInterviewGroups = interviewGroups.filter((group) => getCompletedCount(group) === 4)
+  const sortedInterviewGroups = useMemo(
+    () => [...interviewGroups].sort((a, b) => getGroupLatestDate(b) - getGroupLatestDate(a)),
+    [interviewGroups]
+  )
+  const activeInterviewGroups = sortedInterviewGroups.filter((group) => getCompletedCount(group) < 4 && !archivedProcessKeys.includes(getGroupKey(group)))
+  const completedInterviewGroups = sortedInterviewGroups.filter((group) => getCompletedCount(group) === 4 && !archivedProcessKeys.includes(getGroupKey(group)))
+  const archivedInterviewGroups = sortedInterviewGroups.filter((group) => archivedProcessKeys.includes(getGroupKey(group)))
   const completedReportCount = interviewGroups.reduce(
     (count, group) => count + (['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).filter((stage) => group.stages[stage]?.hasFeedback).length,
     0
@@ -410,7 +447,7 @@ export default function DashboardPage() {
       items: [
         { label: 'Active Processes', value: `${activeInterviewGroups.length}`, progress: activeInterviewGroups.length ? 100 : 0, tone: 'brand' as const },
         { label: 'Completed Processes', value: `${completedInterviewGroups.length}`, progress: completedInterviewGroups.length ? 100 : 0, tone: 'success' as const },
-        { label: 'Saved Resumes', value: `${savedResumes.length}`, progress: savedResumes.length ? 100 : 0, tone: 'brand' as const },
+        { label: 'Archived Processes', value: `${archivedInterviewGroups.length}`, progress: archivedInterviewGroups.length ? 100 : 0, tone: 'default' as const },
       ],
     },
     {
@@ -433,6 +470,80 @@ export default function DashboardPage() {
     if (onboardStep === 'job') return "What job are you interviewing for?"
     if (onboardStep === 'resume') return "Now let me get to know you!"
     return "Let's get you ready."
+  }
+
+  const persistArchivedProcessKeys = (nextKeys: string[]) => {
+    setArchivedProcessKeys(nextKeys)
+    if (user?.id) {
+      localStorage.setItem(`prepme_archived_processes_${user.id}`, JSON.stringify(nextKeys))
+    }
+  }
+
+  const archiveProcess = (group: InterviewGroup) => {
+    const key = getGroupKey(group)
+    if (archivedProcessKeys.includes(key)) return
+    persistArchivedProcessKeys([...archivedProcessKeys, key])
+    if (processTab !== 'archived' && activeInterviewGroups.length + completedInterviewGroups.length <= 1) {
+      setProcessTab('archived')
+    }
+  }
+
+  const restoreProcess = (group: InterviewGroup) => {
+    const key = getGroupKey(group)
+    persistArchivedProcessKeys(archivedProcessKeys.filter((existing) => existing !== key))
+  }
+
+  const processTabs = [
+    { key: 'active' as const, label: 'Active Processes', count: activeInterviewGroups.length },
+    { key: 'finished' as const, label: 'Finished Processes', count: completedInterviewGroups.length },
+    { key: 'archived' as const, label: 'Archived Processes', count: archivedInterviewGroups.length },
+  ]
+
+  const renderProcessListItem = (group: InterviewGroup, idx: number, archived = false) => {
+    const latestSession = getLatestSessionForGroup(group)
+    const completedCount = getCompletedCount(group)
+    const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview Process ${idx + 1}`
+    const subcopy = archived ? `${completedCount}/4 stages completed before archiving.` : 'All four stages completed.'
+
+    return (
+      <button
+        key={`${title}-${idx}-${archived ? 'archived' : 'finished'}`}
+        type="button"
+        onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
+        className="flex items-center justify-between gap-4 rounded-[1.35rem] border border-slate-200/80 bg-white/92 px-5 py-4 text-left transition-colors hover:border-slate-300 hover:bg-white"
+      >
+        <div className="min-w-0">
+          <p className="truncate text-base font-black text-slate-900">{title}</p>
+          <p className="mt-1 text-sm text-slate-500">{subcopy}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-600">
+            {completedCount}/4
+          </span>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              archived ? restoreProcess(group) : archiveProcess(group)
+            }}
+            className="inline-flex h-9 items-center justify-center rounded-full border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+          >
+            {archived ? (
+              <>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restore
+              </>
+            ) : (
+              <>
+                <Archive className="mr-2 h-4 w-4" />
+                Archive
+              </>
+            )}
+          </button>
+          <ArrowRight className="h-4 w-4 text-slate-400" />
+        </div>
+      </button>
+    )
   }
 
   const handleStartInterview = async (stage: InterviewStage = selectedStage) => {
@@ -577,100 +688,127 @@ export default function DashboardPage() {
             {workspacePanel === 'interviews' && (
               <div className="space-y-8">
                 <section className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-500">Active Processes</p>
-                      <h2 className="mt-1 text-2xl font-black text-slate-900">Continue where you left off</h2>
+                      <h2 className="text-2xl font-black text-slate-900">Interview processes</h2>
+                      <p className="mt-1 text-sm text-slate-500">Keep active work visible, and move older processes out of the way when you are done with them.</p>
                     </div>
-                    <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
-                      {activeInterviewGroups.length} active
-                    </span>
-                  </div>
-                  {activeInterviewGroups.length === 0 ? (
-                    <div className="premium-panel p-8 text-center">
-                      <Briefcase className="mx-auto h-12 w-12 text-slate-300" />
-                      <p className="mt-4 text-base font-semibold text-slate-700">No active interview processes right now.</p>
-                      <p className="mt-2 text-sm text-slate-500">Start a new process when the next role comes in.</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-5 xl:grid-cols-2">
-                      {activeInterviewGroups.map((group, idx) => {
-                        const latestSession = getLatestSessionForGroup(group)
-                        const completedCount = getCompletedCount(group)
-                        const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview Process ${idx + 1}`
+                    <div className="inline-flex w-fit rounded-full border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+                      {processTabs.map((tab) => {
+                        const isActive = processTab === tab.key
                         return (
                           <button
-                            key={`${title}-${idx}`}
+                            key={tab.key}
                             type="button"
-                            onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
-                            className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
+                            onClick={() => setProcessTab(tab.key)}
+                            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                              isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+                            }`}
                           >
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Interview Process</p>
-                                <h3 className="mt-2 text-2xl font-black text-slate-900">{title}</h3>
+                            <span>{tab.label}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-black uppercase tracking-[0.16em] ${
+                              isActive ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {tab.count}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  {processTab === 'active' && (
+                    activeInterviewGroups.length === 0 ? (
+                      <div className="premium-panel p-8 text-center">
+                        <Briefcase className="mx-auto h-12 w-12 text-slate-300" />
+                        <p className="mt-4 text-base font-semibold text-slate-700">No active interview processes right now.</p>
+                        <p className="mt-2 text-sm text-slate-500">Start a new process when the next role comes in.</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-5 xl:grid-cols-2">
+                        {activeInterviewGroups.map((group, idx) => {
+                          const latestSession = getLatestSessionForGroup(group)
+                          const completedCount = getCompletedCount(group)
+                          const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview Process ${idx + 1}`
+                          return (
+                            <button
+                              key={`${title}-${idx}`}
+                              type="button"
+                              onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
+                              className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div>
+                                  <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Interview Process</p>
+                                  <h3 className="mt-2 text-2xl font-black text-slate-900">{title}</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+                                    {completedCount}/4 complete
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      archiveProcess(group)
+                                    }}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-900"
+                                    aria-label={`Archive ${title}`}
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                  </button>
+                                </div>
                               </div>
-                              <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
-                                {completedCount}/4 complete
-                              </span>
-                            </div>
-                            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                              <div className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]" style={{ width: `${(completedCount / 4) * 100}%` }} />
-                            </div>
-                            <div className="grid grid-cols-4 gap-3">
-                              {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
-                                const stageState = group.stages[stage]
-                                return (
-                                  <div key={stage} className={`rounded-[1.2rem] border px-3 py-3 text-center ${
-                                    stageState?.hasFeedback ? 'border-emerald-200 bg-emerald-50/80' : 'border-slate-200 bg-slate-50/80'
-                                  }`}>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{STAGE_CONFIG[stage].name}</p>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                            <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
-                              <span>{latestSession ? 'Open latest feedback' : 'No completed stages yet'}</span>
-                              <ArrowRight className="h-4 w-4" />
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
+                              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                                <div className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]" style={{ width: `${(completedCount / 4) * 100}%` }} />
+                              </div>
+                              <div className="grid grid-cols-4 gap-3">
+                                {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
+                                  const stageState = group.stages[stage]
+                                  return (
+                                    <div key={stage} className={`rounded-[1.2rem] border px-3 py-3 text-center ${
+                                      stageState?.hasFeedback ? 'border-emerald-200 bg-emerald-50/80' : 'border-slate-200 bg-slate-50/80'
+                                    }`}>
+                                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{STAGE_CONFIG[stage].name}</p>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                              <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
+                                <span>{latestSession ? 'Open latest feedback' : 'No completed stages yet'}</span>
+                                <ArrowRight className="h-4 w-4" />
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )
                   )}
-                </section>
 
-                <section className="space-y-4">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-500">Completed Processes</p>
-                    <h2 className="mt-1 text-2xl font-black text-slate-900">Finished interview tracks</h2>
-                  </div>
-                  {completedInterviewGroups.length === 0 ? (
-                    <div className="premium-panel p-8 text-center">
-                      <CheckCircle2 className="mx-auto h-12 w-12 text-slate-300" />
-                      <p className="mt-4 text-base font-semibold text-slate-700">No completed processes yet.</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {completedInterviewGroups.map((group, idx) => {
-                        const latestSession = getLatestSessionForGroup(group)
-                        const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Completed Process ${idx + 1}`
-                        return (
-                          <button
-                            key={`${title}-${idx}`}
-                            type="button"
-                            onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
-                            className="premium-panel flex items-center justify-between gap-4 p-5 text-left transition-all hover:-translate-y-0.5"
-                          >
-                            <div>
-                              <p className="text-lg font-black text-slate-900">{title}</p>
-                              <p className="mt-1 text-sm text-slate-500">All four stages completed.</p>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-slate-400" />
-                          </button>
-                        )
-                      })}
-                    </div>
+                  {processTab === 'finished' && (
+                    completedInterviewGroups.length === 0 ? (
+                      <div className="premium-panel p-8 text-center">
+                        <CheckCircle2 className="mx-auto h-12 w-12 text-slate-300" />
+                        <p className="mt-4 text-base font-semibold text-slate-700">No finished processes yet.</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {completedInterviewGroups.map((group, idx) => renderProcessListItem(group, idx))}
+                      </div>
+                    )
+                  )}
+
+                  {processTab === 'archived' && (
+                    archivedInterviewGroups.length === 0 ? (
+                      <div className="premium-panel p-8 text-center">
+                        <Archive className="mx-auto h-12 w-12 text-slate-300" />
+                        <p className="mt-4 text-base font-semibold text-slate-700">No archived processes yet.</p>
+                        <p className="mt-2 text-sm text-slate-500">Archive finished or older processes to keep the workspace focused.</p>
+                      </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {archivedInterviewGroups.map((group, idx) => renderProcessListItem(group, idx, true))}
+                      </div>
+                    )
                   )}
                 </section>
               </div>

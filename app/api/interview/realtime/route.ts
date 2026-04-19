@@ -320,6 +320,11 @@ QUESTION BOUNDARIES:
         model: 'gpt-4o-mini-realtime-preview',
         voice: 'marin',
         instructions: optimizedSystemPrompt,
+        audio: {
+          input: {
+            noise_reduction: { type: 'far_field' },
+          },
+        },
         input_audio_format: 'pcm16',
         output_audio_format: 'pcm16',
         turn_detection: {

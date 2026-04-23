@@ -7,7 +7,6 @@ import { useGameFeedback } from '@/hooks/useGameFeedback'
 import PracticeLessonFlow from '@/components/PracticeLessonFlow'
 import FinalVoiceChallenge from '@/components/FinalVoiceChallenge'
 import {
-  detectAnswerStructureTemplate,
   getContextualPracticeBundle,
   getPracticeDisplayNameForCriterion,
   type PracticeBundle,
@@ -80,69 +79,6 @@ export default function SubLessonRoadmap({
     [bundle.rootCause, criterion]
   )
 
-  const hasUsableStructureExcerpt = useCallback((excerpt?: string) => {
-    const trimmed = (excerpt || '').trim()
-    if (!trimmed) return false
-
-    const normalized = trimmed
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-
-    if (!normalized) return false
-    if (normalized.startsWith('no response provided')) return false
-
-    const nonAnswers = new Set([
-      'hello',
-      'hi',
-      'hey',
-      'hello there',
-      'okay',
-      'ok',
-      'yeah',
-      'yep',
-      'yes',
-      'sure',
-      'thanks',
-      'thank you',
-    ])
-
-    if (nonAnswers.has(normalized)) return false
-
-    return true
-  }, [])
-
-  const canonicalStructureQuestions = useMemo(
-    () => ({
-      present_past_future: 'Can you tell me about yourself and walk me through your background briefly?',
-      star: 'Tell me about a project you are proud of.',
-      noticed_fit_now: 'Why are you interested in this role?',
-      answer_reason_example: 'How do you prioritize when everything feels urgent?',
-    }),
-    []
-  )
-
-  const structureTemplates = useMemo(
-    () => ([
-      'present_past_future',
-      'star',
-      'noticed_fit_now',
-      'answer_reason_example',
-    ] as const),
-    []
-  )
-
-  const structureStepNames = useMemo(
-    () => ({
-      present_past_future: 'Professional Story',
-      star: 'STAR',
-      noticed_fit_now: 'Observation, Fit, Timing',
-      answer_reason_example: 'Answer, Reason, Example',
-    }),
-    []
-  )
-
   const [activeSlot, setActiveSlot] = useState<ActiveSlot>(null)
   const [activeRequiredPhase, setActiveRequiredPhase] = useState<RequiredStepPhase>('lesson')
   const [completedSet, setCompletedSet] = useState<Set<number>>(new Set())
@@ -161,28 +97,8 @@ export default function SubLessonRoadmap({
     ).filter((item) => item.question || item.excerpt)
 
     const normalizedBase = base.length > 0 ? base : [{ question: originalQuestion, excerpt: originalAnswer }]
-
-    if (bundle.rootCause !== 'poor_structure') return normalizedBase
-
-    const hasAnyUsableAnswer = normalizedBase.some((item) => {
-      return hasUsableStructureExcerpt(item.excerpt)
-    })
-
-    if (hasAnyUsableAnswer) return normalizedBase
-
-    return structureTemplates.map((template) => {
-      const existing = normalizedBase.find(
-        (item) => detectAnswerStructureTemplate(item.question) === template
-      )
-
-      if (existing) return existing
-
-      return {
-        question: canonicalStructureQuestions[template],
-        excerpt: '',
-      }
-    })
-  }, [bundle.rootCause, canonicalStructureQuestions, evidenceItems, hasUsableStructureExcerpt, originalAnswer, originalQuestion, structureTemplates])
+    return normalizedBase
+  }, [evidenceItems, originalAnswer, originalQuestion])
 
   const contextualBundles = useMemo(
     () => questionRepairs.map((item) => getContextualPracticeBundle(bundle.rootCause, item.question)),
@@ -191,11 +107,10 @@ export default function SubLessonRoadmap({
 
   const requiredSteps = useMemo(() => (
     questionRepairs.map((item, index) => {
-      const template = detectAnswerStructureTemplate(item.question)
       const contextualTitle = contextualBundles[index]?.lessons[0]?.title || bundle.lessons[0]?.title
       return {
         frameworkLabel: bundle.rootCause === 'poor_structure'
-          ? structureStepNames[template] || contextualTitle || `Repair ${index + 1}`
+          ? baseDisplayName
           : contextualTitle || `Repair ${index + 1}`,
         label: `Repair ${index + 1}`,
         description: item.question || 'this flagged question',
@@ -203,37 +118,14 @@ export default function SubLessonRoadmap({
         evidenceIndex: index,
       }
     })
-  ), [bundle.lessons, bundle.rootCause, contextualBundles, questionRepairs, structureStepNames])
-  const optionalStructureLessons = useMemo(() => {
-    if (bundle.rootCause !== 'poor_structure') return []
-
-    const requiredTemplates = new Set(
-      questionRepairs.map((item) => detectAnswerStructureTemplate(item.question))
-    )
-
-    return structureTemplates
-      .filter((template) => !requiredTemplates.has(template))
-      .map((template) => {
-        const question = canonicalStructureQuestions[template]
-        const contextualBundle = getContextualPracticeBundle(bundle.rootCause, question)
-        return {
-          template,
-          question,
-          excerpt: '',
-          lesson: contextualBundle.lessons[0],
-          displayName: contextualBundle.displayName,
-        }
-      })
-  }, [bundle.rootCause, canonicalStructureQuestions, questionRepairs, structureTemplates])
+  ), [baseDisplayName, bundle.lessons, bundle.rootCause, contextualBundles, questionRepairs])
   const supplementalCoreLessons = useMemo(
     () => (bundle.rootCause === 'questions_about_company' ? bundle.lessons.slice(1) : []),
     [bundle.lessons, bundle.rootCause]
   )
   const optionalLessons = useMemo(
     () => (
-      bundle.rootCause === 'poor_structure'
-        ? optionalStructureLessons
-        : bundle.rootCause === 'questions_about_company'
+      bundle.rootCause === 'questions_about_company'
           ? []
           : bundle.lessons.slice(1).map((lesson) => ({
               lesson,
@@ -242,7 +134,7 @@ export default function SubLessonRoadmap({
               displayName: bundle.displayName,
             }))
     ),
-    [bundle.displayName, bundle.lessons, bundle.rootCause, optionalStructureLessons, questionRepairs]
+    [bundle.displayName, bundle.lessons, bundle.rootCause, questionRepairs]
   )
   const totalSlots = requiredSteps.length
   const totalCoreItems = totalSlots + supplementalCoreLessons.length

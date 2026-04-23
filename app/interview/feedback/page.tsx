@@ -20,7 +20,7 @@ import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
-import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion } from '@/lib/practice-bundles'
+import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
 
 function parseSessionRoleContext(jobDescriptionText?: string | null) {
   if (!jobDescriptionText) return { role: '', company: '' }
@@ -1416,8 +1416,12 @@ export default function InterviewDashboard() {
 
   // HR screen 6-area data helpers
   const sixAreas = feedback?.hr_screen_six_areas
-  const wentWellAreas = sixAreas?.what_went_well || []
-  const needsImproveAreas = sixAreas?.what_needs_improve || []
+  const normalizeAreaCriterion = (area: any) => ({
+    ...area,
+    criterion: normalizePracticeCriterion(area?.criterion || ''),
+  })
+  const wentWellAreas = (sixAreas?.what_went_well || []).map(normalizeAreaCriterion)
+  const needsImproveAreas = (sixAreas?.what_needs_improve || []).map(normalizeAreaCriterion)
   const practiceWeaknesses = needsImproveAreas
 
   const uniquePracticeModuleCount = new Set(

@@ -114,6 +114,14 @@ export interface PracticeBundle {
   lessons: SubLesson[]
 }
 
+const LEGACY_PRACTICE_CRITERION_ALIASES: Record<string, string> = {
+  'Answer Structure and Conciseness': 'Professional Story',
+}
+
+export function normalizePracticeCriterion(criterion: string): string {
+  return LEGACY_PRACTICE_CRITERION_ALIASES[criterion] || criterion
+}
+
 export const PRACTICE_BUNDLES: PracticeBundle[] = [
   {
     rootCause: 'professional_story',
@@ -2097,7 +2105,7 @@ export function getBundleForRootCause(rootCause: string): PracticeBundle {
 
 export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
   'Professional Story': 'professional_story',
-  'Answer Structure and Conciseness': 'poor_structure',
+  'Answer Structure and Conciseness': 'professional_story',
   'Specific Examples and Evidence': 'lack_of_specificity',
   'Preparation / Curiosity': 'questions_about_company',
   'Pace and Conversation Flow': 'weak_communication',
@@ -2119,13 +2127,15 @@ export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
 }
 
 export function getRootCauseForCriterion(criterion: string, explicitRootCause?: string): string {
-  const mappedRootCause = CRITERION_TO_ROOT_CAUSE[criterion]
+  const normalizedCriterion = normalizePracticeCriterion(criterion)
+  const mappedRootCause = CRITERION_TO_ROOT_CAUSE[normalizedCriterion]
   if (mappedRootCause) return mappedRootCause
   if (explicitRootCause) return explicitRootCause
   return 'poor_structure'
 }
 
 export function getPracticeDisplayNameForCriterion(criterion: string, explicitRootCause?: string): string {
+  const normalizedCriterion = normalizePracticeCriterion(criterion)
   const criterionDisplayNames: Record<string, string> = {
     'Professional Story': 'Professional Story',
     'Specific Examples and Evidence': 'Specificity / Proof',
@@ -2135,9 +2145,9 @@ export function getPracticeDisplayNameForCriterion(criterion: string, explicitRo
     'Pace and Conversation Flow': 'Pace / Natural Delivery',
   }
 
-  if (criterionDisplayNames[criterion]) return criterionDisplayNames[criterion]
+  if (criterionDisplayNames[normalizedCriterion]) return criterionDisplayNames[normalizedCriterion]
 
-  const rootCause = getRootCauseForCriterion(criterion, explicitRootCause)
+  const rootCause = getRootCauseForCriterion(normalizedCriterion, explicitRootCause)
   return getBundleForRootCause(rootCause).displayName
 }
 

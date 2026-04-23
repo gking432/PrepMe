@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import { normalizePracticeCriterion } from '@/lib/practice-bundles'
 import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import Preppi from '@/components/Preppi'
 
@@ -379,9 +380,10 @@ export default function TeachCard({
       return 'This was flagged because we do not have a clean matching answer excerpt for this question. We should still practice the right move, but we should not pretend we have a real answer to critique.'
     }
 
-    const key = criterion.toLowerCase()
-    if (key.includes('answer structure')) {
-      return 'This answer likely got flagged because it takes too long to get to the point, packs in too many side details, and does not land cleanly at the end.'
+    const normalizedCriterion = normalizePracticeCriterion(criterion)
+    const key = normalizedCriterion.toLowerCase()
+    if (key.includes('professional story')) {
+      return 'This answer likely got flagged because it does not clearly define what you do now, the through-line behind your background, and where you want to go next.'
     }
     if (key.includes('specific examples')) {
       return 'This answer likely got flagged because it stays general. The interviewer hears claims, but not enough proof.'

@@ -6,7 +6,7 @@ import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import SubLessonRoadmap from '@/components/SubLessonRoadmap'
-import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion } from '@/lib/practice-bundles'
+import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
 
 // ── Icons per root cause ──────────────────────────────────────────────────────
 
@@ -163,14 +163,15 @@ export default function LessonRoadmap({
 
   if (activeIdx !== null) {
     const weakness = roadmapWeaknesses[activeIdx]
-    const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
+    const normalizedCriterion = normalizePracticeCriterion(weakness.criterion)
+    const rootCause = getRootCauseForCriterion(normalizedCriterion, weakness.rootCause)
     const bundle = getBundleForRootCause(rootCause)
     const evidence = weakness.evidence?.[0]
 
     return (
       <SubLessonRoadmap
         bundle={bundle}
-        criterion={weakness.criterion}
+        criterion={normalizedCriterion}
         originalQuestion={evidence?.question}
         originalAnswer={evidence?.excerpt}
         evidenceItems={weakness.evidence}

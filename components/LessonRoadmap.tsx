@@ -11,6 +11,7 @@ import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCause
 // ── Icons per root cause ──────────────────────────────────────────────────────
 
 const ROOT_CAUSE_ICONS: Record<string, string> = {
+  professional_story: '🧵',
   poor_structure: '📋',
   lack_of_specificity: '🎯',
   weak_communication: '💬',

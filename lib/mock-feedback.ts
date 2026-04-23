@@ -74,7 +74,7 @@ export const MOCK_FEEDBACK = {
         feedback:
           'Your answers tended to ramble without a clear beginning, middle, and end. The interviewer had to redirect you twice.',
         score: 4,
-        rootCause: 'poor_structure',
+        rootCause: 'professional_story',
         evidence: [
           {
             question_id: 'q3',

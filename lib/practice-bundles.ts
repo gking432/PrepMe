@@ -116,6 +116,14 @@ export interface PracticeBundle {
 
 export const PRACTICE_BUNDLES: PracticeBundle[] = [
   {
+    rootCause: 'professional_story',
+    displayName: 'Professional Story',
+    description: 'Build a clear, focused answer for Tell me about yourself.',
+    lessons: [
+      buildAnswerStructureLesson('present_past_future'),
+    ],
+  },
+  {
     rootCause: 'poor_structure',
     displayName: 'Response Patterns',
     description: "Let's sharpen how your answers are built.",
@@ -2088,7 +2096,7 @@ export function getBundleForRootCause(rootCause: string): PracticeBundle {
 }
 
 export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
-  'Professional Story': 'poor_structure',
+  'Professional Story': 'professional_story',
   'Answer Structure and Conciseness': 'poor_structure',
   'Specific Examples and Evidence': 'lack_of_specificity',
   'Preparation / Curiosity': 'questions_about_company',

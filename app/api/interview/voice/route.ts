@@ -366,6 +366,16 @@ ${askedQuestionsCount >= 6 ?
           q.toLowerCase().includes('prompting')
         )
 
+        const hasAskedCurveball = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('stretch you most') ||
+          q.toLowerCase().includes('learn quickly') ||
+          q.toLowerCase().includes('developing professionally') ||
+          q.toLowerCase().includes('resume you') && q.toLowerCase().includes('explain more clearly') ||
+          q.toLowerCase().includes('missing context') ||
+          q.toLowerCase().includes('stressful situations') ||
+          q.toLowerCase().includes('stay organized')
+        )
+
         const hasAskedAboutSalary = askedQuestionsPreview.some((q: string) =>
           q.toLowerCase().includes('salary') ||
           q.toLowerCase().includes('compensation') ||
@@ -401,6 +411,10 @@ ${!hasAskedAboutExperience ?
 ${!hasAskedAboutLeaving ?
   '✓ "Why are you exploring new opportunities?" / "What\'s prompting the move?"' :
   '✗ Already covered leaving reasons'}
+
+${!hasAskedCurveball ?
+  '✓ Ask ONE tougher but still recruiter-appropriate curveball before salary/start date (for example: "What\'s one part of this role you think would stretch you most?", "What would you want to learn quickly if you started here?", "How do you handle stressful situations?", or "How do you stay organized?")' :
+  '✗ Already covered the tougher HR curveball question'}
 
 ${!hasAskedAboutSalary ?
   '○ Salary expectations (ask AFTER experience/motivation, not before)' :
@@ -932,4 +946,3 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     )
   }
 }
-

@@ -6,7 +6,7 @@ import Confetti from '@/components/Confetti'
 import { PreppiSVG } from '@/components/Preppi'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import SubLessonRoadmap from '@/components/SubLessonRoadmap'
-import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
+import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
 // ── Icons per root cause ──────────────────────────────────────────────────────
 
@@ -146,11 +146,11 @@ export default function LessonRoadmap({
       title: '',
       items: roadmapWeaknesses.map((weakness, idx) => {
         const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
-        const bundle = getBundleForRootCause(rootCause)
+        const displayName = getPracticeDisplayNameForCriterion(weakness.criterion, weakness.rootCause)
         const isCompleted = completedSet.has(idx)
         const isCurrent = idx === nextIdx && !allDone
         return {
-          label: bundle.displayName,
+          label: displayName,
           status: isCompleted ? 'complete' as const : isCurrent ? 'current' as const : 'upcoming' as const,
           meta: weakness.score != null ? `${weakness.score}/10` : undefined,
         }
@@ -239,6 +239,7 @@ export default function LessonRoadmap({
                 {roadmapWeaknesses.map((weakness, idx) => {
                   const rootCause = getRootCauseForCriterion(weakness.criterion, weakness.rootCause)
                   const bundle = getBundleForRootCause(rootCause)
+                  const displayName = getPracticeDisplayNameForCriterion(weakness.criterion, weakness.rootCause)
                   const icon = ROOT_CAUSE_ICONS[rootCause] || '📋'
                   const isCompleted = completedSet.has(idx)
                   const isPassed = passedSet.has(idx)
@@ -264,7 +265,7 @@ export default function LessonRoadmap({
                               ? 'border-violet-300 bg-white ring-2 ring-violet-200/70 shadow-[0_20px_34px_rgba(109,40,217,0.12)]'
                               : 'border-slate-200 bg-white/96'
                           }`}
-                          title={bundle.displayName}
+                          title={displayName}
                         >
                           <div className="flex items-center gap-3">
                             <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.95rem] border text-xl ${
@@ -279,7 +280,7 @@ export default function LessonRoadmap({
                               <span>{icon}</span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-black text-slate-900">{bundle.displayName}</p>
+                              <p className="truncate text-sm font-black text-slate-900">{displayName}</p>
                               <div className="mt-1 flex items-center gap-2">
                                 {weakness.score != null && (
                                   <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">

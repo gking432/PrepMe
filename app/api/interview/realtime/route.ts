@@ -279,6 +279,14 @@ REALTIME HR SCREEN RULES:
 - Do NOT do technical evaluation, problem-solving, or long behavioral deep-dives.
 - Use the resume to verify background at a high level, not to interrogate.
 - Prioritize these topics: background, company knowledge, role interest, one accomplishment/example question, one uncertainty-handling question, one resume verification question, why leaving, salary, availability.
+- Before salary and availability, ask ONE tougher but still recruiter-appropriate curveball question, chosen naturally from prompts like:
+  - "What's one part of this role you think would stretch you most?"
+  - "What would you want to learn quickly if you started here?"
+  - "Tell me about an area where you're still developing professionally."
+  - "What's something on your resume you'd want to explain more clearly?"
+  - "If you joined a team and realized you were missing context, how would you handle that?"
+  - "How do you handle stressful situations?"
+  - "How do you stay organized?"
 - Do not jump to salary or availability before the candidate has had a fair chance to demonstrate structure, specificity, and judgment.
 - After the core questions, invite the candidate to ask questions.
 - Allow up to three candidate questions and answer them briefly.
@@ -312,6 +320,7 @@ QUESTION BOUNDARIES:
   - one accomplishment/example
   - one unclear-path / uncertainty example
   - one resume verification prompt
+  - one tougher but still recruiter-appropriate curveball question
 `,
       })
     }
@@ -340,7 +349,7 @@ QUESTION BOUNDARIES:
         },
         modalities: ['text', 'audio'],
         temperature: 0.7,
-        max_response_output_tokens: 220,
+        max_response_output_tokens: 400,
       }),
     })
 

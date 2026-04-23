@@ -1,5 +1,7 @@
 export interface MultipleChoiceExercise {
   type: 'multiple_choice'
+  title?: string
+  context?: string
   question: string
   options: string[]
   correctIndex: number
@@ -8,12 +10,16 @@ export interface MultipleChoiceExercise {
 
 export interface LabelSortExercise {
   type: 'label_sort'
+  title?: string
+  context?: string
   instruction: string
   segments: { text: string; correctLabel: string }[]
 }
 
 export interface WordBankExercise {
   type: 'word_bank'
+  title?: string
+  context?: string
   instruction: string
   sentenceWithBlank: string
   options: string[]
@@ -23,6 +29,8 @@ export interface WordBankExercise {
 
 export interface TapSelectExercise {
   type: 'tap_select'
+  title?: string
+  context?: string
   instruction: string
   items: string[]
   correctIndices: number[]
@@ -31,6 +39,8 @@ export interface TapSelectExercise {
 
 export interface SentenceBuilderExercise {
   type: 'sentence_builder'
+  title?: string
+  context?: string
   instruction: string
   slotLabels: string[]
   options: string[]
@@ -41,6 +51,8 @@ export interface SentenceBuilderExercise {
 
 export interface ApplyToYourselfExercise {
   type: 'apply_to_yourself'
+  title?: string
+  context?: string
   instruction: string
   coachingTip: string
   evaluationType?: string
@@ -52,6 +64,10 @@ export interface ApplyToYourselfExercise {
     shouldIncludeNumber?: boolean
     avoidWords?: string[]
   }>
+}
+
+export interface LessonWorkshop {
+  type: 'professional_story'
 }
 
 export type Exercise =
@@ -88,6 +104,7 @@ export interface SubLesson {
     }
   }
   exercises: Exercise[]
+  workshop?: LessonWorkshop
 }
 
 export interface PracticeBundle {
@@ -100,8 +117,8 @@ export interface PracticeBundle {
 export const PRACTICE_BUNDLES: PracticeBundle[] = [
   {
     rootCause: 'poor_structure',
-    displayName: 'Answer Structure',
-    description: "Your answers lacked clear structure. Let's fix that.",
+    displayName: 'Response Patterns',
+    description: "Let's sharpen how your answers are built.",
     lessons: [
       {
         title: 'STAR',
@@ -2071,8 +2088,10 @@ export function getBundleForRootCause(rootCause: string): PracticeBundle {
 }
 
 export const CRITERION_TO_ROOT_CAUSE: Record<string, string> = {
+  'Professional Story': 'poor_structure',
   'Answer Structure and Conciseness': 'poor_structure',
   'Specific Examples and Evidence': 'lack_of_specificity',
+  'Preparation / Curiosity': 'questions_about_company',
   'Pace and Conversation Flow': 'weak_communication',
   'Questions Asked About Role/Company': 'questions_about_company',
   'Questions Asked About the Role/Company': 'questions_about_company',
@@ -2096,6 +2115,22 @@ export function getRootCauseForCriterion(criterion: string, explicitRootCause?: 
   if (mappedRootCause) return mappedRootCause
   if (explicitRootCause) return explicitRootCause
   return 'poor_structure'
+}
+
+export function getPracticeDisplayNameForCriterion(criterion: string, explicitRootCause?: string): string {
+  const criterionDisplayNames: Record<string, string> = {
+    'Professional Story': 'Professional Story',
+    'Specific Examples and Evidence': 'Specificity / Proof',
+    'Preparation / Curiosity': 'Preparation / Curiosity',
+    'Handling Uncertain/Difficult Questions': 'Handling Uncertainty',
+    'Alignment of Career Goals with Position': 'Career Alignment',
+    'Pace and Conversation Flow': 'Pace / Natural Delivery',
+  }
+
+  if (criterionDisplayNames[criterion]) return criterionDisplayNames[criterion]
+
+  const rootCause = getRootCauseForCriterion(criterion, explicitRootCause)
+  return getBundleForRootCause(rootCause).displayName
 }
 
 export type AnswerStructureTemplate =
@@ -2148,181 +2183,163 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
   switch (template) {
     case 'present_past_future':
       return {
-        title: 'Present, Past, Future',
+        title: 'Professional Story',
         difficulty: 'easy',
         teach: {
-          title: 'Use Present, Past, Future with a qualifier in each section',
-          explanation: 'Structure helps, but structure alone is not enough. A candidate can use the right order and still sound vague. Present should say what you do now and what kind of work that actually is. Past should say what built that foundation and what pattern connects it. Future should explain what you want to keep building toward and why this role fits that direction.',
+          title: 'Turn your background into a clear professional story',
+          explanation: 'In this lesson, you’ll learn how to turn a scattered background into a clear, focused answer you can actually use. A strong answer explains what you do now, shows the background that led you here, and makes it clear where you are headed next.',
           example: {
             question: 'Can you tell me about yourself?',
-            badAnswer: 'Sure. I started out doing a lot of different marketing work, and over the years I have touched a bunch of industries and learned a lot. I have worked with agencies and internal teams and done everything from content to operations, so there is a lot I could get into.',
-            goodAnswer: 'Right now I work at the intersection of marketing execution and operations, with a lot of my recent work focused on keeping cross-functional projects moving. Before that, I built my foundation across agency and in-house roles where I had to turn messy requirements into clean execution. Going forward, I want to keep building in work like that, and this role fits because it makes that kind of cross-functional execution more central to the job.',
+            badAnswer: 'I started my career in customer support, then moved into operations, and before that I also spent some time in account work and a few other roles where I learned a lot. Over time I picked up experience across different environments, and now I am looking for a new challenge where I can keep growing.',
+            goodAnswer: 'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward. Before that, I built my foundation in support and operations roles where I had to stay organized, adjust quickly, and keep work moving across shifting priorities. Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
             breakdown: {
-              Present: 'Say what you do now, then add the qualifier that shows what kind of work it really is.',
-              Past: 'Say what built that foundation, then add the qualifier that explains the through-line.',
-              Future: 'Say what you want to keep building toward, then add the qualifier that shows why this role fits that direction.',
+              Present: 'Start with what you do now and define your professional lane clearly.',
+              Past: 'Show the background that led you here without turning it into a timeline.',
+              Future: 'Explain where you want to go next in a way that sounds specific and logical.',
             },
             annotatedStrongAnswer: [
-              { label: 'Present', text: 'Right now I work at the intersection of marketing execution and operations,', detail: 'This is the section statement. It names the current lane.' },
-              { label: 'Present Qualifier', text: 'with a lot of my recent work focused on keeping cross-functional projects moving.', detail: 'This is the qualifier. It explains what kind of work that actually is.' },
-              { label: 'Past', text: 'Before that, I built my foundation across agency and in-house roles', detail: 'This is the section statement. It names the foundation.' },
-              { label: 'Past Qualifier', text: 'where I had to turn messy requirements into clean execution.', detail: 'This is the qualifier. It explains the repeated pattern that matters now.' },
-              { label: 'Future', text: 'Going forward, I want to keep building in work like that,', detail: 'This is the section statement. It shows the direction the candidate wants to keep moving toward.' },
-              { label: 'Future Qualifier', text: 'and this role fits because it makes that kind of cross-functional execution more central to the job.', detail: 'This is the qualifier. It makes the direction and fit sound intentional instead of random.' },
-            ],
-            pairedAnnotatedAnswer: [
               {
                 label: 'Present',
-                statement: 'Right now I work at the intersection of marketing execution and operations',
-                groundingDetail: 'with a lot of my recent work focused on keeping cross-functional projects moving',
-                note: 'The section statement names the lane. The qualifier tells the interviewer what that lane actually looks like in practice.',
+                text: 'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward.',
+                detail: 'This clearly defines the candidate’s lane right now instead of just naming a title.',
               },
               {
                 label: 'Past',
-                statement: 'Before that, I built my foundation across agency and in-house roles',
-                groundingDetail: 'where I had to turn messy requirements into clean execution',
-                note: 'The section statement gives the background. The qualifier explains the through-line that makes the background relevant.',
+                text: 'Before that, I built my foundation in support and operations roles where I had to stay organized, adjust quickly, and keep work moving across shifting priorities.',
+                detail: 'This gives a through-line instead of walking job by job through a resume.',
               },
               {
                 label: 'Future',
-                statement: 'Going forward, I want to keep building in work like that',
-                groundingDetail: 'and this role fits because it makes that kind of cross-functional execution more central to the job',
-                note: 'The section statement shows direction. The qualifier is what makes that direction feel logical and tied to this role.',
+                text: 'Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
+                detail: 'This gives a specific direction instead of vague growth language.',
               },
             ],
           },
         },
         exercises: [
           {
+            title: 'Drill 1 — What is this question really asking?',
             type: 'multiple_choice',
-            question: 'Which answer is the strongest?',
+            question: 'When an interviewer says, “Can you walk me through your background?”, what are they usually looking for?',
             options: [
-              'I have worked in a lot of different roles and learned a lot along the way. I think those experiences have prepared me for this opportunity.',
-              'Right now I work in operations. Before that, I worked in support roles. Going forward, I want a role like this.',
-              'Right now I work in operations, mostly in situations where keeping work organized and moving across people or priorities is important. Before that, I built my foundation in support roles where I had to stay organized, follow through, and make sure things did not get missed. Going forward, I want to keep building in that kind of work, and this role fits because it makes it more central.',
-              'Right now I do a lot of different work. Before that, I gained experience in a few other jobs. That is why this opportunity interests me.',
-            ],
-            correctIndex: 2,
-            explanation: 'The strongest answer has the right shape and a useful qualifier in each section. The middle tier has the shape but still sounds generic.',
-          },
-          {
-            type: 'multiple_choice',
-            question: 'Which section is structurally correct but still too weak because it lacks a useful qualifier?',
-            options: [
-              'Right now I work in client support, mostly handling work that requires careful follow-through.',
-              'Before that, I built my foundation in roles where I had to keep requests organized and moving.',
-              'Going forward, I want to keep building in this kind of work.',
-              'Right now I work in project coordination.',
-            ],
-            correctIndex: 3,
-            explanation: 'That section has the right bucket, but it is still only a label. The interviewer still does not know what kind of project coordination it is.',
-          },
-          {
-            type: 'multiple_choice',
-            question: 'Which revision best improves this Present line: "Right now I work in project coordination."',
-            options: [
-              'Right now I work in project coordination and have learned a lot from it.',
-              'Right now I work in project coordination, mostly helping keep timelines, handoffs, and follow-through on track.',
-              'Right now I work in project coordination and enjoy being busy.',
-              'Right now I work in project coordination and am ready for more responsibility.',
+              'A chronological summary of the most relevant roles you’ve held, usually starting with the earlier experience that built your foundation and ending with why this opportunity interests you now.',
+              'A summary of what you do now, the experience that led you there, and an explanation of where you want to go next.',
+              'A brief explanation of why you’re interested in this role right now, followed by an overview of the parts of your background that are most relevant to the position.',
+              'A chance to understand who you are as a person first, with professional experience used mainly as supporting context for your character and work style.',
             ],
             correctIndex: 1,
-            explanation: 'A good qualifier defines the lane. It does not just add emotion or ambition.',
+            explanation: 'B is the strongest because it matches the actual job of the question: give the interviewer a clear professional story. A is tempting because it sounds organized and relevant, but it still leans too chronological. C is tempting because interest in the role matters, but that is more of a Why this role? answer than a true background summary. D reflects what some candidates do, but this question is mainly about professional identity, not personality.',
           },
           {
-            type: 'multiple_choice',
-            question: 'Which revision best improves this Past line: "Before that, I worked in a few different roles."',
-            options: [
-              'Before that, I worked in a few different roles and gained valuable experience.',
-              'Before that, I worked in a few different roles where I learned how to stay organized and work well with others.',
-              'Before that, I built my foundation in roles where I had to bring structure to shifting priorities and keep work moving.',
-              'Before that, I worked in different environments that helped me grow professionally.',
-            ],
-            correctIndex: 2,
-            explanation: 'The Past section needs a through-line, not a resume summary.',
-          },
-          {
-            type: 'multiple_choice',
-            question: 'Which revision best improves this Future line: "Going forward, I want to keep building in this kind of work."',
-            options: [
-              'Going forward, I want to keep building in this kind of work, and I think that would be great for me.',
-              'Going forward, I want to keep building in this kind of work because it feels like a good opportunity to continue growing.',
-              'Going forward, I want to keep building in this kind of coordination work, and this role fits because it makes that work more central to the job.',
-              'Going forward, I want to keep building in this kind of work, and I am excited to learn more.',
-            ],
-            correctIndex: 2,
-            explanation: 'The Future section should explain direction and fit, not just growth language.',
-          },
-          {
-            type: 'multiple_choice',
-            question: 'Which section is weakest in this answer? "Right now I work in administrative support, mostly helping keep scheduling, communication, and follow-through organized. Before that, I worked in a few different roles. Going forward, I want to keep building in work like this, and this role fits that direction."',
-            options: ['Present', 'Past', 'Future', 'None of them'],
-            correctIndex: 1,
-            explanation: 'The Present and Future sections are at least qualified. The Past section is still just a summary with no through-line.',
-          },
-          {
-            type: 'label_sort',
-            instruction: 'Label each section of the stronger answer by the job it is doing.',
-            segments: [
-              { text: 'Right now I work at the intersection of marketing execution and operations', correctLabel: 'Present' },
-              { text: 'with a lot of my recent work focused on keeping cross-functional projects moving', correctLabel: 'Present Qualifier' },
-              { text: 'Before that, I built my foundation across agency and in-house roles', correctLabel: 'Past' },
-              { text: 'where I had to turn messy requirements into clean execution', correctLabel: 'Past Qualifier' },
-              { text: 'Going forward, I want to keep building in work like that', correctLabel: 'Future' },
-              { text: 'and this role fits because it makes that kind of cross-functional execution more central to the job', correctLabel: 'Future Qualifier' },
-            ],
-          },
-          {
+            title: 'Drill 2',
             type: 'sentence_builder',
-            instruction: 'Build the strongest Present, Past, Future answer by choosing six fragments in order.',
-            slotLabels: [
-              'Present',
-              'Present Qualifier',
-              'Past',
-              'Past Qualifier',
-              'Future',
-              'Future Qualifier',
+            instruction: 'Build the strongest answer to: “Tell me about yourself.” Choose the best Present, best Past, and best Future.',
+            slotLabels: ['Present', 'Past', 'Future'],
+            options: [
+              'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward.',
+              'I graduated in 2020 and started my career with a manufacturer working in customer success before moving into operations-focused roles.',
+              'Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
+              'Early in my career, I was hyper-focused on improving operating systems and learning how teams work together more efficiently.',
+              'What interests me about this position is that it feels like a strong match for the direction I want to keep growing in.',
+              'Right now, I work in operations and have learned a lot about how to support teams effectively.',
+              'Before that, I built my foundation in support and operations roles where I had to stay organized, adjust quickly, and keep work moving across shifting priorities.',
+              'As I got more comfortable in similar roles, I started to get more responsibility and broader exposure to the business.',
+              'I’m someone who has always been hardworking, dependable, and willing to do whatever the team needs.',
+              'Going forward, I’m looking for growth and a new challenge where I can continue developing professionally.',
+              'Right now, I’m in a role that gives me exposure to a lot of different parts of the business and helps me build transferable skills.',
+              'As that evolved, I became more interested in work that depends on coordination, follow-through, and keeping different moving parts on track.',
             ],
             correctOrder: [
-              'Right now I work in operations',
-              'mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned',
-              'Before that, I built my foundation in roles',
-              'where I had to keep work organized, respond to changing needs, and make sure things stayed on track',
-              'Going forward, I want to keep building in work like that',
-              'and this role fits because it offers more direct ownership of that kind of coordination',
+              'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward.',
+              'Before that, I built my foundation in support and operations roles where I had to stay organized, adjust quickly, and keep work moving across shifting priorities.',
+              'Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
             ],
-            options: [
-              'Right now I work in operations',
-              'mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned',
-              'Before that, I built my foundation in roles',
-              'where I had to keep work organized, respond to changing needs, and make sure things stayed on track',
-              'Going forward, I want to keep building in work like that',
-              'and this role fits because it offers more direct ownership of that kind of coordination',
-              'Right now I do a lot of different things',
-              'and I enjoy staying busy',
-              'Before that, I worked in a few different jobs',
-              'where I learned a lot',
-              'Going forward, I want a good next step',
-              'and this role seems interesting to me',
-            ],
-            explanation: 'The strongest build uses all six fragments in the right order: section, qualifier, section, qualifier, section, qualifier. The weaker fragments sound generic even when the shape looks close.',
+            explanation: 'Present: 1. Past: 7. Future: 3. 1 clearly defines the current lane. 7 gives a through-line, not a timeline. 3 names a specific next direction. The others are realistic mistakes: too chronological, too vague, too trait-led, or too early on why-this-role.',
             displayMode: 'sequence',
           },
           {
-            type: 'apply_to_yourself',
-            instruction: 'Draft your answer using Present, Past, Future. Do not stop at the section label. Add a qualifier to each one.',
-            coachingTip: 'A stronger answer does not just hit the right order. Each section needs a qualifier that makes it believable. Present should define your current lane, Past should explain the pattern behind your background, and Future should show what you want to keep building toward and why this role fits that direction.',
-            evaluationType: 'present_past_future',
-            fields: [
-              { label: 'Present', placeholder: 'What do you do now?', helper: 'Name your current lane clearly.', minWords: 5, avoidWords: ['something', 'stuff', 'various things', 'a lot of things'] },
-              { label: 'Present Qualifier', placeholder: 'What kind of work is it really? What defines it?', helper: 'Add the qualifier that makes the Present section believable.', minWords: 8, avoidWords: ['learned a lot', 'busy', 'many things'] },
-              { label: 'Past', placeholder: 'What earlier background built this?', helper: 'Name the foundation, not your whole resume.', minWords: 5, avoidWords: ['a few different roles', 'many jobs', 'different industries'] },
-              { label: 'Past Qualifier', placeholder: 'What repeated skill or pattern came from that experience?', helper: 'Show the through-line that still matters now.', minWords: 8, avoidWords: ['valuable experience', 'learned a lot', 'grew professionally'] },
-              { label: 'Future', placeholder: 'What do you want to keep building toward next?', helper: 'State the direction clearly.', minWords: 5, avoidWords: ['good opportunity', 'next step', 'sounds interesting'] },
-              { label: 'Future Qualifier', placeholder: 'Why does this role fit that direction specifically?', helper: 'Make the fit feel specific and earned.', minWords: 8, avoidWords: ['full-time role', 'something new', 'continue growing'] },
+            title: 'Drill 3 — Reorder the answer',
+            type: 'sentence_builder',
+            instruction: 'A candidate gave these four parts in a weak order. Rearrange them into the strongest answer to: “Tell me about yourself.”',
+            slotLabels: ['1', '2', '3', '4'],
+            options: [
+              'Going forward, I want to keep building in that kind of operations work in a role where I can take on more ownership and have a bigger impact on execution.',
+              'Before that, I built my foundation in support and coordination roles where I had to stay organized, communicate clearly, and keep work moving when priorities changed.',
+              'That’s what made this role stand out to me, because it feels like a natural next step in the kind of work I’ve been building toward.',
+              'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward.',
             ],
+            correctOrder: [
+              'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward.',
+              'Before that, I built my foundation in support and coordination roles where I had to stay organized, communicate clearly, and keep work moving when priorities changed.',
+              'Going forward, I want to keep building in that kind of operations work in a role where I can take on more ownership and have a bigger impact on execution.',
+              'That’s what made this role stand out to me, because it feels like a natural next step in the kind of work I’ve been building toward.',
+            ],
+            explanation: 'Correct order: D → B → A → C.',
+            displayMode: 'sequence',
+          },
+          {
+            title: 'Drill 4 — Cut 2 of 6 lines',
+            type: 'tap_select',
+            instruction: 'A candidate gave this answer to: “Tell me about yourself.” Two lines weaken the answer most. Remove the 2 lines that should be cut first.',
+            items: [
+              'A. Right now, I work as an Operations Coordinator at a regional logistics company, where most of my time is spent keeping projects moving, aligning teams, and making sure priorities stay on track.',
+              'B. Earlier in my career, I worked in mostly project support roles at companies like Grainger and C.H. Robinson, where I learned how to manage competing priorities, communicate clearly, and keep work moving under pressure.',
+              'C. Before that, I built my foundation in customer support and project support roles where I had to stay organized, communicate clearly, and adapt quickly when plans changed.',
+              'D. People have always told me I’m dependable, hardworking, and easy to work with, which I think has helped me succeed in every role I’ve had.',
+              'E. Going forward, I want to keep building in operations and coordination work in a role where I can take on more ownership and contribute at a higher level.',
+              'F. That mix of support and coordination experience is a big part of why I’ve gravitated toward fast-moving, cross-functional work.',
+            ],
+            correctIndices: [2, 3],
+            explanation: 'Correct cuts: C and D. C is now the weaker Past because it says basically the same thing as B, but in a more generic way. D is still trait-led and adds the least value. B is stronger because it sounds more like how a real candidate would talk and gives more concrete credibility.',
+          },
+          {
+            title: 'Drill 4 — Multi-select',
+            type: 'tap_select',
+            context: 'Answer:\nI started my career as a Customer Success Representative at Grainger, where I spent four years working with clients and learning the business. After that, I joined Salesforce as a Customer Success Manager overseeing a small team of three account coordinators. I’ve been there ever since, and it’s been a great experience, but now I’m looking to join a SaaS company where I can keep building the things I’m good at while focusing more directly on the software industry.',
+            instruction: 'Read this answer to: “Tell me about yourself.” Then select the 2 biggest problems.',
+            items: [
+              'A. It starts with earlier career history instead of clearly anchoring who the candidate is professionally right now.',
+              'B. It spends too much time on leadership experience and should say less about team oversight.',
+              'C. It reads more like a career timeline than a clear professional summary.',
+              'D. It is too specific because it uses real company names instead of staying broad.',
+              'E. It makes the candidate’s future direction too specific for an HR screen.',
+            ],
+            correctIndices: [0, 2],
+            explanation: 'Correct: A and C. A: no clear present identity. C: too timeline-driven. The others are believable, but not the real problem.',
+          },
+          {
+            title: 'Drill 5 — Highlight the weak parts',
+            type: 'tap_select',
+            instruction: 'Read this answer to: “Can you walk me through your background?” Tap the 3 parts that make this sound more like a resume walk-through than a strong professional summary.',
+            items: [
+              '1. I started my career as a Sales Coordinator at Grainger after graduating from Michigan State in 2018.',
+              '2. After about three years there, I moved into an Account Manager role with Cintas, where I worked with a larger book of business.',
+              '3. Over time, I took on more responsibility and got exposure to more complex client relationships.',
+              '4. Right now, most of my work is focused on managing client accounts, solving day-to-day issues, and making sure customers stay supported over time.',
+              '5. What I’ve really built over that time is a foundation in client-facing work that depends on communication, follow-through, and long-term relationship management.',
+              '6. Going forward, I want to keep building in that kind of account and client success work in a role where I can take on more ownership.',
+            ],
+            correctIndices: [0, 1, 2],
+            explanation: 'Correct highlights: 1, 2, and 3. 1 starts too far back and opens in pure chronology. 2 continues the timeline instead of summarizing the pattern. 3 is realistic, but still keeps the answer in timeline mode. 4, 5, and 6 are closer to a strong professional summary: current lane, through-line, future direction.',
+          },
+          {
+            title: 'Drill 6 — Sentence surgery',
+            type: 'multiple_choice',
+            context: 'Current opening line:\nRight now, I work in finance and have learned a lot in my current role.\n\nRest of answer:\nEarlier in my career, I worked in accounting support roles where I had to stay organized, work carefully under deadlines, and catch small issues before they became bigger problems. Going forward, I want to keep building in that kind of detail-oriented financial work in a role where I can take on more responsibility.',
+            question: 'This answer starts too broadly. Choose the best replacement for the opening line.',
+            options: [
+              'Right now, I work as a Financial Analyst, where I support reporting, help review data for accuracy, and make sure the financial side of the business stays organized and reliable.',
+              'Right now, I work as a Financial Analyst, and over the past few years I’ve built a strong foundation in reporting, accuracy, and detail-oriented work.',
+              'Right now, I work in a finance role that sits pretty close to reporting and analysis, and a lot of what I’ve learned has come from working carefully with numbers and deadlines.',
+              'Right now, I work in finance, mainly in a role that’s given me more exposure to reporting, analysis, and the kinds of details that matter in keeping things accurate.',
+            ],
+            correctIndex: 0,
+            explanation: 'A is best because it clearly defines the current lane through actual work. B is strong, but leans a little too much into summary over present-day function. C sounds natural, but is softer and less clear. D is plausible, but still too broad.',
           },
         ],
+        workshop: {
+          type: 'professional_story',
+        },
       }
     case 'noticed_fit_now':
       return {

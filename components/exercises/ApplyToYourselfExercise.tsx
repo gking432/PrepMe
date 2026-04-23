@@ -13,6 +13,8 @@ interface ApplyField {
 }
 
 interface ApplyToYourselfExerciseProps {
+  title?: string
+  context?: string
   instruction: string
   coachingTip: string
   evaluationType?: string
@@ -60,6 +62,8 @@ function getFieldChecks(field: ApplyField, value: string) {
 }
 
 export default function ApplyToYourselfExercise({
+  title,
+  context,
   instruction,
   coachingTip,
   evaluationType,
@@ -221,6 +225,14 @@ export default function ApplyToYourselfExercise({
   return (
     <div className="flex h-full w-full flex-col gap-5">
       <div className="shrink-0">
+        {title ? (
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">{title}</p>
+        ) : null}
+        {context ? (
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm leading-6 text-slate-700 whitespace-pre-line">{context}</p>
+          </div>
+        ) : null}
         <p className="text-base font-bold leading-snug text-slate-900 md:text-lg">{instruction}</p>
         <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-3">
           <div className="flex items-start gap-3">

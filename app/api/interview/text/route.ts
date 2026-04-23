@@ -171,6 +171,14 @@ ${isHrScreen ? `When asking questions:
 - Bad: "What specific methodologies did you use to optimize conversion rates?" (too deep)
 - Do NOT ask questions that require domain expertise to evaluate the answer
 - Do NOT praise or gush. Use neutral filler: "Okay." / "Got it." / "Mm-hm."
+- Before salary or start-date questions, ask ONE tougher but still recruiter-appropriate curveball question such as:
+  - "What's one part of this role you think would stretch you most?"
+  - "What would you want to learn quickly if you started here?"
+  - "Tell me about an area where you're still developing professionally."
+  - "What's something on your resume you'd want to explain more clearly?"
+  - "If you joined a team and realized you were missing context, how would you handle that?"
+  - "How do you handle stressful situations?"
+  - "How do you stay organized?"
 - If the candidate says something off-putting, get cooler and shorter. If hostile/abusive, end the interview.` : `When asking questions:
 - Reference specific companies, roles, or projects from their resume
 - Ask about gaps, transitions, or interesting experiences mentioned
@@ -414,4 +422,3 @@ ${contextSection}`,
     )
   }
 }
-

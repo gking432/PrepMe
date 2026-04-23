@@ -421,259 +421,234 @@ export default function TeachCard({
 
   const cards = useMemo(() => {
     if (isPresentPastFutureLesson) {
-      return withIntro([
+      return [
         {
-          eyebrow: 'Your Flagged Answer',
-          title: originalQuestion || example.question,
-          preppi: 'We should start with the exact miss first, not generic advice.',
+          eyebrow: 'Professional Story',
+          title: 'What this answer is for',
+          preppi: 'This is the opening move in a lot of interviews. The goal is not to tell your whole life story.',
           content: (
             <div className="space-y-4">
-              {safeOriginalAnswer ? (
-                <div className="overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 shadow-sm">
-                  <div className="border-b border-rose-200 bg-rose-100/80 px-4 py-3">
-                    <p className="text-xs font-bold uppercase tracking-wide text-rose-600">Your original answer</p>
-                  </div>
-                  <div className="px-4 py-4">
-                    <p className="text-sm leading-relaxed text-rose-900 md:text-[15px]">&ldquo;{safeOriginalAnswer}&rdquo;</p>
-                  </div>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">In this lesson, you’ll learn how to turn a scattered background into a clear, focused answer you can actually use.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">“Tell me about yourself” is not your full resume.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">A strong answer does three things:</p>
+              <TeachingList
+                items={[
+                  'explains what you do now',
+                  'shows the background that led you here',
+                  'makes it clear where you are headed next',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is to make your background easy to follow and relevant to the role.</p>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Why It Gets Flagged',
+          title: 'Why this gets flagged',
+          preppi: 'Most misses here are not about having a weak background. They come from how the story is told.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This answer usually gets flagged when the candidate:</p>
+              <TeachingList
+                items={[
+                  'starts too far back',
+                  'lists jobs in order',
+                  'includes too much irrelevant detail',
+                  'never clearly defines what they do now',
+                  'sounds scattered or unfocused',
+                  'uses vague future language like “I want to grow” or “I’m looking for a new challenge”',
+                  'sounds like a resume recap instead of a professional story',
+                ]}
+              />
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'The Framework',
+          title: 'The repair tool: Present → Past → Future',
+          preppi: 'This is the cleanest shape for background questions because it keeps the answer anchored in the present and pointed toward what comes next.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">A strong answer usually follows this shape:</p>
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Present</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">Start with where you are now.</p>
                 </div>
-              ) : (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-sm leading-relaxed text-slate-600 md:text-base">
-                    We do not have a clean matching transcript excerpt for this flagged answer, so we will use the flagged question and rebuild the move from there.
-                  </p>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Past</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain the background that led you here.</p>
                 </div>
-              )}
-              <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Why it got flagged</p>
-                <p className="mt-2 text-sm leading-relaxed text-amber-900 md:text-[15px]">{whyMissed}</p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Question Type',
-          title: 'What kind of question this is',
-          preppi: 'This is a background question. A strong answer usually follows Present, Past, Future.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'Tell me a bit about yourself',
-                  'Walk me through your background briefly',
-                  'I see you were at [Company] as a [Role] — could you tell me a bit more about that?',
-                ].map((line) => (
-                  <div key={line} className="border-l-2 border-violet-200 pl-4">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Best use: background walkthrough, role history, transitions, where you&apos;re headed.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Scoring Logic',
-          title: 'What interviewers are actually listening for',
-          preppi: 'They are not looking for your full resume. They are listening for a clear through-line.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'what you do now',
-                  'what shaped your background',
-                  'why this next move makes sense',
-                ].map((line, index) => (
-                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  They are not looking for your full resume. They are listening for a clear through-line.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'The Structure',
-          title: 'The structure',
-          preppi: 'Each section should be short, clear, and connected to the next.',
-          content: (
-            <div className="space-y-3">
-              {frameworkRows.map(([key, value], index) => {
-                const colors = annotationColors(key)
-                return (
-                  <div key={key} className={`flex items-start gap-3 rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
-                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${colors.chip}`}>
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
-                    </div>
-                  </div>
-                )
-              })}
-              <div className="border-t border-slate-200 pt-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  Each section should be short, clear, and connected to the next.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Compare',
-          title: 'Weak vs better vs strong',
-          preppi: 'The middle tier matters here too. Structure alone is not enough if the answer still sounds generic.',
-          content: (
-            <div className="space-y-4">
-              {[
-                ['Weak', example.badAnswer, 'rose', 'Walks through everything and loses the thread.'],
-                ['Better', example.mediumAnswer || '', 'amber', 'Has the shape, but still sounds generic.'],
-                ['Strong', example.goodAnswer, 'emerald', 'Clear, selective, and easy to believe.'],
-              ].map(([label, answer, tone, note]) => {
-                const styles = tone === 'rose'
-                  ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
-                  : tone === 'amber'
-                  ? ['border-amber-200', 'bg-amber-50/70', 'border-amber-200 bg-amber-100/80', 'text-amber-700', 'text-amber-900']
-                  : ['border-emerald-200', 'bg-emerald-50/70', 'border-emerald-200 bg-emerald-100/80', 'text-emerald-600', 'text-emerald-900']
-                return (
-                  <div key={label} className={`overflow-hidden rounded-2xl border-2 ${styles[0]} ${styles[1]} shadow-sm`}>
-                    <div className={`px-4 py-3 ${styles[2]}`}>
-                      <span className={`text-xs font-bold uppercase tracking-wide ${styles[3]}`}>{label}</span>
-                    </div>
-                    <div className="space-y-3 px-4 py-4">
-                      <p className={`text-base leading-relaxed ${styles[4]}`}>&ldquo;{answer}&rdquo;</p>
-                      <p className="text-sm leading-relaxed text-slate-600">{note}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'What Makes It Strong',
-          title: 'What makes the answer strong',
-          preppi: 'Structure helps, but each section needs more than a label.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-600 md:text-base">
-                Each section needs more than a label.
-              </p>
-              <div className="grid gap-3">
-                {[
-                  'what kind of work you do now',
-                  'what pattern connects your past',
-                  'why this move makes sense next',
-                ].map((line) => (
-                  <div key={line} className="border-l-2 border-violet-200 pl-4">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Structure helps. Qualifiers make it believable.
-                </p>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-700">Future</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain where you want to go next.</p>
+                </div>
               </div>
             </div>
           ),
         },
         {
           eyebrow: 'Present',
-          title: 'What strong Present sounds like',
-          preppi: 'A strong Present gives your lane, not just your title.',
+          title: 'Present: what to do',
+          preppi: 'Lead with your current lane. This is where the interviewer should immediately understand what kind of professional you are.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Present</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">&ldquo;Right now I work in operations.&rdquo;</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-sky-700">Strong Present</p>
-                <p className="mt-2 text-sm font-semibold leading-relaxed text-sky-900 md:text-[15px]">
-                  &ldquo;Right now I work in operations, mostly supporting work that depends on coordination, follow-through, and keeping moving parts aligned.&rdquo;
-                </p>
-              </div>
-              <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  A strong Present gives your lane, not just your title.
-                </p>
-              </div>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Start with where you are now.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This should explain:</p>
+              <TeachingList
+                items={[
+                  'what kind of work you do',
+                  'what your role really centers on',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Do not just give your title. Define your lane.</p>
             </div>
           ),
         },
         {
-          eyebrow: 'Past And Future',
-          title: 'What strong Past and Future sound like',
-          preppi: 'Past should show the pattern. Future should show the logic of the move.',
+          eyebrow: 'Past',
+          title: 'Past: what to do',
+          preppi: 'This is where you show the pattern behind your experience instead of walking through every stop on your resume.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Past</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">&ldquo;Before that, I worked in a few different roles.&rdquo;</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Strong Past</p>
-                <p className="mt-2 text-sm font-semibold leading-relaxed text-emerald-900 md:text-[15px]">
-                  &ldquo;Before that, I built my foundation in roles where I had to keep work organized, respond to changing needs, and make sure things stayed on track.&rdquo;
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Weak Future</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 md:text-[15px]">&ldquo;I&apos;m looking for a new opportunity.&rdquo;</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-amber-700">Strong Future</p>
-                <p className="mt-2 text-sm font-semibold leading-relaxed text-amber-900 md:text-[15px]">
-                  &ldquo;That is why this next move makes sense. It lets me keep doing that kind of work in a role with more direct ownership.&rdquo;
-                </p>
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Past should show the pattern. Future should show the logic of the move.
-                </p>
-              </div>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain the background that led you here.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This should:</p>
+              <TeachingList
+                items={[
+                  'show the foundation behind your current work',
+                  'explain the pattern in your experience',
+                  'avoid listing every job in order',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is not chronology. The goal is connection.</p>
             </div>
           ),
         },
         {
-          eyebrow: 'Self Check',
-          title: 'Use this check before you answer again',
-          preppi: 'This is the editing lens to keep in your head while you practice.',
+          eyebrow: 'Future',
+          title: 'Future: what to do',
+          preppi: 'Finish by showing the direction you want to keep building toward and why that direction makes sense.',
           content: (
             <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'Did I start with what I do now?',
-                  'Did I describe my past as a foundation, not a full history?',
-                  'Did I explain why this next move makes sense?',
-                  'Does each section sound specific, not generic?',
-                ].map((line) => (
-                  <div key={line} className="border-l-2 border-violet-200 pl-4">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  That is the standard you will practice next.
-                </p>
-              </div>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain where you want to go next.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This should:</p>
+              <TeachingList
+                items={[
+                  'name the kind of work you want more of',
+                  'make this move feel logical',
+                  'sound specific, not generic',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Do not say:</p>
+              <TeachingList
+                items={[
+                  'I want to grow',
+                  'I want a new challenge',
+                  'I’m looking for a better opportunity',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Those are too broad.</p>
             </div>
           ),
         },
-      ])
+        {
+          eyebrow: 'Selection',
+          title: 'The most important skill: selection',
+          preppi: 'A stronger answer is not about saying more. It is about choosing the details that support the story you want the interviewer to hear.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Most people do not struggle because they lack experience. They struggle because they do not know what to include.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">A strong Professional Story is not about saying more. It is about choosing better.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Keep what helps explain:</p>
+              <TeachingList
+                items={[
+                  'what you do now',
+                  'what built that path',
+                  'why this role makes sense next',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Cut what does not help:</p>
+              <TeachingList
+                items={[
+                  'old details that are no longer relevant',
+                  'side paths that do not support the story',
+                  'repeated ideas',
+                  'job-by-job chronology',
+                  'resume bullet language',
+                ]}
+              />
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Messy Backgrounds',
+          title: 'If your background feels messy',
+          preppi: 'That does not mean you have no story. It usually means you have to zoom out far enough to see the pattern.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">That is normal.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Your story does not need to explain everything. It just needs to explain the version of your background that makes sense for this role.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">If your background feels scattered, look for:</p>
+              <TeachingList
+                items={[
+                  'the kind of work that repeats',
+                  'the strengths that show up across roles',
+                  'the pattern that connects your experience',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Focus on the through-line, not the titles.</p>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Examples',
+          title: 'What strong answers sound like',
+          preppi: 'These work because they are clear, selective, connected, and pointed in a direction.',
+          content: (
+            <div className="space-y-4">
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-sm leading-relaxed text-sky-700 md:text-[15px]">“Right now, most of my work is focused on coordinating teams and keeping work moving.”</p>
+                <p className="text-sm leading-relaxed text-emerald-700 md:text-[15px]">“Before that, I built my foundation in roles where I had to stay organized, adjust quickly, and keep priorities on track.”</p>
+                <p className="text-sm leading-relaxed text-amber-700 md:text-[15px]">“Going forward, I want to keep building in that kind of coordination work in a role with more ownership.”</p>
+              </div>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This works because it is:</p>
+              <TeachingList
+                items={[
+                  'clear',
+                  'selective',
+                  'connected',
+                  'pointed in a direction',
+                ]}
+              />
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Delivery',
+          title: 'Final reminder',
+          preppi: 'The goal is a clear answer you can say naturally, not a word-for-word performance.',
+          content: (
+            <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is not to memorize a speech.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is to build a clear answer you can say naturally.</p>
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">You should know:</p>
+              <TeachingList
+                items={[
+                  'the points you want to hit',
+                  'the order you want to hit them in',
+                ]}
+              />
+              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">But it should still sound like you, not like a script.</p>
+            </div>
+          ),
+        },
+        {
+          eyebrow: 'Next Up',
+          title: 'Ready to practice?',
+          preppi: 'You have the pattern. Now let’s pressure-test it with drills before we build your own version.',
+          content: <div />,
+        },
+      ]
     }
 
     if (isStarLesson) {
@@ -2902,18 +2877,20 @@ export default function TeachCard({
   return (
     <div className="flex h-full w-full flex-col gap-5">
       <div className="shrink-0 space-y-4">
-        <Preppi message={currentCard.preppi} size="sm" />
+        {currentCard.preppi ? <Preppi message={currentCard.preppi} size="sm" /> : null}
 
         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-          <span>{currentCard.eyebrow}</span>
+          <span>{currentCard.eyebrow || ''}</span>
           <span>{step + 1} / {cards.length}</span>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 rounded-[2rem] bg-white px-6 py-7 md:px-8 md:py-8">
-        <h2 className="max-w-3xl text-xl font-extrabold leading-tight text-slate-900 md:text-[2rem]">
-          {currentCard.title}
-        </h2>
+        {currentCard.title ? (
+          <h2 className="max-w-3xl text-xl font-extrabold leading-tight text-slate-900 md:text-[2rem]">
+            {currentCard.title}
+          </h2>
+        ) : null}
         {currentCard.eyebrow === 'Flagged Moment' && (
           <div className="mt-5 border-l-2 border-slate-200 pl-4">
             <p className="text-xs font-bold uppercase tracking-wide text-slate-400">

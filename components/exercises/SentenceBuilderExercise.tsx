@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, CheckCircle, RotateCcw, XCircle } from 'lucide-react'
 
 interface SentenceBuilderExerciseProps {
+  title?: string
+  context?: string
   instruction: string
   slotLabels: string[]
   options: string[]
@@ -23,6 +25,8 @@ function shuffle<T>(items: T[]) {
 }
 
 export default function SentenceBuilderExercise({
+  title,
+  context,
   instruction,
   slotLabels,
   options,
@@ -61,6 +65,14 @@ export default function SentenceBuilderExercise({
 
   return (
     <div className="flex h-full w-full flex-col gap-5">
+      {title ? (
+        <p className="shrink-0 text-xs font-black uppercase tracking-[0.14em] text-violet-600">{title}</p>
+      ) : null}
+      {context ? (
+        <div className="shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">{context}</p>
+        </div>
+      ) : null}
       <p className="shrink-0 text-base font-bold leading-snug text-gray-900 md:text-lg">
         {instruction}
       </p>

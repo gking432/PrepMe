@@ -70,7 +70,7 @@ export const MOCK_FEEDBACK = {
     ],
     what_needs_improve: [
       {
-        criterion: 'Answer Structure and Conciseness',
+        criterion: 'Professional Story',
         feedback:
           'Your answers tended to ramble without a clear beginning, middle, and end. The interviewer had to redirect you twice.',
         score: 4,

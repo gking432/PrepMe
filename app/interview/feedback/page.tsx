@@ -20,7 +20,7 @@ import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
-import { getBundleForRootCause, getRootCauseForCriterion } from '@/lib/practice-bundles'
+import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
 function parseSessionRoleContext(jobDescriptionText?: string | null) {
   if (!jobDescriptionText) return { role: '', company: '' }
@@ -2688,6 +2688,7 @@ export default function InterviewDashboard() {
                       {needsImproveAreas.map((area: any) => {
                         const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
                         const bundle = getBundleForRootCause(rootCause)
+                        const displayName = getPracticeDisplayNameForCriterion(area.criterion, area.rootCause)
                         const isPassed = passedCriteria.includes(area.criterion)
 
                         return (
@@ -2724,7 +2725,7 @@ export default function InterviewDashboard() {
                               )}
                               <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
                               <p className="text-xs text-accent-500 font-semibold mt-1.5">
-                                📚 {bundle.displayName}
+                                📚 {displayName}
                               </p>
                             </div>
                           </div>

@@ -10,6 +10,7 @@ import WordBankExercise from '@/components/exercises/WordBankExercise'
 import TapSelectExercise from '@/components/exercises/TapSelectExercise'
 import ApplyToYourselfExercise from '@/components/exercises/ApplyToYourselfExercise'
 import SentenceBuilderExercise from '@/components/exercises/SentenceBuilderExercise'
+import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -25,7 +26,7 @@ interface PracticeLessonFlowProps {
   mode?: 'core' | 'optional'
 }
 
-type FlowState = 'intro' | 'teach' | 'retry_intro' | `exercise_${number}` | 'complete'
+type FlowState = 'intro' | 'teach' | 'retry_intro' | `exercise_${number}` | 'workshop' | 'complete'
 
 const XP_TEACH = 5
 const XP_CORRECT = 10
@@ -146,6 +147,7 @@ export default function PracticeLessonFlow({
 
   const activeExercises = mode === 'core' ? coreExercises : randomizedExercises
   const exerciseCount = activeExercises.length
+  const hasWorkshop = Boolean(subLesson.workshop)
 
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [round, setRound] = useState<'main' | 'retry'>('main')
@@ -155,6 +157,8 @@ export default function PracticeLessonFlow({
   const [stepBurst, setStepBurst] = useState(false)
   const [solvedExerciseIndices, setSolvedExerciseIndices] = useState<number[]>([])
   const [retryExerciseIndices, setRetryExerciseIndices] = useState<number[]>([])
+  const retryStepCount = retryExerciseIndices.length > 0 ? retryExerciseIndices.length + 1 : 0
+  const workshopStepCount = hasWorkshop ? 1 : 0
 
   const activeExerciseIndices = round === 'retry'
     ? retryExerciseIndices
@@ -164,12 +168,13 @@ export default function PracticeLessonFlow({
     if (flowState === 'intro') return -1
     if (flowState === 'teach') return 0
     if (flowState === 'retry_intro') return 1 + exerciseCount
-    if (flowState === 'complete') return 1 + exerciseCount + (retryExerciseIndices.length > 0 ? retryExerciseIndices.length + 1 : 0)
+    if (flowState === 'workshop') return 1 + exerciseCount + retryStepCount
+    if (flowState === 'complete') return 1 + exerciseCount + retryStepCount + workshopStepCount
     const match = flowState.match(/^exercise_(\d+)$/)
     if (!match) return 0
     const stepWithinRound = parseInt(match[1], 10)
     return round === 'retry' ? 2 + exerciseCount + stepWithinRound : 1 + stepWithinRound
-  }, [exerciseCount, flowState, retryExerciseIndices.length, round])
+  }, [exerciseCount, flowState, retryStepCount, round, workshopStepCount])
 
   const addXp = useCallback((amount: number) => {
     setXp(prev => prev + amount)
@@ -188,6 +193,14 @@ export default function PracticeLessonFlow({
     setRound('main')
     setFlowState('exercise_0')
   }, [addXp, triggerBurst])
+
+  const moveToFinalPhase = useCallback(() => {
+    if (hasWorkshop) {
+      setFlowState('workshop')
+      return
+    }
+    setFlowState('complete')
+  }, [hasWorkshop])
 
   const advanceFromExercise = useCallback((queuePosition: number, correct: boolean) => {
     const queue = round === 'retry'
@@ -219,22 +232,22 @@ export default function PracticeLessonFlow({
       }
     }
 
-    setFlowState('complete')
-  }, [activeExercises, addXp, retryExerciseIndices, round, triggerBurst])
+    moveToFinalPhase()
+  }, [activeExercises, addXp, moveToFinalPhase, retryExerciseIndices, round, triggerBurst])
 
   const startRetryRound = useCallback(() => {
     if (retryExerciseIndices.length === 0) {
-      setFlowState('complete')
+      moveToFinalPhase()
       return
     }
     setRound('retry')
     setFlowState('exercise_0')
-  }, [retryExerciseIndices.length])
+  }, [moveToFinalPhase, retryExerciseIndices.length])
 
   const correctCount = solvedExerciseIndices.length
 
   const renderProgress = () => {
-    const totalSteps = 1 + exerciseCount + (retryExerciseIndices.length > 0 ? retryExerciseIndices.length + 1 : 0)
+    const totalSteps = 1 + exerciseCount + retryStepCount + workshopStepCount
     const pct = flowState === 'complete'
       ? 100
       : currentStepIndex < 0
@@ -293,6 +306,8 @@ export default function PracticeLessonFlow({
         return (
           <MultipleChoiceExercise
             key={key}
+            title={exercise.title}
+            context={exercise.context}
             question={exercise.question}
             options={exercise.options}
             correctIndex={exercise.correctIndex}
@@ -304,6 +319,8 @@ export default function PracticeLessonFlow({
         return (
           <LabelSortExercise
             key={key}
+            title={exercise.title}
+            context={exercise.context}
             instruction={exercise.instruction}
             segments={exercise.segments}
             onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
@@ -325,6 +342,8 @@ export default function PracticeLessonFlow({
         return (
           <TapSelectExercise
             key={key}
+            title={exercise.title}
+            context={exercise.context}
             instruction={exercise.instruction}
             items={exercise.items}
             correctIndices={exercise.correctIndices}
@@ -336,6 +355,8 @@ export default function PracticeLessonFlow({
         return (
           <SentenceBuilderExercise
             key={key}
+            title={exercise.title}
+            context={exercise.context}
             instruction={exercise.instruction}
             slotLabels={exercise.slotLabels}
             options={exercise.options}
@@ -349,6 +370,8 @@ export default function PracticeLessonFlow({
         return (
           <ApplyToYourselfExercise
             key={key}
+            title={exercise.title}
+            context={exercise.context}
             instruction={exercise.instruction}
             coachingTip={exercise.coachingTip}
             evaluationType={exercise.evaluationType}
@@ -398,7 +421,9 @@ export default function PracticeLessonFlow({
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800">
-                {mode === 'core' ? `${exerciseCount} focused drill${exerciseCount === 1 ? '' : 's'}` : `${exerciseCount} drills + a retry round`}
+                {mode === 'core'
+                  ? `${exerciseCount} focused drill${exerciseCount === 1 ? '' : 's'}${hasWorkshop ? ' + workshop' : ''}`
+                  : `${exerciseCount} drills${hasWorkshop ? ' + workshop' : ''} + a retry round`}
               </p>
               <p className="text-xs text-gray-400">
                 {mode === 'core'
@@ -412,7 +437,7 @@ export default function PracticeLessonFlow({
         <div className="mb-6">
           <Preppi
             message={mode === 'core'
-              ? 'First we will look at the exact answer that got flagged. Then we will rebuild it into something you can actually say in a real interview.'
+              ? 'First we will learn the pattern. Then we will pressure-test it with drills and finish by building your own answer.'
               : 'We will learn the pattern first, then do the full round, then come back to anything you missed.'}
             size="md"
           />
@@ -553,10 +578,34 @@ export default function PracticeLessonFlow({
     </div>
   )
 
+  const renderWorkshop = () => {
+    if (subLesson.workshop?.type !== 'professional_story') return null
+
+    return (
+      <div className="flex h-full flex-col animate-slide-up">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Workshop
+          </p>
+        </div>
+        <div className="mb-4">
+          <Preppi
+            message="This is where we turn the lesson into your own answer. We are not grading it yet. We are just helping the story take shape."
+            size="sm"
+          />
+        </div>
+        <div className="min-h-0 flex-1">
+          <ProfessionalStoryWorkshop onComplete={() => setFlowState('complete')} />
+        </div>
+      </div>
+    )
+  }
+
   const renderStep = () => {
     if (flowState === 'intro') return renderIntro()
     if (flowState === 'teach') return renderTeach()
     if (flowState === 'retry_intro') return renderRetryIntro()
+    if (flowState === 'workshop') return renderWorkshop()
     if (flowState === 'complete') return renderComplete()
     const match = flowState.match(/^exercise_(\d+)$/)
     if (match) return renderExerciseStep(parseInt(match[1], 10))

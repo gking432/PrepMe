@@ -570,7 +570,7 @@ export default function InterviewPage() {
               interrupt_response: false,
             },
             temperature: 0.7,
-            max_response_output_tokens: 220,
+            max_response_output_tokens: 400,
           },
         }))
         setIsConnected(true)

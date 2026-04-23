@@ -4,6 +4,7 @@ type HrStepKey =
   | 'role_motivation'
   | 'personalized_experience_1'
   | 'personalized_experience_2'
+  | 'curveball'
   | 'salary_expectations'
   | 'availability'
   | 'close'
@@ -60,6 +61,16 @@ const TERMINATION_LINES = [
   'I’m going to end the interview here. Thank you for your time.',
 ]
 
+const CURVEBALL_QUESTIONS = [
+  "What's one part of this role you think would stretch you most?",
+  'What would you want to learn quickly if you started here?',
+  "Tell me about an area where you're still developing professionally.",
+  "What's something on your resume you'd want to explain more clearly?",
+  'If you joined a team and realized you were missing context, how would you handle that?',
+  'How do you handle stressful situations?',
+  'How do you stay organized?',
+]
+
 function buildPrompt(args: {
   key: HrStepKey
   questionId: string
@@ -84,6 +95,7 @@ export function buildInitialHrState(args: {
   const opening = `Hi, this is ${interviewerName} calling from ${args.companyName} about the ${args.roleTitle} position. Thanks for taking the time to chat today. I have a few quick questions, and then we’ll wrap up. To start, can you tell me a bit about yourself?`
   const companyKnowledge = 'Okay, and then, what do you know about our company so far?'
   const roleMotivation = 'Got it. So then, what interests you about this role specifically?'
+  const curveballQuestion = CURVEBALL_QUESTIONS[Math.floor(Math.random() * CURVEBALL_QUESTIONS.length)]
   const salary = 'Gotcha. So then, I know this can be a little awkward to talk about early on, but what are you expecting salary-wise?'
   const availability = 'Right. So then, if we did decide to move forward with your application, when would you be available to start?'
   const close = 'Alright, that covers everything I wanted to ask today. Thanks again for your time.'
@@ -168,6 +180,22 @@ export function buildInitialHrState(args: {
       })
     )
   }
+
+  prompts.push(
+    buildPrompt({
+      key: 'curveball',
+      questionId: `q${questionNumber++}`,
+      text: `Okay. One other quick question before we get into logistics. ${curveballQuestion}`,
+      audioSegments: [
+        { type: 'fixed', key: 'okay' },
+        {
+          type: 'dynamic',
+          text: `One other quick question before we get into logistics. ${curveballQuestion}`,
+          cacheKey: `curveball-${curveballQuestion}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-'),
+        },
+      ],
+    })
+  )
 
   prompts.push(
     buildPrompt({

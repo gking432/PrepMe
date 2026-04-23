@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 
 interface MultipleChoiceExerciseProps {
+  title?: string
+  context?: string
   question: string
   options: string[]
   correctIndex: number
@@ -12,6 +14,8 @@ interface MultipleChoiceExerciseProps {
 }
 
 export default function MultipleChoiceExercise({
+  title,
+  context,
   question,
   options,
   correctIndex,
@@ -30,6 +34,14 @@ export default function MultipleChoiceExercise({
 
   return (
     <div className="flex h-full w-full flex-col gap-5">
+      {title ? (
+        <p className="shrink-0 text-xs font-black uppercase tracking-[0.14em] text-violet-600">{title}</p>
+      ) : null}
+      {context ? (
+        <div className="shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">{context}</p>
+        </div>
+      ) : null}
       {/* Question */}
       <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">
         {question}

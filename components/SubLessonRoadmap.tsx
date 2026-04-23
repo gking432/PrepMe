@@ -9,6 +9,7 @@ import FinalVoiceChallenge from '@/components/FinalVoiceChallenge'
 import {
   detectAnswerStructureTemplate,
   getContextualPracticeBundle,
+  getPracticeDisplayNameForCriterion,
   type PracticeBundle,
 } from '@/lib/practice-bundles'
 
@@ -74,6 +75,43 @@ export default function SubLessonRoadmap({
   onContextChange,
 }: SubLessonRoadmapProps) {
   const { ding } = useGameFeedback()
+  const baseDisplayName = useMemo(
+    () => getPracticeDisplayNameForCriterion(criterion, bundle.rootCause),
+    [bundle.rootCause, criterion]
+  )
+
+  const hasUsableStructureExcerpt = useCallback((excerpt?: string) => {
+    const trimmed = (excerpt || '').trim()
+    if (!trimmed) return false
+
+    const normalized = trimmed
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (!normalized) return false
+    if (normalized.startsWith('no response provided')) return false
+
+    const nonAnswers = new Set([
+      'hello',
+      'hi',
+      'hey',
+      'hello there',
+      'okay',
+      'ok',
+      'yeah',
+      'yep',
+      'yes',
+      'sure',
+      'thanks',
+      'thank you',
+    ])
+
+    if (nonAnswers.has(normalized)) return false
+
+    return true
+  }, [])
 
   const canonicalStructureQuestions = useMemo(
     () => ({
@@ -85,9 +123,19 @@ export default function SubLessonRoadmap({
     []
   )
 
+  const structureTemplates = useMemo(
+    () => ([
+      'present_past_future',
+      'star',
+      'noticed_fit_now',
+      'answer_reason_example',
+    ] as const),
+    []
+  )
+
   const structureStepNames = useMemo(
     () => ({
-      present_past_future: 'Present, Past, Future',
+      present_past_future: 'Professional Story',
       star: 'STAR',
       noticed_fit_now: 'Observation, Fit, Timing',
       answer_reason_example: 'Answer, Reason, Example',
@@ -117,25 +165,12 @@ export default function SubLessonRoadmap({
     if (bundle.rootCause !== 'poor_structure') return normalizedBase
 
     const hasAnyUsableAnswer = normalizedBase.some((item) => {
-      const excerpt = (item.excerpt || '').trim().toLowerCase()
-      return Boolean(
-        excerpt &&
-        !excerpt.startsWith('no response provided') &&
-        excerpt !== 'hello' &&
-        excerpt !== 'hi'
-      )
+      return hasUsableStructureExcerpt(item.excerpt)
     })
 
     if (hasAnyUsableAnswer) return normalizedBase
 
-    const templates: Array<'present_past_future' | 'star' | 'noticed_fit_now' | 'answer_reason_example'> = [
-      'present_past_future',
-      'star',
-      'noticed_fit_now',
-      'answer_reason_example',
-    ]
-
-    return templates.map((template) => {
+    return structureTemplates.map((template) => {
       const existing = normalizedBase.find(
         (item) => detectAnswerStructureTemplate(item.question) === template
       )
@@ -147,7 +182,7 @@ export default function SubLessonRoadmap({
         excerpt: '',
       }
     })
-  }, [bundle.rootCause, canonicalStructureQuestions, evidenceItems, originalAnswer, originalQuestion])
+  }, [bundle.rootCause, canonicalStructureQuestions, evidenceItems, hasUsableStructureExcerpt, originalAnswer, originalQuestion, structureTemplates])
 
   const contextualBundles = useMemo(
     () => questionRepairs.map((item) => getContextualPracticeBundle(bundle.rootCause, item.question)),
@@ -169,13 +204,45 @@ export default function SubLessonRoadmap({
       }
     })
   ), [bundle.lessons, bundle.rootCause, contextualBundles, questionRepairs, structureStepNames])
+  const optionalStructureLessons = useMemo(() => {
+    if (bundle.rootCause !== 'poor_structure') return []
+
+    const requiredTemplates = new Set(
+      questionRepairs.map((item) => detectAnswerStructureTemplate(item.question))
+    )
+
+    return structureTemplates
+      .filter((template) => !requiredTemplates.has(template))
+      .map((template) => {
+        const question = canonicalStructureQuestions[template]
+        const contextualBundle = getContextualPracticeBundle(bundle.rootCause, question)
+        return {
+          template,
+          question,
+          excerpt: '',
+          lesson: contextualBundle.lessons[0],
+          displayName: contextualBundle.displayName,
+        }
+      })
+  }, [bundle.rootCause, canonicalStructureQuestions, questionRepairs, structureTemplates])
   const supplementalCoreLessons = useMemo(
     () => (bundle.rootCause === 'questions_about_company' ? bundle.lessons.slice(1) : []),
     [bundle.lessons, bundle.rootCause]
   )
   const optionalLessons = useMemo(
-    () => (bundle.rootCause === 'poor_structure' || bundle.rootCause === 'questions_about_company' ? [] : bundle.lessons.slice(1)),
-    [bundle.lessons, bundle.rootCause]
+    () => (
+      bundle.rootCause === 'poor_structure'
+        ? optionalStructureLessons
+        : bundle.rootCause === 'questions_about_company'
+          ? []
+          : bundle.lessons.slice(1).map((lesson) => ({
+              lesson,
+              question: questionRepairs[0]?.question,
+              excerpt: questionRepairs[0]?.excerpt || '',
+              displayName: bundle.displayName,
+            }))
+    ),
+    [bundle.displayName, bundle.lessons, bundle.rootCause, optionalStructureLessons, questionRepairs]
   )
   const totalSlots = requiredSteps.length
   const totalCoreItems = totalSlots + supplementalCoreLessons.length
@@ -242,7 +309,7 @@ export default function SubLessonRoadmap({
   useEffect(() => {
     if (!onContextChange) return
     onContextChange({
-      title: bundle.displayName,
+      title: baseDisplayName,
       items: [
         ...requiredSteps.map((step, idx) => {
           const isCompleted = completedSet.has(idx)
@@ -267,7 +334,7 @@ export default function SubLessonRoadmap({
         }),
       ],
     })
-  }, [activeSlot, allDone, bundle.displayName, completedSet, nextRequired, onContextChange, requiredSteps, supplementalCompletedSet, supplementalCoreLessons, totalSlots])
+  }, [activeSlot, allDone, baseDisplayName, completedSet, nextRequired, onContextChange, requiredSteps, supplementalCompletedSet, supplementalCoreLessons, totalSlots])
 
   if (activeSlot !== null) {
     const isSupplementalCore = activeSlot >= totalSlots && activeSlot < totalSlots + supplementalCoreLessons.length
@@ -279,13 +346,17 @@ export default function SubLessonRoadmap({
     const activeBundle = isOptional || isSupplementalCore
       ? bundle
       : contextualBundles[requiredStep.evidenceIndex] || getContextualPracticeBundle(bundle.rootCause, currentEvidence?.question)
+    const optionalLesson = isOptional ? optionalLessons[optionalLessonIndex as number - 1] : null
     const subLesson = isOptional
-      ? bundle.lessons[optionalLessonIndex as number]
+      ? optionalLesson?.lesson
       : isSupplementalCore
         ? supplementalCoreLessons[supplementalLessonIndex as number - 1]
       : activeRequiredPhase === 'lesson'
         ? activeBundle.lessons[0]
         : null
+    const optionalEvidence = optionalLesson
+      ? { question: optionalLesson.question, excerpt: optionalLesson.excerpt }
+      : null
 
     if (subLesson) {
       return (
@@ -295,7 +366,7 @@ export default function SubLessonRoadmap({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
-                  <span>{activeBundle.displayName}</span>
+                    <span>{isOptional ? optionalLesson?.displayName || baseDisplayName : bundle.rootCause === 'poor_structure' ? baseDisplayName : activeBundle.displayName}</span>
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>{activeRequiredPhase === 'lesson' ? subLesson.title : 'Voice Re-Answer'}</span>
                 </div>
@@ -347,8 +418,8 @@ export default function SubLessonRoadmap({
             lessonNumber={isOptional ? optionalLessonIndex as number : isSupplementalCore ? supplementalLessonIndex as number : 1}
             totalLessons={isOptional ? optionalLessons.length : isSupplementalCore ? supplementalCoreLessons.length : 1}
             criterion={criterion}
-            originalQuestion={currentEvidence?.question}
-            originalAnswer={currentEvidence?.excerpt}
+            originalQuestion={isOptional ? optionalEvidence?.question : currentEvidence?.question}
+            originalAnswer={isOptional ? optionalEvidence?.excerpt : currentEvidence?.excerpt}
             onComplete={(passed, xp) => {
               if (isOptional) {
                 handleOptionalComplete(optionalLessonIndex as number, passed, xp)
@@ -381,7 +452,7 @@ export default function SubLessonRoadmap({
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
-                  <span>{contextualBundles[requiredStep.evidenceIndex]?.displayName || bundle.displayName}</span>
+                    <span>{contextualBundles[requiredStep.evidenceIndex]?.displayName || baseDisplayName}</span>
                   <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
                   <span>Voice Re-Answer</span>
                 </div>
@@ -456,7 +527,7 @@ export default function SubLessonRoadmap({
               <X className="w-5 h-5" />
             </button>
             <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-slate-500">
-              {bundle.displayName}
+              {baseDisplayName}
             </p>
             {sessionXp > 0
               ? <span className="text-sm font-extrabold text-amber-500 tabular-nums">+{sessionXp} XP</span>
@@ -475,10 +546,10 @@ export default function SubLessonRoadmap({
                   <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-violet-500">
                     <span>{criterion}</span>
                     <CrumbChevron className="h-3.5 w-3.5 text-slate-300" />
-                    <span>{bundle.displayName}</span>
+                    <span>{baseDisplayName}</span>
                   </div>
                   <div className="mt-4 flex items-center gap-3">
-                    <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{bundle.displayName}</h2>
+                    <h2 className="text-[2.3rem] font-black leading-none tracking-tight text-slate-900">{baseDisplayName}</h2>
                     <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">
                       {totalCoreItems} {totalCoreItems === 1 ? 'core lesson' : 'core lessons'}
                     </span>
@@ -677,9 +748,9 @@ export default function SubLessonRoadmap({
                       const optionalKey = idx + 1
                       const isCompleted = optionalCompletedSet.has(optionalKey)
                       const isPassed = optionalPassedSet.has(optionalKey)
-                      const isMini = miniBurstIdx === totalSlots + optionalKey
+                      const isMini = miniBurstIdx === totalSlots + supplementalCoreLessons.length + idx
                       return (
-                        <div key={lesson.title} className="relative">
+                        <div key={lesson.lesson.title} className="relative">
                           <div className="absolute inset-0 pointer-events-none">
                             <MiniConfettiBurst active={isMini} />
                           </div>
@@ -694,11 +765,11 @@ export default function SubLessonRoadmap({
                             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] ${
                               isCompleted && isPassed ? 'bg-emerald-500 text-white' : 'bg-white text-violet-700 ring-1 ring-violet-200'
                             }`}>
-                              {isCompleted && isPassed ? <CheckCircle className="h-6 w-6" /> : <span className="text-sm font-black">{optionalKey + 1}</span>}
+                              {isCompleted && isPassed ? <CheckCircle className="h-6 w-6" /> : <span className="text-sm font-black">{totalCoreItems + optionalKey}</span>}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-black text-slate-900">{lesson.title}</p>
+                                <p className="text-sm font-black text-slate-900">{lesson.lesson.title}</p>
                                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
                                   Optional
                                 </span>

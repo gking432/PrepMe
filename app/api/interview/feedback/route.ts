@@ -14,6 +14,119 @@ function getOpenAI() {
   return _openai
 }
 
+const HR_SIX_CRITERIA = [
+  'Professional Story',
+  'Specific Examples and Evidence',
+  'Preparation / Curiosity',
+  'Handling Uncertain/Difficult Questions',
+  'Alignment of Career Goals with Position',
+  'Pace and Conversation Flow',
+] as const
+
+function isSubstantiveCandidateUtterance(text?: string | null) {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return false
+
+  const normalized = trimmed
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!normalized) return false
+
+  const trivialUtterances = new Set([
+    'hello',
+    'hello there',
+    'hi',
+    'hey',
+    'hey there',
+    'yeah',
+    'yep',
+    'yes',
+    'ok',
+    'okay',
+    'sure',
+    'thanks',
+    'thank you',
+    'bye',
+    'goodbye',
+    'you too',
+  ])
+
+  if (trivialUtterances.has(normalized)) return false
+
+  const words = normalized.split(' ').filter(Boolean)
+  return words.length >= 4
+}
+
+function isBlankInterviewTranscript(structuredTranscript: any, transcript: string) {
+  const structuredMessages = Array.isArray(structuredTranscript?.messages)
+    ? structuredTranscript.messages
+    : []
+
+  const structuredCandidateMessages = structuredMessages
+    .filter((message: any) => message?.speaker === 'candidate')
+    .map((message: any) => message?.text)
+
+  if (structuredCandidateMessages.length > 0) {
+    return !structuredCandidateMessages.some((text: string) => isSubstantiveCandidateUtterance(text))
+  }
+
+  const plainCandidateLines = (transcript || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^You:\s*/i.test(line))
+    .map((line) => line.replace(/^You:\s*/i, ''))
+
+  if (plainCandidateLines.length > 0) {
+    return !plainCandidateLines.some((text) => isSubstantiveCandidateUtterance(text))
+  }
+
+  return true
+}
+
+function applyBlankInterviewGuardrailToHrRubric(rubric: any) {
+  const blankFeedback =
+    'Candidate provided no substantive verbal response in the interview, so this area was not demonstrated live and should be practiced before the next round.'
+
+  rubric.overall_assessment = rubric.overall_assessment || {}
+  rubric.overall_assessment.overall_score = Math.min(Number(rubric.overall_assessment.overall_score || 2), 2)
+  rubric.overall_assessment.likelihood_to_advance = 'unlikely'
+  rubric.overall_assessment.key_strengths = []
+  rubric.overall_assessment.key_weaknesses = [
+    'Candidate provided no substantive verbal responses during the interview, so interview performance could not be demonstrated.',
+    ...((Array.isArray(rubric.overall_assessment.key_weaknesses) ? rubric.overall_assessment.key_weaknesses : [])
+      .filter((item: string) => typeof item === 'string' && !/no substantive verbal responses/i.test(item))),
+  ].slice(0, 4)
+  rubric.overall_assessment.summary =
+    'Candidate provided no substantive verbal responses during the interview. Resume and job-description fit may exist on paper, but interview strengths were not demonstrated live, so the session should be treated as a full practice-needed outcome.'
+
+  rubric.hr_screen_six_areas = {
+    what_went_well: [],
+    what_needs_improve: HR_SIX_CRITERIA.map((criterion) => ({
+      criterion,
+      feedback: blankFeedback,
+      evidence: [],
+    })),
+  }
+
+  rubric.next_steps_preparation = rubric.next_steps_preparation || {}
+  rubric.next_steps_preparation.ready_for_hiring_manager = false
+  rubric.next_steps_preparation.confidence_level = 'High'
+  rubric.next_steps_preparation.improvement_suggestions = [
+    'Complete a full HR practice loop with spoken responses so your communication, structure, alignment, and question quality can actually be evaluated.',
+    ...((Array.isArray(rubric.next_steps_preparation.improvement_suggestions)
+      ? rubric.next_steps_preparation.improvement_suggestions
+      : []).filter((item: string) => typeof item === 'string')),
+  ].slice(0, 5)
+  rubric.next_steps_preparation.practice_recommendations =
+    rubric.next_steps_preparation.practice_recommendations || {}
+  rubric.next_steps_preparation.practice_recommendations.immediate_focus_areas = [...HR_SIX_CRITERIA]
+
+  return rubric
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sessionId, transcript: providedTranscript } = await request.json()
@@ -243,6 +356,8 @@ export async function POST(request: NextRequest) {
 
     // For HR screen: Add 6-area evaluation instructions
     if (stage === 'hr_screen') {
+      const blankInterview = isBlankInterviewTranscript(structuredTranscript, Array.isArray(transcript) ? transcript.join('\n') : transcript)
+
       systemPrompt += `\n\n=== HR SCREEN 6-AREA EVALUATION ===
 You are evaluating an HR phone screen interview. You will receive:
 - Job description
@@ -254,29 +369,41 @@ Your task is to assess the candidate on 6 specific criteria. For each criterion,
 
 EVALUATION CRITERIA:
 
-1. Answer Structure and Conciseness
-   - "What Went Well" if: Answers are structured (e.g., situation-action-result), stay on topic, typically 30-90 seconds worth of content, and directly address the question
-   - "Needs to Improve" if: Answers ramble beyond 2 minutes, jump between topics, are overly brief (one sentence when more detail expected), or fail to actually answer what was asked
+1. Professional Story
+   - Use this area for "Tell me about yourself," "Walk me through your background," and similar opening background questions.
+   - "What Went Well" if: Gives a clear, selective summary of who they are professionally, explains what they do now, what relevant experience led them here, and where they want to go next, makes their background feel connected by a clear through-line, highlights the parts of their experience that are most relevant to the role, and sounds intentional and concise rather than reciting their resume
+   - "Needs to Improve" if: Gives a long, unfocused walkthrough of their background, lists jobs or experiences without a clear through-line, includes too much irrelevant detail, makes it hard to understand what they do now, how they got here, or where they are headed, or sounds like they are reciting their resume instead of telling a coherent professional story
+   - Internal grading guidance: When evaluating "Tell me about yourself," "Walk me through your background," or similar questions, strong answers often follow a clear present -> past -> future logic. Reward answers that naturally reflect that flow, even if the structure is not explicit. If the answer jumps around in time, stays too long in the past, never explains current work clearly, or does not land on future direction, that is a sign the response may need work.
 
 2. Specific Examples and Evidence
-   - "What Went Well" if: Uses at least 2-3 specific examples with details (companies, projects, metrics, outcomes) when discussing experience or skills
-   - "Needs to Improve" if: Primarily uses generic statements like "I'm good at..." or "I usually..." without backing them up, or only provides vague examples without details
+   - Use this area for answers where the candidate is describing a skill, strength, experience, accomplishment, challenge, or way of working and needs to support it with believable proof.
+   - "What Went Well" if: Supports their points with real, specific examples, includes enough concrete detail to make the example feel believable, makes their role in the example clear, explains what they actually did rather than just what the team did, and uses proof that strengthens the point they are trying to make
+   - "Needs to Improve" if: Relies mostly on broad claims like "I'm good at..." or "I usually...", gives examples that are too vague to feel convincing, talks in summaries or patterns without anchoring them in one real example, makes it unclear what they personally did, or gives proof that is too thin, generic, or disconnected from the point they are trying to make
+   - Internal grading guidance: When evaluating answers about skills, strengths, accomplishments, problem-solving, or work style, strong responses often use a concrete example with clear context, action, and outcome. Reward answers that naturally show that logic, even if the structure is not explicit. Story-based answers will often resemble STAR, while shorter judgment or work-style answers may use a briefer proof style. If the candidate stays at the level of claims, summaries, or vague patterns without giving one believable example, that is a sign the response may need work.
 
-3. Questions Asked About the Role/Company
-   - "What Went Well" if: Asks 2+ questions that demonstrate research (references company info, role specifics) or show strategic thinking about the position
-   - "Needs to Improve" if: Asks no questions, only asks about logistics easily found online (salary, benefits, hours), or asks questions that show they didn't read the job description
+3. Preparation / Curiosity
+   - Use this area for moments when the candidate is asked about the company or role (for example, "What do you know about our company?", "Why this company?", or "What stood out to you?"), as well as the candidate’s questions at the end of the interview.
+   - "What Went Well" if: Shows they did basic homework on the company and role, gives answers about the company or role that sound specific, informed, and intentional, can explain what the company does, what the role seems focused on, or what stood out to them without relying on generic praise, asks 1-2 thoughtful, stage-appropriate questions about the role, team, company, or process, asks questions that show real curiosity and help them understand the opportunity better, and sounds like they are taking the opportunity seriously rather than just moving through another application
+   - "Needs to Improve" if: Sounds broad, generic, or underprepared when asked about the company or role, relies mostly on praise, surface-level facts, or filler like "you seem like a great company", makes it unclear whether they understand what the company does or what the role is actually about, asks no questions, asks only questions about salary, benefits, hours, remote work, or logistics in a way that can make their interest seem shallow especially early in the process, asks questions that show they did not read the job description or were not paying attention, or asks only broad, generic, or low-value questions that do not help them understand the role
+   - Internal grading guidance: This area covers both sides of preparation and curiosity: whether the candidate sounds informed when discussing the company or role, and whether the candidate asks thoughtful, stage-appropriate questions during the question portion. Reward candidates who show basic preparation, real curiosity, and enough specificity to sound like they chose this interview on purpose. In an HR screen, strong answers and questions usually stay close to the company, the role, what stood out, what success looks like, team context, and the interview process. Questions about compensation, benefits, remote work, or logistics are not inherently bad, but if those are the only questions early in the process, that can make the candidate’s interest seem shallow. Score lower when the candidate sounds underprepared, asks nothing, or treats the interaction like just another application.
 
 4. Handling Uncertain/Difficult Questions
-   - "What Went Well" if: Acknowledges gaps honestly ("I haven't done X, but I have done Y which is similar") and pivots to relevant strengths or learning ability
-   - "Needs to Improve" if: Becomes defensive, tries to bluff through obvious knowledge gaps, gives contradictory information, or completely avoids answering
+   - Use this area for moments when the candidate is asked an unexpected, difficult, or unfamiliar question and does not have a ready-made answer.
+   - "What Went Well" if: Stays composed when asked an unexpected, difficult, or unfamiliar question, takes a brief moment to think instead of rushing into a weak answer, answers honestly when they do not have the exact experience or answer, avoids bluffing and instead gives a clear starting point, related example, or thoughtful approach, and finds a way to land the answer clearly instead of rambling or trailing off
+   - "Needs to Improve" if: Becomes defensive or visibly flustered, tries to bluff through obvious gaps in knowledge or experience, gives contradictory information, avoids the question instead of engaging with it, starts talking before finding a clear point and ends up rambling, or never arrives at a settled answer or says something like "I'm not sure if that answered your question"
+   - Internal grading guidance: When evaluating unexpected or difficult questions, reward candidates who stay calm, take a moment to think, and find a clear angle instead of panicking or filling space. Strong answers often begin with a brief pause or acknowledgment, then move into a clear starting point, reasoning, and a settled answer. A simple answer -> reason -> example flow often works well here once the candidate knows what they want to say, but the structure does not need to be explicit. Score lower when the candidate rambles, bluffs, contradicts themselves, avoids the question, or never lands on a clear point.
 
 5. Alignment of Career Goals with Position
-   - "What Went Well" if: Articulates clear connection between their background/goals and this specific role, mentions company mission/values, or explains what they hope to achieve/learn
-   - "Needs to Improve" if: Gives generic reasons that could apply to any job ("it seems interesting"), focuses only on what they want to get out of it without mentioning contribution, or appears to be applying indiscriminately
+   - Use this area for "Why this role?", "Why this position?", "Why now?", and similar questions about why this move makes sense for the candidate at this point in their career.
+   - "What Went Well" if: Makes a clear connection between their background and this specific role, explains why this role stands out over other possible opportunities, makes the timing of the move feel intentional, makes the next step feel logical and coherent, and sounds like they are pursuing a role that fits their direction rather than just looking for change
+   - "Needs to Improve" if: Gives generic reasons that could apply to almost any role, focuses mostly on wanting change, growth, or a new challenge without explaining fit, sounds opportunistic or broadly open rather than specifically aligned, does not make the transition from past experience to this role feel logical, or makes it unclear why this move makes sense now
+   - Internal grading guidance: When evaluating "Why this role?" and similar alignment questions, strong answers often follow a clear observation -> fit -> timing logic. Reward answers that naturally reflect that flow, even if the structure is not explicit. Strong responses usually point to something specific about the role, connect it to the candidate’s background, and explain why the timing makes sense now. Score lower when the answer stays generic, over-relies on growth or change language, or could apply just as easily to many other jobs.
 
 6. Pace and Conversation Flow
-   - "What Went Well" if: Responses flow naturally with appropriate pauses for thought (2-5 seconds), candidate doesn't interrupt, uses conversational transitions, and there's good back-and-forth
-   - "Needs to Improve" if: Frequent awkward silences (10+ seconds), interrupts the interviewer multiple times, rushes through answers without pausing, or treats it like an interrogation rather than a conversation
+   - Use this area for how the candidate sounds in the interview overall, including pacing, timing, transitions, and whether the conversation feels natural rather than stiff, rushed, awkward, or memorized.
+   - "What Went Well" if: Responds with a natural, conversational rhythm, uses brief pauses to think without creating awkward dead air, does not interrupt the interviewer, uses simple transitions that make answers easier to follow, sounds prepared and confident without sounding memorized or overly scripted, delivers answers in a way that feels spoken and human rather than recited word for word, and helps the interview feel like a real back-and-forth conversation
+   - "Needs to Improve" if: Has frequent awkward silences that disrupt the flow of the conversation, interrupts the interviewer multiple times or starts answering before the question is finished, rushes through answers in a way that makes them hard to follow, sounds overly rehearsed, robotic, or memorized, delivers polished content in a way that feels recited instead of spoken, gives answers that feel abrupt, choppy, or hard to track, or makes the interview feel more like a speech, interrogation, or race to answer than a conversation
+   - Internal grading guidance: When evaluating delivery, reward answers that feel easy to follow, well-paced, and conversational. Brief pauses to think are a positive signal when they feel intentional and do not derail the rhythm. Strong candidates usually let the interviewer finish, begin cleanly, use light transitions when shifting ideas, and stop once their point has landed. They may clearly be prepared, but they should still sound like they are speaking naturally rather than reciting a memorized paragraph. Score lower when the candidate frequently interrupts, leaves long dead air, rushes, trails off awkwardly, or sounds like they are delivering a script word for word instead of having a real conversation.
 
 IMPORTANT GUIDELINES:
 - Be balanced: Not all 6 should go in the same category
@@ -291,7 +418,7 @@ You MUST include a "hr_screen_six_areas" field in your JSON response with this s
   "hr_screen_six_areas": {
     "what_went_well": [
       {
-        "criterion": "Answer Structure and Conciseness",
+        "criterion": "Professional Story",
         "feedback": "[1-2 sentence explanation with specific reference to transcript]",
         "evidence": [
           {
@@ -320,6 +447,15 @@ You MUST include a "hr_screen_six_areas" field in your JSON response with this s
 
 Each of the 6 criteria should appear in either "what_went_well" or "what_needs_improve" (not both).
 `
+
+      if (blankInterview) {
+        systemPrompt += `\n\nBLANK INTERVIEW GUARDRAIL:
+The candidate provided no substantive verbal responses in this interview.
+- Do NOT treat resume/job-description fit as a demonstrated interview strength
+- Do NOT place any of the 6 HR screen areas in "what_went_well"
+- Place all 6 HR screen areas in "what_needs_improve"
+- You may mention that on-paper alignment exists, but it was NOT demonstrated live in the interview`
+      }
       
       if (websiteContent) {
         systemPrompt += `\n\nCOMPANY WEBSITE CONTENT:
@@ -526,6 +662,10 @@ Use the question IDs and timestamps from this structured transcript when providi
 
         // Call Claude grader with retry logic
         const rubric = await gradeHrScreenWithRetry(gradingMaterials, 3)
+
+        if (isBlankInterviewTranscript(structuredTranscript, Array.isArray(transcript) ? transcript.join('\n') : transcript)) {
+          applyBlankInterviewGuardrailToHrRubric(rubric)
+        }
 
         // Validate rubric
         if (!validateHrScreenRubric(rubric)) {

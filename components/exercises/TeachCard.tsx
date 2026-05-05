@@ -318,10 +318,6 @@ export default function TeachCard({
     const keys = frameworkRows.map(([key]) => key.toLowerCase())
     return ['situation', 'task', 'action', 'result'].every((key) => keys.includes(key))
   }, [frameworkRows])
-  const isPresentPastFutureLesson = useMemo(() => {
-    const keys = frameworkRows.map(([key]) => key.toLowerCase())
-    return ['present', 'past', 'future'].every((key) => keys.includes(key))
-  }, [frameworkRows])
   const isObservationLesson = useMemo(() => {
     const keys = frameworkRows.map(([key]) => key.toLowerCase())
     return ['observation', 'fit', 'timing'].every((key) => keys.includes(key))
@@ -422,237 +418,6 @@ export default function TeachCard({
   )
 
   const cards = useMemo(() => {
-    if (isPresentPastFutureLesson) {
-      return [
-        {
-          eyebrow: 'Professional Story',
-          title: 'What this answer is for',
-          preppi: 'This is the opening move in a lot of interviews. The goal is not to tell your whole life story.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">In this lesson, you’ll learn how to turn a scattered background into a clear, focused answer you can actually use.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">“Tell me about yourself” is not your full resume.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">A strong answer does three things:</p>
-              <TeachingList
-                items={[
-                  'explains what you do now',
-                  'shows the background that led you here',
-                  'makes it clear where you are headed next',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is to make your background easy to follow and relevant to the role.</p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Why It Gets Flagged',
-          title: 'Why this gets flagged',
-          preppi: 'Most misses here are not about having a weak background. They come from how the story is told.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This answer usually gets flagged when the candidate:</p>
-              <TeachingList
-                items={[
-                  'starts too far back',
-                  'lists jobs in order',
-                  'includes too much irrelevant detail',
-                  'never clearly defines what they do now',
-                  'sounds scattered or unfocused',
-                  'uses vague future language like “I want to grow” or “I’m looking for a new challenge”',
-                  'sounds like a resume recap instead of a professional story',
-                ]}
-              />
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'The Framework',
-          title: 'The repair tool: Present → Past → Future',
-          preppi: 'This is the cleanest shape for background questions because it keeps the answer anchored in the present and pointed toward what comes next.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">A strong answer usually follows this shape:</p>
-              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Present</p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">Start with where you are now.</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Past</p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain the background that led you here.</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-700">Future</p>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain where you want to go next.</p>
-                </div>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Present',
-          title: 'Present: what to do',
-          preppi: 'Lead with your current lane. This is where the interviewer should immediately understand what kind of professional you are.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Start with where you are now.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This should explain:</p>
-              <TeachingList
-                items={[
-                  'what kind of work you do',
-                  'what your role really centers on',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Do not just give your title. Define your lane.</p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Past',
-          title: 'Past: what to do',
-          preppi: 'This is where you show the pattern behind your experience instead of walking through every stop on your resume.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain the background that led you here.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This should:</p>
-              <TeachingList
-                items={[
-                  'show the foundation behind your current work',
-                  'explain the pattern in your experience',
-                  'avoid listing every job in order',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is not chronology. The goal is connection.</p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Future',
-          title: 'Future: what to do',
-          preppi: 'Finish by showing the direction you want to keep building toward and why that direction makes sense.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Then explain where you want to go next.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This should:</p>
-              <TeachingList
-                items={[
-                  'name the kind of work you want more of',
-                  'make this move feel logical',
-                  'sound specific, not generic',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Do not say:</p>
-              <TeachingList
-                items={[
-                  'I want to grow',
-                  'I want a new challenge',
-                  'I’m looking for a better opportunity',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Those are too broad.</p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Selection',
-          title: 'The most important skill: selection',
-          preppi: 'A stronger answer is not about saying more. It is about choosing the details that support the story you want the interviewer to hear.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Most people do not struggle because they lack experience. They struggle because they do not know what to include.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">A strong Professional Story is not about saying more. It is about choosing better.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Keep what helps explain:</p>
-              <TeachingList
-                items={[
-                  'what you do now',
-                  'what built that path',
-                  'why this role makes sense next',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Cut what does not help:</p>
-              <TeachingList
-                items={[
-                  'old details that are no longer relevant',
-                  'side paths that do not support the story',
-                  'repeated ideas',
-                  'job-by-job chronology',
-                  'resume bullet language',
-                ]}
-              />
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Messy Backgrounds',
-          title: 'If your background feels messy',
-          preppi: 'That does not mean you have no story. It usually means you have to zoom out far enough to see the pattern.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">That is normal.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Your story does not need to explain everything. It just needs to explain the version of your background that makes sense for this role.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">If your background feels scattered, look for:</p>
-              <TeachingList
-                items={[
-                  'the kind of work that repeats',
-                  'the strengths that show up across roles',
-                  'the pattern that connects your experience',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">Focus on the through-line, not the titles.</p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Examples',
-          title: 'What strong answers sound like',
-          preppi: 'These work because they are clear, selective, connected, and pointed in a direction.',
-          content: (
-            <div className="space-y-4">
-              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-sm leading-relaxed text-sky-700 md:text-[15px]">“Right now, most of my work is focused on coordinating teams and keeping work moving.”</p>
-                <p className="text-sm leading-relaxed text-emerald-700 md:text-[15px]">“Before that, I built my foundation in roles where I had to stay organized, adjust quickly, and keep priorities on track.”</p>
-                <p className="text-sm leading-relaxed text-amber-700 md:text-[15px]">“Going forward, I want to keep building in that kind of coordination work in a role with more ownership.”</p>
-              </div>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">This works because it is:</p>
-              <TeachingList
-                items={[
-                  'clear',
-                  'selective',
-                  'connected',
-                  'pointed in a direction',
-                ]}
-              />
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Delivery',
-          title: 'Final reminder',
-          preppi: 'The goal is a clear answer you can say naturally, not a word-for-word performance.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is not to memorize a speech.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">The goal is to build a clear answer you can say naturally.</p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">You should know:</p>
-              <TeachingList
-                items={[
-                  'the points you want to hit',
-                  'the order you want to hit them in',
-                ]}
-              />
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">But it should still sound like you, not like a script.</p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Next Up',
-          title: 'Ready to practice?',
-          preppi: 'You have the pattern. Now let’s pressure-test it with drills before we build your own version.',
-          content: <div />,
-        },
-      ]
-    }
-
     if (isStarLesson) {
       return withIntro([
         {
@@ -1892,230 +1657,97 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'Missing Piece',
-          title: 'What this answer was missing',
-          preppi: 'This module fixes weak proof, not weak structure.',
+          eyebrow: title,
+          title,
+          preppi: 'This should teach the repair tool clearly before the drills start.',
           content: (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  This answer made a point, but it did not prove it strongly enough. When you describe a strength, skill, or work style, the interviewer needs evidence that feels real and believable.
-                </p>
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  This module helps you move from claim to proof.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Scoring Logic',
-          title: 'What strong proof does differently',
-          preppi: 'The goal is not more words. The goal is more believable proof.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'makes a clear claim',
-                  'uses a real example',
-                  'adds concrete detail',
-                  'shows what the example proves',
-                ].map((line, index) => (
-                  <div key={line} className="flex items-start gap-3 border-l-2 border-violet-200 pl-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-700">{index + 1}</span>
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
+              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">{explanation}</p>
+              <div className="space-y-3">
+                {frameworkRows.map(([key, value], index) => (
+                  <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                      {formatBreakdownKey(key, index)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                    </div>
                   </div>
                 ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  The goal is not more words. The goal is more believable proof.
-                </p>
               </div>
             </div>
           ),
         },
         {
           eyebrow: 'Compare',
-          title: 'Weak vs better vs strong',
-          preppi: 'This is where the difference becomes obvious.',
+          title: 'See the difference',
+          preppi: 'This should make the jump from vague STAR to stronger STAR obvious.',
           content: (
             <div className="space-y-4">
-              {[
-                ['Weak', example.badAnswer, 'rose', 'This makes a claim and leaves it unsupported.'],
-                ['Better but still weak', example.mediumAnswer || '', 'amber', 'There is some shape, but the proof is still too broad.'],
-                ['Strong', example.goodAnswer, 'emerald', 'This gives real proof, concrete detail, and a clear takeaway.'],
-              ].map(([label, answer, tone, note]) => {
-                const styles = tone === 'rose'
-                  ? ['border-rose-200', 'bg-rose-50/70', 'border-rose-200 bg-rose-100/80', 'text-rose-600', 'text-rose-900']
-                  : tone === 'amber'
-                    ? ['border-amber-200', 'bg-amber-50/70', 'border-amber-200 bg-amber-100/80', 'text-amber-700', 'text-amber-900']
-                    : ['border-emerald-200', 'bg-emerald-50/70', 'border-emerald-200 bg-emerald-100/80', 'text-emerald-600', 'text-emerald-900']
-                return (
-                  <div key={label} className={`overflow-hidden rounded-2xl border-2 ${styles[0]} ${styles[1]} shadow-sm`}>
-                    <div className={`px-4 py-3 ${styles[2]}`}>
-                      <span className={`text-xs font-bold uppercase tracking-wide ${styles[3]}`}>{label}</span>
-                    </div>
-                    <div className="space-y-3 px-4 py-4">
-                      <p className={`text-base leading-relaxed ${styles[4]}`}>&ldquo;{answer}&rdquo;</p>
-                      <p className="text-sm leading-relaxed text-slate-600">{note}</p>
-                    </div>
-                  </div>
-                )
-              })}
+              <ContrastText
+                weakLabel="Weak"
+                weakText={example.badAnswer}
+                strongLabel="Stronger"
+                strongText={example.goodAnswer}
+              />
             </div>
           ),
         },
         {
-          eyebrow: 'Core Principle',
-          title: 'A claim is not proof',
-          preppi: 'This needs to be said plainly.',
+          eyebrow: 'See It In Action',
+          title: 'See exactly where each part lives',
+          preppi: 'Now the stronger answer should be laid out so the user can see where each part lives.',
           content: (
             <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'I am organized.',
-                  'I am proactive.',
-                  'I am good under pressure.',
-                ].map((line) => (
-                  <div key={line} className="border-l-2 border-violet-200 pl-4">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Those are claims. The interviewer still needs a reason to believe them.
+              <div className="border-t border-slate-200 pt-4">
+                <div className="flex flex-wrap gap-2">
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span
+                        key={`${part.label}-pill-${index}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}
+                      >
+                        {part.label}
+                      </span>
+                    )
+                  })}
+                </div>
+                <p className="mt-4 text-base leading-relaxed text-slate-900">
+                  &ldquo;
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span
+                        key={`${part.label}-highlight-${index}`}
+                        className={`rounded px-1.5 py-0.5 ${colors.highlight}`}
+                      >
+                        {part.text}
+                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
+                      </span>
+                    )
+                  })}
+                  &rdquo;
                 </p>
               </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'Use a real example',
-          preppi: 'Real examples are easier to trust than broad summaries.',
-          content: (
-            <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak proof</p>
-                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “I have done that in different roles.”
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger proof</p>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “In my last role, I handled scheduling changes during a busy launch week.”
-                  </p>
-                </div>
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  The best proof comes from a real moment or a clear pattern of work.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'Concrete detail makes proof believable',
-          preppi: 'Specifics make the answer credible.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'what was happening',
-                  'what made it difficult',
-                  'what you handled',
-                  'what you did',
-                ].map((line) => (
-                  <div key={line} className="border-l-2 border-violet-200 pl-4">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  You do not need a huge story. You need enough detail to make the example feel true.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'You do not need a long story',
-          preppi: 'Aim for concrete, not long.',
-          content: (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
-                <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                  More detail is not always better. You only need enough detail to make the example believable and relevant.
-                </p>
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Enough detail to trust you. Not so much detail that the answer loses shape.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'End by showing what the example proves',
-          preppi: 'Do not just tell the example and stop.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-rose-700">Weak ending</p>
-                  <p className="mt-2 text-sm leading-relaxed text-rose-900 md:text-[15px]">
-                    “That was a valuable experience.”
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Stronger ending</p>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-900 md:text-[15px]">
-                    “That is a good example of how I create structure when priorities start shifting.”
-                  </p>
-                </div>
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Make clear what the example shows and why it supports the claim you made.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Self Check',
-          title: 'Use this check before you answer again',
-          preppi: 'This is the standard you will practice next.',
-          content: (
-            <div className="space-y-4">
-              <div className="grid gap-3">
-                {[
-                  'Did I make a clear claim?',
-                  'Did I give a real example?',
-                  'Did I add a concrete detail?',
-                  'Did I explain what that example shows?',
-                ].map((line) => (
-                  <div key={line} className="border-l-2 border-violet-200 pl-4">
-                    <p className="text-sm font-semibold text-slate-800 md:text-[15px]">{line}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  That is the standard you will practice next.
-                </p>
+                {example.annotatedStrongAnswer?.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <div
+                      key={`${part.label}-detail-${index}`}
+                      className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}
+                    >
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                        {part.detail}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ),
@@ -2871,7 +2503,7 @@ export default function TeachCard({
       ),
     }] : []),
     ])
-  }, [example, frameworkRows, isAnswerReasonExampleLesson, isCareerAlignmentLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPaceAndFlowLesson, isPresentPastFutureLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
+  }, [example, frameworkRows, isAnswerReasonExampleLesson, isCareerAlignmentLesson, isClaimExampleDetailImpactLesson, isCompanyKnowledgeLesson, isHandlingUncertaintyLesson, isMeaningfulQuestionsLesson, isObservationLesson, isPaceAndFlowLesson, isStarLesson, originalQuestion, safeOriginalAnswer, summary, title, whyMissed, withIntro])
 
   const currentCard = cards[step]
   const isLastStep = step === cards.length - 1

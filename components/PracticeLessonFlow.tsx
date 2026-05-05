@@ -11,6 +11,7 @@ import TapSelectExercise from '@/components/exercises/TapSelectExercise'
 import ApplyToYourselfExercise from '@/components/exercises/ApplyToYourselfExercise'
 import SentenceBuilderExercise from '@/components/exercises/SentenceBuilderExercise'
 import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
+import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -82,6 +83,18 @@ function randomizeExercise(exercise: Exercise): Exercise {
         ...exercise,
         options: optionEntries.map(entry => entry.option),
         correctIndex: optionEntries.findIndex(entry => entry.index === exercise.correctIndex),
+        followUp: exercise.followUp
+          ? (() => {
+              const itemEntries = shuffle(exercise.followUp.items.map((item, index) => ({ item, index })))
+              return {
+                ...exercise.followUp,
+                items: itemEntries.map(entry => entry.item),
+                correctIndices: itemEntries
+                  .map((entry, index) => (exercise.followUp!.correctIndices.includes(entry.index) ? index : -1))
+                  .filter(index => index >= 0),
+              }
+            })()
+          : undefined,
       }
     }
     case 'word_bank': {
@@ -312,6 +325,7 @@ export default function PracticeLessonFlow({
             options={exercise.options}
             correctIndex={exercise.correctIndex}
             explanation={exercise.explanation}
+            followUp={exercise.followUp}
             onComplete={(correct) => advanceFromExercise(queuePosition, correct)}
           />
         )
@@ -579,26 +593,49 @@ export default function PracticeLessonFlow({
   )
 
   const renderWorkshop = () => {
-    if (subLesson.workshop?.type !== 'professional_story') return null
+    if (subLesson.workshop?.type === 'professional_story') {
+      return (
+        <div className="flex h-full flex-col animate-slide-up">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Workshop
+            </p>
+          </div>
+          <div className="mb-4">
+            <Preppi
+              message="This is where we turn the lesson into your own answer. We are not grading it yet. We are helping you shape a version that is clear, grounded, and usable out loud."
+              size="sm"
+            />
+          </div>
+          <div className="min-h-0 flex-1">
+            <ProfessionalStoryWorkshop onComplete={() => setFlowState('complete')} />
+          </div>
+        </div>
+      )
+    }
 
-    return (
-      <div className="flex h-full flex-col animate-slide-up">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Workshop
-          </p>
+    if (subLesson.workshop?.type === 'star_proof') {
+      return (
+        <div className="flex h-full flex-col animate-slide-up">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Workshop
+            </p>
+          </div>
+          <div className="mb-4">
+            <Preppi
+              message="This is where we take a vague STAR and turn it into one that actually proves something. You bring the raw example. We will help shape the setup, then put most of the weight into Action and Result."
+              size="sm"
+            />
+          </div>
+          <div className="min-h-0 flex-1">
+            <StarProofWorkshop onComplete={() => setFlowState('complete')} />
+          </div>
         </div>
-        <div className="mb-4">
-          <Preppi
-            message="This is where we turn the lesson into your own answer. We are not grading it yet. We are just helping the story take shape."
-            size="sm"
-          />
-        </div>
-        <div className="min-h-0 flex-1">
-          <ProfessionalStoryWorkshop onComplete={() => setFlowState('complete')} />
-        </div>
-      </div>
-    )
+      )
+    }
+
+    return null
   }
 
   const renderStep = () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle, XCircle } from 'lucide-react'
 
 interface MultipleChoiceExerciseProps {
@@ -11,6 +11,14 @@ interface MultipleChoiceExerciseProps {
   correctIndex: number
   explanation: string
   onComplete: (correct: boolean) => void
+  followUp?: {
+    title?: string
+    context?: string
+    instruction: string
+    items: string[]
+    correctIndices: number[]
+    explanation: string
+  }
 }
 
 export default function MultipleChoiceExercise({
@@ -21,16 +29,130 @@ export default function MultipleChoiceExercise({
   correctIndex,
   explanation,
   onComplete,
+  followUp,
 }: MultipleChoiceExerciseProps) {
   const [selected, setSelected] = useState<number | null>(null)
+  const [stage, setStage] = useState<'primary' | 'follow_up'>('primary')
+  const [followUpSelected, setFollowUpSelected] = useState<Set<number>>(new Set())
+  const [followUpChecked, setFollowUpChecked] = useState(false)
   const answered = selected !== null
 
   const handleSelect = (index: number) => {
-    if (answered) return
+    if (stage !== 'primary' || answered) return
     setSelected(index)
   }
 
   const correct = selected === correctIndex
+  const followUpCorrectSet = new Set(followUp?.correctIndices || [])
+  const followUpAllCorrect =
+    !!followUp &&
+    followUp.correctIndices.every(i => followUpSelected.has(i)) &&
+    [...followUpSelected].every(i => followUpCorrectSet.has(i))
+
+  const toggleFollowUp = (index: number) => {
+    if (stage !== 'follow_up' || followUpChecked) return
+    setFollowUpSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  useEffect(() => {
+    if (stage !== 'follow_up' || !followUp || followUpChecked) return
+    if (followUpSelected.size === 0) return
+    if (followUpSelected.size !== followUp.correctIndices.length) return
+
+    const timer = setTimeout(() => setFollowUpChecked(true), 180)
+    return () => clearTimeout(timer)
+  }, [followUp, followUpChecked, followUpSelected, stage])
+
+  if (stage === 'follow_up' && followUp) {
+    return (
+      <div className="flex h-full w-full flex-col gap-5">
+        {followUp.title ? (
+          <p className="shrink-0 text-xs font-black uppercase tracking-[0.14em] text-violet-600">{followUp.title}</p>
+        ) : null}
+        {followUp.context ? (
+          <div className="shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">{followUp.context}</p>
+          </div>
+        ) : null}
+        <p className="shrink-0 text-base font-bold text-gray-900 leading-snug md:text-lg">{followUp.instruction}</p>
+
+        <div className="flex flex-wrap gap-2">
+          {followUp.items.map((item, i) => {
+            const isSelected = followUpSelected.has(i)
+            const isCorrect = followUpCorrectSet.has(i)
+
+            let cls =
+              'px-4 py-2.5 rounded-xl border-2 border-b-4 text-sm font-bold transition-all duration-150 active:translate-y-[2px] active:border-b-2 '
+
+            if (followUpChecked) {
+              if (isCorrect && isSelected) {
+                cls += 'bg-[#d7f5b1] border-[#46a302] text-[#2a7a00]'
+              } else if (isCorrect && !isSelected) {
+                cls += 'bg-amber-50 border-amber-400 text-amber-700'
+              } else if (!isCorrect && isSelected) {
+                cls += 'bg-[#ffdfe0] border-[#cc3c3c] text-[#9b1c1c] line-through'
+              } else {
+                cls += 'bg-gray-50 border-gray-200 text-gray-400 cursor-default'
+              }
+            } else if (isSelected) {
+              cls += 'bg-[#ddf4ff] border-[#1CB0F6] text-[#0369a1]'
+            } else {
+              cls += 'bg-white border-gray-200 text-gray-700 hover:border-[#1CB0F6] hover:bg-[#ddf4ff] cursor-pointer'
+            }
+
+            return (
+              <button key={i} onClick={() => toggleFollowUp(i)} disabled={followUpChecked} className={cls}>
+                {followUpChecked && isCorrect && isSelected && <CheckCircle className="w-3.5 h-3.5 inline mr-1" />}
+                {followUpChecked && !isCorrect && isSelected && <XCircle className="w-3.5 h-3.5 inline mr-1" />}
+                {item}
+              </button>
+            )
+          })}
+        </div>
+
+        <p className="text-xs text-gray-400">Tap all that apply.</p>
+
+        {followUpChecked && (
+          <div
+            className={`shrink-0 rounded-xl border px-4 py-3 flex items-start gap-3 animate-slide-up ${
+              followUpAllCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'
+            }`}
+          >
+            {followUpAllCorrect
+              ? <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+              : <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            }
+            <div>
+              {!followUpAllCorrect && (
+                <p className="text-xs font-bold text-red-700 mb-0.5">
+                  Correct: {followUp.correctIndices.map(i => followUp.items[i]).join(', ')}
+                </p>
+              )}
+              <p className={`text-xs leading-relaxed ${followUpAllCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
+                {followUpAllCorrect ? followUp.explanation : `${followUp.explanation} We&apos;ll bring this one back at the end.`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-auto shrink-0 flex items-end justify-end border-t border-slate-200/80 pt-5">
+          {followUpChecked && (
+            <button
+              onClick={() => onComplete(followUpAllCorrect)}
+              className="btn-coach-primary min-w-[168px] px-6 py-3"
+            >
+              Continue
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full w-full flex-col gap-5">
@@ -126,7 +248,13 @@ export default function MultipleChoiceExercise({
       <div className="mt-auto shrink-0 flex items-end justify-end border-t border-slate-200/80 pt-5">
       {selected !== null && (
         <button
-          onClick={() => onComplete(correct)}
+          onClick={() => {
+            if (correct && followUp) {
+              setStage('follow_up')
+              return
+            }
+            onComplete(correct)
+          }}
           className="btn-coach-primary min-w-[168px] px-6 py-3"
         >
           Continue

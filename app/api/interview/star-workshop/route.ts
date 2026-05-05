@@ -8,146 +8,113 @@ function getOpenAI() {
   return _openai
 }
 
-type WorkshopStage = 'story' | 'follow_up' | 'finalize'
+type WorkshopState = {
+  setting: string
+  problem: string
+  ownership: string
+  actions: string[]
+  result: string
+  proof: string
+  missing_piece: string
+  turn_count: number
+}
 
 const MODEL = 'gpt-4o-mini'
 
-function buildSystemPrompt(stage: WorkshopStage) {
-  const shared = `You are coaching a user on a flagged behavioral interview answer.
+function buildSystemPrompt() {
+  return `You are generating the next question for a hidden coaching workflow that helps a user build a stronger behavioral interview answer.
 
-The user already has the interview question.
-The user needs help finding a specific situation and turning it into a believable answer.
-You should coach adaptively based on the latest answer, not force a rigid visible STAR form.
+The user sees only one question at a time.
+Do not sound like a chatbot.
+Do not acknowledge the user's answer.
+Do not say things like "got it", "that helps", "that gives me", or "I’m hearing".
+Ask one short direct question only.
+The question should feel smart because it directly follows from the user's last answer.
 
-Return ONLY valid JSON.
-Do not include markdown.
-Do not explain your reasoning.
-Keep every sentence short, natural, and spoken.
-Ground the coaching in the flagged question.
-Prefer concrete, believable language over polished fluff.`
+The flagged interview question is already known.
+Your job each turn:
+1. Update the hidden answer state from the latest user answer.
+2. Decide what is still missing.
+3. Ask the best next question.
+4. If the example is strong enough, stop asking questions and generate final answers.
 
-  if (stage === 'story') {
-    return `${shared}
-
-Return JSON in this exact shape:
+Return ONLY valid JSON in this exact shape:
 {
-  "normalized": {
-    "story": "string"
-  },
-  "reflection": "string",
-  "weakness_focus": "string",
-  "next_question": "string",
-  "should_continue": true,
-  "draft": {
-    "situation": "string",
-    "task": "string",
-    "action": "string",
+  "updated_state": {
+    "setting": "string",
+    "problem": "string",
+    "ownership": "string",
+    "actions": ["string", "string"],
     "result": "string",
-    "proof": "string"
-  }
-}
-
-Rules:
-- The user just described a possible situation for the flagged question.
-- Reflection should briefly say what kind of situation this sounds like and what will matter most.
-- Ask one best next question based on what is weakest or missing.
-- Most of the time, the next question should clarify risk, ownership, or the first concrete action.
-- Draft fields can be partial. Leave unknown fields as empty strings.
-- Do not generate final answer options yet.`
-  }
-
-  if (stage === 'follow_up') {
-    return `${shared}
-
-Return JSON in this exact shape:
-{
-  "normalized": {
-    "latest_answer": "string"
+    "proof": "string",
+    "missing_piece": "string",
+    "turn_count": 0
   },
-  "reflection": "string",
-  "weakness_focus": "string",
   "next_question": "string",
-  "should_continue": true,
-  "draft": {
-    "situation": "string",
-    "task": "string",
-    "action": "string",
-    "result": "string",
-    "proof": "string"
-  },
+  "ready_for_final": true,
   "final_options": ["string", "string", "string"]
 }
 
 Rules:
-- Use the story and prior turns to decide the next best coaching move.
-- The next question must respond to the latest answer.
-- Ask about one thing only: risk, ownership, first action, concrete move, result, or what the story proves.
-- If the story is strong enough, set should_continue to false and include exactly 3 final_options.
-- If it is not strong enough, set should_continue to true and leave final_options empty.
-- Draft should get stronger and more specific after every turn.`
-  }
-
-  return `${shared}
-
-Return JSON in this exact shape:
-{
-  "reflection": "string",
-  "weakness_focus": "string",
-  "should_continue": false,
-  "draft": {
-    "situation": "string",
-    "task": "string",
-    "action": "string",
-    "result": "string",
-    "proof": "string"
-  },
-  "final_options": ["string", "string", "string"]
-}
-
-Rules:
-- The story is ready to turn into final answer options.
-- Generate exactly 3 full answer options for the flagged question.
-- Each answer should be one short spoken paragraph.
-- The answers should be specific, believable, and clearly owned.
-- Action and Result should carry the most proof.
-- Keep the tone natural, not over-coached.`
+- Keep hidden state concise and factual.
+- A setting alone is not enough. If the latest answer only names a container like a project, class, internship, launch, or client, ask what specifically became difficult, unclear, or at risk.
+- Once a real problem exists, ask what part of it was theirs to handle if ownership is still unclear.
+- Then ask what they actually did.
+- If action is still generic, ask for one more concrete move.
+- Then ask what changed in the end.
+- "proof" should be a short internal note about what the story demonstrates, but it should not drive the next visible question until the rest is strong.
+- Final answers should only be generated when there is enough for a believable story: setting, problem, ownership, at least one concrete action, and a result.
+- If force_finalize is true, generate final answers from the best available state even if some detail is thinner than ideal.
+- Final answers must be short spoken paragraphs that answer the flagged question naturally.
+- Keep final answers specific, believable, and clearly owned.
+- When ready_for_final is false, final_options must be an empty array.
+- When ready_for_final is true, generate exactly 3 final_options.
+- next_question must be empty when ready_for_final is true.`
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const stage = body.stage as WorkshopStage | undefined
-    const state = body.state as Record<string, unknown> | undefined
+    const latestAnswer = body.latest_answer as string | undefined
+    const state = body.state as WorkshopState | undefined
 
-    if (!stage || !state) {
-      return NextResponse.json({ error: 'Missing stage or state.' }, { status: 400 })
+    if (!latestAnswer || !state) {
+      return NextResponse.json(
+        { error: 'Missing latest_answer or state.' },
+        { status: 400 }
+      )
     }
 
     const completion = await getOpenAI().chat.completions.create({
       model: MODEL,
-      temperature: 0.25,
+      temperature: 0.2,
       max_tokens: 900,
       response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
-          content: buildSystemPrompt(stage),
+          content: buildSystemPrompt(),
         },
         {
           role: 'user',
-          content: JSON.stringify({ stage, state }),
+          content: JSON.stringify({
+            question: body.question || '',
+            flagged_answer: body.flagged_answer || '',
+            latest_answer: latestAnswer,
+            state,
+            force_finalize: Boolean(body.force_finalize),
+          }),
         },
       ],
     })
 
     const raw = completion.choices[0]?.message?.content || '{}'
     const parsed = JSON.parse(raw)
-
     return NextResponse.json(parsed)
   } catch (error) {
     console.error('star-workshop error', error)
     return NextResponse.json(
-      { error: 'Failed to generate workshop step.' },
+      { error: 'Failed to generate workshop turn.' },
       { status: 500 }
     )
   }

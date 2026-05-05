@@ -4,44 +4,148 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 
 type WorkshopPhase =
-  | 'situation_context'
-  | 'situation_problem'
+  | 'example'
+  | 'pressure'
   | 'situation_choose'
-  | 'task'
+  | 'responsibility'
   | 'task_choose'
-  | 'task_preview'
-  | 'action_main'
+  | 'setup_preview'
+  | 'action_types'
   | 'action_detail'
   | 'action_choose'
   | 'action_preview'
-  | 'result_outcome'
-  | 'result_evidence'
+  | 'result_types'
+  | 'result_detail'
   | 'result_choose'
   | 'result_preview'
+  | 'proof_types'
+  | 'proof_choose'
   | 'practice'
-
-interface WorkshopAnswers {
-  situationContext: string
-  situationProblem: string
-  taskOwnership: string
-  actionMain: string
-  actionDetail: string
-  resultOutcome: string
-  resultEvidence: string
-}
 
 interface StarProofWorkshopProps {
   onComplete: () => void
 }
 
+interface WorkshopAnswers {
+  example: string
+  responsibility: string
+  actionDetail: string
+  resultDetail: string
+}
+
 const EMPTY_ANSWERS: WorkshopAnswers = {
-  situationContext: '',
-  situationProblem: '',
-  taskOwnership: '',
-  actionMain: '',
+  example: '',
+  responsibility: '',
   actionDetail: '',
-  resultOutcome: '',
-  resultEvidence: '',
+  resultDetail: '',
+}
+
+const PRESSURE_OPTIONS = [
+  'deadline at risk',
+  'competing priorities',
+  'unclear ownership',
+  'cross-team coordination',
+  'high volume of work',
+  'unexpected change',
+  'client pressure',
+  'process confusion',
+  'limited time',
+  'missing information',
+]
+
+const ACTION_OPTIONS = [
+  'created structure',
+  'clarified priorities',
+  'assigned ownership',
+  'improved communication',
+  'flagged blockers early',
+  'built a tracker',
+  'solved a process issue',
+  'coordinated across teams',
+  'escalated when needed',
+  'simplified the workflow',
+  'checked in regularly',
+  'fixed a handoff problem',
+]
+
+const RESULT_OPTIONS = [
+  'met the deadline',
+  'reduced confusion',
+  'improved turnaround time',
+  'avoided delays',
+  'improved the process',
+  'prevented escalation',
+  'kept the project moving',
+  'improved communication',
+  'created a repeatable system',
+  'solved the immediate issue',
+]
+
+const PROOF_OPTIONS = [
+  'organized under pressure',
+  'proactive',
+  'strong communicator',
+  'good at creating structure',
+  'calm under pressure',
+  'strong follow-through',
+  'adaptable',
+  'reliable',
+  'good at solving problems',
+  'effective across teams',
+]
+
+const PRESSURE_PHRASES: Record<string, string> = {
+  'deadline at risk': 'the deadline was starting to slip',
+  'competing priorities': 'competing priorities were pulling the work in different directions',
+  'unclear ownership': 'ownership was not clear',
+  'cross-team coordination': 'several teams needed to stay aligned',
+  'high volume of work': 'the volume of work spiked quickly',
+  'unexpected change': 'plans shifted unexpectedly',
+  'client pressure': 'there was pressure from the client side',
+  'process confusion': 'the process was causing confusion',
+  'limited time': 'there was very little time to reset the work',
+  'missing information': 'key information was still missing',
+}
+
+const ACTION_PHRASES: Record<string, string> = {
+  'created structure': 'created more structure around the work',
+  'clarified priorities': 'clarified what needed to happen first',
+  'assigned ownership': 'made ownership more explicit',
+  'improved communication': 'tightened communication across the people involved',
+  'flagged blockers early': 'flagged blockers before they slowed the work',
+  'built a tracker': 'built one tracker for the moving pieces',
+  'solved a process issue': 'fixed the process issue that was slowing the team down',
+  'coordinated across teams': 'coordinated the work across teams',
+  'escalated when needed': 'escalated the right issues early',
+  'simplified the workflow': 'simplified the workflow',
+  'checked in regularly': 'used short regular check-ins',
+  'fixed a handoff problem': 'fixed the handoff gap between teams',
+}
+
+const RESULT_PHRASES: Record<string, string> = {
+  'met the deadline': 'we still met the deadline',
+  'reduced confusion': 'the team had much less confusion',
+  'improved turnaround time': 'turnaround time improved',
+  'avoided delays': 'we avoided further delays',
+  'improved the process': 'the process worked better afterward',
+  'prevented escalation': 'the issue did not escalate further',
+  'kept the project moving': 'the project kept moving',
+  'improved communication': 'communication was much clearer',
+  'created a repeatable system': 'the team ended up with a repeatable system',
+  'solved the immediate issue': 'the immediate issue got resolved',
+}
+
+const PROOF_PHRASES: Record<string, string> = {
+  'organized under pressure': 'That is a good example of how I stay organized when a lot is moving at once.',
+  proactive: 'That example shows that I try to solve the problem early instead of waiting for it to get worse.',
+  'strong communicator': 'That is a good example of how I keep communication clear when a situation gets messy.',
+  'good at creating structure': 'That experience shows how I create structure when the process is not working.',
+  'calm under pressure': 'That is a good example of how I stay steady when timelines tighten.',
+  'strong follow-through': 'That example shows that I stay close to the work until the important pieces are actually done.',
+  adaptable: 'That experience shows how I adjust quickly when the situation changes.',
+  reliable: 'That is a good example of how I help keep the work dependable when things get complicated.',
+  'good at solving problems': 'That example shows how I work through problems in a practical way.',
+  'effective across teams': 'That is a good example of how I keep work moving across teams when a lot of people are involved.',
 }
 
 function cleanInput(value: string) {
@@ -59,103 +163,101 @@ function ensurePeriod(value: string) {
   return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`
 }
 
-function withOnePrefix(value: string) {
-  const trimmed = cleanInput(value)
-  if (!trimmed) return ''
-  const lowered = trimmed.toLowerCase()
+function uniqueOptions(options: string[]) {
+  return Array.from(new Set(options.map((option) => ensurePeriod(option)))).filter(Boolean).slice(0, 4)
+}
+
+function joinWithAnd(items: string[]) {
+  if (items.length === 0) return ''
+  if (items.length === 1) return items[0]
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
+}
+
+function withOneThing(value: string) {
+  const cleaned = cleanInput(value)
+  if (!cleaned) return ''
+  const lowered = cleaned.toLowerCase()
   if (
     lowered.startsWith('a ') ||
     lowered.startsWith('an ') ||
     lowered.startsWith('the ') ||
-    lowered.startsWith('this ') ||
-    lowered.startsWith('that ') ||
-    lowered.startsWith('our ') ||
+    lowered.startsWith('one ') ||
     lowered.startsWith('my ')
   ) {
-    return trimmed
+    return cleaned
   }
-  return `one ${trimmed}`
+  return `one ${cleaned}`
 }
 
-function joinWithAnd(items: string[]) {
-  const cleaned = items.map(cleanInput).filter(Boolean)
-  if (cleaned.length === 0) return ''
-  if (cleaned.length === 1) return cleaned[0]
-  if (cleaned.length === 2) return `${cleaned[0]} and ${cleaned[1]}`
-  return `${cleaned.slice(0, -1).join(', ')}, and ${cleaned[cleaned.length - 1]}`
+function buildSituationOptions(example: string, pressureSelections: string[]) {
+  const exampleText = cleanInput(example)
+  const pressureText = pressureSelections.map((item) => PRESSURE_PHRASES[item]).filter(Boolean)
+  if (!exampleText || pressureText.length === 0) return []
+
+  const pressureSummary = joinWithAnd(pressureText.slice(0, 3))
+
+  return uniqueOptions([
+    `In one role, we were dealing with ${lowerFirst(exampleText)}, and ${pressureSummary}.`,
+    `At one point, ${lowerFirst(exampleText)} became more difficult because ${pressureSummary}.`,
+    `One example that stands out was ${lowerFirst(exampleText)}, where ${pressureSummary}.`,
+    `I was in a situation involving ${lowerFirst(exampleText)}, and the main issue was that ${pressureSummary}.`,
+  ])
 }
 
-function splitCommaList(value: string) {
-  return value
-    .split(',')
-    .map(cleanInput)
-    .filter(Boolean)
+function buildTaskOptions(responsibility: string) {
+  const responsibilityText = cleanInput(responsibility)
+  if (!responsibilityText) return []
+
+  return uniqueOptions([
+    `I was responsible for ${lowerFirst(responsibilityText)}.`,
+    `My job there was to ${lowerFirst(responsibilityText)}.`,
+    `What I owned in that situation was ${lowerFirst(responsibilityText)}.`,
+    `I needed to ${lowerFirst(responsibilityText)}.`,
+  ])
 }
 
-function buildSituationOptions(answers: WorkshopAnswers) {
-  const context = cleanInput(answers.situationContext)
-  const problem = cleanInput(answers.situationProblem)
-  if (!context || !problem) return []
+function buildActionOptions(selections: string[], detail: string) {
+  const actionPhrases = selections.map((item) => ACTION_PHRASES[item]).filter(Boolean)
+  const detailText = withOneThing(detail)
+  if (actionPhrases.length === 0 || !detailText) return []
 
-  const options = [
-    `In ${lowerFirst(context)}, ${lowerFirst(problem)}.`,
-    `${context} was the setting, and ${lowerFirst(problem)}.`,
-    `I was in ${lowerFirst(context)} when ${lowerFirst(problem)}.`,
-    `One example that stands out was ${lowerFirst(context)}, where ${lowerFirst(problem)}.`,
-  ]
+  const actionSummary = joinWithAnd(actionPhrases.slice(0, 3))
 
+  return uniqueOptions([
+    `I ${actionSummary}, and I anchored that by using ${detailText} so the work stayed visible and easier to manage.`,
+    `To move it forward, I ${actionSummary}. A big part of that was using ${detailText} to keep owners and next steps clear.`,
+    `The biggest thing I did was ${actionSummary}, and I backed that up with ${detailText} so issues surfaced earlier.`,
+    `I ${actionSummary}, then used ${detailText} to give the team one clearer process instead of scattered updates.`,
+  ])
+}
+
+function buildResultOptions(selections: string[], detail: string) {
+  const resultPhrases = selections.map((item) => RESULT_PHRASES[item]).filter(Boolean)
+  if (resultPhrases.length === 0) return []
+
+  const resultSummary = joinWithAnd(resultPhrases.slice(0, 2))
+  const detailText = cleanInput(detail)
+
+  return uniqueOptions([
+    detailText
+      ? `${resultSummary}, and ${lowerFirst(detailText)}`
+      : `${resultSummary}`,
+    detailText
+      ? `As a result, ${resultSummary}, and ${lowerFirst(detailText)}`
+      : `As a result, ${resultSummary}`,
+    detailText
+      ? `${resultSummary}. It also meant ${lowerFirst(detailText)}`
+      : `${resultSummary}, which helped stabilize the situation`,
+    detailText
+      ? `The end result was that ${resultSummary}, with ${lowerFirst(detailText)}`
+      : `The end result was that ${resultSummary}`,
+  ])
+}
+
+function buildProofOptions(selections: string[]) {
+  const options = selections.map((item) => PROOF_PHRASES[item]).filter(Boolean)
   return uniqueOptions(options)
-}
-
-function buildTaskOptions(answers: WorkshopAnswers) {
-  const task = cleanInput(answers.taskOwnership)
-  if (!task) return []
-
-  const options = [
-    `My job was to ${lowerFirst(task)}.`,
-    `I was responsible for ${lowerFirst(task)}.`,
-    `What I owned there was ${lowerFirst(task)}.`,
-    `I needed to ${lowerFirst(task)}.`,
-  ]
-
-  return uniqueOptions(options)
-}
-
-function buildActionOptions(answers: WorkshopAnswers) {
-  const actionItems = splitCommaList(answers.actionMain)
-  const detailItems = splitCommaList(answers.actionDetail)
-  if (actionItems.length === 0 || detailItems.length === 0) return []
-
-  const actionText = joinWithAnd(actionItems)
-  const detailText = joinWithAnd(detailItems.map(withOnePrefix))
-
-  const options = [
-    `I ${actionText}, using ${detailText} so the work stayed visible and blockers surfaced early.`,
-    `To move it forward, I ${actionText}, and I used ${detailText} to keep owners aligned and next steps clear.`,
-    `The biggest thing I did was ${actionText}. I supported that with ${detailText}, which made the process much easier to manage.`,
-    `I ${actionText}, then backed that up with ${detailText} so the team could work from one clear process instead of scattered updates.`,
-  ]
-
-  return uniqueOptions(options)
-}
-
-function buildResultOptions(answers: WorkshopAnswers) {
-  const outcome = cleanInput(answers.resultOutcome)
-  const evidence = cleanInput(answers.resultEvidence)
-  if (!outcome || !evidence) return []
-
-  const options = [
-    `${outcome}, and ${lowerFirst(evidence)}.`,
-    `${outcome}. It also meant ${lowerFirst(evidence)}.`,
-    `Because of that, ${lowerFirst(outcome)}, and ${lowerFirst(evidence)}.`,
-    `The result was that ${lowerFirst(outcome)}, with ${lowerFirst(evidence)}.`,
-  ]
-
-  return uniqueOptions(options)
-}
-
-function uniqueOptions(options: string[]) {
-  return Array.from(new Set(options.map((option) => ensurePeriod(option)))).slice(0, 4)
 }
 
 function ChoiceCard({
@@ -181,7 +283,30 @@ function ChoiceCard({
   )
 }
 
-function TextStep({
+function ToggleChip({
+  label,
+  selected,
+  onToggle,
+}: {
+  label: string
+  selected: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
+        selected
+          ? 'border-violet-400 bg-violet-50 text-violet-700'
+          : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
+function TextPrompt({
   stepLabel,
   title,
   description,
@@ -190,6 +315,7 @@ function TextStep({
   value,
   onChange,
   onNext,
+  optional = false,
 }: {
   stepLabel: string
   title: string
@@ -199,6 +325,7 @@ function TextStep({
   value: string
   onChange: (value: string) => void
   onNext: () => void
+  optional?: boolean
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -210,14 +337,62 @@ function TextStep({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="min-h-[132px] w-full resize-none border-0 bg-transparent text-sm leading-7 text-slate-800 outline-none placeholder:text-slate-400"
+          className="min-h-[116px] w-full resize-none border-0 bg-transparent text-sm leading-7 text-slate-800 outline-none placeholder:text-slate-400"
         />
         <p className="mt-3 text-xs leading-5 text-slate-500">{helper}</p>
       </div>
       <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
         <button
           onClick={onNext}
-          disabled={!cleanInput(value)}
+          disabled={!optional && !cleanInput(value)}
+          className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
+        >
+          Next
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SelectionPrompt({
+  stepLabel,
+  title,
+  description,
+  options,
+  selections,
+  onToggle,
+  onNext,
+  minSelected = 1,
+}: {
+  stepLabel: string
+  title: string
+  description: string
+  options: string[]
+  selections: string[]
+  onToggle: (label: string) => void
+  onNext: () => void
+  minSelected?: number
+}) {
+  return (
+    <div className="flex h-full flex-col">
+      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{stepLabel}</p>
+      <h4 className="mt-2 text-lg font-extrabold text-slate-900">{title}</h4>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        {options.map((option) => (
+          <ToggleChip
+            key={option}
+            label={option}
+            selected={selections.includes(option)}
+            onToggle={() => onToggle(option)}
+          />
+        ))}
+      </div>
+      <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
+        <button
+          onClick={onNext}
+          disabled={selections.length < minSelected}
           className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
         >
           Next
@@ -229,60 +404,82 @@ function TextStep({
 }
 
 export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps) {
-  const [phase, setPhase] = useState<WorkshopPhase>('situation_context')
+  const [phase, setPhase] = useState<WorkshopPhase>('example')
   const [answers, setAnswers] = useState<WorkshopAnswers>(EMPTY_ANSWERS)
+  const [selectedPressure, setSelectedPressure] = useState<string[]>([])
+  const [selectedActionTypes, setSelectedActionTypes] = useState<string[]>([])
+  const [selectedResultTypes, setSelectedResultTypes] = useState<string[]>([])
+  const [selectedProofTypes, setSelectedProofTypes] = useState<string[]>([])
   const [selectedSituation, setSelectedSituation] = useState('')
   const [selectedTask, setSelectedTask] = useState('')
   const [selectedAction, setSelectedAction] = useState('')
   const [selectedResult, setSelectedResult] = useState('')
+  const [selectedProof, setSelectedProof] = useState('')
 
-  const situationOptions = useMemo(() => buildSituationOptions(answers), [answers])
-  const taskOptions = useMemo(() => buildTaskOptions(answers), [answers])
-  const actionOptions = useMemo(() => buildActionOptions(answers), [answers])
-  const resultOptions = useMemo(() => buildResultOptions(answers), [answers])
+  const situationOptions = useMemo(
+    () => buildSituationOptions(answers.example, selectedPressure),
+    [answers.example, selectedPressure]
+  )
+  const taskOptions = useMemo(() => buildTaskOptions(answers.responsibility), [answers.responsibility])
+  const actionOptions = useMemo(
+    () => buildActionOptions(selectedActionTypes, answers.actionDetail),
+    [answers.actionDetail, selectedActionTypes]
+  )
+  const resultOptions = useMemo(
+    () => buildResultOptions(selectedResultTypes, answers.resultDetail),
+    [answers.resultDetail, selectedResultTypes]
+  )
+  const proofOptions = useMemo(() => buildProofOptions(selectedProofTypes), [selectedProofTypes])
 
-  const fullAnswer = [selectedSituation, selectedTask, selectedAction, selectedResult]
+  const fullAnswer = [selectedSituation, selectedTask, selectedAction, selectedResult, selectedProof]
     .filter(Boolean)
     .join(' ')
 
-  const setAnswer = (key: keyof WorkshopAnswers, value: string) => {
+  function setAnswer<K extends keyof WorkshopAnswers>(key: K, value: WorkshopAnswers[K]) {
     setAnswers((current) => ({ ...current, [key]: value }))
+  }
+
+  function toggleSelection(value: string, selected: string[], setter: (values: string[]) => void) {
+    setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
   }
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
       <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#f8f5ff_0%,#fff_100%)] px-5 py-4">
         <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">STAR proof workshop</p>
-        <h3 className="mt-1 text-xl font-extrabold text-slate-900">Build a STAR answer that actually proves something</h3>
+        <h3 className="mt-1 text-xl font-extrabold text-slate-900">Build a stronger STAR with less typing</h3>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-        {phase === 'situation_context' ? (
-          <TextStep
+        {phase === 'example' ? (
+          <TextPrompt
             stepLabel="Step 1 of 5"
-            title="Start with the moment"
-            description="Give the raw setup. Name the project, launch, deadline, client issue, or team situation. Keep it rough."
-            placeholder="Example: a launch week with lots of last-minute scheduling changes across teams"
-            helper="Do not polish this. We just need enough context to make the story real."
-            value={answers.situationContext}
-            onChange={(value) => setAnswer('situationContext', value)}
-            onNext={() => setPhase('situation_problem')}
+            title="What example are we using?"
+            description="Keep it short. Just name the situation or moment."
+            placeholder="e.g. launch week scheduling issue"
+            helper="This is the real anchor for the story. We will shape the wording for you later."
+            value={answers.example}
+            onChange={(value) => {
+              setSelectedSituation('')
+              setAnswer('example', value)
+            }}
+            onNext={() => setPhase('pressure')}
           />
         ) : null}
 
-        {phase === 'situation_problem' ? (
-          <TextStep
+        {phase === 'pressure' ? (
+          <SelectionPrompt
             stepLabel="Step 1 of 5"
-            title="What made it difficult?"
-            description="Now add the pressure or problem inside that situation."
-            placeholder="Example: requests were being tracked in different places and handoffs were starting to slip"
-            helper="This is what turns the setup into a real interview example."
-            value={answers.situationProblem}
-            onChange={(value) => {
+            title="What made this situation difficult?"
+            description="Select all that apply."
+            options={PRESSURE_OPTIONS}
+            selections={selectedPressure}
+            onToggle={(value) => {
               setSelectedSituation('')
-              setAnswer('situationProblem', value)
+              toggleSelection(value, selectedPressure, setSelectedPressure)
             }}
             onNext={() => setPhase('situation_choose')}
+            minSelected={2}
           />
         ) : null}
 
@@ -290,7 +487,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 1 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your Situation</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the version that gives enough context without eating the whole answer.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the version that gives enough context without turning into a long setup.</p>
             <div className="mt-5 space-y-3">
               {situationOptions.map((option) => (
                 <ChoiceCard key={option} option={option} selected={selectedSituation === option} onSelect={() => setSelectedSituation(option)} />
@@ -298,7 +495,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button
-                onClick={() => setPhase('task')}
+                onClick={() => setPhase('responsibility')}
                 disabled={!selectedSituation}
                 className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
               >
@@ -309,17 +506,17 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           </div>
         ) : null}
 
-        {phase === 'task' ? (
-          <TextStep
+        {phase === 'responsibility' ? (
+          <TextPrompt
             stepLabel="Step 2 of 5"
-            title="What did you own?"
-            description="State your responsibility in simple terms."
-            placeholder="Example: keep the requests organized and make sure urgent changes moved first"
-            helper="This is where we make ownership clear before we get into Action."
-            value={answers.taskOwnership}
+            title="What were you responsible for?"
+            description="Use a short phrase. We will format it into a stronger sentence."
+            placeholder="e.g. get the project back on track"
+            helper="This is the ownership line. Keep it simple and real."
+            value={answers.responsibility}
             onChange={(value) => {
               setSelectedTask('')
-              setAnswer('taskOwnership', value)
+              setAnswer('responsibility', value)
             }}
             onNext={() => setPhase('task_choose')}
           />
@@ -329,7 +526,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 2 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your Task</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the line that makes your ownership easiest to understand.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the version that makes your ownership easiest to understand.</p>
             <div className="mt-5 space-y-3">
               {taskOptions.map((option) => (
                 <ChoiceCard key={option} option={option} selected={selectedTask === option} onSelect={() => setSelectedTask(option)} />
@@ -337,29 +534,29 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button
-                onClick={() => setPhase('task_preview')}
+                onClick={() => setPhase('setup_preview')}
                 disabled={!selectedTask}
                 className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
               >
-                Preview ST
+                Preview setup
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           </div>
         ) : null}
 
-        {phase === 'task_preview' ? (
+        {phase === 'setup_preview' ? (
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 2 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Here is your setup so far</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">This is enough context. Now we put most of the weight into Action.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">This gives the interviewer enough context. Now we put the real weight into Action.</p>
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Your Situation and Task</p>
               <p className="mt-3 text-sm leading-7 text-slate-800">{[selectedSituation, selectedTask].join(' ')}</p>
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button
-                onClick={() => setPhase('action_main')}
+                onClick={() => setPhase('action_types')}
                 className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3"
               >
                 Build Action
@@ -369,29 +566,29 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           </div>
         ) : null}
 
-        {phase === 'action_main' ? (
-          <TextStep
+        {phase === 'action_types' ? (
+          <SelectionPrompt
             stepLabel="Step 3 of 5"
-            title="What did you actually do?"
-            description="List the moves you made. Short phrases are great. Separate with commas."
-            placeholder="Example: pulled all requests into one tracker, reset owners and deadlines, set short check-ins"
-            helper="Use visible actions, not traits like 'stayed organized' or 'worked closely with everyone.'"
-            value={answers.actionMain}
-            onChange={(value) => {
+            title="What kinds of moves did you make?"
+            description="Select all that apply."
+            options={ACTION_OPTIONS}
+            selections={selectedActionTypes}
+            onToggle={(value) => {
               setSelectedAction('')
-              setAnswer('actionMain', value)
+              toggleSelection(value, selectedActionTypes, setSelectedActionTypes)
             }}
             onNext={() => setPhase('action_detail')}
+            minSelected={2}
           />
         ) : null}
 
         {phase === 'action_detail' ? (
-          <TextStep
+          <TextPrompt
             stepLabel="Step 3 of 5"
-            title="What detail makes that believable?"
-            description="Add the tools, cadence, system, or concrete detail that makes the Action feel real. Separate with commas."
-            placeholder="Example: one shared tracker, twice-daily check-ins, updated owners list"
-            helper="This is where vague STAR answers usually get stronger."
+            title="What is one concrete thing you actually did?"
+            description="Keep it short. This is the detail that makes the story believable."
+            placeholder="e.g. built one tracker for open requests"
+            helper="This is the proof anchor. We need one real detail in your own words."
             value={answers.actionDetail}
             onChange={(value) => {
               setSelectedAction('')
@@ -405,7 +602,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 3 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your Action</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">All of these are acceptable. Pick the one that sounds strongest and most natural out loud.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the version that sounds strongest and most natural out loud.</p>
             <div className="mt-5 space-y-3">
               {actionOptions.map((option) => (
                 <ChoiceCard key={option} option={option} selected={selectedAction === option} onSelect={() => setSelectedAction(option)} />
@@ -428,14 +625,14 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 3 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Here is where the proof starts to land</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Action usually carries the most weight in a strong STAR answer.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Action is usually the most important part of a strong STAR answer.</p>
             <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">Your Action</p>
               <p className="mt-3 text-sm leading-7 text-slate-800">{selectedAction}</p>
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button
-                onClick={() => setPhase('result_outcome')}
+                onClick={() => setPhase('result_types')}
                 className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3"
               >
                 Build Result
@@ -445,35 +642,36 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           </div>
         ) : null}
 
-        {phase === 'result_outcome' ? (
-          <TextStep
+        {phase === 'result_types' ? (
+          <SelectionPrompt
             stepLabel="Step 4 of 5"
-            title="What happened because of your work?"
-            description="Name the main outcome first."
-            placeholder="Example: we got through the launch week without missing any critical handoffs"
-            helper="Do not default to 'it went well' or 'it was successful.'"
-            value={answers.resultOutcome}
-            onChange={(value) => {
+            title="What happened as a result?"
+            description="Select all that apply."
+            options={RESULT_OPTIONS}
+            selections={selectedResultTypes}
+            onToggle={(value) => {
               setSelectedResult('')
-              setAnswer('resultOutcome', value)
+              toggleSelection(value, selectedResultTypes, setSelectedResultTypes)
             }}
-            onNext={() => setPhase('result_evidence')}
+            onNext={() => setPhase('result_detail')}
+            minSelected={1}
           />
         ) : null}
 
-        {phase === 'result_evidence' ? (
-          <TextStep
+        {phase === 'result_detail' ? (
+          <TextPrompt
             stepLabel="Step 4 of 5"
-            title="What makes that result more meaningful?"
-            description="Add one more concrete layer: reuse, speed, numbers, avoided risk, or visible impact."
-            placeholder="Example: the tracker process was reused for the next rollout"
-            helper="This helps the Result prove value instead of just ending the story."
-            value={answers.resultEvidence}
+            title="Do you have a concrete result, number, or visible outcome?"
+            description="Optional, but strong if you have one."
+            placeholder="e.g. used again on future projects"
+            helper="If you do not have a number, a visible outcome still helps."
+            value={answers.resultDetail}
             onChange={(value) => {
               setSelectedResult('')
-              setAnswer('resultEvidence', value)
+              setAnswer('resultDetail', value)
             }}
             onNext={() => setPhase('result_choose')}
+            optional
           />
         ) : null}
 
@@ -481,7 +679,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 4 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your Result</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the ending that actually shows value.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the ending that makes the value easiest to hear.</p>
             <div className="mt-5 space-y-3">
               {resultOptions.map((option) => (
                 <ChoiceCard key={option} option={option} selected={selectedResult === option} onSelect={() => setSelectedResult(option)} />
@@ -504,15 +702,54 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 4 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Now the value is visible</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">This is the difference between a STAR answer that sounds tidy and one that actually proves something.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">This is where the answer stops sounding tidy and starts sounding believable.</p>
             <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-rose-700">Your Result</p>
               <p className="mt-3 text-sm leading-7 text-slate-800">{selectedResult}</p>
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button
-                onClick={() => setPhase('practice')}
+                onClick={() => setPhase('proof_types')}
                 className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3"
+              >
+                Add the payoff
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {phase === 'proof_types' ? (
+          <SelectionPrompt
+            stepLabel="Step 5 of 5"
+            title="What does this example best prove about you?"
+            description="Select all that apply."
+            options={PROOF_OPTIONS}
+            selections={selectedProofTypes}
+            onToggle={(value) => {
+              setSelectedProof('')
+              toggleSelection(value, selectedProofTypes, setSelectedProofTypes)
+            }}
+            onNext={() => setPhase('proof_choose')}
+            minSelected={1}
+          />
+        ) : null}
+
+        {phase === 'proof_choose' ? (
+          <div className="flex h-full flex-col">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 5 of 5</p>
+            <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your landing line</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the short payoff line that lands what the story proves.</p>
+            <div className="mt-5 space-y-3">
+              {proofOptions.map((option) => (
+                <ChoiceCard key={option} option={option} selected={selectedProof === option} onSelect={() => setSelectedProof(option)} />
+              ))}
+            </div>
+            <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
+              <button
+                onClick={() => setPhase('practice')}
+                disabled={!selectedProof}
+                className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
               >
                 Assemble full answer
                 <ArrowRight className="h-4 w-4" />
@@ -525,7 +762,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 5 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Here is your full STAR answer</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Say it out loud a few times, then try it again without staring at every word.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Say it out loud a few times. Then try it again without staring at every word.</p>
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
               <p className="text-sm leading-7 text-slate-800">{fullAnswer}</p>
@@ -537,8 +774,8 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
                 {[
                   'Keep Situation and Task tight.',
                   'Let Action do most of the proving.',
-                  'End with a Result that shows real value, not just “it went well.”',
-                  'Do not memorize this word for word. Paraphrase it naturally.',
+                  'Use Result to make the value visible.',
+                  'Do not memorize this word for word. Keep the logic and paraphrase naturally.',
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />

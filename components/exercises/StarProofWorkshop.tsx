@@ -1,26 +1,31 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 
 type WorkshopPhase =
   | 'example'
   | 'pressure'
-  | 'situation_choose'
   | 'responsibility'
+  | 'situation_task_follow_up'
+  | 'situation_choose'
   | 'task_choose'
   | 'setup_preview'
   | 'action_types'
   | 'action_detail'
+  | 'action_follow_up'
   | 'action_choose'
   | 'action_preview'
   | 'result_types'
   | 'result_detail'
+  | 'proof_types'
+  | 'result_landing_follow_up'
   | 'result_choose'
   | 'result_preview'
-  | 'proof_types'
   | 'proof_choose'
   | 'practice'
+
+type AiStage = 'situation_task' | 'action' | 'result_landing'
 
 interface StarProofWorkshopProps {
   onComplete: () => void
@@ -31,6 +36,20 @@ interface WorkshopAnswers {
   responsibility: string
   actionDetail: string
   resultDetail: string
+}
+
+interface AiResponse {
+  normalized_input?: Record<string, string>
+  options?: {
+    situation?: string[]
+    task?: string[]
+    action?: string[]
+    result?: string[]
+    landing?: string[]
+  }
+  should_ask_follow_up?: boolean
+  follow_up_question?: string
+  weakness_tag?: string
 }
 
 const EMPTY_ANSWERS: WorkshopAnswers = {
@@ -169,7 +188,7 @@ function ensurePeriod(value: string) {
 }
 
 function uniqueOptions(options: string[]) {
-  return Array.from(new Set(options.map((option) => ensurePeriod(option)))).filter(Boolean).slice(0, 4)
+  return Array.from(new Set(options.map((option) => ensurePeriod(option)))).filter(Boolean)
 }
 
 function joinWithAnd(items: string[]) {
@@ -184,24 +203,7 @@ function normalizeActionDetail(value: string) {
   if (!cleaned) return null
   const lowered = cleaned.toLowerCase()
   if (lowered.split(' ').length < 2) return null
-  if (
-    lowered.startsWith('got ') ||
-    lowered.startsWith('met ') ||
-    lowered.startsWith('made it ') ||
-    lowered.startsWith('result ') ||
-    lowered.startsWith('outcome ')
-  ) {
-    return null
-  }
-  if (
-    lowered.startsWith('a ') ||
-    lowered.startsWith('an ') ||
-    lowered.startsWith('the ') ||
-    lowered.startsWith('one ') ||
-    lowered.startsWith('my ')
-  ) {
-    return cleaned
-  }
+  if (/^(got|met|made it|result|outcome)/.test(lowered)) return null
   return cleaned
 }
 
@@ -210,118 +212,79 @@ function normalizeResultDetail(value: string) {
   if (!cleaned) return null
   const lowered = cleaned.toLowerCase()
   if (lowered.split(' ').length < 2) return null
-  if (
-    lowered.startsWith('built ') ||
-    lowered.startsWith('created ') ||
-    lowered.startsWith('assigned ') ||
-    lowered.startsWith('communicated ') ||
-    lowered.startsWith('tracked ') ||
-    lowered.startsWith('checked ')
-  ) {
-    return null
-  }
+  if (/^(built|created|assigned|communicated|tracked|checked)/.test(lowered)) return null
   if (!/^(we|it|the|they|this|that|got|met|cut|reduced|improved|avoided|used|prevented|kept|submitted)/.test(lowered)) {
     return `we ${lowerFirst(cleaned)}`
   }
   return cleaned
 }
 
-function formatActionDetailForSentence(value: string | null) {
-  if (!value) return null
-  const lowered = value.toLowerCase()
-  if (
-    lowered.startsWith('a ') ||
-    lowered.startsWith('an ') ||
-    lowered.startsWith('the ') ||
-    lowered.startsWith('one ') ||
-    lowered.startsWith('my ')
-  ) {
-    return value
-  }
-  return `one ${value}`
-}
-
 function buildSituationOptions(example: string, pressureSelections: string[]) {
   const exampleText = cleanInput(example)
   const pressureText = pressureSelections.map((item) => PRESSURE_PHRASES[item]).filter(Boolean)
   if (!exampleText || pressureText.length === 0) return []
-
   const pressureSummary = joinWithAnd(pressureText.slice(0, 3))
-
   return uniqueOptions([
     `In one role, we were dealing with ${lowerFirst(exampleText)}, and ${pressureSummary}.`,
     `At one point, ${lowerFirst(exampleText)} became more difficult because ${pressureSummary}.`,
     `One example that stands out was ${lowerFirst(exampleText)}, where ${pressureSummary}.`,
-    `I was in a situation involving ${lowerFirst(exampleText)}, and the main issue was that ${pressureSummary}.`,
-  ])
+  ]).slice(0, 3)
 }
 
 function buildTaskOptions(responsibility: string) {
   const responsibilityText = cleanInput(responsibility)
   if (!responsibilityText) return []
-
   return uniqueOptions([
     `I was responsible for ${lowerFirst(responsibilityText)}.`,
     `My job there was to ${lowerFirst(responsibilityText)}.`,
     `What I owned in that situation was ${lowerFirst(responsibilityText)}.`,
-    `I needed to ${lowerFirst(responsibilityText)}.`,
-  ])
+  ]).slice(0, 3)
 }
 
 function buildActionOptions(selections: string[], detail: string) {
   const actionPhrases = selections.map((item) => ACTION_PHRASES[item]).filter(Boolean)
-  const normalizedDetail = normalizeActionDetail(detail)
-  const detailText = formatActionDetailForSentence(normalizedDetail)
   if (actionPhrases.length === 0) return []
-
+  const detailText = normalizeActionDetail(detail)
   const actionSummary = joinWithAnd(actionPhrases.slice(0, 2))
-  const leadAction = actionPhrases[0]
-  const supportAction = actionPhrases[1]
 
   if (!detailText) {
     return uniqueOptions([
       `I ${actionSummary} so the work was clearer and easier to manage.`,
       `To keep things on track, I ${actionSummary} and made the next steps easier to follow.`,
-      `A key part of my approach was that I ${actionSummary}, which helped stabilize the situation.`,
       `I moved the work forward by ${actionSummary} so issues surfaced earlier instead of later.`,
-    ])
+      `A key part of my approach was that I ${actionSummary}, which helped stabilize the situation.`,
+    ]).slice(0, 4)
   }
 
   return uniqueOptions([
-    `To keep things on track, I ${actionSummary}. A key part of that was ${lowerFirst(normalizedDetail!)}.`,
-    `I ${leadAction}${supportAction ? ` and ${supportAction}` : ''}, and I grounded that by ${lowerFirst(normalizedDetail!)}.`,
-    `A big part of how I moved it forward was ${lowerFirst(normalizedDetail!)}, alongside ${actionSummary}.`,
-    `I created more structure around the situation by ${actionSummary}, especially by ${lowerFirst(normalizedDetail!)}.`,
-  ])
+    `To keep things on track, I ${actionSummary}. A key part of that was ${lowerFirst(detailText)}.`,
+    `I ${actionPhrases[0]}${actionPhrases[1] ? ` and ${actionPhrases[1]}` : ''}, and I grounded that by ${lowerFirst(detailText)}.`,
+    `A big part of how I moved it forward was ${lowerFirst(detailText)}, alongside ${actionSummary}.`,
+    `I created more structure around the situation by ${actionSummary}, especially by ${lowerFirst(detailText)}.`,
+  ]).slice(0, 4)
 }
 
 function buildResultOptions(selections: string[], detail: string) {
   const resultPhrases = selections.map((item) => RESULT_PHRASES[item]).filter(Boolean)
   if (resultPhrases.length === 0) return []
-
   const resultSummary = joinWithAnd(resultPhrases.slice(0, 2))
   const detailText = normalizeResultDetail(detail)
-
   if (!detailText) {
     return uniqueOptions([
       `${upperFirst(resultSummary)}.`,
       `As a result, ${resultSummary}.`,
       `${upperFirst(resultSummary)}, which helped stabilize the work.`,
-      `The end result was that ${resultSummary}.`,
-    ])
+    ]).slice(0, 3)
   }
-
   return uniqueOptions([
     `${upperFirst(resultSummary)}, and ${lowerFirst(detailText)}.`,
     `As a result, ${resultSummary}, and ${lowerFirst(detailText)}.`,
-    `${upperFirst(resultSummary)}. It also meant ${lowerFirst(detailText)}.`,
     `The end result was that ${resultSummary}, and ${lowerFirst(detailText)}.`,
-  ])
+  ]).slice(0, 3)
 }
 
 function buildProofOptions(selections: string[]) {
-  const options = selections.slice(0, 4).map((item) => PROOF_PHRASES[item]).filter(Boolean)
-  return uniqueOptions(options)
+  return uniqueOptions(selections.slice(0, 3).map((item) => PROOF_PHRASES[item]).filter(Boolean)).slice(0, 3)
 }
 
 function ChoiceCard({
@@ -380,6 +343,7 @@ function TextPrompt({
   onChange,
   onNext,
   optional = false,
+  isLoading = false,
 }: {
   stepLabel: string
   title: string
@@ -390,6 +354,7 @@ function TextPrompt({
   onChange: (value: string) => void
   onNext: () => void
   optional?: boolean
+  isLoading?: boolean
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -408,10 +373,10 @@ function TextPrompt({
       <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
         <button
           onClick={onNext}
-          disabled={!optional && !cleanInput(value)}
+          disabled={isLoading || (!optional && !cleanInput(value))}
           className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
         >
-          Next
+          {isLoading ? 'Thinking...' : 'Next'}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
@@ -429,6 +394,7 @@ function SelectionPrompt({
   onToggle,
   onNext,
   minSelected = 1,
+  isLoading = false,
 }: {
   stepLabel: string
   title: string
@@ -439,32 +405,26 @@ function SelectionPrompt({
   onToggle: (label: string) => void
   onNext: () => void
   minSelected?: number
+  isLoading?: boolean
 }) {
   return (
     <div className="flex h-full flex-col">
       <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{stepLabel}</p>
       <h4 className="mt-2 text-lg font-extrabold text-slate-900">{title}</h4>
       <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
-      {helper ? (
-        <p className="mt-2 text-xs leading-5 text-slate-500">{helper}</p>
-      ) : null}
+      {helper ? <p className="mt-2 text-xs leading-5 text-slate-500">{helper}</p> : null}
       <div className="mt-5 flex flex-wrap gap-2">
         {options.map((option) => (
-          <ToggleChip
-            key={option}
-            label={option}
-            selected={selections.includes(option)}
-            onToggle={() => onToggle(option)}
-          />
+          <ToggleChip key={option} label={option} selected={selections.includes(option)} onToggle={() => onToggle(option)} />
         ))}
       </div>
       <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
         <button
           onClick={onNext}
-          disabled={selections.length < minSelected}
+          disabled={isLoading || selections.length < minSelected}
           className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
         >
-          Next
+          {isLoading ? 'Thinking...' : 'Next'}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
@@ -484,25 +444,17 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
   const [selectedAction, setSelectedAction] = useState('')
   const [selectedResult, setSelectedResult] = useState('')
   const [selectedProof, setSelectedProof] = useState('')
+  const [situationOptions, setSituationOptions] = useState<string[]>([])
+  const [taskOptions, setTaskOptions] = useState<string[]>([])
+  const [actionOptions, setActionOptions] = useState<string[]>([])
+  const [resultOptions, setResultOptions] = useState<string[]>([])
+  const [proofOptions, setProofOptions] = useState<string[]>([])
+  const [followUpQuestion, setFollowUpQuestion] = useState('')
+  const [followUpAnswer, setFollowUpAnswer] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const situationOptions = useMemo(
-    () => buildSituationOptions(answers.example, selectedPressure),
-    [answers.example, selectedPressure]
-  )
-  const taskOptions = useMemo(() => buildTaskOptions(answers.responsibility), [answers.responsibility])
-  const actionOptions = useMemo(
-    () => buildActionOptions(selectedActionTypes, answers.actionDetail),
-    [answers.actionDetail, selectedActionTypes]
-  )
-  const resultOptions = useMemo(
-    () => buildResultOptions(selectedResultTypes, answers.resultDetail),
-    [answers.resultDetail, selectedResultTypes]
-  )
-  const proofOptions = useMemo(() => buildProofOptions(selectedProofTypes), [selectedProofTypes])
-
-  const fullAnswer = [selectedSituation, selectedTask, selectedAction, selectedResult, selectedProof]
-    .filter(Boolean)
-    .join(' ')
+  const fullAnswer = [selectedSituation, selectedTask, selectedAction, selectedResult, selectedProof].filter(Boolean).join(' ')
 
   function setAnswer<K extends keyof WorkshopAnswers>(key: K, value: WorkshopAnswers[K]) {
     setAnswers((current) => ({ ...current, [key]: value }))
@@ -512,11 +464,146 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
     setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
   }
 
+  async function requestStage(stage: AiStage, state: Record<string, unknown>) {
+    const response = await fetch('/api/interview/star-workshop', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage, state }),
+    })
+
+    if (!response.ok) {
+      throw new Error('AI step failed')
+    }
+
+    return (await response.json()) as AiResponse
+  }
+
+  async function generateSituationAndTask(withFollowUpAnswer?: string) {
+    setIsLoading(true)
+    setError('')
+    try {
+      const ai = await requestStage('situation_task', {
+        example: answers.example,
+        pressure_tags: selectedPressure,
+        responsibility: answers.responsibility,
+        follow_up_answer: withFollowUpAnswer || undefined,
+      })
+
+      if (ai.normalized_input?.example) {
+        setAnswer('example', ai.normalized_input.example)
+      }
+      if (ai.normalized_input?.responsibility) {
+        setAnswer('responsibility', ai.normalized_input.responsibility)
+      }
+
+      if (ai.should_ask_follow_up && ai.follow_up_question && !withFollowUpAnswer) {
+        setFollowUpQuestion(ai.follow_up_question)
+        setFollowUpAnswer('')
+        setPhase('situation_task_follow_up')
+        return
+      }
+
+      setSituationOptions(
+        ai.options?.situation?.length ? ai.options.situation.slice(0, 3) : buildSituationOptions(answers.example, selectedPressure)
+      )
+      setTaskOptions(
+        ai.options?.task?.length ? ai.options.task.slice(0, 3) : buildTaskOptions(answers.responsibility)
+      )
+      setPhase('situation_choose')
+    } catch {
+      setError('We hit a small generation issue, so we used a safe fallback.')
+      setSituationOptions(buildSituationOptions(answers.example, selectedPressure))
+      setTaskOptions(buildTaskOptions(answers.responsibility))
+      setPhase('situation_choose')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function generateAction(withFollowUpAnswer?: string) {
+    setIsLoading(true)
+    setError('')
+    try {
+      const ai = await requestStage('action', {
+        situation: selectedSituation,
+        task: selectedTask,
+        action_tags: selectedActionTypes,
+        action_detail: answers.actionDetail,
+        follow_up_answer: withFollowUpAnswer || undefined,
+      })
+
+      if (ai.normalized_input?.action_detail) {
+        setAnswer('actionDetail', ai.normalized_input.action_detail)
+      }
+
+      if (ai.should_ask_follow_up && ai.follow_up_question && !withFollowUpAnswer) {
+        setFollowUpQuestion(ai.follow_up_question)
+        setFollowUpAnswer('')
+        setPhase('action_follow_up')
+        return
+      }
+
+      setActionOptions(
+        ai.options?.action?.length ? ai.options.action.slice(0, 4) : buildActionOptions(selectedActionTypes, answers.actionDetail)
+      )
+      setPhase('action_choose')
+    } catch {
+      setError('We hit a small generation issue, so we used a safe fallback.')
+      setActionOptions(buildActionOptions(selectedActionTypes, answers.actionDetail))
+      setPhase('action_choose')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function generateResultAndLanding(withFollowUpAnswer?: string) {
+    setIsLoading(true)
+    setError('')
+    try {
+      const ai = await requestStage('result_landing', {
+        situation: selectedSituation,
+        task: selectedTask,
+        action: selectedAction,
+        result_tags: selectedResultTypes,
+        result_detail: answers.resultDetail,
+        proof_tags: selectedProofTypes,
+        follow_up_answer: withFollowUpAnswer || undefined,
+      })
+
+      if (ai.normalized_input?.result_detail) {
+        setAnswer('resultDetail', ai.normalized_input.result_detail)
+      }
+
+      if (ai.should_ask_follow_up && ai.follow_up_question && !withFollowUpAnswer) {
+        setFollowUpQuestion(ai.follow_up_question)
+        setFollowUpAnswer('')
+        setPhase('result_landing_follow_up')
+        return
+      }
+
+      setResultOptions(
+        ai.options?.result?.length ? ai.options.result.slice(0, 3) : buildResultOptions(selectedResultTypes, answers.resultDetail)
+      )
+      setProofOptions(
+        ai.options?.landing?.length ? ai.options.landing.slice(0, 3) : buildProofOptions(selectedProofTypes)
+      )
+      setPhase('result_choose')
+    } catch {
+      setError('We hit a small generation issue, so we used a safe fallback.')
+      setResultOptions(buildResultOptions(selectedResultTypes, answers.resultDetail))
+      setProofOptions(buildProofOptions(selectedProofTypes))
+      setPhase('result_choose')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
       <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#f8f5ff_0%,#fff_100%)] px-5 py-4">
         <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-600">STAR proof workshop</p>
-        <h3 className="mt-1 text-xl font-extrabold text-slate-900">Build a stronger STAR with less typing</h3>
+        <h3 className="mt-1 text-xl font-extrabold text-slate-900">Build a stronger STAR with guided coaching</h3>
+        {error ? <p className="mt-2 text-xs leading-5 text-amber-700">{error}</p> : null}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
@@ -528,10 +615,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             placeholder="e.g. shifting customer lead times"
             helper="Examples: a delayed launch, a client escalation, shifting customer lead times, confusion across teams, a deadline that was at risk, a process that kept breaking."
             value={answers.example}
-            onChange={(value) => {
-              setSelectedSituation('')
-              setAnswer('example', value)
-            }}
+            onChange={(value) => setAnswer('example', value)}
             onNext={() => setPhase('pressure')}
           />
         ) : null}
@@ -539,16 +623,41 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'pressure' ? (
           <SelectionPrompt
             stepLabel="Step 1 of 5"
-            title="What made this situation difficult?"
+            title="What made that situation difficult?"
             description="Select all that apply."
             options={PRESSURE_OPTIONS}
             selections={selectedPressure}
-            onToggle={(value) => {
-              setSelectedSituation('')
-              toggleSelection(value, selectedPressure, setSelectedPressure)
-            }}
-            onNext={() => setPhase('situation_choose')}
+            onToggle={(value) => toggleSelection(value, selectedPressure, setSelectedPressure)}
+            onNext={() => setPhase('responsibility')}
             minSelected={2}
+          />
+        ) : null}
+
+        {phase === 'responsibility' ? (
+          <TextPrompt
+            stepLabel="Step 2 of 5"
+            title="What were you responsible for in that situation?"
+            description="Keep it short. Focus on what you needed to fix, own, or deliver."
+            placeholder="e.g. get the project back on track"
+            helper="Examples: get the project back on track, reduce confusion across teams, keep the client updated, make sure the deadline did not slip, create a clearer handoff process."
+            value={answers.responsibility}
+            onChange={(value) => setAnswer('responsibility', value)}
+            onNext={() => generateSituationAndTask()}
+            isLoading={isLoading}
+          />
+        ) : null}
+
+        {phase === 'situation_task_follow_up' ? (
+          <TextPrompt
+            stepLabel="Step 2 of 5"
+            title={followUpQuestion}
+            description="Keep it short. We are sharpening the ownership before we build options."
+            placeholder="e.g. make sure our side stayed on schedule"
+            helper="This is a quick clarifying step so the next options are more useful."
+            value={followUpAnswer}
+            onChange={setFollowUpAnswer}
+            onNext={() => generateSituationAndTask(followUpAnswer)}
+            isLoading={isLoading}
           />
         ) : null}
 
@@ -564,7 +673,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button
-                onClick={() => setPhase('responsibility')}
+                onClick={() => setPhase('task_choose')}
                 disabled={!selectedSituation}
                 className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3 disabled:opacity-50"
               >
@@ -573,22 +682,6 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
               </button>
             </div>
           </div>
-        ) : null}
-
-        {phase === 'responsibility' ? (
-          <TextPrompt
-            stepLabel="Step 2 of 5"
-            title="What were you responsible for in that situation?"
-            description="Keep it short. Focus on what you needed to fix, own, or deliver."
-            placeholder="e.g. get the project back on track"
-            helper="Examples: get the project back on track, reduce confusion across teams, keep the client updated, make sure the deadline did not slip, create a clearer handoff process."
-            value={answers.responsibility}
-            onChange={(value) => {
-              setSelectedTask('')
-              setAnswer('responsibility', value)
-            }}
-            onNext={() => setPhase('task_choose')}
-          />
         ) : null}
 
         {phase === 'task_choose' ? (
@@ -618,16 +711,13 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 2 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Here is your setup so far</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">This gives the interviewer enough context. Now we put the real weight into Action.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">This gives enough context. Now we put most of the weight into Action.</p>
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Your Situation and Task</p>
               <p className="mt-3 text-sm leading-7 text-slate-800">{[selectedSituation, selectedTask].join(' ')}</p>
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
-              <button
-                onClick={() => setPhase('action_types')}
-                className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3"
-              >
+              <button onClick={() => setPhase('action_types')} className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3">
                 Build Action
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -643,10 +733,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             helper="Pick the actions that best reflect what you actually did, not just the outcome."
             options={ACTION_OPTIONS}
             selections={selectedActionTypes}
-            onToggle={(value) => {
-              setSelectedAction('')
-              toggleSelection(value, selectedActionTypes, setSelectedActionTypes)
-            }}
+            onToggle={(value) => toggleSelection(value, selectedActionTypes, setSelectedActionTypes)}
             onNext={() => setPhase('action_detail')}
             minSelected={2}
           />
@@ -660,11 +747,23 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             placeholder="e.g. built one tracker for open requests"
             helper="Examples: built one tracker for open requests, reassigned open items to clear owners, set short check-ins for blockers, created a new handoff checklist, flagged risks before the deadline."
             value={answers.actionDetail}
-            onChange={(value) => {
-              setSelectedAction('')
-              setAnswer('actionDetail', value)
-            }}
-            onNext={() => setPhase('action_choose')}
+            onChange={(value) => setAnswer('actionDetail', value)}
+            onNext={() => generateAction()}
+            isLoading={isLoading}
+          />
+        ) : null}
+
+        {phase === 'action_follow_up' ? (
+          <TextPrompt
+            stepLabel="Step 3 of 5"
+            title={followUpQuestion}
+            description="Keep it short. We are just tightening the proof."
+            placeholder="e.g. set short check-ins for blockers"
+            helper="This helps turn a vague action into something the interviewer can picture."
+            value={followUpAnswer}
+            onChange={setFollowUpAnswer}
+            onNext={() => generateAction(followUpAnswer)}
+            isLoading={isLoading}
           />
         ) : null}
 
@@ -695,16 +794,13 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 3 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Here is where the proof starts to land</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Action is usually the most important part of a strong STAR answer.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Action usually carries the most weight in a strong STAR answer.</p>
             <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">Your Action</p>
               <p className="mt-3 text-sm leading-7 text-slate-800">{selectedAction}</p>
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
-              <button
-                onClick={() => setPhase('result_types')}
-                className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3"
-              >
+              <button onClick={() => setPhase('result_types')} className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3">
                 Build Result
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -720,12 +816,8 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             helper="Pick the clearest outcomes from the situation."
             options={RESULT_OPTIONS}
             selections={selectedResultTypes}
-            onToggle={(value) => {
-              setSelectedResult('')
-              toggleSelection(value, selectedResultTypes, setSelectedResultTypes)
-            }}
+            onToggle={(value) => toggleSelection(value, selectedResultTypes, setSelectedResultTypes)}
             onNext={() => setPhase('result_detail')}
-            minSelected={1}
           />
         ) : null}
 
@@ -733,16 +825,41 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <TextPrompt
             stepLabel="Step 4 of 5"
             title="What was the clearest visible outcome?"
-            description="Optional, but strong if you have one."
+            description="Optional, but strong if you have one. Use a short outcome phrase."
             placeholder="e.g. got the order out on time"
             helper="Examples: got the order out on time, used again on future projects, cut response time by 20%, kept the launch on schedule, reduced missed handoffs."
             value={answers.resultDetail}
-            onChange={(value) => {
-              setSelectedResult('')
-              setAnswer('resultDetail', value)
-            }}
-            onNext={() => setPhase('result_choose')}
+            onChange={(value) => setAnswer('resultDetail', value)}
+            onNext={() => setPhase('proof_types')}
             optional
+          />
+        ) : null}
+
+        {phase === 'proof_types' ? (
+          <SelectionPrompt
+            stepLabel="Step 5 of 5"
+            title="What does this example best prove about you?"
+            description="Select all that apply."
+            helper="Pick the qualities this example actually proves, not just what sounds good."
+            options={PROOF_OPTIONS}
+            selections={selectedProofTypes}
+            onToggle={(value) => toggleSelection(value, selectedProofTypes, setSelectedProofTypes)}
+            onNext={() => generateResultAndLanding()}
+            isLoading={isLoading}
+          />
+        ) : null}
+
+        {phase === 'result_landing_follow_up' ? (
+          <TextPrompt
+            stepLabel="Step 5 of 5"
+            title={followUpQuestion}
+            description="Keep it short. We are just tightening the outcome so the payoff is clearer."
+            placeholder="e.g. we finished the launch on schedule"
+            helper="This is optional in spirit, but it helps if the result is still too broad."
+            value={followUpAnswer}
+            onChange={setFollowUpAnswer}
+            onNext={() => generateResultAndLanding(followUpAnswer)}
+            isLoading={isLoading}
           />
         ) : null}
 
@@ -779,32 +896,12 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
               <p className="mt-3 text-sm leading-7 text-slate-800">{selectedResult}</p>
             </div>
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
-              <button
-                onClick={() => setPhase('proof_types')}
-                className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3"
-              >
-                Add the payoff
+              <button onClick={() => setPhase('proof_choose')} className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3">
+                Next
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           </div>
-        ) : null}
-
-        {phase === 'proof_types' ? (
-          <SelectionPrompt
-            stepLabel="Step 5 of 5"
-            title="What does this example best prove about you?"
-            description="Select all that apply."
-            helper="Pick the qualities this example actually proves, not just what sounds good."
-            options={PROOF_OPTIONS}
-            selections={selectedProofTypes}
-            onToggle={(value) => {
-              setSelectedProof('')
-              toggleSelection(value, selectedProofTypes, setSelectedProofTypes)
-            }}
-            onNext={() => setPhase('proof_choose')}
-            minSelected={1}
-          />
         ) : null}
 
         {phase === 'proof_choose' ? (
@@ -835,11 +932,9 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 5 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Here is your full STAR answer</h4>
             <p className="mt-2 text-sm leading-6 text-slate-500">Say it out loud a few times. Then try it again without staring at every word.</p>
-
             <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
               <p className="text-sm leading-7 text-slate-800">{fullAnswer}</p>
             </div>
-
             <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">Final reminder</p>
               <div className="mt-3 space-y-3">
@@ -856,7 +951,6 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
                 ))}
               </div>
             </div>
-
             <div className="mt-auto flex items-end justify-end border-t border-slate-200/80 pt-5">
               <button onClick={onComplete} className="btn-coach-primary flex min-w-[188px] items-center justify-center gap-2 px-6 py-3">
                 Finish workshop

@@ -518,10 +518,10 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'example' ? (
           <TextPrompt
             stepLabel="Step 1 of 5"
-            title="What example are we using?"
-            description="Keep it short. Just name the situation or moment."
-            placeholder="e.g. launch week scheduling issue"
-            helper="This is the real anchor for the story. We will shape the wording for you later."
+            title="What specific work situation are you going to use for this answer?"
+            description="Pick one real moment where something was difficult, unclear, or at risk."
+            placeholder="e.g. shifting customer lead times"
+            helper="Examples: a delayed launch, a client escalation, shifting customer lead times, confusion across teams, a deadline that was at risk, a process that kept breaking."
             value={answers.example}
             onChange={(value) => {
               setSelectedSituation('')
@@ -573,10 +573,10 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'responsibility' ? (
           <TextPrompt
             stepLabel="Step 2 of 5"
-            title="What were you responsible for?"
-            description="Use a short phrase. We will format it into a stronger sentence."
+            title="What were you responsible for in that situation?"
+            description="Keep it short. Focus on what you needed to fix, own, or deliver."
             placeholder="e.g. get the project back on track"
-            helper="This is the ownership line. Keep it simple and real."
+            helper="Examples: get the project back on track, reduce confusion across teams, keep the client updated, make sure the deadline did not slip, create a clearer handoff process."
             value={answers.responsibility}
             onChange={(value) => {
               setSelectedTask('')

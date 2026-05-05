@@ -2,95 +2,115 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
+
 function getOpenAI() {
   if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   return _openai
 }
 
-type WorkshopStage = 'situation_task' | 'action' | 'result_landing'
+type WorkshopStage = 'story' | 'follow_up' | 'finalize'
 
 const MODEL = 'gpt-4o-mini'
 
 function buildSystemPrompt(stage: WorkshopStage) {
-  const shared = `You are helping generate a stronger interview workshop step for a STAR answer.
+  const shared = `You are coaching a user on a flagged behavioral interview answer.
+
+The user already has the interview question.
+The user needs help finding a specific situation and turning it into a believable answer.
+You should coach adaptively based on the latest answer, not force a rigid visible STAR form.
 
 Return ONLY valid JSON.
 Do not include markdown.
 Do not explain your reasoning.
-Keep all generated options short, natural, and spoken.
-If user input is weak or malformed, prefer cleaner rewrites over literal reuse.
-Ask at most one follow-up question only when the latest user input is too vague to generate strong options.
-`
+Keep every sentence short, natural, and spoken.
+Ground the coaching in the flagged question.
+Prefer concrete, believable language over polished fluff.`
 
-  if (stage === 'situation_task') {
+  if (stage === 'story') {
     return `${shared}
+
 Return JSON in this exact shape:
 {
-  "normalized_input": {
-    "example": "string",
-    "responsibility": "string"
+  "normalized": {
+    "story": "string"
   },
-  "options": {
-    "situation": ["string", "string", "string"],
-    "task": ["string", "string", "string"]
-  },
-  "should_ask_follow_up": true,
-  "follow_up_question": "string",
-  "weakness_tag": "ownership_vague"
+  "reflection": "string",
+  "weakness_focus": "string",
+  "next_question": "string",
+  "should_continue": true,
+  "draft": {
+    "situation": "string",
+    "task": "string",
+    "action": "string",
+    "result": "string",
+    "proof": "string"
+  }
 }
 
 Rules:
-- Situation should give enough context without becoming long.
-- Task should make ownership clear and concrete.
-- If responsibility is too broad, vague, or label-like, ask one follow-up.
-- If responsibility is usable, do not ask a follow-up.
-- Generate exactly 3 situation options and exactly 3 task options when not asking a follow-up.`
+- The user just described a possible situation for the flagged question.
+- Reflection should briefly say what kind of situation this sounds like and what will matter most.
+- Ask one best next question based on what is weakest or missing.
+- Most of the time, the next question should clarify risk, ownership, or the first concrete action.
+- Draft fields can be partial. Leave unknown fields as empty strings.
+- Do not generate final answer options yet.`
   }
 
-  if (stage === 'action') {
+  if (stage === 'follow_up') {
     return `${shared}
+
 Return JSON in this exact shape:
 {
-  "normalized_input": {
-    "action_detail": "string"
+  "normalized": {
+    "latest_answer": "string"
   },
-  "options": {
-    "action": ["string", "string", "string", "string"]
+  "reflection": "string",
+  "weakness_focus": "string",
+  "next_question": "string",
+  "should_continue": true,
+  "draft": {
+    "situation": "string",
+    "task": "string",
+    "action": "string",
+    "result": "string",
+    "proof": "string"
   },
-  "should_ask_follow_up": true,
-  "follow_up_question": "string",
-  "weakness_tag": "action_detail_vague"
+  "final_options": ["string", "string", "string"]
 }
 
 Rules:
-- Action must sound like specific moves, not traits or outcomes.
-- The typed detail should be used only if it clearly fits as an action phrase.
-- If the typed detail is too vague or not action-like, ask one follow-up.
-- Otherwise generate exactly 4 strong action options.`
+- Use the story and prior turns to decide the next best coaching move.
+- The next question must respond to the latest answer.
+- Ask about one thing only: risk, ownership, first action, concrete move, result, or what the story proves.
+- If the story is strong enough, set should_continue to false and include exactly 3 final_options.
+- If it is not strong enough, set should_continue to true and leave final_options empty.
+- Draft should get stronger and more specific after every turn.`
   }
 
   return `${shared}
+
 Return JSON in this exact shape:
 {
-  "normalized_input": {
-    "result_detail": "string"
+  "reflection": "string",
+  "weakness_focus": "string",
+  "should_continue": false,
+  "draft": {
+    "situation": "string",
+    "task": "string",
+    "action": "string",
+    "result": "string",
+    "proof": "string"
   },
-  "options": {
-    "result": ["string", "string", "string"],
-    "landing": ["string", "string", "string"]
-  },
-  "should_ask_follow_up": true,
-  "follow_up_question": "string",
-  "weakness_tag": "result_detail_vague"
+  "final_options": ["string", "string", "string"]
 }
 
 Rules:
-- Result should make the value easy to hear.
-- Landing lines should explain what the story proves, not just sound flattering.
-- The typed visible outcome is optional. Use it only if it improves the sentence.
-- If the typed outcome is malformed or too vague, you may ignore it without asking a follow-up if the selected outcome tags are enough.
-- Ask one follow-up only if the result signal is too weak overall.
-- Generate exactly 3 result options and exactly 3 landing options when not asking a follow-up.`
+- The story is ready to turn into final answer options.
+- Generate exactly 3 full answer options for the flagged question.
+- Each answer should be one short spoken paragraph.
+- The answers should be specific, believable, and clearly owned.
+- Action and Result should carry the most proof.
+- Keep the tone natural, not over-coached.`
 }
 
 export async function POST(request: NextRequest) {
@@ -105,8 +125,8 @@ export async function POST(request: NextRequest) {
 
     const completion = await getOpenAI().chat.completions.create({
       model: MODEL,
-      temperature: 0.2,
-      max_tokens: 700,
+      temperature: 0.25,
+      max_tokens: 900,
       response_format: { type: 'json_object' },
       messages: [
         {

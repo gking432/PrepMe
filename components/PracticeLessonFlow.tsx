@@ -638,7 +638,11 @@ export default function PracticeLessonFlow({
             />
           </div>
           <div className="min-h-0 flex-1">
-            <StarProofWorkshop onComplete={() => setFlowState('complete')} />
+            <StarProofWorkshop
+              originalQuestion={originalQuestion}
+              originalAnswer={originalAnswer}
+              onComplete={() => setFlowState('complete')}
+            />
           </div>
         </div>
       )

@@ -157,6 +157,11 @@ function lowerFirst(value: string) {
   return value.charAt(0).toLowerCase() + value.slice(1)
 }
 
+function upperFirst(value: string) {
+  if (!value) return value
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
 function ensurePeriod(value: string) {
   const trimmed = value.trim()
   if (!trimmed) return ''
@@ -174,10 +179,20 @@ function joinWithAnd(items: string[]) {
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
 }
 
-function withOneThing(value: string) {
+function normalizeActionDetail(value: string) {
   const cleaned = cleanInput(value)
-  if (!cleaned) return ''
+  if (!cleaned) return null
   const lowered = cleaned.toLowerCase()
+  if (lowered.split(' ').length < 2) return null
+  if (
+    lowered.startsWith('got ') ||
+    lowered.startsWith('met ') ||
+    lowered.startsWith('made it ') ||
+    lowered.startsWith('result ') ||
+    lowered.startsWith('outcome ')
+  ) {
+    return null
+  }
   if (
     lowered.startsWith('a ') ||
     lowered.startsWith('an ') ||
@@ -187,7 +202,43 @@ function withOneThing(value: string) {
   ) {
     return cleaned
   }
-  return `one ${cleaned}`
+  return cleaned
+}
+
+function normalizeResultDetail(value: string) {
+  const cleaned = cleanInput(value)
+  if (!cleaned) return null
+  const lowered = cleaned.toLowerCase()
+  if (lowered.split(' ').length < 2) return null
+  if (
+    lowered.startsWith('built ') ||
+    lowered.startsWith('created ') ||
+    lowered.startsWith('assigned ') ||
+    lowered.startsWith('communicated ') ||
+    lowered.startsWith('tracked ') ||
+    lowered.startsWith('checked ')
+  ) {
+    return null
+  }
+  if (!/^(we|it|the|they|this|that|got|met|cut|reduced|improved|avoided|used|prevented|kept|submitted)/.test(lowered)) {
+    return `we ${lowerFirst(cleaned)}`
+  }
+  return cleaned
+}
+
+function formatActionDetailForSentence(value: string | null) {
+  if (!value) return null
+  const lowered = value.toLowerCase()
+  if (
+    lowered.startsWith('a ') ||
+    lowered.startsWith('an ') ||
+    lowered.startsWith('the ') ||
+    lowered.startsWith('one ') ||
+    lowered.startsWith('my ')
+  ) {
+    return value
+  }
+  return `one ${value}`
 }
 
 function buildSituationOptions(example: string, pressureSelections: string[]) {
@@ -219,16 +270,28 @@ function buildTaskOptions(responsibility: string) {
 
 function buildActionOptions(selections: string[], detail: string) {
   const actionPhrases = selections.map((item) => ACTION_PHRASES[item]).filter(Boolean)
-  const detailText = withOneThing(detail)
-  if (actionPhrases.length === 0 || !detailText) return []
+  const normalizedDetail = normalizeActionDetail(detail)
+  const detailText = formatActionDetailForSentence(normalizedDetail)
+  if (actionPhrases.length === 0) return []
 
-  const actionSummary = joinWithAnd(actionPhrases.slice(0, 3))
+  const actionSummary = joinWithAnd(actionPhrases.slice(0, 2))
+  const leadAction = actionPhrases[0]
+  const supportAction = actionPhrases[1]
+
+  if (!detailText) {
+    return uniqueOptions([
+      `I ${actionSummary} so the work was clearer and easier to manage.`,
+      `To keep things on track, I ${actionSummary} and made the next steps easier to follow.`,
+      `A key part of my approach was that I ${actionSummary}, which helped stabilize the situation.`,
+      `I moved the work forward by ${actionSummary} so issues surfaced earlier instead of later.`,
+    ])
+  }
 
   return uniqueOptions([
-    `I ${actionSummary}, and I anchored that by using ${detailText} so the work stayed visible and easier to manage.`,
-    `To move it forward, I ${actionSummary}. A big part of that was using ${detailText} to keep owners and next steps clear.`,
-    `The biggest thing I did was ${actionSummary}, and I backed that up with ${detailText} so issues surfaced earlier.`,
-    `I ${actionSummary}, then used ${detailText} to give the team one clearer process instead of scattered updates.`,
+    `To keep things on track, I ${actionSummary}. A key part of that was ${lowerFirst(normalizedDetail!)}.`,
+    `I ${leadAction}${supportAction ? ` and ${supportAction}` : ''}, and I grounded that by ${lowerFirst(normalizedDetail!)}.`,
+    `A big part of how I moved it forward was ${lowerFirst(normalizedDetail!)}, alongside ${actionSummary}.`,
+    `I created more structure around the situation by ${actionSummary}, especially by ${lowerFirst(normalizedDetail!)}.`,
   ])
 }
 
@@ -237,26 +300,27 @@ function buildResultOptions(selections: string[], detail: string) {
   if (resultPhrases.length === 0) return []
 
   const resultSummary = joinWithAnd(resultPhrases.slice(0, 2))
-  const detailText = cleanInput(detail)
+  const detailText = normalizeResultDetail(detail)
+
+  if (!detailText) {
+    return uniqueOptions([
+      `${upperFirst(resultSummary)}.`,
+      `As a result, ${resultSummary}.`,
+      `${upperFirst(resultSummary)}, which helped stabilize the work.`,
+      `The end result was that ${resultSummary}.`,
+    ])
+  }
 
   return uniqueOptions([
-    detailText
-      ? `${resultSummary}, and ${lowerFirst(detailText)}`
-      : `${resultSummary}`,
-    detailText
-      ? `As a result, ${resultSummary}, and ${lowerFirst(detailText)}`
-      : `As a result, ${resultSummary}`,
-    detailText
-      ? `${resultSummary}. It also meant ${lowerFirst(detailText)}`
-      : `${resultSummary}, which helped stabilize the situation`,
-    detailText
-      ? `The end result was that ${resultSummary}, with ${lowerFirst(detailText)}`
-      : `The end result was that ${resultSummary}`,
+    `${upperFirst(resultSummary)}, and ${lowerFirst(detailText)}.`,
+    `As a result, ${resultSummary}, and ${lowerFirst(detailText)}.`,
+    `${upperFirst(resultSummary)}. It also meant ${lowerFirst(detailText)}.`,
+    `The end result was that ${resultSummary}, and ${lowerFirst(detailText)}.`,
   ])
 }
 
 function buildProofOptions(selections: string[]) {
-  const options = selections.map((item) => PROOF_PHRASES[item]).filter(Boolean)
+  const options = selections.slice(0, 4).map((item) => PROOF_PHRASES[item]).filter(Boolean)
   return uniqueOptions(options)
 }
 
@@ -585,10 +649,10 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'action_detail' ? (
           <TextPrompt
             stepLabel="Step 3 of 5"
-            title="What is one concrete thing you actually did?"
-            description="Keep it short. This is the detail that makes the story believable."
+            title="What is one specific action you took?"
+            description="Use a short action phrase, like a resume bullet."
             placeholder="e.g. built one tracker for open requests"
-            helper="This is the proof anchor. We need one real detail in your own words."
+            helper="This should sound like something you did, not just a fragment or outcome."
             value={answers.actionDetail}
             onChange={(value) => {
               setSelectedAction('')
@@ -661,10 +725,10 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'result_detail' ? (
           <TextPrompt
             stepLabel="Step 4 of 5"
-            title="Do you have a concrete result, number, or visible outcome?"
+            title="What was the clearest visible outcome?"
             description="Optional, but strong if you have one."
-            placeholder="e.g. used again on future projects"
-            helper="If you do not have a number, a visible outcome still helps."
+            placeholder="e.g. got the order out on time"
+            helper="Use a short outcome phrase. If it does not fit cleanly, we will leave it out."
             value={answers.resultDetail}
             onChange={(value) => {
               setSelectedResult('')

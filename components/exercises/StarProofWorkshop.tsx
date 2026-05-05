@@ -423,6 +423,7 @@ function SelectionPrompt({
   stepLabel,
   title,
   description,
+  helper,
   options,
   selections,
   onToggle,
@@ -432,6 +433,7 @@ function SelectionPrompt({
   stepLabel: string
   title: string
   description: string
+  helper?: string
   options: string[]
   selections: string[]
   onToggle: (label: string) => void
@@ -443,6 +445,9 @@ function SelectionPrompt({
       <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{stepLabel}</p>
       <h4 className="mt-2 text-lg font-extrabold text-slate-900">{title}</h4>
       <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+      {helper ? (
+        <p className="mt-2 text-xs leading-5 text-slate-500">{helper}</p>
+      ) : null}
       <div className="mt-5 flex flex-wrap gap-2">
         {options.map((option) => (
           <ToggleChip
@@ -635,6 +640,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             stepLabel="Step 3 of 5"
             title="What kinds of moves did you make?"
             description="Select all that apply."
+            helper="Pick the actions that best reflect what you actually did, not just the outcome."
             options={ACTION_OPTIONS}
             selections={selectedActionTypes}
             onToggle={(value) => {
@@ -649,10 +655,10 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'action_detail' ? (
           <TextPrompt
             stepLabel="Step 3 of 5"
-            title="What is one specific action you took?"
+            title="What is one specific thing you actually did?"
             description="Use a short action phrase, like a resume bullet."
             placeholder="e.g. built one tracker for open requests"
-            helper="This should sound like something you did, not just a fragment or outcome."
+            helper="Examples: built one tracker for open requests, reassigned open items to clear owners, set short check-ins for blockers, created a new handoff checklist, flagged risks before the deadline."
             value={answers.actionDetail}
             onChange={(value) => {
               setSelectedAction('')
@@ -666,7 +672,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 3 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your Action</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the version that sounds strongest and most natural out loud.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the version that sounds strongest and most believable out loud.</p>
             <div className="mt-5 space-y-3">
               {actionOptions.map((option) => (
                 <ChoiceCard key={option} option={option} selected={selectedAction === option} onSelect={() => setSelectedAction(option)} />
@@ -709,8 +715,9 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
         {phase === 'result_types' ? (
           <SelectionPrompt
             stepLabel="Step 4 of 5"
-            title="What happened as a result?"
+            title="What happened in the end?"
             description="Select all that apply."
+            helper="Pick the clearest outcomes from the situation."
             options={RESULT_OPTIONS}
             selections={selectedResultTypes}
             onToggle={(value) => {
@@ -728,7 +735,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             title="What was the clearest visible outcome?"
             description="Optional, but strong if you have one."
             placeholder="e.g. got the order out on time"
-            helper="Use a short outcome phrase. If it does not fit cleanly, we will leave it out."
+            helper="Examples: got the order out on time, used again on future projects, cut response time by 20%, kept the launch on schedule, reduced missed handoffs."
             value={answers.resultDetail}
             onChange={(value) => {
               setSelectedResult('')
@@ -788,6 +795,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
             stepLabel="Step 5 of 5"
             title="What does this example best prove about you?"
             description="Select all that apply."
+            helper="Pick the qualities this example actually proves, not just what sounds good."
             options={PROOF_OPTIONS}
             selections={selectedProofTypes}
             onToggle={(value) => {
@@ -803,7 +811,7 @@ export default function StarProofWorkshop({ onComplete }: StarProofWorkshopProps
           <div className="flex h-full flex-col">
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">Step 5 of 5</p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">Choose your landing line</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the short payoff line that lands what the story proves.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Pick the short payoff line that best explains what the story proves.</p>
             <div className="mt-5 space-y-3">
               {proofOptions.map((option) => (
                 <ChoiceCard key={option} option={option} selected={selectedProof === option} onSelect={() => setSelectedProof(option)} />

@@ -161,6 +161,7 @@ export default function PracticeLessonFlow({
   const activeExercises = mode === 'core' ? coreExercises : randomizedExercises
   const exerciseCount = activeExercises.length
   const hasWorkshop = Boolean(subLesson.workshop)
+  const canSkipToWorkshop = subLesson.workshop?.type === 'star_proof'
 
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [round, setRound] = useState<'main' | 'retry'>('main')
@@ -458,7 +459,15 @@ export default function PracticeLessonFlow({
         </div>
       </div>
 
-      <div className="shrink-0 flex items-end justify-end border-t border-slate-200/80 pt-5">
+      <div className="shrink-0 flex items-end justify-end gap-3 border-t border-slate-200/80 pt-5">
+        {canSkipToWorkshop ? (
+          <button
+            onClick={() => setFlowState('workshop')}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+          >
+            Skip to workshop
+          </button>
+        ) : null}
         <button onClick={() => setFlowState('teach')} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
           Start
           <ArrowRight className="h-5 w-5" />

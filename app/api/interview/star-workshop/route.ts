@@ -58,18 +58,27 @@ Return ONLY valid JSON in this exact shape:
 Rules:
 - Keep hidden state concise and factual.
 - A setting alone is not enough. If the latest answer only names a container like a project, class, internship, launch, or client, ask what specifically became difficult, unclear, or at risk.
+- Do not treat "a class project", "a business plan", "an internship", "a launch", or "a client request" as a usable situation by itself. Those are settings, not stories.
 - Once a real problem exists, ask what part of it was theirs to handle if ownership is still unclear.
 - Then ask what they actually did.
 - If action is still generic, ask for one more concrete move.
+- Do not accept action language like "helped", "communicated", "stayed organized", "took on responsibilities", "stepped up", or "managed it" unless the specific moves are also clear.
+- Push until you have at least two concrete action beats or one clearly detailed action beat with visible execution.
 - Then ask what changed in the end.
+- Do not accept weak result lines like "we passed the class", "it worked out", "we finished", "it went well", or "everyone was happy" unless there is also a more visible consequence, improvement, protection, or outcome.
+- For academic examples, passing the class or completing the assignment is usually too weak by itself. Ask what improved, what got saved, what changed in the team, or what outcome showed their contribution mattered.
+- If the user mentions teammates not contributing, missed work, or unclear roles, ask what exactly was slipping, what they personally took over, and how they got the project back under control.
 - "proof" should be a short internal note about what the story demonstrates, but it should not drive the next visible question until the rest is strong.
-- Final answers should only be generated when there is enough for a believable story: setting, problem, ownership, at least one concrete action, and a result.
-- If force_finalize is true, generate final answers from the best available state even if some detail is thinner than ideal.
+- Final answers should only be generated when there is enough for a believable story: setting, problem, ownership, at least two concrete actions or one strongly concrete action sequence, and a result with visible consequence.
+- If force_finalize is true, you should still try to ask one last highest-value question unless the existing state is already good enough to draft from.
 - Final answers must be short spoken paragraphs that answer the flagged question naturally.
 - Keep final answers specific, believable, and clearly owned.
+- Final answers must read like real STAR even though the user never saw STAR labels: clear setup, clear ownership, visible action, meaningful outcome.
 - When ready_for_final is false, final_options must be an empty array.
 - When ready_for_final is true, generate exactly 3 final_options.
-- next_question must be empty when ready_for_final is true.`
+- next_question must be empty when ready_for_final is true.
+- Prefer one sharp next question over a broad or generic one.
+- Never finalize early just because every field has something in it. Finalize only when the content is strong enough.`
 }
 
 export async function POST(request: NextRequest) {

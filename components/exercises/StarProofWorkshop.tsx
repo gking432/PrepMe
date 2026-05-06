@@ -32,7 +32,7 @@ interface TurnResponse {
   final_options?: string[]
 }
 
-const MAX_TURNS = 5
+const MAX_TURNS = 7
 
 const EMPTY_STATE: WorkshopState = {
   setting: '',
@@ -91,7 +91,7 @@ function buildFallbackState(
       nextState.missing_piece = 'problem'
       return {
         state: nextState,
-        nextQuestion: 'What specifically became difficult, unclear, or at risk there?',
+        nextQuestion: 'What specifically became difficult, unclear, or at risk in that situation?',
       }
     case 'problem':
       nextState.problem = answer
@@ -105,7 +105,7 @@ function buildFallbackState(
       nextState.missing_piece = 'action'
       return {
         state: nextState,
-        nextQuestion: 'What did you actually do first?',
+        nextQuestion: 'What did you actually do first to move it forward?',
       }
     case 'action':
       nextState.actions = [...nextState.actions, answer].slice(0, 3)
@@ -115,7 +115,7 @@ function buildFallbackState(
         nextQuestion:
           nextState.actions.length >= 2
             ? 'What changed in the end because of your work?'
-            : 'What else did you do that made the example believable?',
+            : 'What else did you actually do that made the example believable?',
       }
     case 'action_more':
       nextState.actions = [...nextState.actions, answer].slice(0, 3)
@@ -129,7 +129,7 @@ function buildFallbackState(
       nextState.missing_piece = 'proof'
       return {
         state: nextState,
-        nextQuestion: `What does this example show about how you handle questions like "${question}"?`,
+        nextQuestion: 'What outcome made your contribution matter beyond just finishing it?',
       }
     default:
       nextState.proof = answer
@@ -182,7 +182,12 @@ export default function StarProofWorkshop({
   const questionLabel = originalQuestion || 'Tell me about a time when...'
   const answerSummary = useMemo(() => summarizeAnswer(originalAnswer), [originalAnswer])
 
-  async function requestTurn(latestAnswer: string, currentState: WorkshopState, forceFinalize: boolean) {
+  async function requestTurn(
+    latestAnswer: string,
+    currentState: WorkshopState,
+    turnHistory: WorkshopTurn[],
+    forceFinalize: boolean
+  ) {
     const response = await fetch('/api/interview/star-workshop', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -191,6 +196,8 @@ export default function StarProofWorkshop({
         flagged_answer: originalAnswer || '',
         latest_answer: latestAnswer,
         state: currentState,
+        turns: turnHistory,
+        current_question: currentQuestion,
         force_finalize: forceFinalize,
       }),
     })
@@ -213,7 +220,7 @@ export default function StarProofWorkshop({
 
     try {
       const forceFinalize = state.turn_count + 1 >= MAX_TURNS
-      const ai = await requestTurn(answer, state, forceFinalize)
+      const ai = await requestTurn(answer, state, nextTurns, forceFinalize)
       const nextState = mergeState(state, ai.updated_state)
       setState(nextState)
 

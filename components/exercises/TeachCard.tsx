@@ -996,161 +996,117 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'Alignment',
-          title: 'What this answer was missing',
-          preppi: 'The goal here is not just to sound interested. The move needs to make sense.',
+          eyebrow: 'The Tool',
+          title: 'Observation, Fit, Timing',
+          preppi: 'This should mirror the Professional Story structure: one clear tool and one clear job for each part.',
           content: (
             <div className="space-y-4">
               <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                This answer needed a stronger sense of alignment.
+                In this lesson, you&apos;ll learn how to make the move sound chosen, specific, and logical instead of broad or generic.
               </p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                When you answer &ldquo;Why this role?&rdquo; the goal is not just to sound interested. The goal is to make the move feel logical and intentional.
-              </p>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Best use: &ldquo;Why this role?&rdquo; &ldquo;Why this position?&rdquo; &ldquo;What&apos;s prompting the move?&rdquo; &ldquo;Why now?&rdquo;
-                </p>
+              <div className="space-y-3">
+                {frameworkRows.map(([key, value], index) => (
+                  <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
+              <p className="border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-700 md:text-[15px]">
+                The interviewer is not just listening for interest. They are listening for whether the move makes sense.
+              </p>
             </div>
           ),
         },
         {
-          eyebrow: 'Scoring Logic',
-          title: 'What interviewers are actually listening for',
-          preppi: 'They are not just asking whether you want the role. They are asking whether the move makes sense.',
+          eyebrow: 'Most Common Mistake',
+          title: 'What usually goes wrong',
+          preppi: 'This should teach the exact miss: broad interest language without a real logic chain.',
           content: (
             <div className="space-y-4">
+              <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+                Many answers sound interested, but not convincing. They rely on broad lines like:
+              </p>
               <TeachingList
                 items={[
-                  'specific interest',
-                  'relevance to your background',
-                  'clear timing',
-                  'a logical next step',
-                ]}
-              />
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  They are not just asking whether you want the role. They are asking whether the move makes sense.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Generic Interest',
-          title: 'Weak alignment usually sounds generic',
-          preppi: 'Positive language is not enough if it could apply to almost any job.',
-          content: (
-            <div className="space-y-4">
-              <TeachingList
-                items={[
-                  '“It seems like a great opportunity.”',
+                  '“I’m looking for something new.”',
+                  '“This seems like a great opportunity.”',
                   '“I’m ready for a new challenge.”',
-                  '“I want to use my skills in a new role.”',
+                  '“It feels like a strong next step.”',
                 ]}
               />
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  Generic interest is not enough.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Connection',
-          title: 'Strong alignment connects the role to your background',
-          preppi: 'A stronger answer should make the fit feel natural, not aspirational.',
-          content: (
-            <div className="space-y-4">
-              <TeachingList
-                items={[
-                  'what part of the role stands out',
-                  'how it fits the work you have been doing',
-                  'why that makes this move feel natural',
-                ]}
-              />
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  The role should connect to your direction, not just your desire for change.
-                </p>
-              </div>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Timing',
-          title: 'Timing should sound intentional',
-          preppi: 'This is one of the easiest places for the answer to slip back into generic job-seeking.',
-          content: (
-            <ContrastText
-              weakLabel="Weak timing"
-              weakText="I’m ready for something new."
-              strongLabel="Stronger timing"
-              strongText="The timing makes sense because I’m looking for a role where this kind of work is more central to what I do."
-            />
-          ),
-        },
-        {
-          eyebrow: 'Specificity',
-          title: 'Do not sound like you would take anything',
-          preppi: 'If the answer could work in every interview, it does not sound aligned yet.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                A weak answer can make your interest sound broad or unfocused.
+              <p className="text-sm font-semibold leading-relaxed text-amber-900 md:text-[15px]">
+                Those things may be true, but they are too thin on their own. The answer has to sound chosen and logical, not broadly job-seeking.
               </p>
-              <p className="text-sm leading-relaxed text-slate-700 md:text-[15px]">
-                If your answer could apply to almost any role, it does not sound aligned yet.
-              </p>
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  A strong answer should feel specific enough that it could not be copied into every interview.
-                </p>
-              </div>
             </div>
           ),
         },
         {
-          eyebrow: 'Landing',
-          title: 'Strong answers land on a clear next step',
-          preppi: 'By the end, the interviewer should understand why this move is coherent.',
+          eyebrow: 'Compare',
+          title: 'See the difference',
+          preppi: 'Keep this in the same weak-versus-strong rhythm as Professional Story.',
           content: (
             <div className="space-y-4">
-              <TeachingList
-                items={[
-                  'why this role fits your background',
-                  'why it stands out to you',
-                  'why this move makes sense now',
-                ]}
+              <ContrastText
+                weakLabel="Weak"
+                weakText={example.badAnswer}
+                strongLabel="Stronger"
+                strongText={example.goodAnswer}
               />
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  The goal is to make the next step feel coherent.
-                </p>
-              </div>
             </div>
           ),
         },
         {
-          eyebrow: 'Self Check',
-          title: 'Use this check before you answer again',
-          preppi: 'This is the editing lens to keep in your head while you practice.',
+          eyebrow: 'See It In Action',
+          title: 'See exactly where each part lives',
+          preppi: 'Lay the stronger answer out so the user can see exactly where Observation, Fit, and Timing live.',
           content: (
             <div className="space-y-4">
-              <TeachingList
-                items={[
-                  'Did I say what specifically interests me here?',
-                  'Did I connect it to my background?',
-                  'Did I explain why this move makes sense now?',
-                  'Does this sound intentional, not generic?',
-                ]}
-              />
-              <div className="border-t border-violet-100 pt-3">
-                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  That is the standard you will practice next.
+              <div className="border-t border-slate-200 pt-4">
+                <div className="flex flex-wrap gap-2">
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span
+                        key={`${part.label}-pill-${index}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}
+                      >
+                        {part.label}
+                      </span>
+                    )
+                  })}
+                </div>
+                <p className="mt-4 text-base leading-relaxed text-slate-900">
+                  &ldquo;
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span key={`${part.label}-highlight-${index}`} className={`rounded px-1.5 py-0.5 ${colors.highlight}`}>
+                        {part.text}
+                        {index < (example.annotatedStrongAnswer?.length || 0) - 1 ? ' ' : ''}
+                      </span>
+                    )
+                  })}
+                  &rdquo;
                 </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {example.annotatedStrongAnswer?.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <div key={`${part.label}-detail-${index}`} className={`rounded-2xl border ${colors.border} bg-white px-4 py-4 shadow-sm`}>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                        {part.label}
+                      </span>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700 md:text-[15px]">{part.detail}</p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ),

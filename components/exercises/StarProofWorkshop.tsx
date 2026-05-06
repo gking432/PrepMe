@@ -266,8 +266,9 @@ export default function StarProofWorkshop({
           Specificity and proof workshop
         </p>
         <h3 className="mt-1 text-xl font-extrabold text-slate-900">
-          Build a stronger example one question at a time
+          Build your answer to this question
         </h3>
+        <p className="mt-2 text-sm leading-6 text-slate-700">{questionLabel}</p>
         {error ? <p className="mt-2 text-xs leading-5 text-amber-700">{error}</p> : null}
       </div>
 
@@ -281,15 +282,8 @@ export default function StarProofWorkshop({
               We’re rebuilding this answer
             </h4>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              The last version stayed too general. This time we’ll build from one real situation.
+              The last version stayed too general. This time we’ll build a stronger answer to this exact question.
             </p>
-
-            <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">
-                Flagged question
-              </p>
-              <p className="mt-3 text-sm leading-7 text-slate-800">{questionLabel}</p>
-            </div>
 
             {answerSummary ? (
               <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -319,29 +313,14 @@ export default function StarProofWorkshop({
             </p>
             <h4 className="mt-2 text-lg font-extrabold text-slate-900">{currentQuestion}</h4>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Keep it plain. One real detail is enough.
+              Be as descriptive as you want. No need to organize it yet. Just get the details down, and we’ll shape them into a stronger answer.
             </p>
-
-            {turns.length > 0 ? (
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-                  Notes so far
-                </p>
-                <div className="mt-3 space-y-2">
-                  {turns.slice(-3).map((turn, index) => (
-                    <p key={`${turn.question}-${index}`} className="text-sm leading-6 text-slate-700">
-                      {turn.answer}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            ) : null}
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
               <textarea
                 value={currentAnswer}
                 onChange={(event) => setCurrentAnswer(event.target.value)}
-                placeholder="Type your answer here."
+                placeholder="Write whatever comes to mind. We’ll help turn it into a strong answer."
                 className="min-h-[132px] w-full resize-none border-0 bg-transparent text-sm leading-7 text-slate-800 outline-none placeholder:text-slate-400"
               />
             </div>

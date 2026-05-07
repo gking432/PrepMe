@@ -2089,7 +2089,7 @@ export default function TeachCard({
     if (isHandlingUncertaintyLesson) {
       return withIntro([
         {
-          eyebrow: 'Flagged Moment',
+          eyebrow: 'Your Flagged Answer',
           title: originalQuestion || example.question,
           preppi: 'We should start with the exact miss first, not generic advice.',
           content: (
@@ -2118,131 +2118,95 @@ export default function TeachCard({
           ),
         },
         {
-          eyebrow: 'Missing Piece',
-          title: 'What this answer was missing',
+          eyebrow: title,
+          title,
           preppi: 'This lesson is about recovery, not perfection.',
           content: (
             <div className="space-y-4">
-              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">
-                This answer needed more steadiness. Sometimes the question is fine, but you do not have a strong answer right away. In that moment, do not fill the space with rambling. Slow down and regain control.
-              </p>
-              <p className="text-sm font-semibold leading-relaxed text-violet-700 md:text-[15px]">
-                This lesson helps when you are unsure how to answer, not just when the question feels hard.
-              </p>
+              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">{explanation}</p>
+              <div className="space-y-3">
+                {frameworkRows.map(([key, value], index) => (
+                  <div key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-extrabold text-violet-700">
+                      {formatBreakdownKey(key, index)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-wide text-violet-600">{breakdownKeyLabel(key)}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-700 md:text-[15px]">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-violet-100 pt-3">
+                <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
+                  The interviewer is not expecting instant perfection. They are listening for how you recover.
+                </p>
+              </div>
             </div>
           ),
         },
         {
-          eyebrow: 'Scoring Logic',
-          title: 'What interviewers are actually listening for',
-          preppi: 'They are not expecting instant perfection.',
+          eyebrow: 'Compare',
+          title: 'See the difference',
+          preppi: 'The weaker version spirals. The stronger version regains control quickly.',
           content: (
             <div className="space-y-4">
-              <TeachingList
-                items={[
-                  'calm judgment',
-                  'honesty',
-                  'clarity',
-                  'grounded thinking',
-                ]}
-                numbered
-              />
-              <p className="text-sm font-semibold leading-relaxed text-violet-700 md:text-[15px]">
-                They are not expecting instant perfection. They are listening for how you recover.
-              </p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Failure Mode',
-          title: 'How weak uncertain answers usually sound',
-          preppi: 'Uncertainty is normal. Spiraling is the problem.',
-          content: (
-            <TeachingList
-              items={[
-                'start talking before the point is clear',
-                'hedge too much',
-                'circle without answering',
-                'sound more lost than honest',
-              ]}
-            />
-          ),
-        },
-        {
-          eyebrow: 'Recovery Move',
-          title: 'What stronger uncertain answers do differently',
-          preppi: 'You do not need the full answer right away. You do need a steady one.',
-          content: (
-            <TeachingList
-              items={[
-                'pauses briefly',
-                'makes one clear point',
-                'stays honest about what is unclear',
-                'gives the first useful move',
-                'ends somewhere settled',
-              ]}
-            />
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'Start with one point, not a cloud of hedges',
-          preppi: 'Do not talk in circles while you search for the answer.',
-          content: (
-            <ContrastText
-              weakLabel="Weak start"
-              weakText="There are probably a lot of ways to think about that, and I think it would depend..."
-              strongLabel="Stronger start"
-              strongText="The main thing I’d do first is... or My starting point would be..."
-            />
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'Honest caution is better than bluffing',
-          preppi: 'You do not have to sound completely certain.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">
-                A stronger answer can say: <span className="text-violet-700">&ldquo;I&apos;d want to understand the situation a little better first, but my starting point would be...&rdquo;</span>
-              </p>
-              <p className="text-sm font-semibold leading-relaxed text-violet-700 md:text-[15px]">
-                Honest caution sounds stronger than pretending to know more than you do.
-              </p>
-            </div>
-          ),
-        },
-        {
-          eyebrow: 'Core Principle',
-          title: 'Give the first useful move',
-          preppi: 'The first move shows judgment.',
-          content: (
-            <div className="space-y-4">
-              <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">
-                When the full answer is not obvious yet, name the next grounded step.
-              </p>
-              <TeachingList
-                items={[
-                  'getting clear on the situation',
-                  'checking what matters most',
-                  'talking to the right person',
-                  'confirming the facts before acting',
-                ]}
+              <ContrastText
+                weakLabel="Weak"
+                weakText={example.badAnswer}
+                strongLabel="Stronger"
+                strongText={example.goodAnswer}
               />
             </div>
           ),
         },
         {
-          eyebrow: 'Core Principle',
-          title: 'End somewhere settled',
-          preppi: 'Even if the answer is not perfect, the ending should feel grounded.',
+          eyebrow: 'See It In Action',
+          title: 'See exactly where the recovery works',
+          preppi: 'Now the stronger answer should show where the recovery actually happens.',
           content: (
-            <ContrastText
-              weakLabel="Weak ending"
-              weakText="So yeah, I think it would depend a lot and I’d kind of figure it out from there."
-              strongLabel="Stronger ending"
-              strongText="The main thing is staying calm, getting clear on the situation, and taking the first useful step."
-            />
+            <div className="space-y-4">
+              <div className="border-t border-slate-200 pt-4">
+                <div className="flex flex-wrap gap-2">
+                  {example.annotatedStrongAnswer?.map((part, index) => {
+                    const colors = annotationColors(part.label)
+                    return (
+                      <span
+                        key={`${part.label}-pill-${index}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}
+                      >
+                        {part.label}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="space-y-4">
+                {example.annotatedStrongAnswer?.map((part, index) => {
+                  const colors = annotationColors(part.label)
+                  return (
+                    <div
+                      key={`${part.label}-${index}`}
+                      className={`rounded-3xl border px-4 py-4 shadow-sm ${colors.border} ${colors.subtle}`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${colors.chip}`}>
+                          {part.label}
+                        </span>
+                      </div>
+                      <p className={`mt-3 text-base leading-relaxed md:text-[17px] ${colors.text}`}>
+                        &ldquo;{part.text}&rdquo;
+                      </p>
+                      {part.detail ? (
+                        <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-[15px]">
+                          {part.detail}
+                        </p>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           ),
         },
         {

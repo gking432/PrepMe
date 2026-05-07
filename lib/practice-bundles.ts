@@ -1314,9 +1314,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
         title: 'Stay Grounded When You Are Unsure',
         difficulty: 'easy',
         teach: {
-          title: 'Stay steady, avoid spiraling, and give the clearest grounded answer you can',
+          title: 'Recover, then answer clearly',
           explanation:
-            'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, the goal is not to sound perfect. The goal is to stay steady, avoid spiraling, and give the clearest grounded answer you can.',
+            'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, the goal is not to sound perfect. The goal is to recover calmly, choose one grounded angle, and give the clearest useful answer you can.',
           example: {
             question: 'When you are not sure how to answer right away',
             badAnswer:
@@ -1326,7 +1326,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'My starting point would be to get clear on the situation before reacting too quickly. I would want to understand what matters most first so I could make a more grounded decision. The main thing is staying calm and taking the next useful step from something real.',
             breakdown: {
-              Steadiness: 'Do not fill the space with hedge-heavy rambling. Slow down and regain control.',
+              Pause: 'Do not fill the space with hedge-heavy rambling. Slow down and regain control.',
               ClearPoint: 'Make one clear point early so the interviewer has something grounded to follow.',
               HonestCaution: 'Be honest about what is unclear without sounding lost or helpless.',
               FirstMove: 'Name the first useful move that would help you get grounded.',

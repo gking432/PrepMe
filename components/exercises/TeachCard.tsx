@@ -391,7 +391,7 @@ export default function TeachCard({
       return 'This answer likely got flagged because it does not show a calm first step, a decision process, or what happened next.'
     }
     if (key.includes('career goals') || key.includes('alignment')) {
-      return 'This answer likely got flagged because it does not clearly explain why this role makes sense for you now.'
+      return 'This answer likely got flagged because it focuses too much on what you want from the role and not enough on why this specific work is a strong fit for you and the company.'
     }
     if (key.includes('pace') || key.includes('conversation')) {
       return 'This answer likely got flagged because the delivery does not feel clean and controlled yet.'

@@ -12,6 +12,7 @@ import ApplyToYourselfExercise from '@/components/exercises/ApplyToYourselfExerc
 import SentenceBuilderExercise from '@/components/exercises/SentenceBuilderExercise'
 import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
 import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
+import CareerAlignmentWorkshop from '@/components/exercises/CareerAlignmentWorkshop'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -19,6 +20,7 @@ interface PracticeLessonFlowProps {
   lessonNumber: number
   totalLessons: number
   criterion: string
+  sessionId?: string
   originalQuestion?: string
   originalAnswer?: string
   onComplete: (passed: boolean, xpEarned: number) => void
@@ -140,6 +142,7 @@ export default function PracticeLessonFlow({
   lessonNumber,
   totalLessons,
   criterion,
+  sessionId,
   originalQuestion,
   originalAnswer,
   onComplete,
@@ -639,6 +642,32 @@ export default function PracticeLessonFlow({
           </div>
           <div className="min-h-0 flex-1">
             <StarProofWorkshop
+              originalQuestion={originalQuestion}
+              originalAnswer={originalAnswer}
+              onComplete={() => setFlowState('complete')}
+            />
+          </div>
+        </div>
+      )
+    }
+
+    if (subLesson.workshop?.type === 'career_alignment') {
+      return (
+        <div className="flex h-full flex-col animate-slide-up">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Workshop
+            </p>
+          </div>
+          <div className="mb-4">
+            <Preppi
+              message="This is where we turn a broad why-this-role answer into one that feels specific, connected, and intentional. Start with the work itself, then build the fit and the timing."
+              size="sm"
+            />
+          </div>
+          <div className="min-h-0 flex-1">
+            <CareerAlignmentWorkshop
+              sessionId={sessionId}
               originalQuestion={originalQuestion}
               originalAnswer={originalAnswer}
               onComplete={() => setFlowState('complete')}

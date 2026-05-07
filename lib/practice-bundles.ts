@@ -75,7 +75,7 @@ export interface ApplyToYourselfExercise {
 }
 
 export interface LessonWorkshop {
-  type: 'professional_story' | 'star_proof'
+  type: 'professional_story' | 'star_proof' | 'career_alignment'
 }
 
 export type Exercise =
@@ -1612,36 +1612,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             correctIndex: 1,
             explanation: 'The stronger line explains why the move makes sense now. The others still sound like broad movement language.',
           },
-          {
-            type: 'apply_to_yourself',
-            instruction: 'Rewrite the answer so the move sounds more specific, connected, and intentional.',
-            coachingTip: 'Say what specifically stands out about the role, connect it to your background, and explain why the timing makes sense now. This is a place where answer structure can help. A simple shape like Observation / Fit / Timing can organize the answer, but the substance still needs to feel specific and believable.',
-            evaluationType: 'career_alignment',
-            fields: [
-              {
-                label: 'What specifically stands out about the role?',
-                placeholder: 'Point to something real about the role that interests you.',
-                helper: 'Avoid generic praise or broad language that could apply anywhere.',
-                minWords: 10,
-                avoidWords: ['great opportunity', 'strong next step', 'new challenge'],
-              },
-              {
-                label: 'How does that connect to your background?',
-                placeholder: 'Explain how your recent work or strengths line up with that part of the role.',
-                helper: 'Make the connection concrete instead of just claiming your skills transfer.',
-                minWords: 12,
-                avoidWords: ['my skills would transfer', 'strong candidate', 'learn quickly'],
-              },
-              {
-                label: 'Why does this move make sense now?',
-                placeholder: 'Explain why the timing feels intentional and logical.',
-                helper: 'Make this sound like a coherent next step, not broad job-seeking.',
-                minWords: 12,
-                avoidWords: ['ready for something new', 'next challenge', 'time for me to grow'],
-              },
-            ],
-          },
         ],
+        workshop: {
+          type: 'career_alignment',
+        },
       },
     ],
   },

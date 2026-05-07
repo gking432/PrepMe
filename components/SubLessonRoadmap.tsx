@@ -310,6 +310,7 @@ export default function SubLessonRoadmap({
             lessonNumber={isOptional ? optionalLessonIndex as number : isSupplementalCore ? supplementalLessonIndex as number : 1}
             totalLessons={isOptional ? optionalLessons.length : isSupplementalCore ? supplementalCoreLessons.length : 1}
             criterion={criterion}
+            sessionId={sessionId}
             originalQuestion={isOptional ? optionalEvidence?.question : currentEvidence?.question}
             originalAnswer={isOptional ? optionalEvidence?.excerpt : currentEvidence?.excerpt}
             onComplete={(passed, xp) => {

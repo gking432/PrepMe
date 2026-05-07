@@ -164,7 +164,9 @@ export default function PracticeLessonFlow({
   const activeExercises = mode === 'core' ? coreExercises : randomizedExercises
   const exerciseCount = activeExercises.length
   const hasWorkshop = Boolean(subLesson.workshop)
-  const canSkipToWorkshop = subLesson.workshop?.type === 'star_proof'
+  const canSkipToWorkshop =
+    subLesson.workshop?.type === 'star_proof' ||
+    subLesson.workshop?.type === 'career_alignment'
 
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [round, setRound] = useState<'main' | 'retry'>('main')

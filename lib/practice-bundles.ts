@@ -1318,13 +1318,13 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           explanation:
             'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, do not ramble while you search. Pause, choose one grounded answer, explain why, and then support it with a short real example.',
           example: {
-            question: 'How do you handle uncertainty when the path forward is not clear right away?',
+            question: 'Tell me about an area where you are still developing professionally.',
             badAnswer:
-              'I think there are probably a few ways to think about that, and it would really depend on the situation. There are a lot of factors there, so I would not want to say too much too quickly. I would probably just try to feel it out first.',
+              'That is a good question. I think there are probably a few areas, and it kind of depends on how you define development. I am always trying to improve, so it is hard to pick just one thing.',
             mediumAnswer:
-              'My starting point is usually to slow the situation down and get clear on what matters most before reacting.',
+              'One area I am still working on is getting faster at making decisions when not everything is fully clear yet.',
             goodAnswer:
-              'When the path is not clear right away, my starting point is to slow the situation down and get clear on what matters most first. That helps me avoid reacting too quickly and gives me a better basis for the next decision. In one role, when priorities shifted late on a project and ownership was unclear, I first clarified the real deadline and decision-maker before resetting the plan, which kept the work moving without unnecessary escalation.',
+              'One area I am still developing is getting faster at making decisions when the path is not fully clear. I have gotten much better at it, but I still push myself to get to a clear call faster instead of over-processing. For example, in one role I had to reset a project plan with incomplete information, and I learned that clarifying the key decision first was more useful than waiting for perfect certainty.',
             breakdown: {
               Answer: 'Give one clear answer early so the interviewer knows where the response is going.',
               Reason: 'Explain why that answer makes sense instead of circling the topic.',
@@ -1333,17 +1333,17 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             annotatedStrongAnswer: [
               {
                 label: 'Answer',
-                text: 'When the path is not clear right away, my starting point is to slow the situation down and get clear on what matters most first.',
+                text: 'One area I am still developing is getting faster at making decisions when the path is not fully clear.',
                 detail: 'This gives one direct answer early instead of rambling while searching for a point.',
               },
               {
                 label: 'Reason',
-                text: 'That helps me avoid reacting too quickly and gives me a better basis for the next decision.',
+                text: 'I have gotten much better at it, but I still push myself to get to a clear call faster instead of over-processing.',
                 detail: 'This explains the logic behind the answer instead of leaving it as a vague instinct.',
               },
               {
                 label: 'Example',
-                text: 'In one role, when priorities shifted late on a project and ownership was unclear, I first clarified the real deadline and decision-maker before resetting the plan, which kept the work moving without unnecessary escalation.',
+                text: 'For example, in one role I had to reset a project plan with incomplete information, and I learned that clarifying the key decision first was more useful than waiting for perfect certainty.',
                 detail: 'This makes the answer believable by showing what the approach looked like in a real situation.',
               },
             ],

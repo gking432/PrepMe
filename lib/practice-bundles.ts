@@ -75,7 +75,7 @@ export interface ApplyToYourselfExercise {
 }
 
 export interface LessonWorkshop {
-  type: 'professional_story' | 'star_proof' | 'career_alignment'
+  type: 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty'
 }
 
 export type Exercise =
@@ -1498,36 +1498,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               },
             ],
           },
-          {
-            type: 'apply_to_yourself',
-            instruction: 'Rewrite this answer so it uses Answer, Reason, Example instead of rambling while you think.',
-            coachingTip: 'Pause first if you need a second. Then give one clear answer, explain why, and support it with a short real example.',
-            evaluationType: 'handling_uncertainty',
-            fields: [
-              {
-                label: 'Answer',
-                placeholder: 'Start with one clear answer instead of circling the question.',
-                helper: 'The interviewer should know where you are going right away.',
-                minWords: 6,
-                avoidWords: ['it depends', 'a few different ways', 'hard to pick just one'],
-              },
-              {
-                label: 'Reason',
-                placeholder: 'Explain why that answer is true for you.',
-                helper: 'This is where you make the answer feel thoughtful instead of abrupt.',
-                minWords: 8,
-                avoidWords: ['it is important', 'I care about that', 'it matters a lot'],
-              },
-              {
-                label: 'Example',
-                placeholder: 'Support the answer with a short real example.',
-                helper: 'Keep it brief, but make it real enough to sound believable.',
-                minWords: 10,
-                avoidWords: ['for example in general', 'I have seen this before', 'this comes up a lot'],
-              },
-            ],
-          },
         ],
+        workshop: {
+          type: 'handling_uncertainty',
+        },
       },
     ],
   },

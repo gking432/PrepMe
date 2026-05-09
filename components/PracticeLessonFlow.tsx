@@ -13,6 +13,7 @@ import SentenceBuilderExercise from '@/components/exercises/SentenceBuilderExerc
 import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
 import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
 import CareerAlignmentWorkshop from '@/components/exercises/CareerAlignmentWorkshop'
+import HandlingUncertaintyWorkshop from '@/components/exercises/HandlingUncertaintyWorkshop'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -166,7 +167,8 @@ export default function PracticeLessonFlow({
   const hasWorkshop = Boolean(subLesson.workshop)
   const canSkipToWorkshop =
     subLesson.workshop?.type === 'star_proof' ||
-    subLesson.workshop?.type === 'career_alignment'
+    subLesson.workshop?.type === 'career_alignment' ||
+    subLesson.workshop?.type === 'handling_uncertainty'
 
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [round, setRound] = useState<'main' | 'retry'>('main')
@@ -670,6 +672,31 @@ export default function PracticeLessonFlow({
           <div className="min-h-0 flex-1">
             <CareerAlignmentWorkshop
               sessionId={sessionId}
+              originalQuestion={originalQuestion}
+              originalAnswer={originalAnswer}
+              onComplete={() => setFlowState('complete')}
+            />
+          </div>
+        </div>
+      )
+    }
+
+    if (subLesson.workshop?.type === 'handling_uncertainty') {
+      return (
+        <div className="flex h-full flex-col animate-slide-up">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Workshop
+            </p>
+          </div>
+          <div className="mb-4">
+            <Preppi
+              message="This is where we practice recovering cleanly on a question that could make you ramble. We will keep the choices controlled so you can build a strong Answer, Reason, Example response step by step."
+              size="sm"
+            />
+          </div>
+          <div className="min-h-0 flex-1">
+            <HandlingUncertaintyWorkshop
               originalQuestion={originalQuestion}
               originalAnswer={originalAnswer}
               onComplete={() => setFlowState('complete')}

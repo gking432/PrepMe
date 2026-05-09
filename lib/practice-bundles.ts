@@ -1314,39 +1314,37 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
         title: 'Stay Grounded When You Are Unsure',
         difficulty: 'easy',
         teach: {
-          title: 'Recover, then answer clearly',
+          title: 'Use Answer, Reason, Example when you are unsure',
           explanation:
-            'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, the goal is not to sound perfect. The goal is to recover calmly, choose one grounded angle, and give the clearest useful answer you can.',
+            'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, do not ramble while you search. Pause, choose one grounded answer, explain why, and then support it with a short real example.',
           example: {
-            question: 'When you are not sure how to answer right away',
+            question: 'How do you handle uncertainty when the path forward is not clear right away?',
             badAnswer:
               'I think there are probably a few ways to think about that, and it would really depend on the situation. There are a lot of factors there, so I would not want to say too much too quickly. I would probably just try to feel it out first.',
             mediumAnswer:
-              'I would want to understand the situation a little better first, but my starting point would be to clarify what matters most before reacting.',
+              'My starting point is usually to slow the situation down and get clear on what matters most before reacting.',
             goodAnswer:
-              'My starting point would be to get clear on the situation before reacting too quickly. I would want to understand what matters most first so I could make a more grounded decision. The main thing is staying calm and taking the next useful step from something real.',
+              'When the path is not clear right away, my starting point is to slow the situation down and get clear on what matters most first. That helps me avoid reacting too quickly and gives me a better basis for the next decision. In one role, when priorities shifted late on a project and ownership was unclear, I first clarified the real deadline and decision-maker before resetting the plan, which kept the work moving without unnecessary escalation.',
             breakdown: {
-              Pause: 'Do not fill the space with hedge-heavy rambling. Slow down and regain control.',
-              ClearPoint: 'Make one clear point early so the interviewer has something grounded to follow.',
-              HonestCaution: 'Be honest about what is unclear without sounding lost or helpless.',
-              FirstMove: 'Name the first useful move that would help you get grounded.',
-              SettledEnding: 'End somewhere settled instead of drifting back into uncertainty.',
+              Answer: 'Give one clear answer early so the interviewer knows where the response is going.',
+              Reason: 'Explain why that answer makes sense instead of circling the topic.',
+              Example: 'Ground it with a short real example so the answer sounds credible and lived-in.',
             },
             annotatedStrongAnswer: [
               {
-                label: 'Clear Point',
-                text: 'My starting point would be to get clear on the situation before reacting too quickly.',
-                detail: 'This gives one grounded point instead of a cloud of hedges.',
+                label: 'Answer',
+                text: 'When the path is not clear right away, my starting point is to slow the situation down and get clear on what matters most first.',
+                detail: 'This gives one direct answer early instead of rambling while searching for a point.',
               },
               {
-                label: 'First Useful Move',
-                text: 'I would want to understand what matters most first so I could make a more grounded decision.',
-                detail: 'This names an actual next move instead of sounding passive or vague.',
+                label: 'Reason',
+                text: 'That helps me avoid reacting too quickly and gives me a better basis for the next decision.',
+                detail: 'This explains the logic behind the answer instead of leaving it as a vague instinct.',
               },
               {
-                label: 'Settled Ending',
-                text: 'The main thing is staying calm and taking the next useful step from something real.',
-                detail: 'This lands on a grounded principle instead of wandering back into uncertainty.',
+                label: 'Example',
+                text: 'In one role, when priorities shifted late on a project and ownership was unclear, I first clarified the real deadline and decision-maker before resetting the plan, which kept the work moving without unnecessary escalation.',
+                detail: 'This makes the answer believable by showing what the approach looked like in a real situation.',
               },
             ],
           },

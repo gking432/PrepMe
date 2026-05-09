@@ -2120,7 +2120,7 @@ export default function TeachCard({
         {
           eyebrow: title,
           title,
-          preppi: 'This lesson is about recovery, not perfection.',
+          preppi: 'This lesson is about recovering into a clear answer, not filling space while you think.',
           content: (
             <div className="space-y-4">
               <p className="text-base leading-relaxed text-slate-700 md:text-[17px]">{explanation}</p>
@@ -2139,7 +2139,7 @@ export default function TeachCard({
               </div>
               <div className="border-t border-violet-100 pt-3">
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
-                  The interviewer is not expecting instant perfection. They are listening for how you recover.
+                  The interviewer is not expecting instant perfection. They are listening for whether you can recover into a clear answer.
                 </p>
               </div>
             </div>
@@ -2148,7 +2148,7 @@ export default function TeachCard({
         {
           eyebrow: 'Compare',
           title: 'See the difference',
-          preppi: 'The weaker version spirals. The stronger version regains control quickly.',
+          preppi: 'The weaker version rambles. The stronger version answers, explains, and proves.',
           content: (
             <div className="space-y-4">
               <ContrastText
@@ -2162,8 +2162,8 @@ export default function TeachCard({
         },
         {
           eyebrow: 'See It In Action',
-          title: 'See exactly where the recovery works',
-          preppi: 'Now the stronger answer should show where the recovery actually happens.',
+          title: 'See exactly where each part lives',
+          preppi: 'Now the stronger answer should show the Answer, the Reason, and the Example clearly.',
           content: (
             <div className="space-y-4">
               <div className="border-t border-slate-200 pt-4">
@@ -2216,11 +2216,11 @@ export default function TeachCard({
           content: (
             <TeachingList
               items={[
-                'Did I pause instead of filling space?',
-                'Did I make one clear point early?',
-                'Was I honest without sounding lost?',
-                'Did I name the first useful move?',
-                'Did I end somewhere settled?',
+                'Did I pause instead of rambling?',
+                'Did I give one clear answer early?',
+                'Did I explain why that answer makes sense?',
+                'Did I ground it with a short real example?',
+                'Did the answer feel direct instead of hedge-heavy?',
               ]}
             />
           ),

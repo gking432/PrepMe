@@ -2141,12 +2141,15 @@ export default function TeachCard({
                 <p className="text-sm font-semibold leading-relaxed text-violet-900 md:text-[15px]">
                   The interviewer is not expecting instant perfection. They are listening for whether you can recover into a clear answer.
                 </p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 md:text-[15px]">
+                  The example below uses a common HR screen question so the tool is easy to see clearly, even if your own flagged question was different.
+                </p>
               </div>
             </div>
           ),
         },
         {
-          eyebrow: 'Compare',
+          eyebrow: example.question,
           title: 'See the difference',
           preppi: 'The weaker version rambles. The stronger version answers, explains, and proves.',
           content: (

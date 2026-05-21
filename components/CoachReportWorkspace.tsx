@@ -1,7 +1,8 @@
 'use client'
 
 import { ReactNode, useEffect, useMemo, useState } from 'react'
-import { ArrowRight, CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Target, Trophy, FileText, Download, X } from 'lucide-react'
+import { CheckCircle, ChevronLeft, ChevronRight, AlertTriangle, Target, Trophy, FileText, Download, X } from 'lucide-react'
+import { getImprovementTipForCriterion } from '@/lib/practice-bundles'
 
 type ReportSection = 'overview' | 'strengths' | 'issues' | 'criteria' | 'next_steps'
 
@@ -9,7 +10,6 @@ interface ReportWorkspaceProps {
   feedback: any
   currentSessionData: any
   currentStage: string
-  onStartPractice: () => void
   onRetakeInterview?: () => void
   onUnlockNextStage?: () => void
   artifactContent?: ReactNode
@@ -20,8 +20,8 @@ interface ReportWorkspaceProps {
 
 const SECTION_CONFIG: Array<{ key: ReportSection; label: string }> = [
   { key: 'overview', label: 'Overview' },
-  { key: 'strengths', label: 'Strengths' },
-  { key: 'issues', label: 'Issues' },
+  { key: 'strengths', label: 'Strong Signals' },
+  { key: 'issues', label: 'Improve' },
   { key: 'criteria', label: 'Comparison' },
   { key: 'next_steps', label: 'Next Steps' },
 ]
@@ -48,6 +48,96 @@ function getSixAreas(feedback: any, stage: string) {
     case 'final_round': return feedback?.final_round_six_areas
     default: return feedback?.hr_screen_six_areas
   }
+}
+
+type InsightTone = 'emerald' | 'amber' | 'slate' | 'violet'
+
+const INSIGHT_TONE_CLASSES: Record<InsightTone, { card: string; icon: string; label: string }> = {
+  emerald: {
+    card: 'border-emerald-200 bg-emerald-50/75',
+    icon: 'bg-emerald-100 text-emerald-700',
+    label: 'text-emerald-700',
+  },
+  amber: {
+    card: 'border-amber-200 bg-amber-50/75',
+    icon: 'bg-amber-100 text-amber-700',
+    label: 'text-amber-700',
+  },
+  slate: {
+    card: 'border-slate-200 bg-slate-50/85',
+    icon: 'bg-slate-100 text-slate-700',
+    label: 'text-slate-600',
+  },
+  violet: {
+    card: 'border-violet-200 bg-violet-50/75',
+    icon: 'bg-violet-100 text-violet-700',
+    label: 'text-violet-700',
+  },
+}
+
+function InsightBlock({
+  icon: Icon,
+  eyebrow,
+  title,
+  children,
+  tone = 'slate',
+}: {
+  icon: typeof Target
+  eyebrow: string
+  title: string
+  children: ReactNode
+  tone?: InsightTone
+}) {
+  const classes = INSIGHT_TONE_CLASSES[tone]
+
+  return (
+    <div className={`rounded-[1.25rem] border p-4 ${classes.card}`}>
+      <div className="flex items-start gap-3">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${classes.icon}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <p className={`text-[11px] font-black uppercase tracking-[0.18em] ${classes.label}`}>{eyebrow}</p>
+          <h3 className="mt-1 text-base font-black text-slate-950">{title}</h3>
+        </div>
+      </div>
+      <div className="mt-3 text-sm leading-7 text-slate-700">{children}</div>
+    </div>
+  )
+}
+
+function getPrimaryEvidence(item: any) {
+  const evidence = Array.isArray(item?.evidence) ? item.evidence[0] : null
+  if (!evidence) return null
+
+  return {
+    question: typeof evidence.question === 'string' ? evidence.question : '',
+    excerpt: typeof evidence.excerpt === 'string' ? evidence.excerpt : '',
+  }
+}
+
+function truncateText(value: any, maxLength = 260) {
+  const text = typeof value === 'string' ? value.trim() : ''
+  if (!text) return ''
+  return text.length > maxLength ? `${text.slice(0, maxLength).trim()}...` : text
+}
+
+function scoreBadge(score: any) {
+  if (score == null) return null
+  return `${score}/10`
+}
+
+function repeatSignalGuidance(item: any) {
+  const criterion = typeof item?.criterion === 'string' ? item.criterion.toLowerCase() : 'this signal'
+  return `Repeat this by making ${criterion} visible early, grounding it in a concrete example, and tying the point back to the role.`
+}
+
+function defaultRepairPattern(criterion: string) {
+  return [
+    `Answer the ${criterion.toLowerCase()} concern directly in the first sentence.`,
+    'Add one specific example with your role, action, and result.',
+    'Close by connecting the example to what this job needs next.',
+  ]
 }
 
 function normalizeCriteria(fullRubric: any, overallScoreRef: number) {
@@ -152,7 +242,6 @@ export default function CoachReportWorkspace({
   feedback,
   currentSessionData,
   currentStage,
-  onStartPractice,
   onRetakeInterview,
   onUnlockNextStage,
   artifactContent,
@@ -163,6 +252,8 @@ export default function CoachReportWorkspace({
   const [section, setSection] = useState<ReportSection>('overview')
   const [showArtifact, setShowArtifact] = useState(false)
   const [tutorialStep, setTutorialStep] = useState(0)
+  const [selectedStrengthIndex, setSelectedStrengthIndex] = useState(0)
+  const [selectedIssueIndex, setSelectedIssueIndex] = useState(0)
 
   const sixAreas = useMemo(() => getSixAreas(feedback, currentStage), [feedback, currentStage])
   const strengths = sixAreas?.what_went_well || []
@@ -177,8 +268,12 @@ export default function CoachReportWorkspace({
   const studyAreas = fullRubric?.next_steps_preparation?.areas_to_study || []
   const predictedQuestions = fullRubric?.next_steps_preparation?.predicted_hiring_manager_questions || []
   const sectionIndex = SECTION_CONFIG.findIndex((item) => item.key === section)
-  const topStrengths = strengths.slice(0, 4)
+  const topStrengths = strengths
   const topIssues = issues
+  const activeStrengthIndex = topStrengths.length ? Math.min(selectedStrengthIndex, topStrengths.length - 1) : 0
+  const activeIssueIndex = topIssues.length ? Math.min(selectedIssueIndex, topIssues.length - 1) : 0
+  const selectedStrength = topStrengths[activeStrengthIndex]
+  const selectedIssue = topIssues[activeIssueIndex]
   const tutorialSteps = [
     {
       section: 'overview' as ReportSection,
@@ -192,13 +287,13 @@ export default function CoachReportWorkspace({
     },
     {
       section: 'issues' as ReportSection,
-      title: 'Flagged issues are where practice comes from',
-      body: 'Each issue here can turn into a coaching module. Fix the highest-leverage problems first.',
+      title: 'Flagged issues are where you tighten your next attempt',
+      body: 'Use each flagged area to understand what weakened the answer, review the quick tip, then craft a stronger version before you retry.',
     },
     {
       section: 'next_steps' as ReportSection,
       title: 'This is how you move forward',
-      body: 'From Next Steps you can launch practice, retake the round, or move on when the feedback says you are ready.',
+      body: 'From Next Steps you can review what to improve, retake the round, or move on when the feedback says you are ready.',
     },
   ]
   const activeTutorial = tutorialSteps[Math.min(tutorialStep, tutorialSteps.length - 1)]
@@ -207,6 +302,14 @@ export default function CoachReportWorkspace({
     if (!tutorialActive) return
     setSection(activeTutorial.section)
   }, [activeTutorial.section, tutorialActive])
+
+  useEffect(() => {
+    if (selectedStrengthIndex >= topStrengths.length) setSelectedStrengthIndex(0)
+  }, [selectedStrengthIndex, topStrengths.length])
+
+  useEffect(() => {
+    if (selectedIssueIndex >= topIssues.length) setSelectedIssueIndex(0)
+  }, [selectedIssueIndex, topIssues.length])
 
   const renderSection = () => {
     if (section === 'overview') {
@@ -242,7 +345,7 @@ export default function CoachReportWorkspace({
               </div>
               <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 p-3">
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600">Focus</p>
-                <p className="mt-1 text-sm font-bold text-slate-900">{issues.length} modules available</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{issues.length} flagged area{issues.length === 1 ? '' : 's'}</p>
               </div>
             </div>
           </div>
@@ -315,99 +418,211 @@ export default function CoachReportWorkspace({
     }
 
     if (section === 'strengths') {
+      const evidence = getPrimaryEvidence(selectedStrength)
+      const score = scoreBadge(selectedStrength?.score)
+
       return (
-        <div className="grid h-full gap-5 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="rounded-[1.8rem] border border-emerald-200 bg-emerald-50/90 p-6">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Strength Summary</p>
-            <h2 className="mt-3 text-3xl font-black text-emerald-900">{strengths.length} strong signals</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-700">
-              These are the parts of the interview that already sounded credible, structured, and worth carrying into the next round.
+        <div className="grid h-full min-h-0 gap-4 overflow-hidden xl:grid-cols-[320px_1fr]">
+          <div className="flex min-h-0 flex-col rounded-[1.8rem] border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-5 shadow-[0_18px_34px_rgba(15,118,110,0.08)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Strong Signals</p>
+            <h2 className="mt-3 text-2xl font-black leading-tight text-slate-950">Choose a signal to inspect</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              The goal here is repeatability. Pick a strong signal and see why it worked.
             </p>
-            <div className="mt-6 space-y-3">
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-[1rem] border border-emerald-200 bg-white/80 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Found</p>
+                <p className="mt-1 text-2xl font-black text-emerald-800">{topStrengths.length}</p>
+              </div>
+              <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Viewing</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{topStrengths.length ? activeStrengthIndex + 1 : 0}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">All signals</p>
+            <div className="mt-2 grid flex-1 content-start gap-2">
               {topStrengths.map((item: any, idx: number) => (
-                <div key={`${item.criterion}-summary-${idx}`} className="rounded-[1.2rem] border border-emerald-200 bg-white/80 px-4 py-3">
-                  <p className="text-sm font-black text-slate-900">{item.criterion}</p>
-                </div>
+                <button
+                  key={`${item.criterion}-quick-${idx}`}
+                  type="button"
+                  onClick={() => setSelectedStrengthIndex(idx)}
+                  className={`rounded-[1rem] border px-3 py-2 text-left text-sm font-black transition ${
+                    activeStrengthIndex === idx
+                      ? 'border-emerald-300 bg-emerald-600 text-white shadow-[0_10px_18px_rgba(5,150,105,0.22)]'
+                      : 'border-emerald-200 bg-white/80 text-slate-700 hover:border-emerald-300'
+                  }`}
+                >
+                  <span className="line-clamp-1">{item.criterion}</span>
+                </button>
               ))}
             </div>
           </div>
-          <div className="grid h-full gap-4 lg:grid-cols-2">
-            {topStrengths.map((item: any, idx: number) => (
-              <div key={`${item.criterion}-${idx}`} className="rounded-[1.5rem] border border-emerald-200 bg-white/92 p-5 shadow-[0_14px_28px_rgba(15,23,42,0.06)]">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-emerald-100">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+
+          {selectedStrength ? (
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-4 overflow-hidden">
+              <div className="rounded-[1.6rem] border border-emerald-200 bg-white/95 p-5 shadow-[0_14px_30px_rgba(15,23,42,0.06)]">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-700">Selected strong signal</p>
+                    <h3 className="mt-1 text-2xl font-black leading-tight text-slate-950">{selectedStrength.criterion}</h3>
                   </div>
-                  <p className="text-base font-black text-slate-900">{item.criterion}</p>
+                  {score && (
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+                      {score}
+                    </span>
+                  )}
                 </div>
-                <p className="text-sm leading-7 text-slate-600">{item.feedback}</p>
               </div>
-            ))}
-          </div>
+
+              <div className="grid min-h-0 gap-4 lg:grid-cols-2">
+                <InsightBlock icon={CheckCircle} eyebrow="What worked" title="This landed well" tone="emerald">
+                  <p className="line-clamp-5">{selectedStrength.feedback || 'This answer created a positive signal the interviewer could use.'}</p>
+                </InsightBlock>
+                <InsightBlock icon={Trophy} eyebrow="Why it mattered" title="It reduced doubt" tone="violet">
+                  <p className="line-clamp-5">
+                    This gave the interviewer a clearer reason to believe you can do the work, communicate cleanly, or fit the stage expectations.
+                  </p>
+                </InsightBlock>
+                <InsightBlock icon={Target} eyebrow="Repeat it next time" title="Turn it into a habit" tone="slate">
+                  <p className="line-clamp-5">{repeatSignalGuidance(selectedStrength)}</p>
+                </InsightBlock>
+                <InsightBlock icon={FileText} eyebrow="Evidence" title={evidence?.question ? 'Where it showed up' : 'No quote captured'} tone="emerald">
+                  {evidence?.question || evidence?.excerpt ? (
+                    <div className="space-y-2">
+                      {evidence.question && <p className="line-clamp-2 font-bold text-slate-900">{evidence.question}</p>}
+                      {evidence.excerpt && <p className="line-clamp-3 text-slate-600">&ldquo;{truncateText(evidence.excerpt, 240)}&rdquo;</p>}
+                    </div>
+                  ) : (
+                    <p>No supporting excerpt was attached to this signal.</p>
+                  )}
+                </InsightBlock>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-[1.5rem] border border-slate-200 bg-white/92 p-6 text-sm leading-7 text-slate-600">
+              No strong signals were returned for this report yet. Once the grader identifies repeatable wins, they will show up here with coaching notes.
+            </div>
+          )}
         </div>
       )
     }
 
     if (section === 'issues') {
+      const tip = selectedIssue ? getImprovementTipForCriterion(selectedIssue.criterion || 'Response Quality', selectedIssue.rootCause) : null
+      const evidence = getPrimaryEvidence(selectedIssue)
+      const score = scoreBadge(selectedIssue?.score)
+      const rewrittenAnswer = typeof selectedIssue?.rewritten_answer === 'string' ? selectedIssue.rewritten_answer.trim() : ''
+      const rewriteMethod = typeof selectedIssue?.rewrite_method === 'string' ? selectedIssue.rewrite_method.trim() : ''
+      const repairPattern = tip
+        ? tip.bullets?.length
+          ? tip.bullets
+          : defaultRepairPattern(selectedIssue?.criterion || 'response quality')
+        : []
+
       return (
-        <div className="grid h-full gap-5 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="rounded-[1.8rem] border border-amber-200 bg-amber-50/90 p-6">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-600">Issue Summary</p>
-            <h2 className="mt-3 text-3xl font-black text-amber-900">{issues.length} flagged issues</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-700">
-              These are the places where the interview lost signal. This is the work that feeds your practice modules and the next retake.
+        <div className="grid h-full min-h-0 gap-4 overflow-hidden xl:grid-cols-[320px_1fr]">
+          <div className="flex min-h-0 flex-col rounded-[1.8rem] border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 shadow-[0_18px_34px_rgba(180,83,9,0.08)]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">Answer Repair</p>
+            <h2 className="mt-3 text-2xl font-black leading-tight text-slate-950">Pick a flagged area</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              The page stays still. The user drills into one improvement at a time.
             </p>
-            <div className="mt-6 space-y-3">
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-[1rem] border border-amber-200 bg-white/80 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-700">Flagged</p>
+                <p className="mt-1 text-2xl font-black text-amber-800">{topIssues.length}</p>
+              </div>
+              <div className="rounded-[1rem] border border-slate-200 bg-white/80 p-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Viewing</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{topIssues.length ? activeIssueIndex + 1 : 0}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">All flagged areas</p>
+            <div className="mt-2 grid flex-1 content-start gap-2">
               {topIssues.map((item: any, idx: number) => (
-                <div key={`${item.criterion}-summary-${idx}`} className="rounded-[1.2rem] border border-amber-200 bg-white/80 px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-black text-slate-900">{item.criterion}</p>
-                    {item.score != null && (
-                      <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">
-                        {item.score}/10
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <button
+                  key={`${item.criterion}-issue-quick-${idx}`}
+                  type="button"
+                  onClick={() => setSelectedIssueIndex(idx)}
+                  className={`rounded-[1rem] border px-3 py-2 text-left text-sm font-black transition ${
+                    activeIssueIndex === idx
+                      ? 'border-amber-300 bg-amber-500 text-white shadow-[0_10px_18px_rgba(217,119,6,0.22)]'
+                      : 'border-amber-200 bg-white/80 text-slate-700 hover:border-amber-300'
+                  }`}
+                >
+                  <span className="line-clamp-1">{item.criterion}</span>
+                </button>
               ))}
             </div>
           </div>
-          <div className="grid h-full gap-4 lg:grid-cols-2">
-            {topIssues.map((item: any, idx: number) => (
-              <div key={`${item.criterion}-${idx}`} className="rounded-[1.5rem] border border-amber-200 bg-white/92 p-5 shadow-[0_14px_28px_rgba(15,23,42,0.06)]">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-amber-100">
-                      <AlertTriangle className="h-5 w-5 text-amber-600" />
-                    </div>
-                    <p className="text-base font-black text-slate-900">{item.criterion}</p>
+
+          {selectedIssue && tip ? (
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-4 overflow-hidden">
+              <div className="rounded-[1.6rem] border border-amber-200 bg-white/95 p-5 shadow-[0_14px_30px_rgba(15,23,42,0.06)]">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">Selected improvement</p>
+                    <h3 className="mt-1 text-2xl font-black leading-tight text-slate-950">{selectedIssue.criterion}</h3>
                   </div>
-                  {item.score != null && (
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">
-                      {item.score}/10
+                  {score && (
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-black text-amber-700">
+                      {score}
                     </span>
                   )}
                 </div>
-                <p className="text-sm leading-7 text-slate-600">{item.feedback}</p>
-                {item.evidence?.[0]?.question && (
-                  <div className="mt-4 space-y-3">
-                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Flagged Question</p>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{item.evidence[0].question}</p>
-                    </div>
-                    {item.evidence?.[0]?.excerpt && (
-                      <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50/90 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Your Answer</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                          &ldquo;{String(item.evidence[0].excerpt).slice(0, 220)}{String(item.evidence[0].excerpt).length > 220 ? '…' : ''}&rdquo;
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-            ))}
-          </div>
+
+              <div className="grid min-h-0 gap-4 lg:grid-cols-2">
+                <InsightBlock icon={AlertTriangle} eyebrow="What hurt it" title="The missing signal" tone="amber">
+                  <p className="line-clamp-5">{selectedIssue.feedback || 'The answer did not give the interviewer enough usable evidence.'}</p>
+                </InsightBlock>
+                <InsightBlock icon={Target} eyebrow="Tip for improvement" title={tip.title} tone="emerald">
+                  <p className="line-clamp-3">{tip.summary}</p>
+                  <div className="mt-2 rounded-xl border border-emerald-200 bg-white/80 px-3 py-2">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Try this next</p>
+                    <p className="mt-1 font-bold leading-6 text-slate-800">{tip.retryPrompt}</p>
+                  </div>
+                  {rewrittenAnswer ? (
+                    <div className="mt-3 rounded-xl border border-violet-200 bg-white px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">Better Version</p>
+                        {rewriteMethod ? (
+                          <span className="rounded-full bg-violet-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
+                            {rewriteMethod}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">&ldquo;{rewrittenAnswer}&rdquo;</p>
+                    </div>
+                  ) : null}
+                </InsightBlock>
+                <InsightBlock icon={FileText} eyebrow="Better answer pattern" title="Draft this next" tone="violet">
+                  <div className="grid gap-2">
+                    {repairPattern.slice(0, 3).map((step: string, stepIdx: number) => (
+                      <div key={`${selectedIssue.criterion}-compact-pattern-${stepIdx}`} className="rounded-xl border border-violet-200 bg-white/80 px-3 py-2">
+                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-600">Step {stepIdx + 1}</p>
+                        <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-slate-700">{step}</p>
+                      </div>
+                    ))}
+                  </div>
+                </InsightBlock>
+                <InsightBlock icon={FileText} eyebrow="Evidence" title={evidence?.question ? 'Where it showed up' : 'No quote captured'} tone="slate">
+                  {evidence?.question || evidence?.excerpt ? (
+                    <div className="space-y-2">
+                      {evidence.question && <p className="line-clamp-2 font-bold text-slate-900">{evidence.question}</p>}
+                      {evidence.excerpt && <p className="line-clamp-3 text-slate-600">&ldquo;{truncateText(evidence.excerpt, 240)}&rdquo;</p>}
+                    </div>
+                  ) : (
+                    <p>No supporting excerpt was attached to this issue.</p>
+                  )}
+                </InsightBlock>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-[1.5rem] border border-emerald-200 bg-emerald-50/80 p-6 text-sm leading-7 text-emerald-900">
+              No flagged issues were returned for this report. If this looks wrong, retake the interview and the grader will rebuild this coaching workspace.
+            </div>
+          )}
         </div>
       )
     }
@@ -614,7 +829,7 @@ export default function CoachReportWorkspace({
               <Target className="h-6 w-6 text-violet-700" />
             </div>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Practice Direction</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">Improvement Direction</p>
               <p className="text-lg font-black text-slate-900">What to work on next</p>
             </div>
           </div>
@@ -646,14 +861,12 @@ export default function CoachReportWorkspace({
               ))}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onStartPractice}
-            className="btn-coach-primary mt-6 flex items-center justify-center gap-2 px-6 py-4 text-base"
-          >
-            Start Practice
-            <ArrowRight className="h-5 w-5" />
-          </button>
+          <div className="mt-6 rounded-[1.2rem] border border-violet-200 bg-violet-50/80 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">Retry Advice</p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              Pick the highest-leverage flagged area, craft a stronger version of that answer on your own, then either retake this round or continue if the feedback already says you are ready.
+            </p>
+          </div>
           <div className="mt-4 grid gap-3">
             <button
               type="button"

@@ -3,15 +3,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { deductCredit } from '@/lib/credit-check'
 import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
+import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
   if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   return _openai
+}
+
+let _anthropicHaiku: Anthropic | null = null
+function getAnthropicHaiku() {
+  if (!_anthropicHaiku) _anthropicHaiku = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
+  return _anthropicHaiku
 }
 
 const HR_SIX_CRITERIA = [
@@ -22,6 +29,206 @@ const HR_SIX_CRITERIA = [
   'Alignment of Career Goals with Position',
   'Pace and Conversation Flow',
 ] as const
+
+type RewriteMethod = {
+  id: string
+  label: string
+  instruction: string
+}
+
+const HR_REWRITE_METHODS: RewriteMethod[] = [
+  {
+    id: 'present_past_future',
+    label: 'Present-Past-Future',
+    instruction: 'Rewrite as Present -> Past -> Future: current professional lane, relevant background proof, then why this role is the logical next step.',
+  },
+  {
+    id: 'star',
+    label: 'STAR',
+    instruction: 'Rewrite as Situation -> Task -> Action -> Result with one concrete example, clear ownership, and a result or honest placeholder if the result was missing.',
+  },
+  {
+    id: 'answer_reason_example',
+    label: 'Answer-Reason-Example',
+    instruction: 'Rewrite as direct answer -> brief reason -> related example or transferable experience. Address the difficult question honestly instead of deflecting.',
+  },
+  {
+    id: 'noticed_fit_now',
+    label: 'Noticed-Fit-Now',
+    instruction: 'Rewrite as what they noticed about the role/company -> how their background fits -> why the timing makes sense now.',
+  },
+]
+
+function getRewriteMethodForHrSignal(criterion?: string, rootCause?: string): RewriteMethod | null {
+  const text = `${criterion || ''} ${rootCause || ''}`.toLowerCase()
+
+  if (/professional story|professional_story|tell me about yourself|background/.test(text)) {
+    return HR_REWRITE_METHODS[0]
+  }
+
+  if (/specific examples|evidence|lack_of_specificity|star|example/.test(text)) {
+    return HR_REWRITE_METHODS[1]
+  }
+
+  if (/uncertain|difficult|off_topic|gap|bluff|deflect/.test(text)) {
+    return HR_REWRITE_METHODS[2]
+  }
+
+  if (/alignment|career goals|position|why this role|why this position|noticed_fit_now/.test(text)) {
+    return HR_REWRITE_METHODS[3]
+  }
+
+  return null
+}
+
+function getQuestionText(questionId: string | undefined, evidence: any, structuredTranscript: any) {
+  const evidenceQuestion = typeof evidence?.question === 'string' ? evidence.question : ''
+  if (evidenceQuestion) return evidenceQuestion
+
+  const questions = Array.isArray(structuredTranscript?.questions_asked) ? structuredTranscript.questions_asked : []
+  const match = questions.find((question: any) => question?.id === questionId || question?.question_id === questionId)
+  return match?.question || ''
+}
+
+function getCandidateAnswerForQuestion(questionId: string | undefined, evidence: any, structuredTranscript: any) {
+  const messages = Array.isArray(structuredTranscript?.messages) ? structuredTranscript.messages : []
+
+  if (questionId) {
+    const matchingCandidateMessages = messages
+      .filter((message: any) => message?.speaker === 'candidate' && message?.question_id === questionId && typeof message?.text === 'string')
+      .map((message: any) => message.text.trim())
+      .filter(Boolean)
+
+    if (matchingCandidateMessages.length > 0) return matchingCandidateMessages.join('\n\n')
+  }
+
+  const excerpt = typeof evidence?.excerpt === 'string' ? evidence.excerpt.trim() : ''
+  if (excerpt) {
+    const excerptMatch = messages.find((message: any) => {
+      if (message?.speaker !== 'candidate' || typeof message?.text !== 'string') return false
+      return message.text.includes(excerpt) || excerpt.includes(message.text.slice(0, 80))
+    })
+    if (excerptMatch?.text) return excerptMatch.text.trim()
+  }
+
+  return excerpt
+}
+
+function parseJsonObject(text: string) {
+  const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/(\{[\s\S]*\})/)
+  return JSON.parse(jsonMatch ? jsonMatch[1] : text)
+}
+
+async function enrichHrWeakSignalsWithHaikuRewrites(rubric: any, structuredTranscript: any) {
+  const weakSignals = Array.isArray(rubric?.hr_screen_six_areas?.what_needs_improve)
+    ? rubric.hr_screen_six_areas.what_needs_improve
+    : []
+
+  if (!weakSignals.length || !process.env.ANTHROPIC_API_KEY) return rubric
+
+  const rewriteItems = weakSignals
+    .map((signal: any, index: number) => {
+      const method = getRewriteMethodForHrSignal(signal?.criterion, signal?.rootCause || signal?.root_cause)
+      if (!method) return null
+
+      const evidence = Array.isArray(signal?.evidence) ? signal.evidence[0] : null
+      const questionId = evidence?.question_id
+      const question = getQuestionText(questionId, evidence, structuredTranscript)
+      const originalAnswer = getCandidateAnswerForQuestion(questionId, evidence, structuredTranscript)
+
+      if (!question || !originalAnswer || originalAnswer.length < 20) return null
+
+      return {
+        id: `issue_${index}`,
+        index,
+        criterion: signal.criterion,
+        feedback: signal.feedback,
+        question,
+        original_answer: originalAnswer,
+        method,
+      }
+    })
+    .filter(Boolean) as Array<{
+      id: string
+      index: number
+      criterion: string
+      feedback: string
+      question: string
+      original_answer: string
+      method: RewriteMethod
+    }>
+
+  const cappedRewriteItems = rewriteItems.slice(0, 4)
+
+  if (!rewriteItems.length) return rubric
+
+  try {
+    const message = await getAnthropicHaiku().messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1900,
+      temperature: 0.2,
+      system: `You rewrite interview answers cheaply and safely.
+
+Rules:
+- Preserve only details the candidate already provided.
+- Do not invent metrics, company facts, seniority, accomplishments, tools, clients, or outcomes.
+- If a needed detail is missing, use a short bracketed placeholder like [specific result].
+- Keep each rewrite interview-natural, concise, and spoken aloud.
+- Target 90-130 words per rewritten answer.
+- Return valid JSON only.`,
+      messages: [
+        {
+          role: 'user',
+          content: JSON.stringify({
+            task: 'Rewrite each flagged HR-screen answer using the assigned method.',
+            output_shape: {
+              rewrites: [
+                {
+                  id: 'issue_0',
+                  method: 'STAR',
+                  rewritten_answer: 'Better answer here.',
+                  why_this_works: 'One sentence explaining the improvement.',
+                },
+              ],
+            },
+            items: cappedRewriteItems.map((item) => ({
+              id: item.id,
+              criterion: item.criterion,
+              rubric_feedback: item.feedback,
+              question: item.question,
+              original_answer: item.original_answer,
+              method: item.method.label,
+              method_instruction: item.method.instruction,
+            })),
+          }),
+        },
+      ],
+    })
+
+    const content = message.content[0]
+    if (content.type !== 'text') return rubric
+
+    const parsed = parseJsonObject(content.text)
+    const rewrites = Array.isArray(parsed?.rewrites) ? parsed.rewrites : []
+
+    rewrites.forEach((rewrite: any) => {
+      const source = cappedRewriteItems.find((item) => item.id === rewrite?.id)
+      if (!source || !rewrite?.rewritten_answer) return
+
+      weakSignals[source.index] = {
+        ...weakSignals[source.index],
+        rewrite_method: rewrite.method || source.method.label,
+        rewritten_answer: String(rewrite.rewritten_answer).trim(),
+        rewrite_explanation: rewrite.why_this_works ? String(rewrite.why_this_works).trim() : '',
+        original_answer: source.original_answer,
+      }
+    })
+  } catch (error) {
+    console.error('Haiku rewrite enrichment failed; continuing without rewrites:', error)
+  }
+
+  return rubric
+}
 
 function isSubstantiveCandidateUtterance(text?: string | null) {
   const trimmed = (text || '').trim()
@@ -667,6 +874,8 @@ Use the question IDs and timestamps from this structured transcript when providi
           applyBlankInterviewGuardrailToHrRubric(rubric)
         }
 
+        await enrichHrWeakSignalsWithHaikuRewrites(rubric, structuredTranscript)
+
         // Validate rubric
         if (!validateHrScreenRubric(rubric)) {
           console.error('Rubric validation failed, falling back to OpenAI')
@@ -1120,11 +1329,12 @@ Use the question IDs and timestamps from this structured transcript when providi
     }
 
     // Deduct credit for completed paid interview
-    if (stage && stage !== 'hr_screen') {
+    if (stage && shouldDeductInterviewCredit(stage)) {
       try {
         const supabaseAuth = createRouteHandlerClient({ cookies })
         const { data: { session: authSession } } = await supabaseAuth.auth.getSession()
         if (authSession) {
+          const { deductCredit } = await import('@/lib/credit-check')
           await deductCredit(authSession.user.id, stage)
         }
       } catch (creditError) {

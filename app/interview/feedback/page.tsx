@@ -19,8 +19,10 @@ import LessonRoadmap from '@/components/LessonRoadmap'
 import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
+import HrFeedbackDeck from '@/components/HrFeedbackDeck'
+import ImprovementTip from '@/components/ImprovementTip'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
-import { getBundleForRootCause, getPracticeDisplayNameForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
+import { getBundleForRootCause, getImprovementTipForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
 
 function parseSessionRoleContext(jobDescriptionText?: string | null) {
   if (!jobDescriptionText) return { role: '', company: '' }
@@ -99,21 +101,29 @@ export default function InterviewDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const sessionIdFromUrl = searchParams?.get('sessionId') || ''
+  const stageFromUrl = searchParams?.get('stage') || ''
+  const previewFromUrl = searchParams?.get('preview') || ''
 
   // Admin preview: detect admin user (or ?preview=mock URL param) and inject mock data
   useEffect(() => {
     const checkAdmin = async () => {
+      const isMockParam = previewFromUrl === 'mock'
+      setIsMockPreview(isMockParam)
+      if (isMockParam) {
+        setLoading(false)
+        return
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       const email = session?.user?.email || null
       setUserEmail(email)
-      const isMockParam = searchParams?.get('preview') === 'mock'
-      setIsMockPreview(isMockParam)
       if (isAdminPreview(email)) {
         setIsAdmin(true)
       }
     }
     checkAdmin()
-  }, [searchParams, supabase.auth])
+  }, [previewFromUrl, supabase.auth])
 
   // Inject mock data only when preview mode is explicitly requested
   useEffect(() => {
@@ -143,6 +153,14 @@ export default function InterviewDashboard() {
   }, [isMockPreview, feedback])
 
   useEffect(() => {
+    setLoading(true)
+    setFeedback(null)
+    setCurrentSessionData(null)
+    setStructuredTranscript(null)
+    setHasTranscript(false)
+    setDefaultTabSet(false)
+    setFeedbackGenerating(false)
+    setPollingAttempts(0)
     loadFeedback()
 
     // Check if user just signed up and needs to migrate data
@@ -163,7 +181,7 @@ export default function InterviewDashboard() {
     // Check for migration after a short delay (to ensure session is established)
     const migrationTimer = setTimeout(checkMigration, 1000)
     return () => clearTimeout(migrationTimer)
-  }, [])
+  }, [sessionIdFromUrl, stageFromUrl, previewFromUrl])
 
   // Poll for feedback while generation is in flight.
   useEffect(() => {
@@ -307,6 +325,15 @@ export default function InterviewDashboard() {
 
   const loadFeedback = async (skipAutoGenerate = false) => {
     try {
+      if (previewFromUrl === 'mock') {
+        setFeedback(MOCK_FEEDBACK as any)
+        setStructuredTranscript(MOCK_TRANSCRIPT)
+        setCurrentSessionData(MOCK_SESSION_DATA)
+        setHasTranscript(true)
+        setFeedbackGenerating(false)
+        return
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -314,7 +341,6 @@ export default function InterviewDashboard() {
       let sessionData = null
 
       // First, check if sessionId is provided in URL params (from profile page)
-      const sessionIdFromUrl = searchParams?.get('sessionId')
       if (sessionIdFromUrl) {
         const { data: sessionById } = await supabase
           .from('interview_sessions')
@@ -412,7 +438,6 @@ export default function InterviewDashboard() {
           let defaultTabId = 'results'
 
           // Check if stage is provided in URL params (from profile page)
-          const stageFromUrl = searchParams?.get('stage')
           const stageToUse = stageFromUrl || sessionData.stage
           
           // Map session stage to tab ID
@@ -1680,199 +1705,28 @@ export default function InterviewDashboard() {
             )}
 
             <div className="flex items-center justify-between mt-2">
-              <button
-                className={`w-full px-4 py-3 rounded-lg text-sm font-semibold text-white shadow-md ${
-                  variant === 'strength'
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
-                }`}
-                onClick={async () => {
-                  if (variant !== 'improve' || !practiceKey || !firstEvidence) return
-
-                  // Toggle dropdown-style practice interface for this criterion
-                  if (isPracticing) {
-                    // Hide practice and clean up state
-                    if (practiceRecording[practiceKey]) {
-                      stopPracticeRecording(practiceKey)
-                    }
-                    const newPracticeData = { ...practiceData }
-                    delete newPracticeData[practiceKey]
-                    setPracticeData(newPracticeData)
-                    const newResponse = { ...practiceResponse }
-                    delete newResponse[practiceKey]
-                    setPracticeResponse(newResponse)
-                    const newFeedback = { ...practiceFeedback }
-                    delete newFeedback[practiceKey]
-                    setPracticeFeedback(newFeedback)
-                    const newRecording = { ...practiceRecording }
-                    delete newRecording[practiceKey]
-                    setPracticeRecording(newRecording)
-                    setActivePracticeCriterion(null)
-                  } else {
-                    const questionText =
-                      structuredTranscript?.questions_asked?.find(
-                        (q: any) => q.id === firstEvidence.question_id
-                      )?.question || firstEvidence.question || 'Practice this answer'
-
-                    setPracticeData({
-                      ...practiceData,
-                      [practiceKey]: {
-                        sessionId: feedback?.interview_session_id,
-                        questionId: firstEvidence.question_id,
-                        question: questionText,
-                        originalAnswer: firstEvidence.excerpt,
-                        criterion: item.criterion,
-                      },
-                    })
-                    setActivePracticeCriterion(item.criterion)
-                    await startPracticeSession(practiceKey, questionText)
-                  }
-                }}
-              >
-                {variant === 'strength'
-                  ? 'Review Practice'
-                  : 'Practice This Area'}
-              </button>
-            </div>
-
-            {/* Inline practice interface for needs-work cards (dropdown style) */}
-            {variant === 'improve' &&
-              practiceKey &&
-              activePracticeCriterion === item.criterion && (
-                <div className="mt-4 border-t border-gray-200 pt-4 space-y-4">
-                  {/* Question playing state */}
-                  {practicePlayingQuestion[practiceKey] && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-blue-700 font-medium">
-                          AI is asking the question...
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Recording State */}
-                  {practiceRecording[practiceKey] && !practiceFeedback[practiceKey] && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <div className="flex items-center justify-center space-x-3 mb-3">
-                        <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm font-medium text-red-700">
-                          Recording your answer...
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => stopPracticeRecording(practiceKey)}
-                        className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium text-sm flex items-center justify-center space-x-2"
-                      >
-                        <MicOff className="w-4 h-4" />
-                        <span>Stop Recording</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Loading State */}
-                  {practiceLoading[practiceKey] && !practiceRecording[practiceKey] && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-sm text-gray-700">Getting feedback...</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Feedback Playing State */}
-                  {practicePlayingFeedback[practiceKey] && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-green-700 font-medium">
-                          AI is giving feedback...
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Feedback Display */}
-                  {practiceFeedback[practiceKey] && !practicePlayingFeedback[practiceKey] && (
-                    <div className={`${practiceFeedback[practiceKey].passed ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'} border rounded-lg p-4`}>
-                      {/* Pass/Fail Badge */}
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="text-sm font-semibold text-gray-900">
-                          Practice Feedback
-                        </h5>
-                        <div className="flex items-center space-x-2">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            practiceFeedback[practiceKey].passed
-                              ? 'bg-green-200 text-green-800'
-                              : 'bg-amber-200 text-amber-800'
-                          }`}>
-                            {practiceFeedback[practiceKey].score}/10
-                          </span>
-                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            practiceFeedback[practiceKey].passed
-                              ? 'bg-green-200 text-green-800'
-                              : 'bg-red-200 text-red-800'
-                          }`}>
-                            {practiceFeedback[practiceKey].passed ? 'PASSED' : 'NEEDS WORK'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="prose prose-sm max-w-none">
-                        <p className="text-gray-700 whitespace-pre-wrap text-sm">
-                          {practiceFeedback[practiceKey].feedback}
-                        </p>
-                      </div>
-                      {practiceResponse[practiceKey] && (
-                        <div className="mt-3 p-2 bg-white rounded border border-gray-200">
-                          <p className="text-xs font-medium text-gray-600 mb-1">
-                            Your Practice Answer:
-                          </p>
-                          <p className="text-xs text-gray-700 italic">
-                            "{practiceResponse[practiceKey]}"
-                          </p>
-                        </div>
-                      )}
-                      <button
-                        onClick={async () => {
-                          // Reset and let them try again on same card
-                          setPracticeResponse({ ...practiceResponse, [practiceKey]: '' })
-                          const newFeedback = { ...practiceFeedback }
-                          delete newFeedback[practiceKey]
-                          setPracticeFeedback(newFeedback)
-                          const questionText =
-                            structuredTranscript?.questions_asked?.find(
-                              (q: any) => q.id === firstEvidence.question_id
-                            )?.question || firstEvidence.question || 'Practice this answer'
-                          await startPracticeSession(practiceKey, questionText)
-                        }}
-                        className="mt-3 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium"
-                      >
-                        {practiceFeedback[practiceKey].passed ? 'Practice Again (Already Passed!)' : 'Try Again'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Ready-to-record state after question audio finishes but before recording */}
-                  {!practiceRecording[practiceKey] &&
-                    !practiceLoading[practiceKey] &&
-                    !practiceFeedback[practiceKey] &&
-                    !practicePlayingQuestion[practiceKey] && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-3">
-                          Click below to record a stronger answer than your original one.
-                        </p>
-                        <button
-                          onClick={() => startPracticeRecording(practiceKey)}
-                          className="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium text-sm flex items-center justify-center space-x-2 mx-auto"
-                        >
-                          <Mic className="w-4 h-4" />
-                          <span>Start Recording</span>
-                        </button>
-                      </div>
-                    )}
+              {variant === 'strength' ? (
+                <div className="w-full rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-center text-sm font-semibold text-green-700">
+                  Keep repeating this signal in the next round.
+                </div>
+              ) : (
+                <div className="w-full space-y-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-bold text-slate-900">Tip For Improvement</p>
+                    <ImprovementTip
+                      criterion={item.criterion}
+                      rootCause={item.rootCause}
+                      buttonLabel="?"
+                      rewrittenAnswer={item.rewritten_answer}
+                      rewriteMethod={item.rewrite_method}
+                    />
+                  </div>
+                  <p className="text-sm leading-6 text-slate-700">
+                    Craft a stronger version of this answer in your own words before you retry. Fix the missing signal here instead of memorizing a script.
+                  </p>
                 </div>
               )}
+            </div>
 
             {/* Note: card index label and nav arrows are rendered in the section header for each stack */}
           </div>
@@ -1936,19 +1790,10 @@ export default function InterviewDashboard() {
             {
               key: `${key}-feedback`,
               label: 'Feedback',
-              active: !showLessonRoadmap,
+              active: true,
               onClick: () => {
                 setShowLessonRoadmap(false)
                 setShowRubricModal(false)
-              },
-            },
-            {
-              key: `${key}-practice`,
-              label: 'Practice',
-              active: showLessonRoadmap,
-              onClick: () => {
-                setShowRubricModal(false)
-                setShowLessonRoadmap(true)
               },
             },
           ]
@@ -1977,6 +1822,19 @@ export default function InterviewDashboard() {
       label,
       status: isActiveStage ? 'current' as const : isCompletedStage ? 'complete' as const : 'upcoming' as const,
       expanded: isActiveStage,
+      onClick: !isActiveStage
+        ? () => {
+            if (isCompletedStage) {
+              router.push(`/interview/feedback?stage=${stageParam}`)
+              return
+            }
+
+            if (currentSessionData?.user_interview_data_id) {
+              localStorage.setItem('prepme_selected_interview_data_id', currentSessionData.user_interview_data_id)
+            }
+            router.push(`/dashboard?new=1&stage=${stageParam}`)
+          }
+        : undefined,
       children,
     }
   })
@@ -1990,10 +1848,10 @@ export default function InterviewDashboard() {
       ],
     },
     {
-      title: 'Practice',
+      title: 'Improvement',
       items: [
-        { label: 'Completed', value: `${passedCriteria.length}`, progress: needsImproveAreas.length ? (passedCriteria.length / needsImproveAreas.length) * 100 : 0, tone: 'success' as const },
-        { label: 'Remaining', value: `${Math.max(uniquePracticeModuleCount - passedCriteria.length, 0)}` },
+        { label: 'Flagged areas', value: `${needsImproveAreas.length}` },
+        { label: 'Retake focus', value: needsImproveAreas[0]?.criterion || 'Review complete' },
         { label: 'Stage', value: currentStageKey.replace('_', ' ') },
       ],
     },
@@ -2063,7 +1921,7 @@ export default function InterviewDashboard() {
     {
       title: 'Next Move',
       items: [
-        { label: 'Best path', value: needsImproveAreas.length ? 'Practice modules' : 'Review complete' },
+        { label: 'Best path', value: needsImproveAreas.length ? 'Review tips and retry' : 'Review complete' },
         { label: 'Current stage', value: currentStageKey.replace('_', ' ') },
         { label: 'Likelihood', value: likelihood },
       ],
@@ -2321,6 +2179,79 @@ export default function InterviewDashboard() {
 
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
+  const handleUnlockNextStage = () => {
+    const stageOrder: Array<'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'> = ['hr_screen', 'hiring_manager', 'culture_fit', 'final']
+    const normalizedStage = (currentStage === 'final_round' ? 'final' : currentStage) as 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
+    const currentIndex = stageOrder.indexOf(normalizedStage)
+    const nextStage = currentIndex >= 0 ? stageOrder[currentIndex + 1] : null
+
+    if (!nextStage) return
+
+    if (currentSessionData?.user_interview_data_id) {
+      localStorage.setItem('prepme_selected_interview_data_id', currentSessionData.user_interview_data_id)
+    }
+
+    if (!isPremium) {
+      setPurchaseHighlightStage(nextStage)
+      setShowPurchaseFlow(true)
+      return
+    }
+
+    router.push(`/dashboard?new=1&stage=${nextStage}`)
+  }
+
+  const handleExitToProfile = () => {
+    router.push('/profile')
+  }
+
+  if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
+    return (
+      <>
+        <div className="lg:hidden">
+          <HrFeedbackDeck
+            feedback={feedback}
+            currentSessionData={currentSessionData}
+            onRetakeInterview={handleRetakeInterview}
+            onUnlockNextStage={handleUnlockNextStage}
+            onExitToProfile={handleExitToProfile}
+            artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
+            onPrintArtifact={() => window.print()}
+          />
+        </div>
+        <div className={`${shellClasses} hidden lg:grid`}>
+          <AppSidebar
+            activeSection="feedback"
+            processStages={processStages}
+            theme="light"
+            navItemsOverride={processWorkspaceNavItems}
+            navTitle="Workspace"
+            processTitle="Interview Stages"
+            footerText="You are in step one of the interview process. Review the HR screen, then unlock the hiring manager round."
+          />
+          <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
+          <div className={shellCenterClasses}>
+            <div className={`${centeredLaneClasses} py-6`}>
+              <HrFeedbackDeck
+                feedback={feedback}
+                currentSessionData={currentSessionData}
+                onRetakeInterview={handleRetakeInterview}
+                onUnlockNextStage={handleUnlockNextStage}
+                artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
+                onPrintArtifact={() => window.print()}
+                layout="embedded"
+              />
+            </div>
+          </div>
+        </div>
+        {showPurchaseFlow && (
+          <PurchaseFlow
+            onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}
+            highlightStage={purchaseHighlightStage}
+          />
+        )}
+      </>
+    )
+  }
 
   if (hasFeedback && !showLessonRoadmap) {
     return (
@@ -2335,7 +2266,7 @@ export default function InterviewDashboard() {
           navItemsOverride={processWorkspaceNavItems}
           navTitle="Workspace"
           processTitle="Interview Stages"
-          footerText="Stages are primary. Feedback and practice live inside the current stage."
+          footerText="Stages are primary. Review feedback, tighten your answers, then retry or move forward."
         />
         <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
         <div className={shellCenterClasses}>
@@ -2345,14 +2276,9 @@ export default function InterviewDashboard() {
               currentSessionData={currentSessionData}
               currentStage={currentStage}
               onRetakeInterview={handleRetakeInterview}
-              onUnlockNextStage={() => setShowPurchaseFlow(true)}
+              onUnlockNextStage={handleUnlockNextStage}
               artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
               onPrintArtifact={() => window.print()}
-              onStartPractice={() => {
-                setShowRubricModal(false)
-                dismissFeedbackTutorial()
-                setShowLessonRoadmap(true)
-              }}
               tutorialActive={walkthroughActive}
               onDismissTutorial={dismissFeedbackTutorial}
             />
@@ -2691,9 +2617,7 @@ export default function InterviewDashboard() {
                       {/* Weaknesses */}
                       {needsImproveAreas.map((area: any) => {
                         const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
-                        const bundle = getBundleForRootCause(rootCause)
-                        const displayName = getPracticeDisplayNameForCriterion(area.criterion, area.rootCause)
-                        const isPassed = passedCriteria.includes(area.criterion)
+                        const tip = getImprovementTipForCriterion(area.criterion, area.rootCause)
 
                         return (
                           <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/40">
@@ -2707,16 +2631,12 @@ export default function InterviewDashboard() {
                                   {area.score != null && (
                                     <span className="text-xs font-bold text-amber-600 tabular-nums">{area.score}/10</span>
                                   )}
-                                  <button
-                                    onClick={() => setShowLessonRoadmap(true)}
-                                    className={`rounded-full border px-3 py-1 text-xs font-bold transition-all ${
-                                      isPassed
-                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                        : 'bg-accent-50 border-accent-200 text-accent-700 hover:bg-accent-100'
-                                    }`}
-                                  >
-                                    {isPassed ? '✓ Passed' : 'Practice →'}
-                                  </button>
+                                  <ImprovementTip
+                                    criterion={area.criterion}
+                                    rootCause={area.rootCause}
+                                    rewrittenAnswer={area.rewritten_answer}
+                                    rewriteMethod={area.rewrite_method}
+                                  />
                                 </div>
                               </div>
                               {area.score != null && (
@@ -2728,8 +2648,11 @@ export default function InterviewDashboard() {
                                 </div>
                               )}
                               <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
-                              <p className="text-xs text-accent-500 font-semibold mt-1.5">
-                                📚 {displayName}
+                              <p className="mt-1.5 text-xs font-semibold text-amber-700">
+                                Tip focus: {tip.title}
+                              </p>
+                              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                                Before your next attempt, craft a stronger version of this answer on your own instead of memorizing a script.
                               </p>
                             </div>
                           </div>
@@ -2737,14 +2660,6 @@ export default function InterviewDashboard() {
                       })}
                     </div>
                   </div>
-                )}
-
-                {/* Practice CTA */}
-                {needsImproveAreas.length > 0 && (
-                  <button onClick={() => setShowLessonRoadmap(true)} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-4 text-base">
-                    <Zap className="w-5 h-5" />
-                    Practice Weak Areas
-                  </button>
                 )}
 
                 {/* View Full Report */}
@@ -3622,12 +3537,12 @@ export default function InterviewDashboard() {
                     <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-5 text-white">
                       <h3 className="text-lg font-bold">Ready for the next round?</h3>
                       <p className="text-primary-100 text-sm mt-1">
-                        You&apos;ve reviewed your feedback and practiced your weak spots. The next step in the real interview process is the Hiring Manager round.
+                        You&apos;ve reviewed your feedback and tightened the weak spots. The next step in the real interview process is the Hiring Manager round.
                       </p>
                     </div>
                     <div className="p-6">
                       <p className="text-sm text-gray-600 mb-4">
-                        Continue your interview preparation with the full process — Hiring Manager, Culture Fit, and Final Round — each with the same detailed feedback and practice.
+                        Continue your interview preparation with the full process — Hiring Manager, Culture Fit, and Final Round — each with the same detailed feedback and scoring.
                       </p>
                       <button
                         onClick={() => setShowPurchaseFlow(true)}
@@ -3724,7 +3639,7 @@ export default function InterviewDashboard() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">Start Interview</h2>
                     <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                      You're ready for the Hiring Manager round. Practice with our AI to get detailed feedback and improve before the real interview.
+                      You're ready for the Hiring Manager round. Complete the interview and get detailed feedback before the real conversation.
                     </p>
                     <Link
                       href="/dashboard?stage=hiring_manager"
@@ -4295,7 +4210,7 @@ export default function InterviewDashboard() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">Start Interview</h2>
                     <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                      Practice the Culture Fit round with our AI. Get feedback on how you align with the company's values and team dynamics.
+                      Run the Culture Fit round and get feedback on how you align with the company&apos;s values and team dynamics.
                     </p>
                     <Link
                       href="/dashboard?stage=culture_fit"
@@ -4784,7 +4699,7 @@ export default function InterviewDashboard() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">Start Interview</h2>
                     <p className="text-lg text-white/90 mb-6 max-w-2xl">
-                      You're ready for the Final round. Practice with our AI to get detailed feedback before your real final interview.
+                      You're ready for the Final round. Complete the interview and get detailed feedback before your real final interview.
                     </p>
                     <Link
                       href="/dashboard?stage=final"

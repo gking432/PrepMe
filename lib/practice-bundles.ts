@@ -122,6 +122,13 @@ export interface PracticeBundle {
   lessons: SubLesson[]
 }
 
+export interface ImprovementTip {
+  title: string
+  summary: string
+  bullets: string[]
+  retryPrompt: string
+}
+
 const LEGACY_PRACTICE_CRITERION_ALIASES: Record<string, string> = {
   'Answer Structure and Conciseness': 'Professional Story',
 }
@@ -2241,6 +2248,32 @@ export function getPracticeDisplayNameForCriterion(criterion: string, explicitRo
 
   const rootCause = getRootCauseForCriterion(normalizedCriterion, explicitRootCause)
   return getBundleForRootCause(rootCause).displayName
+}
+
+function takeLeadingSentences(text: string, maxSentences: number) {
+  const cleaned = text.trim()
+  if (!cleaned) return ''
+  const matches = cleaned.match(/[^.!?]+[.!?]?/g) || [cleaned]
+  return matches.slice(0, maxSentences).join(' ').trim()
+}
+
+export function getImprovementTipForCriterion(criterion: string, explicitRootCause?: string): ImprovementTip {
+  const rootCause = getRootCauseForCriterion(criterion, explicitRootCause)
+  const bundle = getBundleForRootCause(rootCause)
+  const lesson = bundle.lessons[0]
+  const breakdownEntries = Object.entries(lesson?.teach?.example?.breakdown || {})
+  const applyExercise = lesson?.exercises?.find((exercise) => exercise.type === 'apply_to_yourself')
+  const retryPrompt =
+    applyExercise?.type === 'apply_to_yourself'
+      ? applyExercise.coachingTip
+      : 'Try answering again with more ownership, more specificity, and a clearer result.'
+
+  return {
+    title: lesson?.teach?.title || `${bundle.displayName} tip`,
+    summary: takeLeadingSentences(lesson?.teach?.explanation || bundle.description, 2),
+    bullets: breakdownEntries.slice(0, 3).map(([, detail]) => String(detail)),
+    retryPrompt: takeLeadingSentences(retryPrompt, 2),
+  }
 }
 
 export type AnswerStructureTemplate =

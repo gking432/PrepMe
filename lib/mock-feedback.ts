@@ -75,6 +75,11 @@ export const MOCK_FEEDBACK = {
           'Your answers tended to ramble without a clear beginning, middle, and end. The interviewer had to redirect you twice.',
         score: 4,
         rootCause: 'professional_story',
+        rewrite_method: 'STAR',
+        rewritten_answer:
+          'In my current role, we had a project with a tight deadline where the team felt overwhelmed and priorities were unclear. I stepped in to help the group reset the plan. I listened to the different concerns, identified which work was truly urgent, and helped the team agree on a clearer order of priorities. From there, I stayed close to the execution and helped wherever the biggest gaps were. We got through the deadline, and the team appreciated that I stayed calm and helped turn a stressful situation into a workable plan.',
+        rewrite_explanation:
+          'This keeps your real details but gives the interviewer a clearer situation, action, and result.',
         evidence: [
           {
             question_id: 'q3',

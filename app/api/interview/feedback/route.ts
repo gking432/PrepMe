@@ -8,6 +8,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
+import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -723,6 +724,26 @@ Use the question IDs and timestamps from this structured transcript when providi
 
     systemPrompt += '\n\nYOUR RESPONSE FORMAT:'
     systemPrompt += '\nYou MUST respond with valid JSON in this exact format:'
+    if (stage === 'hr_screen' && !HR_DETAILED_REPORT_ENABLED) {
+      // Compact HR schema — detailed report stored away (see HR_DETAILED_REPORT_ENABLED).
+      systemPrompt += '\n{'
+      systemPrompt += '\n  "overall_assessment": {'
+      systemPrompt += '\n    "overall_score": <number 1-10>,'
+      systemPrompt += '\n    "likelihood_to_advance": "<likely|unlikely|marginal>",'
+      systemPrompt += '\n    "key_strengths": [<array of 3-5 key strengths with specific examples>],'
+      systemPrompt += '\n    "key_weaknesses": [<array of 2-4 areas for improvement with specific examples>],'
+      systemPrompt += '\n    "summary": "<comprehensive overall feedback paragraph>"'
+      systemPrompt += '\n  },'
+      systemPrompt += '\n  "next_steps_preparation": {'
+      systemPrompt += '\n    "improvement_suggestions": [<array of 3-5 actionable improvement suggestions>]'
+      systemPrompt += '\n  },'
+      systemPrompt += '\n  "hr_screen_six_areas": {<the 6-area assessment structure as described above>}'
+      systemPrompt += '\n}'
+      systemPrompt += '\n\nCRITICAL: Include ONLY these top-level fields, nothing else:'
+      systemPrompt += '\n- overall_assessment (overall_score, likelihood_to_advance, key_strengths, key_weaknesses, summary)'
+      systemPrompt += '\n- next_steps_preparation (improvement_suggestions)'
+      systemPrompt += '\n- hr_screen_six_areas (what_went_well and what_needs_improve arrays)'
+    } else {
     systemPrompt += '\n{'
     systemPrompt += '\n  "overall_assessment": {'
     systemPrompt += '\n    "overall_score": <number 1-10>,'
@@ -794,7 +815,9 @@ Use the question IDs and timestamps from this structured transcript when providi
     if (stage === 'hr_screen') {
       systemPrompt += '\n- hr_screen_six_areas (with what_went_well and what_needs_improve arrays)'
     }
+    }
 
+    if (HR_DETAILED_REPORT_ENABLED || stage !== 'hr_screen') {
     systemPrompt += '\n\nMANDATORY REQUIREMENTS FOR traditional_hr_criteria:'
     systemPrompt += '\nYou MUST include ALL 7 criteria in both "scores" and "feedback" objects with these EXACT names:'
     systemPrompt += '\n1. communication_skills'
@@ -817,6 +840,7 @@ Use the question IDs and timestamps from this structured transcript when providi
     systemPrompt += '\n- percentile_estimate: Your best estimate (0-100) of where this candidate ranks compared to typical HR screen candidates'
     systemPrompt += '\n\nDO NOT calculate percentile from overall_score. Provide your honest assessment based on typical candidate performance.'
     systemPrompt += '\nDO NOT create generic placeholder text. All fields must contain real, specific assessments.'
+    }
 
     systemPrompt += '\n\nSCORING SCALE (STRICT - SCORES MUST ALIGN WITH YOUR ANALYSIS):'
     systemPrompt += '\nAll scores use a 1-10 scale. Your scores MUST match the severity and quality described in your analysis. Do not inflate scores.'
@@ -886,8 +910,8 @@ Use the question IDs and timestamps from this structured transcript when providi
         // Derive fields from rubric for backwards compatibility
         const feedback = {
           overall_score: rubric.overall_assessment.overall_score,
-          area_scores: rubric.traditional_hr_criteria.scores,
-          area_feedback: rubric.traditional_hr_criteria.feedback,
+          area_scores: rubric.traditional_hr_criteria?.scores || {},
+          area_feedback: rubric.traditional_hr_criteria?.feedback || {},
           strengths: rubric.overall_assessment.key_strengths || [],
           weaknesses: rubric.overall_assessment.key_weaknesses || [],
           suggestions: rubric.next_steps_preparation.improvement_suggestions || [],

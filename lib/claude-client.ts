@@ -1,5 +1,6 @@
 // Claude (Anthropic) client for post-interview grading
 import Anthropic from '@anthropic-ai/sdk'
+import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -389,15 +390,22 @@ function buildGradingPrompt(materials: GradingMaterials): string {
   // Add output format requirements - CRITICAL: Must include all required fields
   prompt += `\n\nYou MUST respond with valid JSON matching the rubric template structure. Include ALL required fields:`
   prompt += `\n- overall_assessment (with overall_score, likelihood_to_advance, key_strengths, key_weaknesses, summary)`
-  prompt += `\n- traditional_hr_criteria (with scores and feedback objects) - THIS IS REQUIRED`
-  prompt += `\n- time_management_analysis`
-  prompt += `\n- question_analysis`
+  const includeFullReport = HR_DETAILED_REPORT_ENABLED || materials.stage !== 'hr_screen'
+  if (includeFullReport) {
+    prompt += `\n- traditional_hr_criteria (with scores and feedback objects) - THIS IS REQUIRED`
+    prompt += `\n- time_management_analysis`
+    prompt += `\n- question_analysis`
+    prompt += `\n- comparative_analysis`
+  }
   prompt += `\n- next_steps_preparation`
-  prompt += `\n- comparative_analysis`
   if (materials.stage === 'hr_screen') {
     prompt += `\n- hr_screen_six_areas (with what_went_well and what_needs_improve arrays)`
   }
-  prompt += `\n\nDO NOT omit any of these fields. The traditional_hr_criteria field is especially critical.`
+  if (includeFullReport) {
+    prompt += `\n\nDO NOT omit any of these fields. The traditional_hr_criteria field is especially critical.`
+  } else {
+    prompt += `\n\nDO NOT omit any of these fields and do NOT add any other top-level fields.`
+  }
 
   return prompt
 }

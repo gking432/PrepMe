@@ -1,4 +1,5 @@
 // Validator for Claude grader rubric responses
+import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 
 export interface RubricStructure {
   overall_assessment?: any
@@ -132,8 +133,21 @@ export function validateRubric(rubric: any): boolean {
  * Validate HR screen specific fields
  */
 export function validateHrScreenRubric(rubric: any): boolean {
-  if (!validateRubric(rubric)) {
-    return false
+  if (HR_DETAILED_REPORT_ENABLED) {
+    if (!validateRubric(rubric)) {
+      return false
+    }
+  } else {
+    // Lean HR shape — detailed report stored away, so only the fields the
+    // cards/score actually use are required.
+    if (!rubric || typeof rubric !== 'object') {
+      console.error('Rubric is not an object')
+      return false
+    }
+    if (!rubric.overall_assessment || !rubric.overall_assessment.overall_score) {
+      console.error('Missing overall_assessment.overall_score')
+      return false
+    }
   }
 
   // Check for hr_screen_six_areas

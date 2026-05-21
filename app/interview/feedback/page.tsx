@@ -21,6 +21,7 @@ import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import HrFeedbackDeck from '@/components/HrFeedbackDeck'
 import ImprovementTip from '@/components/ImprovementTip'
+import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getImprovementTipForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
 
@@ -1938,6 +1939,7 @@ export default function InterviewDashboard() {
   ]
 
   const buildHrArtifactData = () => {
+    if (!HR_DETAILED_REPORT_ENABLED) return null
     const fullRubric = (feedback as any)?.full_rubric
     if (!fullRubric) return null
     const normalizeScore = (score: number, maxScale: number = 10) => {
@@ -2662,7 +2664,8 @@ export default function InterviewDashboard() {
                   </div>
                 )}
 
-                {/* View Full Report */}
+                {/* View Full Report — stored away unless HR_DETAILED_REPORT_ENABLED */}
+                {HR_DETAILED_REPORT_ENABLED && (
                 <button
                   onClick={() => setShowRubricModal(true)}
                   className="premium-card group flex w-full items-center justify-between p-5 text-left"
@@ -2676,6 +2679,7 @@ export default function InterviewDashboard() {
                     <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </button>
+                )}
 
                 {/* Transcript Section (simplified, with green/red highlights for extremes only) */}
                 {structuredTranscript && (
@@ -2854,6 +2858,7 @@ export default function InterviewDashboard() {
                     Evaluation based on standard HR phone screen criteria
                   </p>
                 </div>
+                {HR_DETAILED_REPORT_ENABLED && (
                 <button
                   type="button"
                   onClick={() => setShowRubricModal(true)}
@@ -2862,12 +2867,13 @@ export default function InterviewDashboard() {
                   <span>View Full Report</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
+                )}
               </div>
             )}
 
 
             {/* Full-Screen Rubric Report Modal */}
-            {showRubricModal && (
+            {HR_DETAILED_REPORT_ENABLED && showRubricModal && (
               <>
                 {/* Print styles */}
                 <style dangerouslySetInnerHTML={{__html: `

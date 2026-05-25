@@ -12,8 +12,7 @@ import { CheckCircle2, Lock, Crown, ChevronDown, Briefcase, ArrowRight, FileText
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
-import AppSidebar from '@/components/AppSidebar'
-import AppProgressRail from '@/components/AppProgressRail'
+import AppChrome from '@/components/AppChrome'
 import { isAdminPreview, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
@@ -645,44 +644,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[linear-gradient(180deg,#fbfcfe_0%,#f6f8fb_42%,#eef3f8_100%)]">
-      <div className="lg:hidden">
-        <Header />
-      </div>
-      <AppSidebar
-        activeSection={showWorkspaceHub ? (workspacePanel === 'documents' ? 'documents' : 'interviews') : 'new_process'}
-        processStages={showWorkspaceHub ? [] : processStages}
-        navTitle={showWorkspaceHub ? 'Workspace' : 'Prep Workspace'}
-        theme="light"
-      />
-      <AppProgressRail
-        cards={dashboardRailCards}
-        theme="light"
-        header={showWorkspaceHub ? {
-          eyebrow: 'Workspace Hub',
-          title: activeInterviewGroups.length ? 'Pick up where you left off' : 'Start a fresh interview process',
-          subtitle: workspacePanel === 'documents' ? 'Resumes and coaching artifacts live here.' : 'Select a process or launch a new one.',
-        } : undefined}
-      />
-
-      {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-xl px-5 pb-36 pt-6 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#fcfdff_0%,#f6f8fb_40%,#eef3f8_100%)] lg:px-8 lg:pb-12 lg:pt-8">
+    <AppChrome active="preps">
+      <div>
         {showWorkspaceHub && (
           <div className="space-y-8 animate-slide-up">
-            <div className="premium-panel p-6 lg:p-7">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="eyebrow eyebrow-coach mb-3 w-fit">Workspace Hub</div>
-                  <h1 className="text-3xl font-black text-slate-950">Your interview prep lives here.</h1>
-                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                    Choose an interview process to continue, review saved materials, or launch a new round.
-                  </p>
-                </div>
-                <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-6 py-4">
-                  <PlusSquare className="h-5 w-5" />
-                  New Interview Process
-                </Link>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Preps</h1>
+                <p className="mt-1 text-sm text-slate-500">Your interview processes. Pick up where you left off or start a new one.</p>
               </div>
+              <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm">
+                <PlusSquare className="h-4 w-4" />
+                New prep
+              </Link>
             </div>
 
             {workspacePanel === 'interviews' && (
@@ -1125,9 +1099,9 @@ export default function DashboardPage() {
         )}
           </>
         )}
-      </main>
+      </div>
 
-      {/* ── STICKY BOTTOM CTA (Duolingo-style) ──────────────────────── */}
+      {/* ── STICKY BOTTOM CTA ──────────────────────── */}
       {!showWorkspaceHub && onboardStep !== 'welcome' && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#f4f7fb] via-[#f4f7fb]/96 to-transparent px-5 pb-7 pt-4">
           {onboardStep === 'job' && (
@@ -1180,9 +1154,6 @@ export default function DashboardPage() {
         />
       )}
 
-      <div className="lg:hidden">
-        <MobileNav />
-      </div>
-    </div>
+    </AppChrome>
   )
 }

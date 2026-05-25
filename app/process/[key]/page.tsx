@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import PurchaseFlow from '@/components/PurchaseFlow'
+import AppChrome from '@/components/AppChrome'
 
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -180,25 +181,27 @@ export default function ProcessSpinePage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center bg-[#f8fafc]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent-200 border-t-accent-600" />
-          <p className="text-sm font-bold text-slate-500">Loading your interview process…</p>
+      <AppChrome active="preps">
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
+          <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-accent-600" />
+          <p className="text-sm font-medium text-slate-500">Loading your prep…</p>
         </div>
-      </main>
+      </AppChrome>
     )
   }
 
   if (!process || !computed) {
     return (
-      <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#f8fafc] px-6 text-center">
-        <Briefcase className="h-12 w-12 text-slate-300" />
-        <h1 className="text-2xl font-bold text-slate-900">We couldn&apos;t find that interview process.</h1>
-        <p className="max-w-sm text-sm font-semibold text-slate-500">It may have been archived, or the link is out of date.</p>
-        <Link href="/dashboard" className="btn-coach-primary mt-2 inline-flex items-center gap-2 px-6 py-3">
-          <ArrowLeft className="h-4 w-4" /> Back to workspace
-        </Link>
-      </main>
+      <AppChrome active="preps">
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+          <Briefcase className="h-10 w-10 text-slate-300" />
+          <h1 className="text-xl font-bold text-slate-900">We couldn&apos;t find that prep.</h1>
+          <p className="max-w-sm text-sm text-slate-500">It may have been archived, or the link is out of date.</p>
+          <Link href="/dashboard" className="btn-coach-primary mt-1 inline-flex items-center gap-2 px-5 py-2.5 text-sm">
+            <ArrowLeft className="h-4 w-4" /> Back to My Preps
+          </Link>
+        </div>
+      </AppChrome>
     )
   }
 
@@ -207,37 +210,31 @@ export default function ProcessSpinePage() {
   const nextStatus = nextStage ? statusOf(nextStage) : null
 
   return (
-    <main className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-[#f8fafc] text-slate-950">
-      <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-transparent" />
-      <div className="pointer-events-none absolute -right-28 bottom-24 h-72 w-72 rounded-full bg-transparent" />
-
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col px-5 py-5 sm:px-6">
+    <AppChrome active="preps" maxWidth="max-w-2xl">
+      <div className="flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between gap-3">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-white"
-          >
-            <ArrowLeft className="h-4 w-4" /> Workspace
-          </Link>
-          <span className="rounded-full bg-accent-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-accent-700">
-            {completedCount}/4 complete
+        <Link href="/dashboard" className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> My Preps
+        </Link>
+
+        <div className="mt-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">Interview Prep</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+          </div>
+          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+            {completedCount}/4 done
           </span>
         </div>
-
-        <div className="mt-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-600">Interview Process</p>
-          <h1 className="mt-1 text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">{title}</h1>
-          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white shadow-inner">
-            <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)] transition-all duration-500"
-              style={{ width: `${(completedCount / 4) * 100}%` }}
-            />
-          </div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className="h-full rounded-full bg-accent-600 transition-all duration-500"
+            style={{ width: `${(completedCount / 4) * 100}%` }}
+          />
         </div>
 
         {/* The path */}
-        <div className="relative mt-7 flex-1">
+        <div className="relative mt-7">
           <div className="pointer-events-none absolute bottom-6 left-[31px] top-6 w-0.5 bg-[linear-gradient(180deg,#dbe6fe_0%,#e2e8f0_100%)]" />
           <div className="space-y-3">
             {STAGE_ORDER.map((stage) => {
@@ -269,7 +266,7 @@ export default function ProcessSpinePage() {
                   key={stage}
                   type="button"
                   onClick={() => handleNodeClick(stage, status)}
-                  className={`relative flex w-full items-center gap-4 rounded-[1.4rem] border p-3.5 text-left transition-all hover:-translate-y-0.5 ${cardTone}`}
+                  className={`relative flex w-full items-center gap-4 rounded-2xl border p-3.5 text-left transition-all hover:-translate-y-0.5 ${cardTone}`}
                 >
                   <div className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-4 ${ring}`}>
                     {status === 'complete' ? (
@@ -323,12 +320,12 @@ export default function ProcessSpinePage() {
         </div>
 
         {/* The single next step */}
-        <div className="sticky bottom-0 z-10 mt-5 pb-[max(env(safe-area-inset-bottom),0px)]">
+        <div className="mt-6">
           {nextStage ? (
             <button
               type="button"
               onClick={() => handleNodeClick(nextStage, nextStatus as NodeStatus)}
-              className="group flex w-full items-center justify-center gap-3 rounded-[1.3rem] bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
+              className="group flex w-full items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
             >
               {nextStatus === 'locked' ? (
                 <>
@@ -343,7 +340,7 @@ export default function ProcessSpinePage() {
               )}
             </button>
           ) : (
-            <div className="flex items-center justify-center gap-3 rounded-[1.3rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-base font-bold text-emerald-800">
+            <div className="flex items-center justify-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base font-bold text-emerald-800">
               <Sparkles className="h-5 w-5" />
               Every round complete — go get the offer.
             </div>
@@ -355,7 +352,7 @@ export default function ProcessSpinePage() {
                 const lastDone = [...STAGE_ORDER].reverse().find((s) => process.stages[s].done)
                 if (lastDone) launchStage(lastDone)
               }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-[1.1rem] border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-white"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-white"
             >
               <RotateCcw className="h-4 w-4" />
               Retake last round
@@ -371,6 +368,6 @@ export default function ProcessSpinePage() {
           userEmail={userEmail}
         />
       )}
-    </main>
+    </AppChrome>
   )
 }

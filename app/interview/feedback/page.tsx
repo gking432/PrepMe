@@ -20,6 +20,8 @@ import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import HrFeedbackDeck from '@/components/HrFeedbackDeck'
+import AppChrome from '@/components/AppChrome'
+import FeedbackReport from '@/components/FeedbackReport'
 import ImprovementTip from '@/components/ImprovementTip'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
@@ -2208,50 +2210,22 @@ export default function InterviewDashboard() {
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
     return (
-      <>
-        <div className="lg:hidden">
-          <HrFeedbackDeck
-            feedback={feedback}
-            currentSessionData={currentSessionData}
-            onRetakeInterview={handleRetakeInterview}
-            onUnlockNextStage={handleUnlockNextStage}
-            onExitToProfile={handleExitToProfile}
-            artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
-            onPrintArtifact={() => window.print()}
-          />
-        </div>
-        <div className={`${shellClasses} hidden lg:grid`}>
-          <AppSidebar
-            activeSection="feedback"
-            processStages={processStages}
-            theme="light"
-            navItemsOverride={processWorkspaceNavItems}
-            navTitle="Workspace"
-            processTitle="Interview Stages"
-            footerText="You are in step one of the interview process. Review the HR screen, then unlock the hiring manager round."
-          />
-          <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
-          <div className={shellCenterClasses}>
-            <div className={`${centeredLaneClasses} py-6`}>
-              <HrFeedbackDeck
-                feedback={feedback}
-                currentSessionData={currentSessionData}
-                onRetakeInterview={handleRetakeInterview}
-                onUnlockNextStage={handleUnlockNextStage}
-                artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
-                onPrintArtifact={() => window.print()}
-                layout="embedded"
-              />
-            </div>
-          </div>
-        </div>
+      <AppChrome active="preps">
+        <FeedbackReport
+          feedback={feedback}
+          currentSessionData={currentSessionData}
+          onRetakeInterview={handleRetakeInterview}
+          onUnlockNextStage={handleUnlockNextStage}
+          artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
+          onPrintArtifact={() => window.print()}
+        />
         {showPurchaseFlow && (
           <PurchaseFlow
             onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}
             highlightStage={purchaseHighlightStage}
           />
         )}
-      </>
+      </AppChrome>
     )
   }
 

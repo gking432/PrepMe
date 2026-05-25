@@ -75,11 +75,11 @@ export const MOCK_FEEDBACK = {
           'Your answers tended to ramble without a clear beginning, middle, and end. The interviewer had to redirect you twice.',
         score: 4,
         rootCause: 'professional_story',
-        rewrite_method: 'STAR',
+        rewrite_method: 'Present, Past, Future',
         rewritten_answer:
-          'In my current role, we had a project with a tight deadline where the team felt overwhelmed and priorities were unclear. I stepped in to help the group reset the plan. I listened to the different concerns, identified which work was truly urgent, and helped the team agree on a clearer order of priorities. From there, I stayed close to the execution and helped wherever the biggest gaps were. We got through the deadline, and the team appreciated that I stayed calm and helped turn a stressful situation into a workable plan.',
+          'Right now, most of my work is focused on keeping projects organized when priorities shift and several people need to stay aligned. Earlier in my career, I built that foundation by working through high-pressure situations where teams needed clearer ownership and calmer communication. One experience that shaped me was a challenging project with a tight deadline, where I helped reset priorities and keep the work moving. Going forward, I want to keep building in roles where coordination, follow-through, and steady execution are central to the work.',
         rewrite_explanation:
-          'This keeps your real details but gives the interviewer a clearer situation, action, and result.',
+          'This keeps the same details but turns them into Present, Past, Future instead of a long challenge story.',
         evidence: [
           {
             question_id: 'q3',

@@ -178,25 +178,109 @@ function getFallbackTeachingBullets(criterion: string) {
   ]
 }
 
-function compactTeachingBullet(value: string) {
-  const text = toDisplayText(value)
-  const [rawLabel, ...rest] = text.split(':')
-  const detail = rest.join(':').trim()
-  const label = detail ? rawLabel.trim() : ''
-  const labelKey = label.toLowerCase()
-  const preset: Record<string, string> = {
-    present: 'Start with what you do now.',
-    past: 'Prove the background that shaped you.',
-    future: 'Connect the story to this role.',
-    situation: 'Set the scene quickly.',
-    task: 'Name what was expected.',
-    action: 'Show the move you owned.',
-    result: 'End with the outcome.',
+type IssueLesson = {
+  title: string
+  summary: string
+  steps: Array<{ label: string; text: string }>
+  tryThis: string
+}
+
+function getIssueLesson(criterion: string, rootCause?: string): IssueLesson {
+  const text = `${criterion} ${rootCause || ''}`.toLowerCase()
+
+  if (/professional story|professional_story|tell me about yourself|background/.test(text)) {
+    return {
+      title: 'Turn your background into a clear professional story',
+      summary:
+        'A strong answer explains what you do now, shows the foundation that shaped you, and makes it clear where you are headed next.',
+      steps: [
+        { label: 'Present', text: 'Start with what you do now and define your professional lane clearly.' },
+        { label: 'Past', text: 'Show the foundation that shaped you. Use specific details when they explain meaning, not when they just add chronology.' },
+        { label: 'Future', text: 'Explain where you want to go next in a way that sounds specific and logical.' },
+      ],
+      tryThis: 'Draft your answer using Present, Past, Future. Do not stop at the section label. Add a qualifier to each one.',
+    }
   }
 
-  if (label && preset[labelKey]) return `${label}: ${preset[labelKey]}`
+  if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
+    return {
+      title: 'Fix weak proof with stronger STAR',
+      summary:
+        'A STAR answer can look organized and still fail if the Action is broad, the Result is thin, or the Situation stays too generic to mean anything.',
+      steps: [
+        { label: 'Situation', text: 'Give enough context to make the problem real, but do not stay broad or drift into a long setup.' },
+        { label: 'Task', text: 'Make your responsibility clear so the interviewer knows what you owned inside the situation.' },
+        { label: 'Action', text: 'This is where proof usually lives. Show the real moves you made, not just traits like “I stayed organized.”' },
+        { label: 'Result', text: 'Close with what changed, improved, or got protected because of your actions.' },
+      ],
+      tryThis: 'Use STAR again, but put more weight into ownership, specific Action, and meaningful Result.',
+    }
+  }
 
-  return detail || text
+  if (/alignment|career goals|career_alignment|position|why this role|why this position/.test(text)) {
+    return {
+      title: 'Use Observation, Fit, Timing',
+      summary:
+        'Do not just say you want the role. Explain what you noticed, why it fits, and why now makes sense.',
+      steps: [
+        { label: 'Observation', text: 'What specifically stood out to you about the role or company?' },
+        { label: 'Fit', text: 'Why does that connect to your background?' },
+        { label: 'Timing', text: 'Why does this move make sense now?' },
+      ],
+      tryThis: 'Use Observation, Fit, Timing to explain what stands out, why it connects to you, and why the move makes sense now.',
+    }
+  }
+
+  if (/uncertain|difficult|handling_uncertainty|off_topic|gap|bluff|deflect/.test(text)) {
+    return {
+      title: 'Use Answer, Reason, Example when you are unsure',
+      summary:
+        'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, do not ramble while you search.',
+      steps: [
+        { label: 'Pause', text: 'Pause, choose one grounded answer, explain why, and then support it with a short real example.' },
+        { label: 'Answer', text: 'Give one clear answer early so the interviewer knows where the response is going.' },
+        { label: 'Reason', text: 'Explain why that answer makes sense instead of circling the topic.' },
+        { label: 'Example', text: 'Ground it with a short real example so the answer sounds credible and lived-in.' },
+      ],
+      tryThis: 'The recovery move is not to keep talking while you think. Pause, choose a direct answer, explain it, and ground it briefly.',
+    }
+  }
+
+  if (/pace|flow|natural delivery|weak_communication|conversation/.test(text)) {
+    return {
+      title: 'Make the conversation feel natural and easy to follow',
+      summary:
+        'A strong interview does not just depend on what you say. It also depends on how the conversation feels.',
+      steps: [
+        { label: 'Rhythm', text: 'A strong answer should sound calm and easy to track.' },
+        { label: 'Transition', text: 'One simple transition helps the answer begin naturally.' },
+        { label: 'Flow', text: 'The ideas should build clearly instead of piling up too fast.' },
+      ],
+      tryThis: 'Use one simple transition, focus on one main point first, and make the answer easier to follow out loud.',
+    }
+  }
+
+  if (/preparation|curiosity|questions_about_company|company|question/.test(text)) {
+    return {
+      title: 'Show you did enough homework to sound informed',
+      summary:
+        'In an HR screen, the interviewer is usually checking whether you did basic homework and whether your interest feels real.',
+      steps: [
+        { label: 'Basics', text: 'Know what the company does, who it serves, and one thing that stood out.' },
+        { label: 'No generic praise', text: 'Saying the company seems great is not the same as showing preparation.' },
+        { label: 'Connect interest', text: 'Say what stood out, then explain why it matters to you.' },
+        { label: 'Better questions', text: 'Strong questions focus on the role, team, culture, or company priorities.' },
+      ],
+      tryThis: 'Keep it short. You only need the basics plus one real point of interest.',
+    }
+  }
+
+  return {
+    title: `${criterion} repair`,
+    summary: 'Use the flagged feedback to make the answer clearer, more specific, and easier for the interviewer to trust.',
+    steps: getFallbackTeachingBullets(criterion).map((text, index) => ({ label: `Step ${index + 1}`, text })),
+    tryThis: 'Try answering again with more ownership, more specificity, and a clearer result.',
+  }
 }
 
 function getScoreTone(score?: number | string) {
@@ -403,13 +487,12 @@ function RepairLessonSlide({
 
   const criterion = toDisplayText(repair.criterion, 'Priority Repair')
   const rootCause = getRootCauseForCriterion(criterion, repair.rootCause)
-  const tip = getImprovementTipForCriterion(criterion, rootCause)
+  const lesson = getIssueLesson(criterion, rootCause)
   const score = parseScore(repair.score)
   const feedbackText = toDisplayText(repair.feedback, 'This answer did not create enough interviewer confidence for the next round.')
   const evidence = getPrimaryEvidence(repair)
   const questionText = toDisplayText(evidence?.question)
   const proofText = toDisplayText(evidence?.excerpt)
-  const teachingBullets = (tip.bullets.length ? tip.bullets : getFallbackTeachingBullets(criterion)).slice(0, 3)
   const rewrittenAnswer = toDisplayText(repair.rewritten_answer)
   const rewriteMethod = toDisplayText(repair.rewrite_method)
   const rewriteExplanation = toDisplayText(repair.rewrite_explanation)
@@ -455,29 +538,31 @@ function RepairLessonSlide({
           </div>
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-violet-700">Mini Lesson</p>
-            <p className="text-xs font-black leading-4 text-slate-950">{tip.title}</p>
+            <p className="text-xs font-black leading-4 text-slate-950">{lesson.title}</p>
           </div>
         </div>
+        <p className="mt-2 text-xs font-semibold leading-5 text-violet-950">{lesson.summary}</p>
 
-        <div className={`mt-2 grid gap-2 ${rewrittenAnswer ? 'xl:grid-cols-[0.85fr_1.15fr] xl:items-start' : ''}`}>
+        <div className="mt-2 grid gap-2">
           <div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {teachingBullets.map((item, index) => (
+            <div className={`grid gap-2 ${lesson.steps.length >= 4 ? 'sm:grid-cols-2 2xl:grid-cols-4' : 'sm:grid-cols-3'}`}>
+              {lesson.steps.map((item, index) => (
                 <div key={`${item}-${index}`} className="flex gap-2 rounded-[1rem] bg-white px-2.5 py-1.5 shadow-sm sm:flex-col">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-black text-white">
                     {index + 1}
                   </span>
-                  <p className="text-xs font-bold leading-4 text-slate-800">{compactTeachingBullet(item)}</p>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">{item.label}</p>
+                    <p className="text-xs font-bold leading-4 text-slate-800">{item.text}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {tip.retryPrompt && (
-              <div className="mt-2 rounded-[1rem] border border-violet-200 bg-white/85 px-3 py-2">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-700">Try this next</p>
-                <p className="mt-1 text-xs font-bold leading-5 text-slate-800 lg:text-sm">{tip.retryPrompt}</p>
-              </div>
-            )}
+            <div className="mt-2 rounded-[1rem] border border-violet-200 bg-white/85 px-3 py-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-700">Try this next</p>
+              <p className="mt-1 text-xs font-bold leading-5 text-slate-800 lg:text-sm">{lesson.tryThis}</p>
+            </div>
           </div>
 
           {rewrittenAnswer && (

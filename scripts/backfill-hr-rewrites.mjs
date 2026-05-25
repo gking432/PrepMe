@@ -35,25 +35,45 @@ const supabase = createClient(
 const HR_REWRITE_METHODS = [
   {
     id: 'present_past_future',
-    label: 'Present-Past-Future',
-    instruction: 'Rewrite as Present -> Past -> Future: current professional lane, relevant background proof, then why this role is the logical next step.',
+    label: 'Present, Past, Future',
+    instruction: 'Rewrite as Present -> Past -> Future: what they do now, the foundation that shaped them, and where they are headed next.',
   },
   {
     id: 'star',
     label: 'STAR',
-    instruction: 'Rewrite as Situation -> Task -> Action -> Result with one concrete example, clear ownership, and a result or honest placeholder if the result was missing.',
+    instruction: 'Rewrite as Situation -> Task -> Action -> Result. Keep Situation short, make Task/ownership clear, put the most weight into Action, and close with Result.',
   },
   {
     id: 'answer_reason_example',
-    label: 'Answer-Reason-Example',
-    instruction: 'Rewrite as direct answer -> brief reason -> related example or transferable experience. Address the difficult question honestly instead of deflecting.',
+    label: 'Answer, Reason, Example',
+    instruction: 'Rewrite as direct Answer -> brief Reason -> short Example or proof. Use this for judgment, preference, approach, or non-story questions.',
   },
   {
-    id: 'noticed_fit_now',
-    label: 'Noticed-Fit-Now',
-    instruction: 'Rewrite as what they noticed about the role/company -> how their background fits -> why the timing makes sense now.',
+    id: 'observation_fit_timing',
+    label: 'Observation, Fit, Timing',
+    instruction: 'Rewrite as Observation -> Fit -> Timing: what stood out about the role/company, why that connects to their background, and why the move makes sense now.',
+  },
+  {
+    id: 'uncertainty_recovery',
+    label: 'Recovery + Answer, Reason, Example',
+    instruction: 'Rewrite as a brief recovery answer: pause/steady opening, one clear Answer, a Reason, and a short Example. Do not ramble while searching.',
+  },
+  {
+    id: 'pace_delivery',
+    label: 'Delivery Workshop',
+    instruction: 'Rewrite the saved answer for better delivery: one simple transition, one clear main point first, smoother flow, and a settled ending. Do not change the substance.',
+  },
+  {
+    id: 'research_questions',
+    label: 'Research + Question-Building',
+    instruction: 'Rewrite as a stronger preparation/curiosity response: basic company knowledge, one real point of interest, why it matters, and one thoughtful role/team/company question if relevant.',
   },
 ]
+
+function questionLooksBehavioral(question = '') {
+  const normalized = question.toLowerCase()
+  return /tell me about a time|give me an example|describe a time|walk me through a time|significant challenge|accomplishment|worked on|handled|managed|solved|dealt with/.test(normalized)
+}
 
 function getRewriteMethodForHrSignal(criterion = '', rootCause = '') {
   const text = `${criterion} ${rootCause}`.toLowerCase()
@@ -62,19 +82,37 @@ function getRewriteMethodForHrSignal(criterion = '', rootCause = '') {
     return HR_REWRITE_METHODS[0]
   }
 
-  if (/specific examples|evidence|lack_of_specificity|star|example/.test(text)) {
-    return HR_REWRITE_METHODS[1]
+  if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
+    return null
   }
 
   if (/uncertain|difficult|off_topic|gap|bluff|deflect/.test(text)) {
-    return HR_REWRITE_METHODS[2]
+    return HR_REWRITE_METHODS[4]
   }
 
-  if (/alignment|career goals|position|why this role|why this position|noticed_fit_now/.test(text)) {
+  if (/alignment|career goals|career_alignment|position|why this role|why this position|noticed_fit_now/.test(text)) {
     return HR_REWRITE_METHODS[3]
   }
 
+  if (/pace|flow|natural delivery|weak_communication|conversation/.test(text)) {
+    return HR_REWRITE_METHODS[5]
+  }
+
+  if (/preparation|curiosity|questions_about_company|company|question/.test(text)) {
+    return HR_REWRITE_METHODS[6]
+  }
+
   return null
+}
+
+function getRewriteMethodForHrSignalAndQuestion(criterion = '', rootCause = '', question = '') {
+  const text = `${criterion} ${rootCause}`.toLowerCase()
+
+  if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
+    return questionLooksBehavioral(question) ? HR_REWRITE_METHODS[1] : HR_REWRITE_METHODS[2]
+  }
+
+  return getRewriteMethodForHrSignal(criterion, rootCause)
 }
 
 function getQuestionText(questionId, evidence, structuredTranscript) {
@@ -130,13 +168,14 @@ async function buildRewriteItems(feedback, structuredTranscript) {
 
   return weakSignals
     .map((signal, index) => {
-      const method = getRewriteMethodForHrSignal(signal?.criterion, signal?.rootCause || signal?.root_cause)
-      if (!method) return null
+      if (typeof signal?.rewritten_answer === 'string' && signal.rewritten_answer.trim()) return null
 
       const evidence = Array.isArray(signal?.evidence) ? signal.evidence[0] : null
       const questionId = evidence?.question_id
       const question = getQuestionText(questionId, evidence, structuredTranscript)
       const originalAnswer = getCandidateAnswerForQuestion(questionId, evidence, structuredTranscript)
+      const method = getRewriteMethodForHrSignalAndQuestion(signal?.criterion, signal?.rootCause || signal?.root_cause, question)
+      if (!method) return null
 
       if (!question || !originalAnswer || originalAnswer.length < 20) return null
 
@@ -151,7 +190,7 @@ async function buildRewriteItems(feedback, structuredTranscript) {
       }
     })
     .filter(Boolean)
-    .slice(0, 4)
+    .slice(0, 6)
 }
 
 async function generateRewrites(rewriteItems) {
@@ -164,7 +203,7 @@ async function generateRewrites(rewriteItems) {
     },
     body: JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1900,
+    max_tokens: 2800,
     temperature: 0.2,
     system: `You rewrite interview answers cheaply and safely.
 
@@ -173,7 +212,7 @@ Rules:
 - Do not invent metrics, company facts, seniority, accomplishments, tools, clients, or outcomes.
 - If a needed detail is missing, use a short bracketed placeholder like [specific result].
 - Keep each rewrite interview-natural, concise, and spoken aloud.
-- Target 90-130 words per rewritten answer.
+- Target 80-120 words per rewritten answer.
 - Return valid JSON only.`,
     messages: [
       {
@@ -262,7 +301,7 @@ async function main() {
 
   for (const feedback of feedbackRows || []) {
     const weakSignals = getWeakSignals(feedback)
-    if (!weakSignals.length || hasAnyRewrite(feedback)) continue
+    if (!weakSignals.length) continue
 
     const { data: session, error: sessionError } = await supabase
       .from('interview_sessions')

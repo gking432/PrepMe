@@ -144,16 +144,20 @@ export default function InterviewPage() {
     dc.send(JSON.stringify({
       type: 'session.update',
       session: {
-        turn_detection: enabled
-          ? {
-              type: 'server_vad',
-              threshold: 0.8,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 900,
-              create_response: true,
-              interrupt_response: false,
-            }
-          : null,
+        audio: {
+          input: {
+            turn_detection: enabled
+              ? {
+                  type: 'server_vad',
+                  threshold: 0.8,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 900,
+                  create_response: true,
+                  interrupt_response: false,
+                }
+              : null,
+          },
+        },
       },
     }))
 
@@ -515,9 +519,9 @@ export default function InterviewPage() {
         throw new Error(data.error)
       }
       
-      const { clientSecret, sessionId: realtimeSessionId, instructions } = data
+      const { clientSecret, sessionId: realtimeSessionId, instructions, model } = data
       
-      console.log('Session data received:', { hasClientSecret: !!clientSecret, sessionId: realtimeSessionId })
+      console.log('Session data received:', { hasClientSecret: !!clientSecret, sessionId: realtimeSessionId, model })
       
       if (!clientSecret) {
         throw new Error('No client secret received from server')
@@ -558,19 +562,25 @@ export default function InterviewPage() {
         dc.send(JSON.stringify({
           type: 'session.update',
           session: {
-            modalities: ['text', 'audio'],
             instructions: instructions || '',
-            input_audio_transcription: { model: 'gpt-4o-mini-transcribe' },
-            turn_detection: {
-              type: 'server_vad',
-              threshold: 0.8,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 900,
-              create_response: true,
-              interrupt_response: false,
+            output_modalities: ['audio'],
+            audio: {
+              input: {
+                transcription: { model: 'gpt-4o-mini-transcribe' },
+                turn_detection: {
+                  type: 'server_vad',
+                  threshold: 0.8,
+                  prefix_padding_ms: 300,
+                  silence_duration_ms: 900,
+                  create_response: true,
+                  interrupt_response: false,
+                },
+              },
+              output: {
+                voice: 'marin',
+              },
             },
-            temperature: 0.7,
-            max_response_output_tokens: 400,
+            max_output_tokens: 400,
           },
         }))
         setIsConnected(true)
@@ -613,7 +623,7 @@ export default function InterviewPage() {
       await pc.setLocalDescription(offer)
 
       const sdpRes = await fetch(
-        'https://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview',
+        'https://api.openai.com/v1/realtime/calls',
         {
           method: 'POST',
           body: offer.sdp,

@@ -325,32 +325,44 @@ QUESTION BOUNDARIES:
       })
     }
 
-    // Create Realtime API session
-    const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
+    const realtimeModel = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-mini'
+    const realtimeSessionConfig = {
+      session: {
+        type: 'realtime',
+        model: realtimeModel,
+        instructions: optimizedSystemPrompt,
+        audio: {
+          input: {
+            format: { type: 'audio/pcm', rate: 24000 },
+            noise_reduction: { type: 'near_field' },
+            transcription: { model: 'gpt-4o-mini-transcribe' },
+            turn_detection: {
+              type: 'server_vad',
+              threshold: 0.8,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 900,
+              create_response: true,
+              interrupt_response: false,
+            },
+          },
+          output: {
+            format: { type: 'audio/pcm', rate: 24000 },
+            voice: 'marin',
+          },
+        },
+        output_modalities: ['audio'],
+        max_output_tokens: 400,
+      },
+    }
+
+    // Create a GA Realtime client secret for browser WebRTC.
+    const response = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
-        'OpenAI-Beta': 'realtime=v1',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini-realtime-preview',
-        voice: 'marin',
-        instructions: optimizedSystemPrompt,
-        input_audio_format: 'pcm16',
-        output_audio_format: 'pcm16',
-        turn_detection: {
-          type: 'server_vad',
-          threshold: 0.8,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 900,
-          create_response: true,
-          interrupt_response: false,
-        },
-        modalities: ['text', 'audio'],
-        temperature: 0.7,
-        max_response_output_tokens: 400,
-      }),
+      body: JSON.stringify(realtimeSessionConfig),
     })
 
     if (!response.ok) {
@@ -359,23 +371,23 @@ QUESTION BOUNDARIES:
       throw new Error(`Failed to create session: ${response.status} - ${errorText}`)
     }
 
-    const session = await response.json()
-    console.log('Session created:', JSON.stringify(session, null, 2))
+    const clientSecretResponse = await response.json()
+    console.log('Realtime client secret created:', {
+      hasValue: !!clientSecretResponse?.value,
+      sessionId: clientSecretResponse?.session?.id,
+      model: clientSecretResponse?.session?.model,
+    })
 
-    // Handle different possible response formats
-    const clientSecret = session.client_secret?.value || 
-                        session.client_secret || 
-                        session.client_secret_value ||
-                        session.data?.client_secret
+    const clientSecret = clientSecretResponse?.value
 
     const finalClientSecret = clientSecret
 
     if (!finalClientSecret) {
-      console.error('No client_secret available. Session response:', JSON.stringify(session, null, 2))
+      console.error('No Realtime client secret available. Response:', JSON.stringify(clientSecretResponse, null, 2))
       return NextResponse.json({
         error: 'No client_secret available',
-        sessionData: session,
-        sessionId: session.id,
+        sessionData: clientSecretResponse,
+        sessionId: clientSecretResponse?.session?.id,
         instructions: optimizedSystemPrompt,
       }, { status: 500 })
     }
@@ -387,10 +399,9 @@ QUESTION BOUNDARIES:
     // This is only for testing the WebSocket connection
     return NextResponse.json({
       clientSecret: finalClientSecret,
-      sessionId: session.id,
+      sessionId: clientSecretResponse?.session?.id,
+      model: clientSecretResponse?.session?.model || realtimeModel,
       instructions: optimizedSystemPrompt,
-      // Temporary: For testing WebSocket connection (REMOVE IN PRODUCTION)
-      // The WebSocket might need the API key in the connection, not the client_secret
       testMode: process.env.NODE_ENV === 'development',
     })
   } catch (error) {

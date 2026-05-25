@@ -20,8 +20,6 @@ import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import HrFeedbackDeck from '@/components/HrFeedbackDeck'
-import AppChrome from '@/components/AppChrome'
-import FeedbackReport from '@/components/FeedbackReport'
 import ImprovementTip from '@/components/ImprovementTip'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
@@ -2205,17 +2203,18 @@ export default function InterviewDashboard() {
   }
 
   const handleExitToProfile = () => {
-    router.push('/profile')
+    router.push('/dashboard')
   }
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
     return (
-      <AppChrome active="preps">
-        <FeedbackReport
+      <>
+        <HrFeedbackDeck
           feedback={feedback}
           currentSessionData={currentSessionData}
           onRetakeInterview={handleRetakeInterview}
           onUnlockNextStage={handleUnlockNextStage}
+          onExitToProfile={handleExitToProfile}
           artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
           onPrintArtifact={() => window.print()}
         />
@@ -2225,7 +2224,7 @@ export default function InterviewDashboard() {
             highlightStage={purchaseHighlightStage}
           />
         )}
-      </AppChrome>
+      </>
     )
   }
 

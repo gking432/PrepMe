@@ -336,17 +336,13 @@ function StepShell({
   compact?: boolean
 }) {
   return (
-    <div className={`grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] ${compact ? 'gap-2' : 'gap-3'} 2xl:grid-cols-[0.72fr_1fr] 2xl:grid-rows-none 2xl:gap-6`}>
-      <div className={`flex min-h-0 flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${compact ? 'p-4 lg:p-5' : 'p-5 lg:p-6 2xl:p-8'}`}>
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent-600">{eyebrow}</p>
-          <h1 className={`mt-2 font-bold leading-tight tracking-tight text-slate-900 ${compact ? 'text-xl lg:text-2xl' : 'text-2xl lg:mt-3 lg:text-3xl 2xl:text-4xl'}`}>{title}</h1>
-          {body && !compact && <p className="mt-4 hidden text-base font-medium leading-7 text-slate-500 2xl:block">{body}</p>}
-        </div>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0">
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">{eyebrow}</p>
+        <h1 className={`mt-1.5 font-bold leading-tight tracking-tight text-slate-900 ${compact ? 'text-xl' : 'text-2xl sm:text-3xl'}`}>{title}</h1>
+        {body && !compact && <p className="mt-2 text-sm leading-relaxed text-slate-500">{body}</p>}
       </div>
-      <div className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
-        {children}
-      </div>
+      <div className="mt-5 min-h-0 flex-1 overflow-hidden">{children}</div>
     </div>
   )
 }
@@ -1006,78 +1002,49 @@ export default function HrFeedbackDeck({
     )
   }
 
-  const isEmbedded = layout === 'embedded'
-  const rootClass = isEmbedded
-    ? 'relative flex h-[calc(100dvh-5rem)] min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-[#f8fafc] text-slate-950 shadow-sm'
-    : 'relative flex h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#f8fafc] text-slate-950'
-  const contentClass = isEmbedded
-    ? 'mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-5'
-    : 'mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-3 sm:px-6 lg:px-8 lg:py-5'
-
   return (
-    <main className={rootClass}>
-      <div className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-accent-200/60 blur-3xl" />
-      <div className="pointer-events-none absolute -right-28 bottom-16 h-72 w-72 rounded-full bg-sky-200/60 blur-3xl" />
-      <div className={contentClass}>
-        <div className="relative z-10 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent-700">PrepMe Feedback</p>
-            <p className="truncate text-sm font-bold text-slate-900">HR Screen Report</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {onExitToProfile && (
-              <button
-                type="button"
-                onClick={onExitToProfile}
-                className="flex items-center gap-2 rounded-full border border-accent-200 bg-white/90 px-3 py-2 text-xs font-bold text-accent-700 shadow-sm transition hover:bg-white"
-              >
-                Exit
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowCoachFile(true)}
-              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white"
-            >
-              <FileText className="h-4 w-4" />
-              Coach File
-            </button>
-          </div>
-        </div>
-
-        <div className="relative z-10 mt-3">
-          <div className="h-3 overflow-hidden rounded-full bg-white shadow-inner">
-            <div className="h-full rounded-full bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
-            <span>HR Screen · {activeStep.label}</span>
-            <span>Step {step + 1}/{deckSteps.length}</span>
-          </div>
-          <div className="mt-2 grid grid-cols-4 gap-1 lg:hidden">
-            {['HR', 'HM', 'Culture', 'Final'].map((stage, index) => (
-              <div key={stage} className={`h-1.5 rounded-full ${index === 0 ? 'bg-accent-600' : 'bg-white shadow-inner'}`} />
+    <div className="fixed inset-0 z-40 flex flex-col bg-slate-200/70">
+      <div className="mx-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-xl">
+        {/* App top bar: close + story progress */}
+        <div className="flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
+          <button
+            type="button"
+            onClick={onExitToProfile}
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex flex-1 gap-1.5">
+            {deckSteps.map((s, index) => (
+              <div key={s.key} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+                <div className={`h-full rounded-full bg-accent-600 transition-all duration-300 ${index <= step ? 'w-full' : 'w-0'}`} />
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 mt-3 min-h-0 flex-1 overflow-hidden pb-3">
+        {/* Slide */}
+        <div key={activeStep.key} className="slide-in-bottom min-h-0 flex-1 overflow-hidden px-4 py-5 sm:px-6 sm:py-6">
           {renderStep()}
         </div>
 
-        <div className="relative z-10 grid grid-cols-[auto_1fr] gap-3 border-t border-slate-900/5 pt-3">
-          <button
-            type="button"
-            onClick={goBack}
-            disabled={step === 0}
-            className="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Previous card"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
+        {/* App bottom bar */}
+        <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={goBack}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+              aria-label="Back"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          )}
           <button
             type="button"
             onClick={goNext}
-            className="group flex h-14 items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
+            className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
           >
             {isLastStep ? 'Unlock Hiring Manager' : 'Continue'}
             {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
@@ -1092,6 +1059,6 @@ export default function HrFeedbackDeck({
           onPrintArtifact={onPrintArtifact}
         />
       )}
-    </main>
+    </div>
   )
 }

@@ -66,7 +66,7 @@ const HR_REWRITE_METHODS = [
   {
     id: 'research_questions',
     label: 'Research + Question-Building',
-    instruction: 'Rewrite as a stronger preparation/curiosity response: basic company knowledge, one real point of interest, why it matters, and one thoughtful role/team/company question if relevant.',
+    instruction: 'Rewrite as a stronger preparation/curiosity response: basic company knowledge, one real point of interest, why it matters, and one thoughtful role/team/company question if relevant. If the candidate admitted they did not research something, keep that honesty and use placeholders for what they need to add.',
   },
 ]
 
@@ -80,6 +80,10 @@ function getRewriteMethodForHrSignal(criterion = '', rootCause = '') {
 
   if (/professional story|professional_story|tell me about yourself|background/.test(text)) {
     return HR_REWRITE_METHODS[0]
+  }
+
+  if (/answer structure|conciseness|structure/.test(text)) {
+    return null
   }
 
   if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
@@ -108,6 +112,13 @@ function getRewriteMethodForHrSignal(criterion = '', rootCause = '') {
 function getRewriteMethodForHrSignalAndQuestion(criterion = '', rootCause = '', question = '') {
   const text = `${criterion} ${rootCause}`.toLowerCase()
 
+  if (/answer structure|conciseness|structure/.test(text)) {
+    if (/tell me about yourself|background|walk me through your experience|bit about yourself/i.test(question)) {
+      return HR_REWRITE_METHODS[0]
+    }
+    return questionLooksBehavioral(question) ? HR_REWRITE_METHODS[1] : HR_REWRITE_METHODS[2]
+  }
+
   if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
     return questionLooksBehavioral(question) ? HR_REWRITE_METHODS[1] : HR_REWRITE_METHODS[2]
   }
@@ -123,6 +134,12 @@ function getQuestionText(questionId, evidence, structuredTranscript) {
   return typeof match?.question === 'string' ? match.question.trim() : ''
 }
 
+function isUsableCandidateAnswer(answer = '') {
+  const normalized = String(answer).trim()
+  if (normalized.length < 20) return false
+  return !/^\[(no response|not enough|missing|inaudible)/i.test(normalized)
+}
+
 function getCandidateAnswerForQuestion(questionId, evidence, structuredTranscript) {
   const messages = Array.isArray(structuredTranscript?.messages) ? structuredTranscript.messages : []
 
@@ -132,7 +149,8 @@ function getCandidateAnswerForQuestion(questionId, evidence, structuredTranscrip
       .map((message) => message.text.trim())
       .filter(Boolean)
 
-    if (matchingCandidateMessages.length > 0) return matchingCandidateMessages.join('\n\n')
+    const answer = matchingCandidateMessages.join('\n\n')
+    if (isUsableCandidateAnswer(answer)) return answer
   }
 
   const excerpt = typeof evidence?.excerpt === 'string' ? evidence.excerpt.trim() : ''
@@ -141,10 +159,118 @@ function getCandidateAnswerForQuestion(questionId, evidence, structuredTranscrip
       if (message?.speaker !== 'candidate' || typeof message?.text !== 'string') return false
       return message.text.includes(excerpt) || excerpt.includes(message.text.slice(0, 80))
     })
-    if (excerptMatch?.text) return excerptMatch.text.trim()
+    if (isUsableCandidateAnswer(excerptMatch?.text)) return excerptMatch.text.trim()
   }
 
   return excerpt
+}
+
+function getQuestionIntent(criterion = '', rootCause = '') {
+  const text = `${criterion} ${rootCause}`.toLowerCase()
+  if (/professional story|professional_story|tell me about yourself|background/.test(text)) return 'professional_story'
+  if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) return 'specificity'
+  if (/uncertain|difficult|off_topic|gap|bluff|deflect/.test(text)) return 'uncertainty'
+  if (/alignment|career goals|career_alignment|position|why this role|why this position|noticed_fit_now/.test(text)) return 'alignment'
+  if (/pace|flow|natural delivery|weak_communication|conversation/.test(text)) return 'pace'
+  if (/preparation|curiosity|questions_about_company|company|question/.test(text)) return 'preparation'
+  return 'general'
+}
+
+function questionMatchesIntent(question = '', intent = 'general') {
+  const text = question.toLowerCase()
+  if (intent === 'professional_story') return /tell me about yourself|background|walk me through your experience|bit about yourself/.test(text)
+  if (intent === 'specificity') return /example|time when|tell me about a time|describe|challenge|accomplishment|handled|managed|worked on|solved/.test(text)
+  if (intent === 'uncertainty') return /difficult|challenge|uncertain|develop|weakness|gap|mistake|failure|struggle|stretch/.test(text)
+  if (intent === 'alignment') return /why.*role|why.*position|interested|career|goals|opportunit|fit|now/.test(text)
+  if (intent === 'preparation') return /what do you know|company|helmhouse|questions.*for|do you have.*questions|research/.test(text)
+  return false
+}
+
+function getFallbackQuestionForIntent(intent, structuredTranscript) {
+  const questions = Array.isArray(structuredTranscript?.questions_asked) ? structuredTranscript.questions_asked : []
+  const matchingQuestion = questions.find((question) => questionMatchesIntent(question?.question || '', intent))
+  if (matchingQuestion?.question) return matchingQuestion.question.trim()
+
+  if (intent === 'professional_story') return 'Can you tell me a bit about yourself?'
+  if (intent === 'specificity') return 'Can you give me a specific example?'
+  if (intent === 'uncertainty') return 'Tell me about an area where you are still developing professionally.'
+  if (intent === 'alignment') return 'What interests you about this role?'
+  if (intent === 'preparation') return 'What do you know about the company, and what questions do you have?'
+  if (intent === 'pace') return 'Use one saved answer from this interview.'
+  return questions[0]?.question?.trim() || 'Interview question'
+}
+
+function getFallbackCandidateAnswer(criterion, rootCause, structuredTranscript) {
+  const intent = getQuestionIntent(criterion, rootCause)
+  const messages = Array.isArray(structuredTranscript?.messages) ? structuredTranscript.messages : []
+  const candidateMessages = messages.filter((message) => message?.speaker === 'candidate' && isUsableCandidateAnswer(message?.text))
+  if (!candidateMessages.length) return ''
+
+  const questions = Array.isArray(structuredTranscript?.questions_asked) ? structuredTranscript.questions_asked : []
+  const matchingQuestion = questions.find((question) => questionMatchesIntent(question?.question || '', intent))
+  if (matchingQuestion?.id || matchingQuestion?.question_id) {
+    const questionId = matchingQuestion.id || matchingQuestion.question_id
+    const answer = candidateMessages
+      .filter((message) => message.question_id === questionId)
+      .map((message) => message.text.trim())
+      .join('\n\n')
+    if (isUsableCandidateAnswer(answer)) return answer
+  }
+
+  const indexedMatch = messages.find((message, index) => {
+    if (message?.speaker !== 'interviewer' || !questionMatchesIntent(message.text || '', intent)) return false
+    return candidateMessages.some((candidate) => messages.indexOf(candidate) > index)
+  })
+
+  if (indexedMatch) {
+    const questionIndex = messages.indexOf(indexedMatch)
+    const nextAnswer = messages
+      .slice(questionIndex + 1)
+      .find((message) => message?.speaker === 'candidate' && isUsableCandidateAnswer(message?.text))
+    if (nextAnswer?.text) return nextAnswer.text.trim()
+  }
+
+  if (intent === 'pace') {
+    return candidateMessages.slice().sort((a, b) => String(b.text).length - String(a.text).length)[0]?.text.trim() || ''
+  }
+
+  return candidateMessages[0]?.text.trim() || ''
+}
+
+function parsePlainTranscript(transcript = '') {
+  const lines = String(transcript)
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  const messages = []
+  const questions_asked = []
+  let questionCounter = 0
+  let currentQuestionId = ''
+
+  for (const line of lines) {
+    const candidateMatch = line.match(/^You:\s*(.+)$/i)
+    const interviewerMatch = line.match(/^Interviewer:\s*(.+)$/i)
+
+    if (interviewerMatch) {
+      const text = interviewerMatch[1].trim()
+      const isQuestion =
+        text.includes('?') ||
+        /^(tell me|what|why|how|can you|would you|could you|do you have)/i.test(text)
+      const question_id = isQuestion ? `q${++questionCounter}` : undefined
+      if (question_id) currentQuestionId = question_id
+      messages.push({ speaker: 'interviewer', text, question_id })
+      if (question_id) questions_asked.push({ id: question_id, question: text })
+      continue
+    }
+
+    if (candidateMatch) {
+      messages.push({ speaker: 'candidate', text: candidateMatch[1].trim(), question_id: currentQuestionId || undefined })
+      continue
+    }
+  }
+
+  return { messages, questions_asked }
 }
 
 function parseJsonObject(text) {
@@ -163,21 +289,25 @@ function hasAnyRewrite(feedback) {
   return getWeakSignals(feedback).some((signal) => typeof signal?.rewritten_answer === 'string' && signal.rewritten_answer.trim())
 }
 
-async function buildRewriteItems(feedback, structuredTranscript) {
+async function buildRewriteItems(feedback, structuredTranscript, { force = false } = {}) {
   const weakSignals = getWeakSignals(feedback)
 
   return weakSignals
     .map((signal, index) => {
-      if (typeof signal?.rewritten_answer === 'string' && signal.rewritten_answer.trim()) return null
+      if (!force && typeof signal?.rewritten_answer === 'string' && signal.rewritten_answer.trim()) return null
 
       const evidence = Array.isArray(signal?.evidence) ? signal.evidence[0] : null
+      const rootCause = signal?.rootCause || signal?.root_cause
       const questionId = evidence?.question_id
-      const question = getQuestionText(questionId, evidence, structuredTranscript)
-      const originalAnswer = getCandidateAnswerForQuestion(questionId, evidence, structuredTranscript)
-      const method = getRewriteMethodForHrSignalAndQuestion(signal?.criterion, signal?.rootCause || signal?.root_cause, question)
+      const intent = getQuestionIntent(signal?.criterion, rootCause)
+      const question = getQuestionText(questionId, evidence, structuredTranscript) || getFallbackQuestionForIntent(intent, structuredTranscript)
+      const originalAnswer =
+        getCandidateAnswerForQuestion(questionId, evidence, structuredTranscript) ||
+        getFallbackCandidateAnswer(signal?.criterion, rootCause, structuredTranscript)
+      const method = getRewriteMethodForHrSignalAndQuestion(signal?.criterion, rootCause, question)
       if (!method) return null
 
-      if (!question || !originalAnswer || originalAnswer.length < 20) return null
+      if (!question || !isUsableCandidateAnswer(originalAnswer)) return null
 
       return {
         id: `issue_${index}`,
@@ -210,6 +340,8 @@ async function generateRewrites(rewriteItems) {
 Rules:
 - Preserve only details the candidate already provided.
 - Do not invent metrics, company facts, seniority, accomplishments, tools, clients, or outcomes.
+- Do not reverse the meaning of a weak answer. If the candidate said they do not know something, preserve that honesty and show the recovery structure, not fake preparation.
+- For company/research rewrites, use bracketed placeholders for missing research details instead of claiming the candidate researched them.
 - If a needed detail is missing, use a short bracketed placeholder like [specific result].
 - Keep each rewrite interview-natural, concise, and spoken aloud.
 - Target 80-120 words per rewritten answer.
@@ -286,8 +418,9 @@ function applyRewrites(feedback, rewriteItems, rewrites) {
 }
 
 async function main() {
-  const limit = Number.parseInt(process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1] || '4', 10)
+  const limit = Number.parseInt(process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1] || '25', 10)
   const dryRun = process.argv.includes('--dry-run')
+  const force = process.argv.includes('--force')
 
   const { data: feedbackRows, error } = await supabase
     .from('interview_feedback')
@@ -305,14 +438,17 @@ async function main() {
 
     const { data: session, error: sessionError } = await supabase
       .from('interview_sessions')
-      .select('id, stage, status, transcript_structured')
+      .select('id, stage, status, transcript_structured, transcript')
       .eq('id', feedback.interview_session_id)
       .maybeSingle()
 
     if (sessionError) throw sessionError
-    if (session?.stage !== 'hr_screen' || !session?.transcript_structured) continue
+    if (session?.stage !== 'hr_screen') continue
 
-    const rewriteItems = await buildRewriteItems(feedback, session.transcript_structured)
+    const transcriptSource = session.transcript_structured || parsePlainTranscript(session.transcript || '')
+    if (!transcriptSource?.messages?.length && !transcriptSource?.questions_asked?.length) continue
+
+    const rewriteItems = await buildRewriteItems(feedback, transcriptSource, { force })
     if (!rewriteItems.length) continue
 
     candidates.push({ feedback, session, rewriteItems })

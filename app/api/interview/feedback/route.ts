@@ -71,7 +71,7 @@ const HR_REWRITE_METHODS: RewriteMethod[] = [
   {
     id: 'research_questions',
     label: 'Research + Question-Building',
-    instruction: 'Rewrite as a stronger preparation/curiosity response: basic company knowledge, one real point of interest, why it matters, and one thoughtful role/team/company question if relevant.',
+    instruction: 'Rewrite as a stronger preparation/curiosity response: basic company knowledge, one real point of interest, why it matters, and one thoughtful role/team/company question if relevant. If the candidate admitted they did not research something, keep that honesty and use placeholders for what they need to add.',
   },
 ]
 
@@ -85,6 +85,10 @@ function getRewriteMethodForHrSignal(criterion?: string, rootCause?: string): Re
 
   if (/professional story|professional_story|tell me about yourself|background/.test(text)) {
     return HR_REWRITE_METHODS[0]
+  }
+
+  if (/answer structure|conciseness|structure/.test(text)) {
+    return null
   }
 
   if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
@@ -112,6 +116,13 @@ function getRewriteMethodForHrSignal(criterion?: string, rootCause?: string): Re
 
 function getRewriteMethodForHrSignalAndQuestion(criterion?: string, rootCause?: string, question?: string): RewriteMethod | null {
   const text = `${criterion || ''} ${rootCause || ''}`.toLowerCase()
+
+  if (/answer structure|conciseness|structure/.test(text)) {
+    if (/tell me about yourself|background|walk me through your experience|bit about yourself/i.test(question || '')) {
+      return HR_REWRITE_METHODS[0]
+    }
+    return questionLooksBehavioral(question) ? HR_REWRITE_METHODS[1] : HR_REWRITE_METHODS[2]
+  }
 
   if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
     return questionLooksBehavioral(question) ? HR_REWRITE_METHODS[1] : HR_REWRITE_METHODS[2]
@@ -210,6 +221,8 @@ async function enrichHrWeakSignalsWithHaikuRewrites(rubric: any, structuredTrans
 Rules:
 - Preserve only details the candidate already provided.
 - Do not invent metrics, company facts, seniority, accomplishments, tools, clients, or outcomes.
+- Do not reverse the meaning of a weak answer. If the candidate said they do not know something, preserve that honesty and show the recovery structure, not fake preparation.
+- For company/research rewrites, use bracketed placeholders for missing research details instead of claiming the candidate researched them.
 - If a needed detail is missing, use a short bracketed placeholder like [specific result].
 - Keep each rewrite interview-natural, concise, and spoken aloud.
 - Target 80-120 words per rewritten answer.

@@ -582,19 +582,23 @@ export default function CoachReportWorkspace({
                     <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Try this next</p>
                     <p className="mt-1 font-bold leading-6 text-slate-800">{tip.retryPrompt}</p>
                   </div>
-                  {rewrittenAnswer ? (
-                    <div className="mt-3 rounded-xl border border-violet-200 bg-white px-3 py-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">Better Version</p>
-                        {rewriteMethod ? (
-                          <span className="rounded-full bg-violet-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
-                            {rewriteMethod}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">&ldquo;{rewrittenAnswer}&rdquo;</p>
+                  <div className="mt-3 rounded-xl border border-violet-200 bg-white px-3 py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-violet-700">Better Version</p>
+                      {rewriteMethod ? (
+                        <span className="rounded-full bg-violet-50 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
+                          {rewriteMethod}
+                        </span>
+                      ) : null}
                     </div>
-                  ) : null}
+                    {rewrittenAnswer ? (
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">&ldquo;{rewrittenAnswer}&rdquo;</p>
+                    ) : (
+                      <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
+                        Not enough candidate answer text was captured to rewrite this without inventing details.
+                      </p>
+                    )}
+                  </div>
                 </InsightBlock>
                 <InsightBlock icon={FileText} eyebrow="Better answer pattern" title="Draft this next" tone="violet">
                   <div className="grid gap-2">

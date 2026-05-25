@@ -565,16 +565,22 @@ function RepairLessonSlide({
             </div>
           </div>
 
-          {rewrittenAnswer && (
-            <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Better Version</p>
-                {rewriteMethod && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">{rewriteMethod}</span>}
-              </div>
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-800">"{rewrittenAnswer}"</p>
-              {rewriteExplanation && <p className="mt-2 text-[11px] font-bold leading-4 text-violet-700">{rewriteExplanation}</p>}
+          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Better Version</p>
+              {rewriteMethod && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">{rewriteMethod}</span>}
             </div>
-          )}
+            {rewrittenAnswer ? (
+              <>
+                <p className="mt-2 text-xs font-semibold leading-5 text-slate-800">"{rewrittenAnswer}"</p>
+                {rewriteExplanation && <p className="mt-2 text-[11px] font-bold leading-4 text-violet-700">{rewriteExplanation}</p>}
+              </>
+            ) : (
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-700">
+                Not enough candidate answer text was captured to rewrite this without inventing details. The next completed interview answer for this signal will generate here automatically.
+              </p>
+            )}
+          </div>
         </div>
       </section>
     </div>

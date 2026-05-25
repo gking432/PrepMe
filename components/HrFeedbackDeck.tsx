@@ -17,7 +17,6 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import Preppi from '@/components/Preppi'
 import { getImprovementTipForCriterion, getRootCauseForCriterion } from '@/lib/practice-bundles'
 
 type Evidence = {
@@ -285,7 +284,7 @@ function getIssueLesson(criterion: string, rootCause?: string): IssueLesson {
 
 function getScoreTone(score?: number | string) {
   const numeric = parseScore(score)
-  if (numeric >= 7) return 'border-violet-200 bg-violet-50 text-violet-700'
+  if (numeric >= 7) return 'border-accent-200 bg-accent-50 text-accent-700'
   if (numeric >= 5) return 'border-amber-200 bg-amber-50 text-amber-700'
   return 'border-rose-200 bg-rose-50 text-rose-700'
 }
@@ -338,22 +337,14 @@ function StepShell({
 }) {
   return (
     <div className={`grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] ${compact ? 'gap-2' : 'gap-3'} 2xl:grid-cols-[0.72fr_1fr] 2xl:grid-rows-none 2xl:gap-6`}>
-      <div className={`flex min-h-0 flex-col justify-between overflow-hidden rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-white via-violet-50/80 to-slate-50 shadow-[0_22px_60px_rgba(76,29,149,0.10)] lg:rounded-[2rem] ${compact ? 'p-3 lg:p-4' : 'p-4 lg:p-5 2xl:p-7'}`}>
+      <div className={`flex min-h-0 flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${compact ? 'p-4 lg:p-5' : 'p-5 lg:p-6 2xl:p-8'}`}>
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-violet-700">{eyebrow}</p>
-          <h1 className={`mt-2 font-black leading-tight text-slate-950 ${compact ? 'text-xl lg:text-2xl' : 'text-2xl lg:mt-3 lg:text-3xl 2xl:text-5xl'}`}>{title}</h1>
-          {body && !compact && <p className="mt-4 hidden text-base font-semibold leading-7 text-slate-600 2xl:block">{body}</p>}
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent-600">{eyebrow}</p>
+          <h1 className={`mt-2 font-bold leading-tight tracking-tight text-slate-900 ${compact ? 'text-xl lg:text-2xl' : 'text-2xl lg:mt-3 lg:text-3xl 2xl:text-4xl'}`}>{title}</h1>
+          {body && !compact && <p className="mt-4 hidden text-base font-medium leading-7 text-slate-500 2xl:block">{body}</p>}
         </div>
-        {!compact && (
-          <Preppi
-            showOnDesktop
-            size="lg"
-            message={preppiMessage || 'One card at a time. No report swamp today.'}
-            className="mt-4 hidden 2xl:flex"
-          />
-        )}
       </div>
-      <div className="min-h-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_22px_60px_rgba(15,23,42,0.08)] lg:rounded-[2rem] lg:p-6">
+      <div className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
         {children}
       </div>
     </div>
@@ -367,11 +358,11 @@ function ScoreOrb({ score }: { score: number }) {
     <div className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-white shadow-[inset_0_0_0_10px_rgba(226,232,240,0.9)] 2xl:h-36 2xl:w-36 2xl:shadow-[inset_0_0_0_12px_rgba(226,232,240,0.9)]">
       <div
         className="absolute inset-0 rounded-full"
-        style={{ background: `conic-gradient(#7c3aed ${percentage}%, transparent ${percentage}% 100%)` }}
+        style={{ background: `conic-gradient(#2563eb ${percentage}%, transparent ${percentage}% 100%)` }}
       />
       <div className="relative flex h-[5.4rem] w-[5.4rem] flex-col items-center justify-center rounded-full bg-white 2xl:h-[7.2rem] 2xl:w-[7.2rem]">
-        <span className="text-3xl font-black text-slate-950 2xl:text-4xl">{score ? score.toFixed(score % 1 ? 1 : 0) : '-'}</span>
-        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">out of 10</span>
+        <span className="text-3xl font-bold text-slate-950 2xl:text-4xl">{score ? score.toFixed(score % 1 ? 1 : 0) : '-'}</span>
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">out of 10</span>
       </div>
     </div>
   )
@@ -382,20 +373,20 @@ function SignalEvidence({ area }: { area?: SignalArea | null }) {
 
   if (!evidence?.excerpt && !evidence?.question) {
     return (
-      <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Evidence</p>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Evidence</p>
         <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">No transcript excerpt was attached to this signal.</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-3 sm:p-4">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Transcript Proof</p>
-        {evidence.timestamp && <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-slate-500">{evidence.timestamp}</span>}
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Transcript Proof</p>
+        {evidence.timestamp && <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-500">{evidence.timestamp}</span>}
       </div>
-      {evidence.question && <p className="mt-2 line-clamp-1 text-sm font-black text-slate-900 sm:mt-3 sm:line-clamp-none">{toDisplayText(evidence.question)}</p>}
+      {evidence.question && <p className="mt-2 line-clamp-1 text-sm font-bold text-slate-900 sm:mt-3 sm:line-clamp-none">{toDisplayText(evidence.question)}</p>}
       {evidence.excerpt && <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-600 sm:line-clamp-none">"{truncate(evidence.excerpt, 230)}"</p>}
     </div>
   )
@@ -404,7 +395,7 @@ function SignalEvidence({ area }: { area?: SignalArea | null }) {
 function SignalSummaryCard({ area, kind }: { area?: SignalArea | null; kind: SignalKind }) {
   if (!area) {
     return (
-      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
         <p className="text-sm font-bold leading-6 text-slate-500">No {kind === 'strength' ? 'strength' : 'repair'} signal was found in this report.</p>
       </div>
     )
@@ -422,14 +413,14 @@ function SignalSummaryCard({ area, kind }: { area?: SignalArea | null; kind: Sig
       ? 'grid h-full min-h-0 grid-rows-[auto_minmax(8.5rem,1fr)] gap-3 overflow-y-auto pr-1 lg:pr-0'
       : 'flex h-full min-h-0 flex-col gap-3 overflow-y-auto pr-1 lg:gap-4 lg:overflow-hidden lg:pr-0'
     }>
-      <div className="min-h-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-3 sm:p-4">
+      <div className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">{kind === 'strength' ? 'Repeat This' : 'Flagged Issue'}</p>
-            <h2 className="mt-2 line-clamp-2 text-lg font-black leading-tight text-slate-950 sm:text-xl 2xl:text-2xl">{criterion}</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">{kind === 'strength' ? 'Repeat This' : 'Flagged Issue'}</p>
+            <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-tight text-slate-950 sm:text-xl 2xl:text-2xl">{criterion}</h2>
           </div>
           {score > 0 && (
-            <span className={`rounded-full border px-3 py-1 text-sm font-black ${getScoreTone(score)}`}>
+            <span className={`rounded-full border px-3 py-1 text-sm font-bold ${getScoreTone(score)}`}>
               {score.toFixed(score % 1 ? 1 : 0)}/10
             </span>
           )}
@@ -437,7 +428,7 @@ function SignalSummaryCard({ area, kind }: { area?: SignalArea | null; kind: Sig
         <p className={`mt-3 text-sm font-semibold leading-6 text-slate-600 sm:mt-4 ${kind === 'repair' ? 'line-clamp-1' : 'line-clamp-2 sm:line-clamp-3 2xl:line-clamp-none'}`}>{feedbackText}</p>
         {kind === 'repair' && (evidence?.excerpt || evidence?.question) && (
           <p className="mt-2 line-clamp-2 rounded-2xl bg-slate-50 px-3 py-2 text-xs font-bold leading-5 text-slate-600">
-            <span className="font-black uppercase tracking-[0.16em] text-slate-400">Proof: </span>
+            <span className="font-bold uppercase tracking-[0.16em] text-slate-400">Proof: </span>
             {truncate(evidence.excerpt || evidence.question, 150)}
           </p>
         )}
@@ -446,14 +437,14 @@ function SignalSummaryCard({ area, kind }: { area?: SignalArea | null; kind: Sig
       {kind === 'strength' && <SignalEvidence area={area} />}
 
       {kind === 'repair' && (
-        <div className="min-h-0 flex-1 overflow-hidden rounded-[1.5rem] border border-amber-200 bg-amber-50 p-3 sm:p-4">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">Coach Move</p>
-          <h3 className="mt-2 line-clamp-1 text-base font-black text-slate-950 sm:text-lg">{tip.title}</h3>
+        <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 sm:p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700">Coach Move</p>
+          <h3 className="mt-2 line-clamp-1 text-base font-bold text-slate-950 sm:text-lg">{tip.title}</h3>
           <p className="mt-1 line-clamp-1 text-sm font-semibold leading-6 text-slate-700 sm:mt-2 sm:line-clamp-3">{tip.summary}</p>
           <div className="mt-3 hidden gap-2 2xl:grid">
             {(tip.bullets.length ? tip.bullets : ['Name the situation briefly.', 'Show the action you owned.', 'End with the result.']).slice(0, 3).map((item) => (
               <div key={item} className="flex gap-2 rounded-2xl bg-white/80 p-2 text-xs font-bold leading-5 text-slate-700">
-                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" />
                 <span className="line-clamp-2">{item}</span>
               </div>
             ))}
@@ -475,10 +466,10 @@ function RepairLessonSlide({
 }) {
   if (!repair) {
     return (
-      <div className="flex h-full min-h-[24rem] items-center justify-center rounded-[1.5rem] border border-dashed border-slate-200 bg-white p-6 text-center shadow-[0_22px_60px_rgba(15,23,42,0.08)]">
+      <div className="flex h-full min-h-[24rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">No Weak Signals</p>
-          <h1 className="mt-2 text-2xl font-black text-slate-950">No flagged issues were attached to this HR report.</h1>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent-700">No Weak Signals</p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-950">No flagged issues were attached to this HR report.</h1>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">If this is a real session, open the Coach File to confirm the full rubric details.</p>
         </div>
       </div>
@@ -498,82 +489,82 @@ function RepairLessonSlide({
   const rewriteExplanation = toDisplayText(repair.rewrite_explanation)
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white p-3 shadow-[0_22px_60px_rgba(15,23,42,0.08)] lg:p-4">
+    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:p-4">
       <section className="min-h-0">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-violet-700">Issue {issueNumber} of {totalIssues}</p>
-            <h1 className="mt-1 text-lg font-black leading-tight text-slate-950 lg:text-xl">{criterion}</h1>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">Issue {issueNumber} of {totalIssues}</p>
+            <h1 className="mt-1 text-lg font-bold leading-tight text-slate-950 lg:text-xl">{criterion}</h1>
           </div>
           {score > 0 && (
-            <span className={`rounded-full border px-3 py-1 text-sm font-black ${getScoreTone(score)}`}>
+            <span className={`rounded-full border px-3 py-1 text-sm font-bold ${getScoreTone(score)}`}>
               {score.toFixed(score % 1 ? 1 : 0)}/10
             </span>
           )}
         </div>
 
         <div className={`mt-3 grid gap-2 ${(questionText || proofText) ? 'sm:grid-cols-2' : ''}`}>
-          <div className="rounded-[1.2rem] border border-rose-100 bg-rose-50/70 p-2.5">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-rose-600">Why Flagged</p>
+          <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-rose-600">Why Flagged</p>
             <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-800">{feedbackText}</p>
           </div>
 
           {(questionText || proofText) && (
-            <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-2.5">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">{questionText ? 'Question / Evidence' : 'What The Interviewer Heard'}</p>
-                {evidence?.timestamp && <span className="rounded-full bg-white px-2 py-1 text-[11px] font-black text-slate-500">{evidence.timestamp}</span>}
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{questionText ? 'Question / Evidence' : 'What The Interviewer Heard'}</p>
+                {evidence?.timestamp && <span className="rounded-full bg-white px-2 py-1 text-[11px] font-bold text-slate-500">{evidence.timestamp}</span>}
               </div>
-              {questionText && <p className="mt-1.5 text-xs font-black leading-4 text-slate-900">{questionText}</p>}
+              {questionText && <p className="mt-1.5 text-xs font-bold leading-4 text-slate-900">{questionText}</p>}
               {proofText && <p className="mt-1.5 text-[11px] font-semibold leading-4 text-slate-700">"{proofText}"</p>}
             </div>
           )}
         </div>
       </section>
 
-      <section className="min-h-0 overflow-y-auto rounded-[1.35rem] border border-violet-200 bg-violet-50 p-2.5">
+      <section className="min-h-0 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50 p-2.5">
         <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-violet-700 shadow-sm">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-accent-700 shadow-sm">
             <Zap className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-violet-700">Mini Lesson</p>
-            <p className="text-xs font-black leading-4 text-slate-950">{lesson.title}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">Mini Lesson</p>
+            <p className="text-xs font-bold leading-4 text-slate-950">{lesson.title}</p>
           </div>
         </div>
-        <p className="mt-2 text-xs font-semibold leading-5 text-violet-950">{lesson.summary}</p>
+        <p className="mt-2 text-xs font-semibold leading-5 text-slate-700">{lesson.summary}</p>
 
         <div className="mt-2 grid gap-2">
           <div>
             <div className={`grid gap-2 ${lesson.steps.length >= 4 ? 'sm:grid-cols-2 2xl:grid-cols-4' : 'sm:grid-cols-3'}`}>
               {lesson.steps.map((item, index) => (
-                <div key={`${item}-${index}`} className="flex gap-2 rounded-[1rem] bg-white px-2.5 py-1.5 shadow-sm sm:flex-col">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[11px] font-black text-white">
+                <div key={`${item}-${index}`} className="flex gap-2 rounded-lg bg-white px-2.5 py-1.5 shadow-sm sm:flex-col">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-600 text-[11px] font-bold text-white">
                     {index + 1}
                   </span>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">{item.label}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent-700">{item.label}</p>
                     <p className="text-xs font-bold leading-4 text-slate-800">{item.text}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-2 rounded-[1rem] border border-violet-200 bg-white/85 px-3 py-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-700">Try this next</p>
+            <div className="mt-2 rounded-lg border border-accent-200 bg-white/85 px-3 py-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent-700">Try this next</p>
               <p className="mt-1 text-xs font-bold leading-5 text-slate-800 lg:text-sm">{lesson.tryThis}</p>
             </div>
           </div>
 
-          <div className="rounded-[1rem] border border-slate-200 bg-white px-3 py-2">
+          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Better Version</p>
-              {rewriteMethod && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">{rewriteMethod}</span>}
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Better Version</p>
+              {rewriteMethod && <span className="rounded-full bg-accent-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-accent-700">{rewriteMethod}</span>}
             </div>
             {rewrittenAnswer ? (
               <>
                 <p className="mt-2 text-xs font-semibold leading-5 text-slate-800">"{rewrittenAnswer}"</p>
-                {rewriteExplanation && <p className="mt-2 text-[11px] font-bold leading-4 text-violet-700">{rewriteExplanation}</p>}
+                {rewriteExplanation && <p className="mt-2 text-[11px] font-bold leading-4 text-accent-700">{rewriteExplanation}</p>}
               </>
             ) : (
               <p className="mt-2 text-xs font-semibold leading-5 text-slate-700">
@@ -590,7 +581,7 @@ function RepairLessonSlide({
 function StrengthsOverview({ strengths }: { strengths: SignalCard[] }) {
   if (!strengths.length) {
     return (
-      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
         <p className="text-sm font-bold leading-6 text-slate-500">No strong-signal details were attached to this report yet.</p>
       </div>
     )
@@ -604,14 +595,14 @@ function StrengthsOverview({ strengths }: { strengths: SignalCard[] }) {
           const evidence = getPrimaryEvidence(strength)
 
           return (
-            <div key={`${strength.criterion}-${index}`} className="rounded-[1.35rem] border border-violet-100 bg-violet-50/55 p-4">
+            <div key={`${strength.criterion}-${index}`} className="rounded-xl border border-accent-100 bg-accent-50/55 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-600">Strong Signal</p>
-                  <h3 className="mt-1 text-lg font-black leading-tight text-slate-950">{strength.criterion}</h3>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent-600">Strong Signal</p>
+                  <h3 className="mt-1 text-lg font-bold leading-tight text-slate-950">{strength.criterion}</h3>
                 </div>
                 {score > 0 && (
-                  <span className="rounded-full border border-violet-200 bg-white px-3 py-1 text-sm font-black text-violet-700">
+                  <span className="rounded-full border border-accent-200 bg-white px-3 py-1 text-sm font-bold text-accent-700">
                     {score.toFixed(score % 1 ? 1 : 0)}/10
                   </span>
                 )}
@@ -633,7 +624,7 @@ function StrengthsOverview({ strengths }: { strengths: SignalCard[] }) {
 function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
   if (!repairs.length) {
     return (
-      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
         <p className="text-sm font-bold leading-6 text-slate-500">No weak-signal details were attached to this report yet.</p>
       </div>
     )
@@ -646,12 +637,12 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
           const score = parseScore(repair.score)
 
           return (
-            <div key={`${repair.criterion}-${index}`} className="rounded-[1rem] border border-rose-100 bg-rose-50/55 p-2.5">
+            <div key={`${repair.criterion}-${index}`} className="rounded-lg border border-rose-100 bg-rose-50/55 p-2.5">
               <div className="flex items-center justify-between gap-1.5">
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-rose-600">Weak {index + 1}</p>
-                {score > 0 && <span className="shrink-0 text-[10px] font-black text-rose-700">{score.toFixed(score % 1 ? 1 : 0)}/10</span>}
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-rose-600">Weak {index + 1}</p>
+                {score > 0 && <span className="shrink-0 text-[10px] font-bold text-rose-700">{score.toFixed(score % 1 ? 1 : 0)}/10</span>}
               </div>
-              <h3 className="mt-1.5 text-xs font-black leading-tight text-slate-950">{repair.criterion}</h3>
+              <h3 className="mt-1.5 text-xs font-bold leading-tight text-slate-950">{repair.criterion}</h3>
             </div>
           )
         })}
@@ -662,15 +653,15 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
 
 function MiniStat({ label, value, tone = 'slate' }: { label: string; value: string; tone?: 'brand' | 'amber' | 'slate' }) {
   const classes = {
-    brand: 'border-violet-200 bg-violet-50 text-violet-700',
+    brand: 'border-accent-200 bg-accent-50 text-accent-700',
     amber: 'border-amber-200 bg-amber-50 text-amber-700',
     slate: 'border-slate-200 bg-slate-50 text-slate-700',
   }
 
   return (
-    <div className={`rounded-[1.2rem] border p-3 ${classes[tone]}`}>
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-70">{label}</p>
-      <p className="mt-1 text-lg font-black">{value}</p>
+    <div className={`rounded-xl border p-3 ${classes[tone]}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-70">{label}</p>
+      <p className="mt-1 text-lg font-bold">{value}</p>
     </div>
   )
 }
@@ -686,18 +677,18 @@ function CoachFileModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/55 p-0 backdrop-blur-sm sm:p-4">
-      <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:rounded-[2rem]">
+      <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:rounded-2xl">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Saved Report</p>
-            <h2 className="text-xl font-black text-slate-950">Coach File</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent-700">Saved Report</p>
+            <h2 className="text-xl font-bold text-slate-950">Coach File</h2>
           </div>
           <div className="flex items-center gap-2">
             {onPrintArtifact && (
               <button
                 type="button"
                 onClick={onPrintArtifact}
-                className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
+                className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
               >
                 Print
               </button>
@@ -714,7 +705,7 @@ function CoachFileModal({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {artifactContent || (
-            <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white p-6 text-center">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
               <FileText className="mx-auto h-8 w-8 text-slate-400" />
               <p className="mt-3 text-sm font-bold text-slate-600">The full rubric report is still being prepared for this session.</p>
             </div>
@@ -829,10 +820,10 @@ export default function HrFeedbackDeck({
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
               <ScoreOrb score={score} />
               <div className="min-w-0">
-                <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+                <span className="inline-flex rounded-full bg-accent-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-accent-700">
                   {verdict.badge}
                 </span>
-                <h2 className="mt-3 text-2xl font-black leading-tight text-slate-950 2xl:text-3xl">{scoreLabel(score)} HR signal</h2>
+                <h2 className="mt-3 text-2xl font-bold leading-tight text-slate-950 2xl:text-3xl">{scoreLabel(score)} HR signal</h2>
                 <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
                   For {role} at {company}, the next interviewer will care less about polish and more about proof.
                 </p>
@@ -843,11 +834,11 @@ export default function HrFeedbackDeck({
               <MiniStat label="Issues" value={`${repairs.length || 0}`} tone="amber" />
               <MiniStat label="HM Ready" value={readyForHm ? 'Yes' : 'Soon'} />
             </div>
-            <div className="hidden rounded-[1.5rem] border border-violet-200 bg-violet-50 p-4 sm:block">
+            <div className="hidden rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:block">
               <div className="flex items-start gap-3">
-                <Sparkles className="mt-1 h-5 w-5 shrink-0 text-violet-700" />
+                <Sparkles className="mt-1 h-5 w-5 shrink-0 text-accent-700" />
                 <div>
-                  <p className="text-sm font-black text-slate-950">What this free report gives you</p>
+                  <p className="text-sm font-bold text-slate-950">What this free report gives you</p>
                   <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
                     The signals to repeat, every flagged issue to repair, and the hiring manager questions likely to come next.
                   </p>
@@ -909,37 +900,37 @@ export default function HrFeedbackDeck({
           preppiMessage="The boss level is less friendly. Helpful, but less friendly."
         >
           <div className="grid h-full min-h-0 gap-4 lg:grid-cols-2">
-            <div className="min-h-0 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+            <div className="min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-violet-700" />
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Likely Questions</p>
+                <Briefcase className="h-5 w-5 text-accent-700" />
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Likely Questions</p>
               </div>
               <div className="mt-4 grid gap-3">
                 {questions.map((question, index) => (
-                  <div key={`${question}-${index}`} className={`rounded-[1.2rem] bg-white p-3 text-sm font-bold leading-6 text-slate-800 shadow-sm ${index > 1 ? 'hidden 2xl:block' : ''}`}>
+                  <div key={`${question}-${index}`} className={`rounded-xl bg-white p-3 text-sm font-bold leading-6 text-slate-800 shadow-sm ${index > 1 ? 'hidden 2xl:block' : ''}`}>
                     {question}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="min-h-0 overflow-hidden rounded-[1.5rem] border border-violet-200 bg-violet-50 p-4">
+            <div className="min-h-0 overflow-hidden rounded-2xl border border-accent-200 bg-accent-50 p-4">
               <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-violet-700" />
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">Study Focus</p>
+                <Target className="h-5 w-5 text-accent-700" />
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-700">Study Focus</p>
               </div>
               <div className="mt-4 grid gap-3">
                 {(studyAreas.length ? studyAreas.slice(0, 4) : [repairs[0]?.criterion || 'Specific examples', 'Role-specific accomplishments', 'Metrics and outcomes', 'Concise story structure']).map((area, index) => (
-                  <div key={`${area}-${index}`} className={`gap-2 rounded-[1.2rem] bg-white/90 p-3 text-sm font-bold leading-6 text-slate-800 ${index > 1 ? 'hidden 2xl:flex' : 'flex'}`}>
-                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
+                  <div key={`${area}-${index}`} className={`gap-2 rounded-xl bg-white/90 p-3 text-sm font-bold leading-6 text-slate-800 ${index > 1 ? 'hidden 2xl:flex' : 'flex'}`}>
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" />
                     <span>{area}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 hidden rounded-[1.2rem] bg-white/70 p-3 2xl:block">
-                <p className="text-sm font-black text-slate-950">Preppi read</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+              <div className="mt-4 hidden rounded-xl border border-slate-200 bg-slate-50 p-3 2xl:block">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Coach note</p>
+                <p className="mt-1 text-sm font-medium leading-6 text-slate-600">
                   {nextSteps?.confidence_level ? `Confidence level: ${nextSteps.confidence_level}. ` : ''}
-                  Your next unlock should turn these predictions into a live hiring manager simulation.
+                  The next round turns these predictions into a live hiring manager simulation.
                 </p>
               </div>
             </div>
@@ -956,28 +947,28 @@ export default function HrFeedbackDeck({
         preppiMessage="If I were a tiny parrot career coach, I would absolutely charge for this next part."
       >
         <div className="flex h-full min-h-0 flex-col justify-between gap-4 overflow-hidden">
-          <div className="rounded-[1.6rem] border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Unlock Next</p>
-                <h2 className="text-2xl font-black text-slate-950">Hiring Manager Round</h2>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Unlock Next</p>
+                <h2 className="text-2xl font-bold text-slate-950">Hiring Manager Round</h2>
               </div>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.2rem] bg-white p-3">
-                <Zap className="h-5 w-5 text-violet-600" />
-                <p className="mt-2 text-sm font-black text-slate-900">Role-specific pressure</p>
+              <div className="rounded-xl bg-white p-3">
+                <Zap className="h-5 w-5 text-accent-600" />
+                <p className="mt-2 text-sm font-bold text-slate-900">Role-specific pressure</p>
               </div>
-              <div className="rounded-[1.2rem] bg-white p-3">
+              <div className="rounded-xl bg-white p-3">
                 <Trophy className="h-5 w-5 text-amber-600" />
-                <p className="mt-2 text-sm font-black text-slate-900">Proof-first scoring</p>
+                <p className="mt-2 text-sm font-bold text-slate-900">Proof-first scoring</p>
               </div>
-              <div className="rounded-[1.2rem] bg-white p-3">
-                <Crown className="h-5 w-5 text-violet-600" />
-                <p className="mt-2 text-sm font-black text-slate-900">Next-round coaching</p>
+              <div className="rounded-xl bg-white p-3">
+                <Crown className="h-5 w-5 text-accent-600" />
+                <p className="mt-2 text-sm font-bold text-slate-900">Next-round coaching</p>
               </div>
             </div>
           </div>
@@ -986,7 +977,7 @@ export default function HrFeedbackDeck({
             <button
               type="button"
               onClick={onUnlockNextStage}
-              className="group flex w-full items-center justify-center gap-3 rounded-[1.3rem] bg-violet-600 px-5 py-4 text-base font-black text-white shadow-[0_6px_0_#4c1d95] transition hover:bg-violet-700 active:translate-y-1 active:shadow-none"
+              className="group flex w-full items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
             >
               Start Hiring Manager Round
               <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
@@ -995,7 +986,7 @@ export default function HrFeedbackDeck({
               <button
                 type="button"
                 onClick={() => setShowCoachFile(true)}
-                className="flex items-center justify-center gap-2 rounded-[1.1rem] border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
                 <FileText className="h-4 w-4" />
                 Coach File
@@ -1003,7 +994,7 @@ export default function HrFeedbackDeck({
               <button
                 type="button"
                 onClick={onRetakeInterview}
-                className="flex items-center justify-center gap-2 rounded-[1.1rem] border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
                 <RefreshCw className="h-4 w-4" />
                 Retake HR
@@ -1017,28 +1008,28 @@ export default function HrFeedbackDeck({
 
   const isEmbedded = layout === 'embedded'
   const rootClass = isEmbedded
-    ? 'relative flex h-[calc(100dvh-5rem)] min-h-0 overflow-hidden rounded-[2.25rem] border border-slate-200 bg-[#f8f7ff] text-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.10)]'
-    : 'relative flex h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#f8f7ff] text-slate-950'
+    ? 'relative flex h-[calc(100dvh-5rem)] min-h-0 overflow-hidden rounded-2xl border border-slate-200 bg-[#f8fafc] text-slate-950 shadow-sm'
+    : 'relative flex h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#f8fafc] text-slate-950'
   const contentClass = isEmbedded
     ? 'mx-auto flex h-full w-full max-w-6xl flex-col px-5 py-5'
     : 'mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-3 sm:px-6 lg:px-8 lg:py-5'
 
   return (
     <main className={rootClass}>
-      <div className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-violet-200/60 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 top-16 h-64 w-64 rounded-full bg-accent-200/60 blur-3xl" />
       <div className="pointer-events-none absolute -right-28 bottom-16 h-72 w-72 rounded-full bg-sky-200/60 blur-3xl" />
       <div className={contentClass}>
         <div className="relative z-10 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-700">PrepMe Feedback</p>
-            <p className="truncate text-sm font-black text-slate-900">HR Screen Report</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent-700">PrepMe Feedback</p>
+            <p className="truncate text-sm font-bold text-slate-900">HR Screen Report</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {onExitToProfile && (
               <button
                 type="button"
                 onClick={onExitToProfile}
-                className="flex items-center gap-2 rounded-full border border-violet-200 bg-white/90 px-3 py-2 text-xs font-black text-violet-700 shadow-sm transition hover:bg-white"
+                className="flex items-center gap-2 rounded-full border border-accent-200 bg-white/90 px-3 py-2 text-xs font-bold text-accent-700 shadow-sm transition hover:bg-white"
               >
                 Exit
               </button>
@@ -1046,7 +1037,7 @@ export default function HrFeedbackDeck({
             <button
               type="button"
               onClick={() => setShowCoachFile(true)}
-              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:bg-white"
+              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white"
             >
               <FileText className="h-4 w-4" />
               Coach File
@@ -1056,15 +1047,15 @@ export default function HrFeedbackDeck({
 
         <div className="relative z-10 mt-3">
           <div className="h-3 overflow-hidden rounded-full bg-white shadow-inner">
-            <div className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+            <div className="h-full rounded-full bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)] transition-all duration-500" style={{ width: `${progressPercent}%` }} />
           </div>
-          <div className="mt-2 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+          <div className="mt-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
             <span>HR Screen · {activeStep.label}</span>
             <span>Step {step + 1}/{deckSteps.length}</span>
           </div>
           <div className="mt-2 grid grid-cols-4 gap-1 lg:hidden">
             {['HR', 'HM', 'Culture', 'Final'].map((stage, index) => (
-              <div key={stage} className={`h-1.5 rounded-full ${index === 0 ? 'bg-violet-600' : 'bg-white shadow-inner'}`} />
+              <div key={stage} className={`h-1.5 rounded-full ${index === 0 ? 'bg-accent-600' : 'bg-white shadow-inner'}`} />
             ))}
           </div>
         </div>
@@ -1078,7 +1069,7 @@ export default function HrFeedbackDeck({
             type="button"
             onClick={goBack}
             disabled={step === 0}
-            className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Previous card"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -1086,7 +1077,7 @@ export default function HrFeedbackDeck({
           <button
             type="button"
             onClick={goNext}
-            className="group flex h-14 items-center justify-center gap-3 rounded-[1.15rem] bg-violet-600 px-5 text-base font-black text-white shadow-[0_5px_0_#4c1d95] transition hover:bg-violet-700 active:translate-y-1 active:shadow-none"
+            className="group flex h-14 items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
           >
             {isLastStep ? 'Unlock Hiring Manager' : 'Continue'}
             {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}

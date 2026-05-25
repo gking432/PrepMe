@@ -180,9 +180,9 @@ export default function ProcessSpinePage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)]">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent-200 border-t-accent-600" />
           <p className="text-sm font-bold text-slate-500">Loading your interview process…</p>
         </div>
       </main>
@@ -191,9 +191,9 @@ export default function ProcessSpinePage() {
 
   if (!process || !computed) {
     return (
-      <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] px-6 text-center">
+      <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#f8fafc] px-6 text-center">
         <Briefcase className="h-12 w-12 text-slate-300" />
-        <h1 className="text-2xl font-black text-slate-900">We couldn&apos;t find that interview process.</h1>
+        <h1 className="text-2xl font-bold text-slate-900">We couldn&apos;t find that interview process.</h1>
         <p className="max-w-sm text-sm font-semibold text-slate-500">It may have been archived, or the link is out of date.</p>
         <Link href="/dashboard" className="btn-coach-primary mt-2 inline-flex items-center gap-2 px-6 py-3">
           <ArrowLeft className="h-4 w-4" /> Back to workspace
@@ -207,30 +207,30 @@ export default function ProcessSpinePage() {
   const nextStatus = nextStage ? statusOf(nextStage) : null
 
   return (
-    <main className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] text-slate-950">
-      <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-violet-200/50 blur-3xl" />
-      <div className="pointer-events-none absolute -right-28 bottom-24 h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
+    <main className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-[#f8fafc] text-slate-950">
+      <div className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-transparent" />
+      <div className="pointer-events-none absolute -right-28 bottom-24 h-72 w-72 rounded-full bg-transparent" />
 
       <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col px-5 py-5 sm:px-6">
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-black text-slate-600 shadow-sm transition hover:bg-white"
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-white"
           >
             <ArrowLeft className="h-4 w-4" /> Workspace
           </Link>
-          <span className="rounded-full bg-violet-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-violet-700">
+          <span className="rounded-full bg-accent-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-accent-700">
             {completedCount}/4 complete
           </span>
         </div>
 
         <div className="mt-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-violet-600">Interview Process</p>
-          <h1 className="mt-1 text-2xl font-black leading-tight text-slate-950 sm:text-3xl">{title}</h1>
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-600">Interview Process</p>
+          <h1 className="mt-1 text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">{title}</h1>
           <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white shadow-inner">
             <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)] transition-all duration-500"
+              className="h-full rounded-full bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)] transition-all duration-500"
               style={{ width: `${(completedCount / 4) * 100}%` }}
             />
           </div>
@@ -238,7 +238,7 @@ export default function ProcessSpinePage() {
 
         {/* The path */}
         <div className="relative mt-7 flex-1">
-          <div className="pointer-events-none absolute bottom-6 left-[31px] top-6 w-0.5 bg-[linear-gradient(180deg,#ddd6fe_0%,#e2e8f0_100%)]" />
+          <div className="pointer-events-none absolute bottom-6 left-[31px] top-6 w-0.5 bg-[linear-gradient(180deg,#dbe6fe_0%,#e2e8f0_100%)]" />
           <div className="space-y-3">
             {STAGE_ORDER.map((stage) => {
               const meta = STAGE_META[stage]
@@ -252,7 +252,7 @@ export default function ProcessSpinePage() {
                 status === 'complete'
                   ? 'border-emerald-500 bg-emerald-500 text-white'
                   : isNext
-                  ? 'border-violet-500 bg-violet-600 text-white shadow-[0_0_0_6px_rgba(124,58,237,0.18)]'
+                  ? 'border-accent-500 bg-accent-600 text-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]'
                   : status === 'locked'
                   ? 'border-slate-300 bg-white text-slate-400'
                   : 'border-slate-300 bg-white text-slate-500'
@@ -261,7 +261,7 @@ export default function ProcessSpinePage() {
                 status === 'complete'
                   ? 'border-emerald-200 bg-emerald-50/70'
                   : isNext
-                  ? 'border-violet-300 bg-white shadow-[0_16px_40px_rgba(124,58,237,0.12)]'
+                  ? 'border-accent-300 bg-white shadow-[0_16px_40px_rgba(37,99,235,0.10)]'
                   : 'border-slate-200 bg-white/70'
 
               return (
@@ -283,17 +283,17 @@ export default function ProcessSpinePage() {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-black text-slate-900">{meta.name}</p>
+                      <p className="text-base font-bold text-slate-900">{meta.name}</p>
                       {meta.optional && (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
                           Optional
                         </span>
                       )}
                       {status === 'complete' && score && (
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">{score}/10</span>
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700">{score}/10</span>
                       )}
                       {isNext && status !== 'complete' && (
-                        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">
+                        <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-accent-700">
                           Next step
                         </span>
                       )}
@@ -311,7 +311,7 @@ export default function ProcessSpinePage() {
                     {status === 'complete' ? (
                       <FileText className="h-5 w-5" />
                     ) : status === 'locked' ? (
-                      <span className="text-sm font-black text-violet-700">{meta.price}</span>
+                      <span className="text-sm font-bold text-accent-700">{meta.price}</span>
                     ) : (
                       <ArrowRight className="h-5 w-5" />
                     )}
@@ -328,7 +328,7 @@ export default function ProcessSpinePage() {
             <button
               type="button"
               onClick={() => handleNodeClick(nextStage, nextStatus as NodeStatus)}
-              className="group flex w-full items-center justify-center gap-3 rounded-[1.3rem] bg-violet-600 px-5 py-4 text-base font-black text-white shadow-[0_6px_0_#4c1d95] transition hover:bg-violet-700 active:translate-y-1 active:shadow-none"
+              className="group flex w-full items-center justify-center gap-3 rounded-[1.3rem] bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
             >
               {nextStatus === 'locked' ? (
                 <>
@@ -343,7 +343,7 @@ export default function ProcessSpinePage() {
               )}
             </button>
           ) : (
-            <div className="flex items-center justify-center gap-3 rounded-[1.3rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-base font-black text-emerald-800">
+            <div className="flex items-center justify-center gap-3 rounded-[1.3rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-base font-bold text-emerald-800">
               <Sparkles className="h-5 w-5" />
               Every round complete — go get the offer.
             </div>
@@ -355,7 +355,7 @@ export default function ProcessSpinePage() {
                 const lastDone = [...STAGE_ORDER].reverse().find((s) => process.stages[s].done)
                 if (lastDone) launchStage(lastDone)
               }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-[1.1rem] border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-black text-slate-600 transition hover:bg-white"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-[1.1rem] border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-white"
             >
               <RotateCcw className="h-4 w-4" />
               Retake last round

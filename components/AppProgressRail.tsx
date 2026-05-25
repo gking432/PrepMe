@@ -29,7 +29,7 @@ function progressBarClass(tone: RailItem['tone']) {
     case 'warning':
       return 'bg-[linear-gradient(90deg,#fbbf24_0%,#f59e0b_100%)]'
     case 'brand':
-      return 'bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]'
+      return 'bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)]'
     default:
       return 'bg-[linear-gradient(90deg,#64748b_0%,#475569_100%)]'
   }
@@ -53,7 +53,7 @@ export default function AppProgressRail({ cards, theme = 'dark', header }: AppPr
             }`}
           >
             {header.eyebrow && (
-              <p className={`text-[11px] font-black uppercase tracking-[0.24em] ${isLight ? 'text-violet-500' : 'text-violet-300'}`}>
+              <p className={`text-[11px] font-black uppercase tracking-[0.24em] ${isLight ? 'text-accent-500' : 'text-accent-300'}`}>
                 {header.eyebrow}
               </p>
             )}

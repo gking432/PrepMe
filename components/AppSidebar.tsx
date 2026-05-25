@@ -77,13 +77,13 @@ export default function AppSidebar({
   const shellClass = isLight
     ? 'hidden border-r border-slate-200/80 bg-[linear-gradient(180deg,#f6f3ff_0%,#f6f8ff_42%,#eff5fb_100%)] lg:order-1 lg:flex lg:min-h-screen lg:flex-col'
     : 'hidden border-r border-white/8 bg-[#101720] lg:order-1 lg:flex lg:min-h-screen lg:flex-col'
-  const logoEyebrowClass = isLight ? 'text-violet-500/70' : 'text-violet-300/70'
+  const logoEyebrowClass = isLight ? 'text-accent-500/70' : 'text-accent-300/70'
   const logoTextClass = isLight ? 'text-slate-900' : 'text-white'
   const navIdleClass = isLight ? 'text-slate-500 hover:bg-white/70 hover:text-slate-900' : 'text-slate-400 hover:bg-white/4 hover:text-white'
   const navActiveClass = isLight
-    ? 'border border-violet-300/70 bg-white/80 text-slate-900 shadow-[0_10px_20px_rgba(109,40,217,0.08)]'
-    : 'border border-violet-400/30 bg-violet-500/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
-  const navActiveIconClass = isLight ? 'text-violet-600' : 'text-violet-300'
+    ? 'border border-accent-300/70 bg-white/80 text-slate-900 shadow-[0_10px_20px_rgba(109,40,217,0.08)]'
+    : 'border border-accent-400/30 bg-accent-500/14 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+  const navActiveIconClass = isLight ? 'text-accent-600' : 'text-accent-300'
   const navIdleIconClass = isLight ? 'text-slate-400' : 'text-slate-500'
   const labelClass = isLight ? 'text-slate-400' : 'text-slate-500'
   const footerClass = isLight ? 'border-slate-200/80 bg-white/65 text-slate-700' : 'border-white/8 bg-white/4 text-slate-200'
@@ -104,7 +104,7 @@ export default function AppSidebar({
           <div className="mt-8">
             <p className={`mb-3 px-1 text-[11px] font-black uppercase tracking-[0.24em] ${labelClass}`}>{processTitle}</p>
             <div className="relative space-y-2">
-              <div className={`pointer-events-none absolute bottom-5 left-5 top-5 w-px ${isLight ? 'bg-[linear-gradient(180deg,#ddd6fe_0%,#e2e8f0_100%)]' : 'bg-[linear-gradient(180deg,rgba(167,139,250,0.38)_0%,rgba(148,163,184,0.18)_100%)]'}`} />
+              <div className={`pointer-events-none absolute bottom-5 left-5 top-5 w-px ${isLight ? 'bg-[linear-gradient(180deg,#dbe6fe_0%,#e2e8f0_100%)]' : 'bg-[linear-gradient(180deg,rgba(167,139,250,0.38)_0%,rgba(148,163,184,0.18)_100%)]'}`} />
               {processStages.map((stage) => {
                 const Icon = stageIcons[stage.key]
                 const isCurrent = stage.status === 'current'
@@ -124,8 +124,8 @@ export default function AppSidebar({
                         className={`absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${
                           isCurrent
                             ? isLight
-                              ? 'border-violet-500 bg-violet-500'
-                              : 'border-violet-300 bg-violet-300'
+                              ? 'border-accent-500 bg-accent-500'
+                              : 'border-accent-300 bg-accent-300'
                             : isComplete
                             ? isLight
                               ? 'border-emerald-500 bg-emerald-500'
@@ -138,7 +138,7 @@ export default function AppSidebar({
                       <div
                         className={`relative flex h-8 w-8 items-center justify-center rounded-xl ${
                           isCurrent
-                            ? isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-500/16 text-violet-300'
+                            ? isLight ? 'bg-accent-100 text-accent-700' : 'bg-accent-500/16 text-accent-300'
                             : isComplete
                             ? isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/18 text-emerald-300'
                             : isLight ? 'bg-slate-100 text-slate-500' : 'bg-white/5 text-slate-600'
@@ -151,7 +151,7 @@ export default function AppSidebar({
                       <p className="text-sm font-semibold">{stage.label}</p>
                       <p className={`mt-0.5 text-[10px] font-black uppercase tracking-[0.18em] ${
                         isCurrent
-                          ? isLight ? 'text-violet-500' : 'text-violet-300'
+                          ? isLight ? 'text-accent-500' : 'text-accent-300'
                           : isComplete
                           ? isLight ? 'text-emerald-600' : 'text-emerald-300'
                           : isLight ? 'text-slate-400' : 'text-slate-500'
@@ -185,8 +185,8 @@ export default function AppSidebar({
                           const childClass = `flex w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left text-sm font-semibold transition-all ${
                             child.active
                               ? isLight
-                                ? 'border border-violet-200 bg-violet-50 text-violet-700'
-                                : 'border border-violet-400/25 bg-violet-500/10 text-violet-200'
+                                ? 'border border-accent-200 bg-accent-50 text-accent-700'
+                                : 'border border-accent-400/25 bg-accent-500/10 text-accent-200'
                               : isLight
                               ? 'text-slate-500 hover:bg-white/70 hover:text-slate-900'
                               : 'text-slate-400 hover:bg-white/4 hover:text-white'
@@ -288,8 +288,8 @@ export default function AppSidebar({
                   className={`rounded-2xl px-4 py-3 ${
                     item.status === 'current'
                       ? isLight
-                        ? 'border border-violet-200 bg-white/82 shadow-[0_10px_20px_rgba(109,40,217,0.08)]'
-                        : 'border border-violet-400/25 bg-violet-500/10'
+                        ? 'border border-accent-200 bg-white/82 shadow-[0_10px_20px_rgba(109,40,217,0.08)]'
+                        : 'border border-accent-400/25 bg-accent-500/10'
                       : item.status === 'complete'
                       ? isLight
                         ? 'border border-emerald-200 bg-emerald-50/90'

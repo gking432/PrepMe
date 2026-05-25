@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { Nunito } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
 
-const nunito = Nunito({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '600', '700', '800', '900'],
-  variable: '--font-nunito',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-sans',
   display: 'swap',
 })
 
@@ -24,11 +24,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={nunito.variable}>
+    <html lang="en" className={inter.variable}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
-      <body className={nunito.className}>{children}</body>
+      <body className={inter.className}>{children}</body>
     </html>
   )
 }

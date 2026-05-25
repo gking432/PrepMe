@@ -19,31 +19,31 @@ const config: Config = {
         coach: 'var(--coach)',
         success: 'var(--success)',
         warning: 'var(--warning)',
-        // Slate-Indigo — primary brand color
+        // Navy / slate — primary brand ink and dark surfaces
         primary: {
-          50:  '#ECEEF8',
-          100: '#D4D9F0',
-          200: '#A9B3E1',
-          300: '#7E8ED3',
-          400: '#5368C4',
-          500: '#2D3A8C',  // core brand
-          600: '#252F72',
-          700: '#1C2357',
-          800: '#12183B',
-          900: '#090C1E',
+          50:  '#F1F5F9',
+          100: '#E2E8F0',
+          200: '#CBD5E1',
+          300: '#94A3B8',
+          400: '#64748B',
+          500: '#334155',
+          600: '#1E293B',  // core brand (deep navy-slate)
+          700: '#152033',
+          800: '#0F1827',
+          900: '#0A1018',
         },
-        // Violet — Preppi's color, used as accent
+        // Sharp blue — single confident accent
         accent: {
-          50:  '#F3EEFE',
-          100: '#E6DCFD',
-          200: '#CDB9FB',
-          300: '#B496F9',
-          400: '#9B73F7',
-          500: '#7C3AED',  // Preppi purple
-          600: '#6330C1',
-          700: '#4A2491',
-          800: '#311860',
-          900: '#190C30',
+          50:  '#EFF4FF',
+          100: '#DBE6FE',
+          200: '#BFD3FE',
+          300: '#93B4FD',
+          400: '#6090FA',
+          500: '#2563EB',  // core accent
+          600: '#1D4ED8',
+          700: '#1E40AF',
+          800: '#1E3A8A',
+          900: '#172554',
         },
       },
     },

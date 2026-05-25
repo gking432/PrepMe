@@ -50,7 +50,7 @@ const STAGE_CONFIG: Record<InterviewStage, {
   name: string; subtitle: string; emoji: string; price?: string
   bg: string; activeBorder: string
 }> = {
-  hr_screen:      { name: 'HR Screen',       subtitle: 'Phone screening with a recruiter',   emoji: '📱', bg: 'bg-[#58CC02]', activeBorder: 'border-[#3b9400]' },
+  hr_screen:      { name: 'HR Screen',       subtitle: 'Phone screening with a recruiter',   emoji: '📱', bg: 'bg-emerald-600', activeBorder: 'border-emerald-800' },
   hiring_manager: { name: 'Hiring Manager',  subtitle: 'Deep-dive with your future boss',    emoji: '💼', price: '$4.99', bg: 'bg-primary-600', activeBorder: 'border-primary-800' },
   culture_fit:    { name: 'Culture Fit',     subtitle: 'Team & values alignment',            emoji: '🤝', price: '$3.99', bg: 'bg-accent-600', activeBorder: 'border-accent-800' },
   final:          { name: 'Final Round',     subtitle: 'Executive-level evaluation',          emoji: '🏆', price: '$5.99', bg: 'bg-slate-800', activeBorder: 'border-slate-950' },
@@ -738,11 +738,11 @@ export default function DashboardPage() {
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div>
-                                  <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Interview Process</p>
+                                  <p className="text-xs font-black uppercase tracking-[0.18em] text-accent-500">Interview Process</p>
                                   <h3 className="mt-2 text-2xl font-black text-slate-900">{title}</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-violet-700">
+                                  <span className="rounded-full bg-accent-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-accent-700">
                                     {completedCount}/4 complete
                                   </span>
                                   <button
@@ -759,7 +759,7 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                               <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                                <div className="h-full rounded-full bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)]" style={{ width: `${(completedCount / 4) * 100}%` }} />
+                                <div className="h-full rounded-full bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)]" style={{ width: `${(completedCount / 4) * 100}%` }} />
                               </div>
                               <div className="grid grid-cols-4 gap-3">
                                 {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
@@ -768,10 +768,10 @@ export default function DashboardPage() {
                                   const locked = !done && isStageLockedFn(stage)
                                   return (
                                     <div key={stage} className={`rounded-[1.2rem] border px-3 py-3 text-center ${
-                                      done ? 'border-emerald-200 bg-emerald-50/80' : locked ? 'border-slate-200 bg-slate-50/60 opacity-70' : 'border-violet-200 bg-violet-50/70'
+                                      done ? 'border-emerald-200 bg-emerald-50/80' : locked ? 'border-slate-200 bg-slate-50/60 opacity-70' : 'border-accent-200 bg-accent-50/70'
                                     }`}>
                                       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{STAGE_CONFIG[stage].name}</p>
-                                      <p className={`mt-1 text-[10px] font-black uppercase tracking-[0.14em] ${done ? 'text-emerald-600' : locked ? 'text-slate-400' : 'text-violet-600'}`}>
+                                      <p className={`mt-1 text-[10px] font-black uppercase tracking-[0.14em] ${done ? 'text-emerald-600' : locked ? 'text-slate-400' : 'text-accent-600'}`}>
                                         {done ? (stageState?.overallScore != null ? `${stageState.overallScore}/10` : 'Done') : locked ? 'Locked' : 'Open'}
                                       </p>
                                     </div>
@@ -823,11 +823,11 @@ export default function DashboardPage() {
               <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
                 <div className="premium-panel p-6">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-violet-100">
-                      <FolderOpen className="h-6 w-6 text-violet-700" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-accent-100">
+                      <FolderOpen className="h-6 w-6 text-accent-700" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Resumes</p>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-accent-500">Resumes</p>
                       <h2 className="text-2xl font-black text-slate-900">Saved resume library</h2>
                     </div>
                   </div>

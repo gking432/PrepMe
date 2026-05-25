@@ -61,11 +61,11 @@ export default function ImprovementTip({
             <p className="mt-1 text-xs leading-5 text-slate-700">{tip.retryPrompt}</p>
           </div>
           {rewrittenAnswer ? (
-            <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-3 py-3">
+            <div className="mt-3 rounded-xl border border-accent-200 bg-accent-50 px-3 py-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-violet-700">Better Version</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-accent-700">Better Version</p>
                 {rewriteMethod ? (
-                  <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-violet-700">
+                  <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-accent-700">
                     {rewriteMethod}
                   </span>
                 ) : null}

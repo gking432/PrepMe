@@ -733,7 +733,7 @@ export default function DashboardPage() {
                             <button
                               key={`${title}-${idx}`}
                               type="button"
-                              onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
+                              onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
                               className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
                             >
                               <div className="flex items-start justify-between gap-4">
@@ -764,17 +764,22 @@ export default function DashboardPage() {
                               <div className="grid grid-cols-4 gap-3">
                                 {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
                                   const stageState = group.stages[stage]
+                                  const done = !!stageState?.hasFeedback
+                                  const locked = !done && isStageLockedFn(stage)
                                   return (
                                     <div key={stage} className={`rounded-[1.2rem] border px-3 py-3 text-center ${
-                                      stageState?.hasFeedback ? 'border-emerald-200 bg-emerald-50/80' : 'border-slate-200 bg-slate-50/80'
+                                      done ? 'border-emerald-200 bg-emerald-50/80' : locked ? 'border-slate-200 bg-slate-50/60 opacity-70' : 'border-violet-200 bg-violet-50/70'
                                     }`}>
                                       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{STAGE_CONFIG[stage].name}</p>
+                                      <p className={`mt-1 text-[10px] font-black uppercase tracking-[0.14em] ${done ? 'text-emerald-600' : locked ? 'text-slate-400' : 'text-violet-600'}`}>
+                                        {done ? (stageState?.overallScore != null ? `${stageState.overallScore}/10` : 'Done') : locked ? 'Locked' : 'Open'}
+                                      </p>
                                     </div>
                                   )
                                 })}
                               </div>
                               <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
-                                <span>{latestSession ? 'Open latest feedback' : 'No completed stages yet'}</span>
+                                <span>Open interview process</span>
                                 <ArrowRight className="h-4 w-4" />
                               </div>
                             </button>

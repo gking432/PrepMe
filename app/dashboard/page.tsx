@@ -620,7 +620,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <AppChrome active="preps" maxWidth="max-w-7xl">
+    <AppChrome active="preps" maxWidth="max-w-7xl" hideMobileTabs={!showWorkspaceHub}>
       <div>
         {showWorkspaceHub && (
           <div className="animate-slide-up md:grid md:grid-cols-[280px_minmax(0,1fr)] md:items-start md:gap-6">

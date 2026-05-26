@@ -45,6 +45,29 @@ type SignalCard = SignalArea & {
   criterion: string
 }
 
+type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
+
+const SIX_AREAS_KEY: Record<StageKey, string> = {
+  hr_screen: 'hr_screen_six_areas',
+  hiring_manager: 'hiring_manager_six_areas',
+  culture_fit: 'culture_fit_six_areas',
+  final: 'final_round_six_areas',
+}
+
+const STAGE_NAME: Record<StageKey, string> = {
+  hr_screen: 'HR Screen',
+  hiring_manager: 'Hiring Manager',
+  culture_fit: 'Culture Fit',
+  final: 'Final Round',
+}
+
+const NEXT_STAGE: Record<StageKey, StageKey | null> = {
+  hr_screen: 'hiring_manager',
+  hiring_manager: 'culture_fit',
+  culture_fit: 'final',
+  final: null,
+}
+
 interface HrFeedbackDeckProps {
   feedback: any
   currentSessionData?: any
@@ -54,6 +77,7 @@ interface HrFeedbackDeckProps {
   onUnlockNextStage?: () => void
   onExitToProfile?: () => void
   layout?: 'standalone' | 'embedded'
+  stageKey?: StageKey
 }
 
 type DeckStep =
@@ -109,8 +133,9 @@ function toDisplayText(value: any, fallback = ''): string {
   return fallback
 }
 
-function getSixAreas(feedback: any) {
-  return feedback?.hr_screen_six_areas || feedback?.full_rubric?.hr_screen_six_areas || {}
+function getSixAreas(feedback: any, stageKey: StageKey = 'hr_screen') {
+  const key = SIX_AREAS_KEY[stageKey]
+  return feedback?.[key] || feedback?.full_rubric?.[key] || feedback?.hr_screen_six_areas || feedback?.full_rubric?.hr_screen_six_areas || {}
 }
 
 function getOverallScore(feedback: any) {
@@ -721,9 +746,13 @@ export default function HrFeedbackDeck({
   onUnlockNextStage,
   onExitToProfile,
   layout = 'standalone',
+  stageKey = 'hr_screen',
 }: HrFeedbackDeckProps) {
   const [step, setStep] = useState(0)
   const [showCoachFile, setShowCoachFile] = useState(false)
+  const nextStageKey = NEXT_STAGE[stageKey]
+  const stageName = STAGE_NAME[stageKey]
+  const nextStageName = nextStageKey ? STAGE_NAME[nextStageKey] : null
 
   const {
     score,
@@ -738,7 +767,7 @@ export default function HrFeedbackDeck({
     company,
   } = useMemo(() => {
     const fullRubric = feedback?.full_rubric || {}
-    const sixAreas = getSixAreas(feedback)
+    const sixAreas = getSixAreas(feedback, stageKey)
     const rawStrengths = asArray<any>(sixAreas.what_went_well).map((area) => normalizeSignal(area, 'strength'))
     const rawRepairs = asArray<any>(sixAreas.what_needs_improve).map((area) => normalizeSignal(area, 'repair'))
     const overallScore = getOverallScore(feedback)
@@ -755,12 +784,15 @@ export default function HrFeedbackDeck({
       strengths: sortedStrengths,
       repairs: sortedRepairs,
       nextSteps: nextStepsData,
-      predictedQuestions: asArray<any>(nextStepsData.predicted_hiring_manager_questions).map((item) => toDisplayText(item)).filter(Boolean),
+      predictedQuestions: asArray<any>(
+        nextStepsData.predicted_next_round_questions ||
+        nextStepsData.predicted_hiring_manager_questions
+      ).map((item) => toDisplayText(item)).filter(Boolean),
       studyAreas: asArray<any>(nextStepsData.areas_to_study).map((item) => toDisplayText(item)).filter(Boolean),
       role: context.role,
       company: context.company,
     }
-  }, [currentSessionData, feedback])
+  }, [currentSessionData, feedback, stageKey])
 
   const deckSteps = useMemo<DeckStep[]>(() => {
     const issueSteps = repairs.length
@@ -772,15 +804,18 @@ export default function HrFeedbackDeck({
         }))
       : [{ key: 'issue-none', label: 'Issues', type: 'repair' as const, repairIndex: 0 }]
 
-    return [
+    const base: DeckStep[] = [
       { key: 'outcome', label: 'Outcome', type: 'outcome' },
       { key: 'strengths', label: 'Strong', type: 'strengths' },
       { key: 'weaknesses', label: 'Weak', type: 'weaknesses' },
       ...issueSteps,
-      { key: 'preview', label: 'Next Round', type: 'preview' },
-      { key: 'upgrade', label: 'Unlock', type: 'upgrade' },
     ]
-  }, [repairs])
+    if (nextStageKey) {
+      base.push({ key: 'preview', label: 'Next Round', type: 'preview' })
+      base.push({ key: 'upgrade', label: 'Unlock', type: 'upgrade' })
+    }
+    return base
+  }, [repairs, nextStageKey])
 
   useEffect(() => {
     if (step >= deckSteps.length) {
@@ -795,7 +830,11 @@ export default function HrFeedbackDeck({
 
   const goNext = () => {
     if (isLastStep) {
-      onUnlockNextStage?.()
+      if (nextStageKey) {
+        onUnlockNextStage?.()
+      } else {
+        onExitToProfile?.()
+      }
       return
     }
     setStep((value) => Math.min(value + 1, deckSteps.length - 1))
@@ -807,7 +846,7 @@ export default function HrFeedbackDeck({
     if (activeStep.type === 'outcome') {
       return (
         <StepShell
-          eyebrow="HR Screen Result"
+          eyebrow={`${stageName} Result`}
           title={verdict.title}
           body={verdict.body}
           preppiMessage="This is the whole point: quick enough to understand, specific enough to trust."
@@ -819,7 +858,7 @@ export default function HrFeedbackDeck({
                 <span className="inline-flex rounded-full bg-accent-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-accent-700">
                   {verdict.badge}
                 </span>
-                <h2 className="mt-3 text-2xl font-bold leading-tight text-slate-950 2xl:text-3xl">{scoreLabel(score)} HR signal</h2>
+                <h2 className="mt-3 text-2xl font-bold leading-tight text-slate-950 2xl:text-3xl">{scoreLabel(score)} {stageName.toLowerCase()} signal</h2>
                 <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
                   For {role} at {company}, the next interviewer will care less about polish and more about proof.
                 </p>
@@ -828,7 +867,7 @@ export default function HrFeedbackDeck({
             <div className="grid grid-cols-3 gap-3">
               <MiniStat label="Strong" value={`${strengths.length || 0}`} tone="brand" />
               <MiniStat label="Issues" value={`${repairs.length || 0}`} tone="amber" />
-              <MiniStat label="HM Ready" value={readyForHm ? 'Yes' : 'Soon'} />
+              <MiniStat label={nextStageName ? `${nextStageName.split(' ')[0]} Ready` : 'Ready'} value={readyForHm ? 'Yes' : 'Soon'} />
             </div>
             <div className="hidden rounded-2xl border border-accent-200 bg-accent-50 p-4 sm:block">
               <div className="flex items-start gap-3">
@@ -890,9 +929,9 @@ export default function HrFeedbackDeck({
 
       return (
         <StepShell
-          eyebrow="Hiring Manager Preview"
+          eyebrow={`${nextStageName} Preview`}
           title="The next round will test proof."
-          body="HR screens ask if you are plausible. Hiring managers ask if you can actually do the work."
+          body={`What this ${stageName.toLowerCase()} signaled, and what the ${nextStageName?.toLowerCase() || 'next round'} will press on next.`}
           preppiMessage="The boss level is less friendly. Helpful, but less friendly."
         >
           <div className="grid h-full min-h-0 gap-4 lg:grid-cols-2">
@@ -939,7 +978,7 @@ export default function HrFeedbackDeck({
       <StepShell
         eyebrow="Next Stage"
         title="You have the diagnosis. Now rehearse the harder round."
-        body="The free HR report should feel complete, not cramped. The paid next step should feel obvious because the next interview is already visible."
+        body={`You have the diagnosis from this ${stageName.toLowerCase()}. The ${nextStageName?.toLowerCase() || 'next round'} is what stands between you and the offer.`}
         preppiMessage="If I were a tiny parrot career coach, I would absolutely charge for this next part."
       >
         <div className="flex h-full min-h-0 flex-col justify-between gap-4 overflow-hidden">
@@ -950,7 +989,7 @@ export default function HrFeedbackDeck({
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Unlock Next</p>
-                <h2 className="text-2xl font-bold text-slate-950">Hiring Manager Round</h2>
+                <h2 className="text-2xl font-bold text-slate-950">{nextStageName} Round</h2>
               </div>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -975,7 +1014,7 @@ export default function HrFeedbackDeck({
               onClick={onUnlockNextStage}
               className="group flex w-full items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
             >
-              Start Hiring Manager Round
+              Start {nextStageName} Round
               <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
             </button>
             <div className="grid grid-cols-2 gap-3">
@@ -1045,7 +1084,7 @@ export default function HrFeedbackDeck({
           onClick={goNext}
           className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
         >
-          {isLastStep ? 'Unlock Hiring Manager' : 'Continue'}
+          {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'Done') : 'Continue'}
           {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
         </button>
       </div>

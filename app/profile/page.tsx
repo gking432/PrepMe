@@ -8,8 +8,7 @@ import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { User, Calendar, Clock, Target, ArrowRight, LogOut, Settings, Briefcase, Phone, Users, Crown, CheckCircle, ChevronDown, ChevronUp, ChevronRight, FileText, CreditCard, Upload, Trash2, Star, Shield, Pencil, X } from 'lucide-react'
-import AppSidebar from '@/components/AppSidebar'
-import AppProgressRail from '@/components/AppProgressRail'
+import AppChrome from '@/components/AppChrome'
 
 const STAGE_NAMES: Record<string, string> = {
   hr_screen: 'HR Screen',
@@ -429,26 +428,19 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="app-shell flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-500"></div>
-          <p className="text-gray-600">Loading profile...</p>
+      <AppChrome active="account">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-accent-600" />
         </div>
-      </div>
+      </AppChrome>
     )
   }
 
   if (!user) return null
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px_minmax(12px,0.25fr)] lg:bg-[#0d141d]">
-      <div className="lg:hidden">
-        <Header />
-      </div>
-      <AppSidebar activeSection="profile" processStages={processStages} />
-      <AppProgressRail cards={railCards} />
-
-      <main className="page-container max-w-7xl py-8 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:py-8">
+    <AppChrome active="account" maxWidth="max-w-5xl">
+      <div className="">
         {/* Profile Header */}
         <div className="mb-8">
           <div className="premium-panel flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
@@ -979,7 +971,7 @@ export default function ProfilePage() {
             </div>
           )
         })()}
-      </main>
-    </div>
+      </div>
+    </AppChrome>
   )
 }

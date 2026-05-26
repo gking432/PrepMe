@@ -10,8 +10,7 @@ import Preppi from '@/components/Preppi'
 import Confetti from '@/components/Confetti'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import { Mic, MicOff, Send, ChevronRight, RotateCcw, Trophy, Zap, CheckCircle, X } from 'lucide-react'
-import AppSidebar from '@/components/AppSidebar'
-import AppProgressRail from '@/components/AppProgressRail'
+import AppChrome from '@/components/AppChrome'
 
 interface DrillQuestion {
   id: string
@@ -355,39 +354,32 @@ export default function PracticeDrillPage() {
 
   if (loading) {
     return (
-      <div className="app-shell flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-      </div>
+      <AppChrome active="practice">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-accent-600" />
+        </div>
+      </AppChrome>
     )
   }
 
   if (questions.length === 0) {
     return (
-      <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
-        <div className="lg:hidden">
-          <Header />
+      <AppChrome active="practice">
+        <div className="mx-auto max-w-lg py-12 text-center">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h1 className="text-xl font-bold text-slate-900">Nothing to drill right now</h1>
+            <p className="mt-2 text-sm text-slate-500">Practice unlocks once you have feedback from an interview. Complete a round and we&apos;ll build your drills from what came up.</p>
+            <button onClick={() => router.push('/dashboard')} className="btn-coach-primary mt-5 inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm">
+              Go to Interviews
+            </button>
+          </div>
         </div>
-        <AppSidebar activeSection="practice" />
-        <AppProgressRail cards={practiceCards} />
-        <div className="page-container max-w-lg py-16 text-center">
-          <Preppi message="Nothing to drill right now — that's actually a good sign." size="lg" />
-          <p className="mt-6 text-gray-500 text-sm">Complete an interview first, and we'll build your drill session from the feedback.</p>
-          <button onClick={() => router.push('/dashboard')} className="btn-coach-primary mt-6 px-6 py-3">
-            Go to Dashboard
-          </button>
-        </div>
-      </div>
+      </AppChrome>
     )
   }
 
   return (
-    <div className="app-shell lg:grid lg:min-h-screen lg:grid-cols-[248px_minmax(0,1fr)_320px] lg:bg-[#0d141d]">
-      <div className="lg:hidden">
-        <Header />
-      </div>
-      <AppSidebar activeSection="practice" />
-      <AppProgressRail cards={practiceCards} />
-
+    <AppChrome active="practice">
       {/* CORRECT! flash overlay */}
       {showCorrectFlash && (
         <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none animate-correct-flash">
@@ -400,7 +392,7 @@ export default function PracticeDrillPage() {
       {/* Confetti */}
       <Confetti active={confettiActive} />
 
-      <div className="page-container max-w-2xl py-8 lg:order-2 lg:min-h-screen lg:max-w-none lg:bg-[linear-gradient(180deg,#f7f4ff_0%,#f4f7ff_40%,#eef4fb_100%)] lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-2xl">
 
         {/* XP bar — always visible during drill */}
         {phase !== 'intro' && phase !== 'summary' && (
@@ -657,6 +649,6 @@ export default function PracticeDrillPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppChrome>
   )
 }

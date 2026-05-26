@@ -2253,37 +2253,47 @@ export default function InterviewDashboard() {
   }
 
   if (hasFeedback && !showLessonRoadmap) {
+    const deckArtifact = currentStageKey === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null
+    const deckProps = {
+      feedback,
+      currentSessionData,
+      onRetakeInterview: handleRetakeInterview,
+      onUnlockNextStage: handleUnlockNextStage,
+      onExitToProfile: handleExitToProfile,
+      artifactContent: deckArtifact,
+      onPrintArtifact: () => window.print(),
+      stageKey: currentStageKey,
+    }
     return (
-      <div className={shellClasses}>
-        <div className="lg:hidden">
-          <Header />
+      <>
+        {/* Mobile: immersive full-screen player */}
+        <div className="fixed inset-0 z-40 flex flex-col bg-white md:hidden">
+          <HrFeedbackDeck {...deckProps} />
         </div>
-        <AppSidebar
-          activeSection="feedback"
-          processStages={processStages}
-          theme="light"
-          navItemsOverride={processWorkspaceNavItems}
-          navTitle="Workspace"
-          processTitle="Interview Stages"
-          footerText="Stages are primary. Review feedback, tighten your answers, then retry or move forward."
-        />
-        <AppProgressRail cards={reportRailCards} theme="light" header={processHeader} />
-        <div className={shellCenterClasses}>
-          <div className={centeredLaneClasses}>
-            <CoachReportWorkspace
-              feedback={feedback}
-              currentSessionData={currentSessionData}
-              currentStage={currentStage}
-              onRetakeInterview={handleRetakeInterview}
-              onUnlockNextStage={handleUnlockNextStage}
-              artifactContent={currentStage === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
-              onPrintArtifact={() => window.print()}
-              tutorialActive={walkthroughActive}
-              onDismissTutorial={dismissFeedbackTutorial}
-            />
-          </div>
+
+        {/* Desktop: app chrome + process sidebar + slide player */}
+        <div className="hidden md:block">
+          <AppChrome active="preps" maxWidth="max-w-7xl">
+            <div className="grid h-[calc(100dvh-9rem)] grid-cols-[300px_minmax(0,1fr)] gap-6">
+              <ProcessSidebar
+                currentStageKey={currentStageKey}
+                currentSessionData={currentSessionData}
+                onPurchase={(stage) => { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }}
+              />
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <HrFeedbackDeck {...deckProps} />
+              </div>
+            </div>
+          </AppChrome>
         </div>
-      </div>
+
+        {showPurchaseFlow && (
+          <PurchaseFlow
+            onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}
+            highlightStage={purchaseHighlightStage}
+          />
+        )}
+      </>
     )
   }
 

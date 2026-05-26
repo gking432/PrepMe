@@ -17,9 +17,10 @@ interface AppChromeProps {
   active?: Tab
   children: ReactNode
   maxWidth?: string
+  hideMobileTabs?: boolean
 }
 
-export default function AppChrome({ active, children, maxWidth = 'max-w-5xl' }: AppChromeProps) {
+export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hideMobileTabs }: AppChromeProps) {
   const [email, setEmail] = useState<string | undefined>(undefined)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -116,7 +117,7 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl' }: 
       <main className={`mx-auto w-full ${maxWidth} px-4 pb-24 pt-6 sm:px-6 md:pb-14`}>{children}</main>
 
       {/* Mobile bottom tabs */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+      <nav className={`fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden ${hideMobileTabs ? 'hidden' : ''}`}>
         {NAV.map((n) => {
           const Icon = n.icon
           const on = active === n.key

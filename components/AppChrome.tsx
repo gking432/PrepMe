@@ -8,7 +8,7 @@ import { Briefcase, Target, LogOut, ChevronDown, UserRound } from 'lucide-react'
 type Tab = 'preps' | 'practice' | 'account'
 
 const NAV: { key: Tab; label: string; href: string; icon: any }[] = [
-  { key: 'preps', label: 'My Preps', href: '/dashboard', icon: Briefcase },
+  { key: 'preps', label: 'Interviews', href: '/dashboard', icon: Briefcase },
   { key: 'practice', label: 'Practice', href: '/practice', icon: Target },
   { key: 'account', label: 'Account', href: '/profile', icon: UserRound },
 ]

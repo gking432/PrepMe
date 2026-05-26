@@ -67,7 +67,7 @@ export default function ProcessSidebar({ currentStageKey, currentSessionData, on
 
       const { data: sessions } = await supabase
         .from('interview_sessions')
-        .select(`id, stage, status, completed_at, user_interview_data_id, user_interview_data(job_description_text), interview_feedback(id, overall_score)`)
+        .select(`id, stage, status, completed_at, user_interview_data_id, user_interview_data(job_description_text), interview_feedback(id, overall_score, created_at)`)
         .eq('user_id', session.user.id)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
@@ -93,7 +93,10 @@ export default function ProcessSidebar({ currentStageKey, currentSessionData, on
         if (!ORDER.includes(sk)) return
         if (!dataId && row.user_interview_data_id) dataId = row.user_interview_data_id
         if (!next[sk].sessionId) {
-          next[sk] = { done: true, score: row.interview_feedback[0]?.overall_score ?? null, sessionId: row.id }
+          const latestFb = [...row.interview_feedback].sort((a: any, b: any) =>
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          )[0]
+          next[sk] = { done: true, score: latestFb?.overall_score ?? null, sessionId: row.id }
         }
       })
 

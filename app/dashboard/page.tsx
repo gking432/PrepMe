@@ -206,40 +206,15 @@ export default function DashboardPage() {
         const latestDate = stageState.latestSession ? new Date(stageState.latestSession.completed_at || stageState.latestSession.created_at).getTime() : 0
         const currentDate = new Date(sessionRow.completed_at || sessionRow.created_at).getTime()
 
+        const latestFeedback = [...sessionRow.interview_feedback].sort((a: any, b: any) =>
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        )[0]
         stageState.hasFeedback = true
-        stageState.overallScore = sessionRow.interview_feedback[0]?.overall_score ?? null
+        stageState.overallScore = latestFeedback?.overall_score ?? null
         if (!stageState.latestSession || currentDate >= latestDate) {
           stageState.latestSession = sessionRow
         }
       })
-
-      if (isAdminPreview(session.user.email)) {
-        const mockCompany = 'Atlas Developer Tools'
-        const mockRole = 'Senior Technical Program Manager'
-        const mockKey = `${mockCompany}-${mockRole}`
-        if (!groupsMap.has(mockKey)) {
-          groupsMap.set(mockKey, {
-            companyName: mockCompany,
-            positionTitle: mockRole,
-            stages: {
-              hr_screen: {
-                latestSession: {
-                  id: 'mock-session',
-                  stage: 'hr_screen',
-                  previewMock: true,
-                  created_at: MOCK_SESSION_DATA.created_at,
-                  completed_at: MOCK_SESSION_DATA.created_at,
-                },
-                hasFeedback: true,
-                overallScore: 6.2,
-              },
-              hiring_manager: { latestSession: null, hasFeedback: false, overallScore: null },
-              culture_fit: { latestSession: null, hasFeedback: false, overallScore: null },
-              final: { latestSession: null, hasFeedback: false, overallScore: null },
-            },
-          })
-        }
-      }
 
       setInterviewGroups(Array.from(groupsMap.values()))
     } catch (error) {
@@ -669,12 +644,12 @@ export default function DashboardPage() {
             <div className="min-w-0 space-y-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Preps</h1>
-                <p className="mt-1 text-sm text-slate-500">Your interview processes. Pick up where you left off or start a new one.</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Interviews</h1>
+                <p className="mt-1 text-sm text-slate-500">Your interview prep. Pick up where you left off or start a new one.</p>
               </div>
               <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm md:hidden">
                 <PlusSquare className="h-4 w-4" />
-                New prep
+                New interview
               </Link>
             </div>
 
@@ -717,65 +692,53 @@ export default function DashboardPage() {
                         <p className="mt-2 text-sm text-slate-500">Start a new process when the next role comes in.</p>
                       </div>
                     ) : (
-                      <div className="grid gap-5 xl:grid-cols-2">
+                      <div className="space-y-2">
                         {activeInterviewGroups.map((group, idx) => {
                           const latestSession = getLatestSessionForGroup(group)
                           const completedCount = getCompletedCount(group)
-                          const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview Process ${idx + 1}`
+                          const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview ${idx + 1}`
+                          const stages = ['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const
                           return (
-                            <button
+                            <div
                               key={`${title}-${idx}`}
-                              type="button"
+                              role="button"
+                              tabIndex={0}
                               onClick={() => latestSession ? router.push(getFeedbackHref(latestSession)) : router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
-                              className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
+                              onKeyDown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLElement).click() }}
+                              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:bg-slate-50 cursor-pointer sm:gap-4 sm:px-5"
                             >
-                              <div className="flex items-start justify-between gap-4">
-                                <div>
-                                  <p className="text-xs font-black uppercase tracking-[0.18em] text-accent-500">Interview Process</p>
-                                  <h3 className="mt-2 text-2xl font-black text-slate-900">{title}</h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="rounded-full bg-accent-100 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-accent-700">
-                                    {completedCount}/4 complete
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation()
-                                      archiveProcess(group)
-                                    }}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-900"
-                                    aria-label={`Archive ${title}`}
-                                  >
-                                    <Archive className="h-4 w-4" />
-                                  </button>
-                                </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
+                                <p className="mt-0.5 text-xs text-slate-500">{completedCount} of 4 rounds complete</p>
                               </div>
-                              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                                <div className="h-full rounded-full bg-[linear-gradient(90deg,#3b82f6_0%,#1d4ed8_100%)]" style={{ width: `${(completedCount / 4) * 100}%` }} />
-                              </div>
-                              <div className="grid grid-cols-4 gap-3">
-                                {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
-                                  const stageState = group.stages[stage]
-                                  const done = !!stageState?.hasFeedback
+                              <div className="hidden shrink-0 items-center gap-1 sm:flex">
+                                {stages.map((stage) => {
+                                  const ss = group.stages[stage]
+                                  const done = !!ss?.hasFeedback
                                   const locked = !done && isStageLockedFn(stage)
+                                  const tone = done
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                    : locked
+                                    ? 'border-slate-200 bg-slate-50 text-slate-400'
+                                    : 'border-accent-200 bg-accent-50 text-accent-700'
                                   return (
-                                    <div key={stage} className={`rounded-[1.2rem] border px-3 py-3 text-center ${
-                                      done ? 'border-emerald-200 bg-emerald-50/80' : locked ? 'border-slate-200 bg-slate-50/60 opacity-70' : 'border-accent-200 bg-accent-50/70'
-                                    }`}>
-                                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{STAGE_CONFIG[stage].name}</p>
-                                      <p className={`mt-1 text-[10px] font-black uppercase tracking-[0.14em] ${done ? 'text-emerald-600' : locked ? 'text-slate-400' : 'text-accent-600'}`}>
-                                        {done ? (stageState?.overallScore != null ? `${stageState.overallScore}/10` : 'Done') : locked ? 'Locked' : 'Open'}
-                                      </p>
-                                    </div>
+                                    <span key={stage} className={`flex h-6 items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold ${tone}`}>
+                                      {done ? <CheckCircle2 className="h-3 w-3" /> : locked ? <Lock className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                      <span className="hidden md:inline">{STAGE_CONFIG[stage].name.split(' ')[0]}</span>
+                                    </span>
                                   )
                                 })}
                               </div>
-                              <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
-                                <span>Open interview process</span>
-                                <ArrowRight className="h-4 w-4" />
-                              </div>
-                            </button>
+                              <button
+                                type="button"
+                                onClick={(event) => { event.stopPropagation(); archiveProcess(group) }}
+                                className="hidden shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:inline-flex"
+                                aria-label={`Archive ${title}`}
+                              >
+                                <Archive className="h-4 w-4" />
+                              </button>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                            </div>
                           )
                         })}
                       </div>

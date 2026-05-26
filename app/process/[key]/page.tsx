@@ -104,7 +104,7 @@ export default function ProcessSpinePage() {
         .select(`
           id, stage, status, created_at, completed_at, user_interview_data_id,
           user_interview_data ( job_description_text ),
-          interview_feedback ( id, overall_score )
+          interview_feedback ( id, overall_score, created_at )
         `)
         .eq('user_id', session.user.id)
         .eq('status', 'completed')
@@ -134,8 +134,11 @@ export default function ProcessSpinePage() {
         }
         const st = proc.stages[stageKey]
         if (!st.sessionId) {
+          const latestFb = [...row.interview_feedback].sort((a: any, b: any) =>
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          )[0]
           st.done = true
-          st.score = row.interview_feedback[0]?.overall_score ?? null
+          st.score = latestFb?.overall_score ?? null
           st.sessionId = row.id
         }
       })

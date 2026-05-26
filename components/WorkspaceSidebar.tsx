@@ -67,8 +67,8 @@ export default function WorkspaceSidebar({
     <aside className="flex h-full min-h-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">Workspace</p>
-        <h2 className="mt-1 text-base font-bold text-slate-900">My Preps</h2>
-        <p className="text-xs text-slate-500">{total} {total === 1 ? 'prep' : 'preps'}</p>
+        <h2 className="mt-1 text-base font-bold text-slate-900">Interviews</h2>
+        <p className="text-xs text-slate-500">{total} {total === 1 ? 'interview' : 'interviews'}</p>
       </div>
 
       <div className="mt-4 -mx-1.5 space-y-1">
@@ -103,7 +103,7 @@ export default function WorkspaceSidebar({
           onClick={onNewPrep}
           className="btn-coach-primary flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm"
         >
-          <PlusSquare className="h-4 w-4" /> New prep
+          <PlusSquare className="h-4 w-4" /> New interview
         </button>
       </div>
     </aside>

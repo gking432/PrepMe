@@ -20,6 +20,8 @@ import AppSidebar from '@/components/AppSidebar'
 import AppProgressRail from '@/components/AppProgressRail'
 import CoachReportWorkspace from '@/components/CoachReportWorkspace'
 import HrFeedbackDeck from '@/components/HrFeedbackDeck'
+import AppChrome from '@/components/AppChrome'
+import ProcessSidebar from '@/components/ProcessSidebar'
 import ImprovementTip from '@/components/ImprovementTip'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
@@ -2207,17 +2209,39 @@ export default function InterviewDashboard() {
   }
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
+    const deckArtifact = buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null
+    const deckProps = {
+      feedback,
+      currentSessionData,
+      onRetakeInterview: handleRetakeInterview,
+      onUnlockNextStage: handleUnlockNextStage,
+      onExitToProfile: handleExitToProfile,
+      artifactContent: deckArtifact,
+      onPrintArtifact: () => window.print(),
+    }
     return (
       <>
-        <HrFeedbackDeck
-          feedback={feedback}
-          currentSessionData={currentSessionData}
-          onRetakeInterview={handleRetakeInterview}
-          onUnlockNextStage={handleUnlockNextStage}
-          onExitToProfile={handleExitToProfile}
-          artifactContent={buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null}
-          onPrintArtifact={() => window.print()}
-        />
+        {/* Mobile: immersive full-screen player */}
+        <div className="fixed inset-0 z-40 flex flex-col bg-white md:hidden">
+          <HrFeedbackDeck {...deckProps} />
+        </div>
+
+        {/* Desktop: app chrome + process sidebar + slide player */}
+        <div className="hidden md:block">
+          <AppChrome active="preps" maxWidth="max-w-7xl">
+            <div className="grid h-[calc(100dvh-9rem)] grid-cols-[300px_minmax(0,1fr)] gap-6">
+              <ProcessSidebar
+                currentStageKey="hr_screen"
+                currentSessionData={currentSessionData}
+                onPurchase={(stage) => { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }}
+              />
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <HrFeedbackDeck {...deckProps} />
+              </div>
+            </div>
+          </AppChrome>
+        </div>
+
         {showPurchaseFlow && (
           <PurchaseFlow
             onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}

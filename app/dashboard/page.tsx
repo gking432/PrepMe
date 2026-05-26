@@ -707,7 +707,7 @@ export default function DashboardPage() {
                             <button
                               key={`${title}-${idx}`}
                               type="button"
-                              onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
+                              onClick={() => latestSession ? router.push(getFeedbackHref(latestSession)) : router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
                               className="premium-panel flex flex-col gap-5 p-6 text-left transition-all hover:-translate-y-1 hover:shadow-[0_22px_40px_rgba(15,23,42,0.08)]"
                             >
                               <div className="flex items-start justify-between gap-4">

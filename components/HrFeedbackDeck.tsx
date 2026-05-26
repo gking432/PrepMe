@@ -1003,53 +1003,51 @@ export default function HrFeedbackDeck({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-slate-200/70">
-      <div className="mx-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-xl">
-        {/* App top bar: close + story progress */}
-        <div className="flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
+    <div className="flex h-full min-h-0 flex-col bg-white">
+      {/* App top bar: close + story progress */}
+      <div className="flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
+        <button
+          type="button"
+          onClick={onExitToProfile}
+          aria-label="Close"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="flex flex-1 gap-1.5">
+          {deckSteps.map((s, index) => (
+            <div key={s.key} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+              <div className={`h-full rounded-full bg-accent-600 transition-all duration-300 ${index <= step ? 'w-full' : 'w-0'}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Slide */}
+      <div key={activeStep.key} className="slide-in-bottom min-h-0 flex-1 overflow-hidden px-4 py-5 sm:px-6 sm:py-6">
+        {renderStep()}
+      </div>
+
+      {/* App bottom bar */}
+      <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6">
+        {step > 0 && (
           <button
             type="button"
-            onClick={onExitToProfile}
-            aria-label="Close"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            onClick={goBack}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+            aria-label="Back"
           >
-            <X className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
-          <div className="flex flex-1 gap-1.5">
-            {deckSteps.map((s, index) => (
-              <div key={s.key} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-                <div className={`h-full rounded-full bg-accent-600 transition-all duration-300 ${index <= step ? 'w-full' : 'w-0'}`} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Slide */}
-        <div key={activeStep.key} className="slide-in-bottom min-h-0 flex-1 overflow-hidden px-4 py-5 sm:px-6 sm:py-6">
-          {renderStep()}
-        </div>
-
-        {/* App bottom bar */}
-        <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6">
-          {step > 0 && (
-            <button
-              type="button"
-              onClick={goBack}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
-              aria-label="Back"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={goNext}
-            className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
-          >
-            {isLastStep ? 'Unlock Hiring Manager' : 'Continue'}
-            {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
-          </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={goNext}
+          className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
+        >
+          {isLastStep ? 'Unlock Hiring Manager' : 'Continue'}
+          {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
+        </button>
       </div>
 
       {showCoachFile && (

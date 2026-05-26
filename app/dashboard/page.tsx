@@ -13,6 +13,7 @@ import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
 import AppChrome from '@/components/AppChrome'
+import WorkspaceSidebar from '@/components/WorkspaceSidebar'
 import { isAdminPreview, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
@@ -644,16 +645,34 @@ export default function DashboardPage() {
   }
 
   return (
-    <AppChrome active="preps">
+    <AppChrome active="preps" maxWidth="max-w-7xl">
       <div>
         {showWorkspaceHub && (
-          <div className="space-y-8 animate-slide-up">
+          <div className="animate-slide-up md:grid md:grid-cols-[280px_minmax(0,1fr)] md:items-start md:gap-6">
+            <div className="hidden md:block">
+              <WorkspaceSidebar
+                activeView={workspacePanel}
+                activeTab={processTab}
+                counts={{
+                  active: activeInterviewGroups.length,
+                  finished: completedInterviewGroups.length,
+                  archived: archivedInterviewGroups.length,
+                }}
+                onSelectTab={(t) => {
+                  setProcessTab(t)
+                  if (workspacePanel === 'documents') router.push('/dashboard')
+                }}
+                onSelectDocuments={() => router.push('/dashboard?panel=documents')}
+                onNewPrep={() => router.push('/dashboard?new=1')}
+              />
+            </div>
+            <div className="min-w-0 space-y-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Preps</h1>
                 <p className="mt-1 text-sm text-slate-500">Your interview processes. Pick up where you left off or start a new one.</p>
               </div>
-              <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm">
+              <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm md:hidden">
                 <PlusSquare className="h-4 w-4" />
                 New prep
               </Link>
@@ -662,7 +681,7 @@ export default function DashboardPage() {
             {workspacePanel === 'interviews' && (
               <div className="space-y-8">
                 <section className="space-y-4">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between md:hidden">
                     <div>
                       <h2 className="text-2xl font-black text-slate-900">Interview processes</h2>
                       <p className="mt-1 text-sm text-slate-500">Keep active work visible, and move older processes out of the way when you are done with them.</p>
@@ -847,6 +866,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+            </div>
           </div>
         )}
 

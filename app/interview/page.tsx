@@ -1774,7 +1774,7 @@ export default function InterviewPage() {
     return (
       <div className="app-shell-interview flex min-h-screen items-center justify-center px-4">
         <div className="interview-card w-full max-w-md p-8 text-center">
-          <h2 className="mb-3 text-2xl font-black">Interview complete</h2>
+          <h2 className="mb-3 text-2xl font-bold">Interview complete</h2>
           <p className="text-sm text-slate-300">Saving the round and preparing your feedback...</p>
         </div>
       </div>
@@ -1852,13 +1852,13 @@ export default function InterviewPage() {
         {/* Pre-interview: Ready to start */}
         {!isListening && !currentMessage && !error && (
           <div className="interview-card w-full max-w-xl p-8 text-center sm:p-10">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[1.6rem] border border-white/10 bg-white/5">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
               <Phone className="h-8 w-8 text-sky-300" />
             </div>
-            <div className="mx-auto mb-4 w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">
+            <div className="mx-auto mb-4 w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
               Formal interview mode
             </div>
-            <h2 className="mb-2 text-3xl font-black text-white">
+            <h2 className="mb-2 text-3xl font-bold text-white">
               {STAGE_NAMES[stage]}
             </h2>
             <p className="mx-auto mb-8 max-w-md text-sm leading-7 text-slate-300">

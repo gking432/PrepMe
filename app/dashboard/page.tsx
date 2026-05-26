@@ -837,34 +837,76 @@ export default function DashboardPage() {
           <>
         {/* ── WELCOME ─────────────────────────────────────────────────── */}
         {onboardStep === 'welcome' && (
-          <div className="flex min-h-[calc(100vh-140px)] flex-col items-center justify-center gap-8 text-center animate-slide-up">
-            <div className="relative">
-              <Preppi size="xl" animate />
-            </div>
+          <div className="mx-auto flex min-h-[calc(100dvh-9rem)] max-w-md flex-col items-center justify-center gap-6 text-center animate-slide-up">
             <div>
-              <div className="eyebrow eyebrow-coach mx-auto mb-4 w-fit">Interview prep, round by round</div>
-              <h1 className="mb-3 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">
-                Ace your next interview.
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                Set up your next interview.
               </h1>
-              <p className="mx-auto max-w-sm text-base leading-relaxed text-slate-500">
-                I&apos;m Preppi. Give me the role, show me your background, and I&apos;ll coach you through the process with pressure where it counts.
+              <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
+                Tell us the role and share your background. We&apos;ll run a realistic interview and grade it against what the interviewer actually cares about.
               </p>
             </div>
-            <div className="w-full space-y-3">
+            <div className="w-full max-w-xs space-y-2">
               <button
                 onClick={() => setOnboardStep('job')}
-                className="btn-coach-primary w-full py-4 text-xl"
+                className="btn-coach-primary w-full px-4 py-2.5 text-sm"
               >
-                LET'S GO
+                Get started
               </button>
               {!user && (
-                <Link href="/auth" className="block text-center text-sm text-gray-400 hover:text-gray-600 py-2">
+                <Link href="/auth/login" className="block py-2 text-center text-xs text-slate-400 hover:text-slate-700">
                   Already have an account? <span className="font-semibold text-accent-600">Sign in</span>
                 </Link>
               )}
             </div>
           </div>
         )}
+
+        {/* ── SETUP STEPS WRAPPER (sidebar + main) ─────────────────────── */}
+        {onboardStep !== 'welcome' && (
+          <div className="md:grid md:grid-cols-[280px_minmax(0,1fr)] md:items-start md:gap-6">
+            {/* Setup checklist sidebar — desktop only */}
+            <aside className="sticky top-20 hidden self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:block">
+              <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
+                <ChevronDown className="h-4 w-4 rotate-90" /> Cancel
+              </Link>
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">New interview</p>
+                <h2 className="mt-1 text-base font-bold text-slate-900">Set up</h2>
+              </div>
+              <ol className="mt-4 -mx-1.5 space-y-1">
+                {([
+                  { key: 'job', label: 'Job posting', done: !!(hasJobDesc || interviewData.companyName || interviewData.positionTitle) },
+                  { key: 'resume', label: 'Resume', done: !!hasResume },
+                  { key: 'stage', label: 'Choose round', done: false },
+                ] as Array<{ key: OnboardStep; label: string; done: boolean }>).map((item, i) => {
+                  const isActive = onboardStep === item.key
+                  return (
+                    <li key={item.key}>
+                      <button
+                        type="button"
+                        onClick={() => setOnboardStep(item.key)}
+                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                          isActive ? 'bg-accent-50 ring-1 ring-accent-200' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          item.done ? 'bg-emerald-100 text-emerald-700' : isActive ? 'bg-accent-600 text-white' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {item.done ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
+                        </span>
+                        <span className={`text-sm font-semibold ${isActive ? 'text-accent-700' : 'text-slate-800'}`}>
+                          {item.label}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
+            </aside>
+
+            {/* Main step content */}
+            <div className="min-w-0">
 
         {/* ── JOB STEP ─────────────────────────────────────────────────── */}
         {onboardStep === 'job' && (
@@ -1078,6 +1120,9 @@ export default function DashboardPage() {
                 Unlock all 4 stages — bundle from $9.99
               </button>
             )}
+          </div>
+        )}
+            </div>
           </div>
         )}
           </>

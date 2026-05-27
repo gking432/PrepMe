@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         const audioBase64 = await getOrCreateCachedSpeech({
           cacheKey,
           text: question.question,
+          preferOpenAI: true,
         })
 
         if (!audioBase64) {

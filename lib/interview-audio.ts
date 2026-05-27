@@ -10,13 +10,22 @@ function getOpenAI() {
   return _openai
 }
 
+function getOpenAiSpeechModel() {
+  return process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts'
+}
+
+function getOpenAiSpeechVoice() {
+  return process.env.OPENAI_TTS_VOICE || 'marin'
+}
+
 export async function synthesizeOpenAiSpeech(input: string): Promise<string | null> {
   try {
     const mp3 = await getOpenAI().audio.speech.create({
-      model: 'tts-1',
-      voice: 'alloy',
+      model: getOpenAiSpeechModel(),
+      voice: getOpenAiSpeechVoice(),
       input,
-    })
+      response_format: 'mp3',
+    } as any)
     const buffer = Buffer.from(await mp3.arrayBuffer())
     return buffer.toString('base64')
   } catch (error) {
@@ -62,7 +71,11 @@ export async function synthesizeElevenLabsSpeech(input: string): Promise<string 
   }
 }
 
-export async function synthesizePreferredSpeech(input: string): Promise<string | null> {
+export async function synthesizePreferredSpeech(input: string, preferOpenAI = false): Promise<string | null> {
+  if (preferOpenAI) {
+    return (await synthesizeOpenAiSpeech(input)) ?? (await synthesizeElevenLabsSpeech(input))
+  }
+
   return (await synthesizeElevenLabsSpeech(input)) ?? (await synthesizeOpenAiSpeech(input))
 }
 
@@ -70,14 +83,14 @@ function hrAudioPath(fileName: string) {
   return path.join(process.cwd(), 'public', 'audio', 'hr-screen', fileName)
 }
 
-function getSpeechCacheNamespace() {
+function getSpeechCacheNamespace(preferOpenAI = false) {
   const voiceId = process.env.ELEVENLABS_VOICE_ID
   const modelId = process.env.ELEVENLABS_MODEL_ID || 'eleven_multilingual_v2'
-  const cacheVersion = 'v3'
-  if (process.env.ELEVENLABS_API_KEY && voiceId) {
+  const cacheVersion = 'v4'
+  if (!preferOpenAI && process.env.ELEVENLABS_API_KEY && voiceId) {
     return `generated/${cacheVersion}-elevenlabs-${voiceId}-${modelId}`
   }
-  return `generated/${cacheVersion}-openai-alloy`
+  return `generated/${cacheVersion}-openai-${getOpenAiSpeechModel()}-${getOpenAiSpeechVoice()}`
 }
 
 async function writeBase64Audio(filePath: string, audioBase64: string) {
@@ -98,8 +111,9 @@ export async function getOrCreateCachedSpeech(args: {
   cacheKey?: string
   text: string
   requireElevenLabs?: boolean
+  preferOpenAI?: boolean
 }): Promise<string | null> {
-  const namespace = getSpeechCacheNamespace()
+  const namespace = getSpeechCacheNamespace(args.preferOpenAI)
   const fileName = args.cacheKey
     ? `${namespace}/${args.cacheKey}.mp3`
     : `${namespace}/${crypto.createHash('sha1').update(args.text).digest('hex')}.mp3`
@@ -109,7 +123,7 @@ export async function getOrCreateCachedSpeech(args: {
 
   const audioBase64 = args.requireElevenLabs
     ? await synthesizeElevenLabsSpeech(args.text)
-    : await synthesizePreferredSpeech(args.text)
+    : await synthesizePreferredSpeech(args.text, args.preferOpenAI)
   if (!audioBase64) return null
 
   try {

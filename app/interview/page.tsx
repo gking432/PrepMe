@@ -1011,7 +1011,12 @@ export default function InterviewPage() {
     setIsListening(true)
 
     if (data.audioBase64) {
-      await playAudio(data.audioBase64)
+      try {
+        await playAudio(data.audioBase64)
+      } catch (error) {
+        console.error('Cached retake audio failed, continuing with microphone:', error)
+        setTimeout(() => startVoiceInput(), 500)
+      }
     } else {
       setTimeout(() => startVoiceInput(), 500)
     }

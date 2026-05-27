@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     audioBase64 = await getOrCreateCachedSpeech({
       cacheKey: nextPrompt?.cacheKey || `retake-close-${sessionId}`,
       text: assistantText,
+      preferOpenAI: true,
     })
 
     const structured = await getStructuredTranscript(sessionId)

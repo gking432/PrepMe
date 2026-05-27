@@ -36,6 +36,7 @@ type SignalArea = {
   practice_focus?: string
   practice_focus_id?: string
   evidence?: Evidence[]
+  source_question_ids?: string[]
   rewrite_method?: string
   rewritten_answer?: string
   rewrite_explanation?: string
@@ -203,6 +204,56 @@ function normalizeSignal(area: any, kind: SignalKind): SignalCard {
     practice_focus_id: toDisplayText(source.practice_focus_id || source.practiceFocusId || source.mini_workshop?.practice_focus_id || source.mini_workshop?.area_id),
     evidence: asArray<any>(source.evidence).map(normalizeEvidence),
   }
+}
+
+function questionIdsForRepair(source: any) {
+  const directIds = asArray<any>(source?.source_question_ids).map((id) => toDisplayText(id)).filter(Boolean)
+  const evidenceIds = asArray<any>(source?.evidence).map((item) => toDisplayText(item?.question_id)).filter(Boolean)
+  return [...new Set([...directIds, ...evidenceIds])]
+}
+
+function buildRepairSignals(sixAreas: any, fullRubric: any) {
+  const rawRepairs = asArray<any>(sixAreas.what_needs_improve)
+  const hrScoreAreas = asArray<any>(fullRubric?.hr_score_areas)
+
+  if (fullRubric?.grading_mode !== 'v2_question_level' || !hrScoreAreas.length) {
+    return rawRepairs.map((area) => normalizeSignal(area, 'repair'))
+  }
+
+  const failedScoreAreas = hrScoreAreas.filter((area) => area?.status === 'fail')
+  if (!failedScoreAreas.length) {
+    return rawRepairs.map((area) => normalizeSignal(area, 'repair'))
+  }
+
+  const failedQuestionIdsByArea = new Map<string, string[]>()
+  for (const evaluation of asArray<any>(fullRubric?.question_evaluations)) {
+    if (evaluation?.vote !== 'fail' || !evaluation?.hr_area) continue
+    const existing = failedQuestionIdsByArea.get(evaluation.hr_area) || []
+    failedQuestionIdsByArea.set(evaluation.hr_area, [...existing, toDisplayText(evaluation.question_id)])
+  }
+
+  return failedScoreAreas.map((scoreArea, index) => {
+    const areaId = toDisplayText(scoreArea.id)
+    const areaLabel = toDisplayText(scoreArea.label || scoreArea.score_area || scoreArea.id, 'Flagged Issue')
+    const failedQuestionIds = new Set(failedQuestionIdsByArea.get(areaId) || [])
+    const matchedRepair =
+      rawRepairs.find((repair) => toDisplayText(repair.score_area_id || repair.mini_workshop?.score_area_id) === areaId) ||
+      rawRepairs.find((repair) => toDisplayText(repair.score_area || repair.mini_workshop?.score_area) === areaLabel) ||
+      rawRepairs.find((repair) => questionIdsForRepair(repair).some((id) => failedQuestionIds.has(id))) ||
+      rawRepairs[index] ||
+      {}
+
+    return normalizeSignal({
+      ...matchedRepair,
+      criterion: areaLabel,
+      score_area: areaLabel,
+      score_area_id: areaId,
+      feedback: toDisplayText(matchedRepair.feedback, toDisplayText(scoreArea.feedback)),
+      evidence: asArray<any>(matchedRepair.evidence).length ? matchedRepair.evidence : scoreArea.evidence,
+      practice_focus: matchedRepair.practice_focus || matchedRepair.mini_workshop?.practice_focus || matchedRepair.mini_workshop?.area || matchedRepair.criterion,
+      practice_focus_id: matchedRepair.practice_focus_id || matchedRepair.mini_workshop?.practice_focus_id || matchedRepair.mini_workshop?.area_id || matchedRepair.rootCause,
+    }, 'repair')
+  })
 }
 
 function getPrimaryEvidence(area?: SignalArea | null) {
@@ -853,7 +904,7 @@ export default function HrFeedbackDeck({
     const fullRubric = feedback?.full_rubric || {}
     const sixAreas = getSixAreas(feedback, stageKey)
     const rawStrengths = asArray<any>(sixAreas.what_went_well).map((area) => normalizeSignal(area, 'strength'))
-    const rawRepairs = asArray<any>(sixAreas.what_needs_improve).map((area) => normalizeSignal(area, 'repair'))
+    const rawRepairs = buildRepairSignals(sixAreas, fullRubric)
     const overallScore = getOverallScore(feedback)
     const derivedLikelihood = getLikelihood(feedback, overallScore)
     const context = getStageContext(currentSessionData)

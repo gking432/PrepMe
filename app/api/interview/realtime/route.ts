@@ -357,7 +357,7 @@ QUESTION BOUNDARIES:
           },
         },
         output_modalities: ['audio'],
-        max_output_tokens: 400,
+        max_output_tokens: stage === 'hr_screen' ? 180 : 400,
       },
     }
 

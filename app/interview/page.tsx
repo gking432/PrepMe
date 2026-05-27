@@ -152,6 +152,7 @@ export default function InterviewPage() {
     dc.send(JSON.stringify({
       type: 'session.update',
       session: {
+        type: 'realtime',
         audio: {
           input: {
             turn_detection: enabled
@@ -690,6 +691,7 @@ export default function InterviewPage() {
         dc.send(JSON.stringify({
           type: 'session.update',
           session: {
+            type: 'realtime',
             instructions: instructions || '',
             output_modalities: ['audio'],
             audio: {

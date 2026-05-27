@@ -310,18 +310,38 @@ function buildQuestionEvidence(evaluation: ModelQuestionEvaluation): Evidence {
   }
 }
 
+function getHrScoreAreaLabel(areaId: string) {
+  return getAreaDefinition(areaId)?.label || areaId
+}
+
+function resolveRepairBucket(areaId: string, evaluation?: ModelQuestionEvaluation) {
+  const bucket = evaluation ? normalizeCoachingBucket(evaluation) : fallbackCoachingBucketForHrArea(areaId)
+  if (COACHING_BUCKET_IDS.includes(bucket)) return bucket
+
+  const fallbackBucket = fallbackCoachingBucketForHrArea(areaId)
+  if (COACHING_BUCKET_IDS.includes(fallbackBucket)) return fallbackBucket
+
+  return 'pace_natural_delivery'
+}
+
 function buildMiniWorkshops(questionEvaluations: ModelQuestionEvaluation[], failedHrAreas: any[]) {
-  const bucketMap = new Map<string, { feedback: string; evidence: Evidence[]; source_question_ids: string[] }>()
+  const bucketMap = new Map<string, {
+    feedback: string
+    evidence: Evidence[]
+    source_question_ids: string[]
+    score_area_ids: string[]
+  }>()
 
   for (const evaluation of questionEvaluations) {
     if (evaluation.vote !== 'fail') continue
     const bucket = normalizeCoachingBucket(evaluation)
     if (!COACHING_BUCKET_IDS.includes(bucket)) continue
 
-    const existing = bucketMap.get(bucket) || { feedback: '', evidence: [], source_question_ids: [] }
+    const existing = bucketMap.get(bucket) || { feedback: '', evidence: [], source_question_ids: [], score_area_ids: [] }
     if (!existing.feedback && evaluation.feedback) existing.feedback = evaluation.feedback
     existing.evidence.push(buildQuestionEvidence(evaluation))
     existing.source_question_ids.push(evaluation.question_id)
+    if (HR_SCORE_AREA_IDS.includes(evaluation.hr_area)) existing.score_area_ids.push(evaluation.hr_area)
     bucketMap.set(bucket, existing)
   }
 
@@ -333,17 +353,74 @@ function buildMiniWorkshops(questionEvaluations: ModelQuestionEvaluation[], fail
       feedback: area.feedback,
       evidence: area.evidence || [],
       source_question_ids: [],
+      score_area_ids: [area.id],
     })
   }
 
-  return [...bucketMap.entries()].map(([bucket, details]) => ({
-    area_id: bucket,
-    area: COACHING_BUCKET_LABELS[bucket],
-    feedback: details.feedback,
-    evidence: details.evidence.slice(0, 2),
-    source_question_ids: [...new Set(details.source_question_ids)].filter(Boolean),
-    ...COACHING_WORKSHOPS[bucket],
-  }))
+  return [...bucketMap.entries()].map(([bucket, details]) => {
+    const scoreAreaIds = [...new Set(details.score_area_ids)].filter(Boolean)
+    const primaryScoreAreaId = scoreAreaIds[0] || ''
+
+    return {
+      area_id: bucket,
+      area: COACHING_BUCKET_LABELS[bucket],
+      practice_focus_id: bucket,
+      practice_focus: COACHING_BUCKET_LABELS[bucket],
+      score_area_id: primaryScoreAreaId,
+      score_area: primaryScoreAreaId ? getHrScoreAreaLabel(primaryScoreAreaId) : '',
+      score_area_ids: scoreAreaIds,
+      score_areas: scoreAreaIds.map((id) => ({ id, label: getHrScoreAreaLabel(id) })),
+      feedback: details.feedback,
+      evidence: details.evidence.slice(0, 2),
+      source_question_ids: [...new Set(details.source_question_ids)].filter(Boolean),
+      ...COACHING_WORKSHOPS[bucket],
+    }
+  })
+}
+
+function buildScoreAreaRepairs(questionEvaluations: ModelQuestionEvaluation[], failedHrAreas: any[]) {
+  return failedHrAreas.map((area) => {
+    const failedEvaluations = questionEvaluations.filter((evaluation) => evaluation.vote === 'fail' && evaluation.hr_area === area.id)
+    const primaryEvaluation = failedEvaluations[0]
+    const bucket = resolveRepairBucket(area.id, primaryEvaluation)
+    const practiceFocus = COACHING_BUCKET_LABELS[bucket] || getHrScoreAreaLabel(area.id)
+    const workshop = COACHING_WORKSHOPS[bucket] || {
+      framework: practiceFocus,
+      diagnosis: area.feedback,
+      example: '',
+      prompt: `Script a stronger answer for ${area.label}.`,
+    }
+    const evidence = failedEvaluations.length
+      ? failedEvaluations.map(buildQuestionEvidence).slice(0, 2)
+      : (area.evidence || []).slice(0, 2)
+    const sourceQuestionIds = failedEvaluations.map((evaluation) => evaluation.question_id).filter(Boolean)
+
+    return {
+      criterion: area.label,
+      score_area_id: area.id,
+      score_area: area.label,
+      score_area_status: area.status,
+      points_awarded: area.points_awarded,
+      points_possible: area.points_possible,
+      feedback: primaryEvaluation?.feedback || area.feedback,
+      evidence,
+      rootCause: bucket,
+      practice_focus_id: bucket,
+      practice_focus: practiceFocus,
+      mini_workshop: {
+        area_id: bucket,
+        area: practiceFocus,
+        practice_focus_id: bucket,
+        practice_focus: practiceFocus,
+        score_area_id: area.id,
+        score_area: area.label,
+        feedback: primaryEvaluation?.feedback || area.feedback,
+        evidence,
+        source_question_ids: sourceQuestionIds,
+        ...workshop,
+      },
+    }
+  })
 }
 
 function buildFallbackRubric(reason: string, model: string) {
@@ -360,11 +437,14 @@ function buildFallbackRubric(reason: string, model: string) {
   const miniWorkshops = HR_PASS_FAIL_AREAS.map((area) => ({
     area_id: area.id,
     area: area.label,
+    practice_focus_id: area.id,
+    practice_focus: area.label,
     feedback: reason,
     evidence: [],
     source_question_ids: [],
     ...area.workshop,
   }))
+  const scoreAreaRepairs = buildScoreAreaRepairs([], failedHrAreas)
 
   return {
     grading_mode: 'v2_question_level',
@@ -375,7 +455,7 @@ function buildFallbackRubric(reason: string, model: string) {
     question_evaluations: [],
     red_flags: [],
     coaching_buckets: miniWorkshops,
-    mini_workshops: miniWorkshops,
+    mini_workshops: scoreAreaRepairs,
     overall_assessment: {
       overall_score: 0,
       likelihood_to_advance: 'unlikely',
@@ -385,20 +465,14 @@ function buildFallbackRubric(reason: string, model: string) {
     },
     hr_screen_six_areas: {
       what_went_well: [],
-      what_needs_improve: miniWorkshops.map((workshop) => ({
-        criterion: workshop.area,
-        feedback: workshop.feedback,
-        evidence: workshop.evidence,
-        rootCause: workshop.area_id,
-        mini_workshop: workshop,
-      })),
+      what_needs_improve: scoreAreaRepairs,
     },
     next_steps_preparation: {
       ready_for_hiring_manager: false,
       confidence_level: 'High',
-      improvement_suggestions: miniWorkshops.map((workshop) => workshop.prompt),
+      improvement_suggestions: scoreAreaRepairs.map((repair) => repair.mini_workshop.prompt),
       practice_recommendations: {
-        immediate_focus_areas: miniWorkshops.map((workshop) => workshop.area),
+        immediate_focus_areas: scoreAreaRepairs.map((repair) => repair.score_area),
       },
     },
     cost_estimate: {
@@ -494,6 +568,7 @@ function buildRubricFromQuestionLevelResult(parsed: any, materials: HrQuestionLe
   const passedHrAreas = hrScoreAreas.filter((area) => area.status === 'pass')
   const failedHrAreas = hrScoreAreas.filter((area) => area.status === 'fail')
   const miniWorkshops = buildMiniWorkshops(questionEvaluations, failedHrAreas)
+  const scoreAreaRepairs = buildScoreAreaRepairs(questionEvaluations, failedHrAreas)
   const redFlagWeaknesses = redFlags.map((flag) => `Red flag (${flag.severity}): ${flag.feedback || flag.code}`)
 
   return {
@@ -507,7 +582,7 @@ function buildRubricFromQuestionLevelResult(parsed: any, materials: HrQuestionLe
     question_evaluations: questionEvaluations,
     red_flags: redFlags,
     coaching_buckets: miniWorkshops,
-    mini_workshops: miniWorkshops,
+    mini_workshops: scoreAreaRepairs,
     overall_assessment: {
       overall_score: roundedScore,
       likelihood_to_advance: likelihood,
@@ -520,7 +595,7 @@ function buildRubricFromQuestionLevelResult(parsed: any, materials: HrQuestionLe
       ],
       summary:
         parsed?.overall_summary ||
-        `The candidate passed ${passedHrAreas.length} of ${assessedAreas.length || HR_SCORE_AREAS.length} assessed HR score areas. Coaching should focus on ${miniWorkshops.map((workshop) => workshop.area).join(', ') || 'the flagged score areas'}.`,
+        `The candidate passed ${passedHrAreas.length} of ${assessedAreas.length || HR_SCORE_AREAS.length} assessed HR score areas. Coaching should focus on ${scoreAreaRepairs.map((repair) => `${repair.score_area} via ${repair.practice_focus}`).join(', ') || 'the flagged score areas'}.`,
     },
     hr_screen_six_areas: {
       what_went_well: passedHrAreas.map((area) => ({
@@ -530,15 +605,8 @@ function buildRubricFromQuestionLevelResult(parsed: any, materials: HrQuestionLe
         points_awarded: area.points_awarded,
         points_possible: area.points_possible,
       })),
-      what_needs_improve: miniWorkshops.length
-        ? miniWorkshops.map((workshop) => ({
-            criterion: workshop.area,
-            feedback: workshop.feedback || workshop.diagnosis,
-            evidence: workshop.evidence,
-            rootCause: workshop.area_id,
-            source_question_ids: workshop.source_question_ids,
-            mini_workshop: workshop,
-          }))
+      what_needs_improve: scoreAreaRepairs.length
+        ? scoreAreaRepairs
         : failedHrAreas.map((area) => ({
             criterion: area.label,
             feedback: area.feedback,
@@ -549,9 +617,9 @@ function buildRubricFromQuestionLevelResult(parsed: any, materials: HrQuestionLe
     next_steps_preparation: {
       ready_for_hiring_manager: likelihood === 'likely',
       confidence_level: redFlags.length ? 'High' : 'Medium',
-      improvement_suggestions: miniWorkshops.map((workshop) => workshop.prompt),
+      improvement_suggestions: scoreAreaRepairs.map((repair) => repair.mini_workshop.prompt),
       practice_recommendations: {
-        immediate_focus_areas: miniWorkshops.map((workshop) => workshop.area),
+        immediate_focus_areas: scoreAreaRepairs.map((repair) => repair.score_area),
       },
     },
     cost_estimate: {

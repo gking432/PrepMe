@@ -31,6 +31,10 @@ type SignalArea = {
   feedback?: string
   score?: number | string
   rootCause?: string
+  score_area?: string
+  score_area_id?: string
+  practice_focus?: string
+  practice_focus_id?: string
   evidence?: Evidence[]
   rewrite_method?: string
   rewritten_answer?: string
@@ -38,6 +42,11 @@ type SignalArea = {
   original_answer?: string
   mini_workshop?: {
     area?: string
+    area_id?: string
+    score_area?: string
+    score_area_id?: string
+    practice_focus?: string
+    practice_focus_id?: string
     framework?: string
     diagnosis?: string
     example?: string
@@ -179,13 +188,19 @@ function normalizeEvidence(evidence: any): Evidence {
 function normalizeSignal(area: any, kind: SignalKind): SignalCard {
   const source = area && typeof area === 'object' && !Array.isArray(area) ? area : {}
   const defaultCriterion = kind === 'strength' ? 'Strong Interview Signal' : 'Flagged Issue'
+  const scoreArea = toDisplayText(source.score_area || source.scoreArea || source.grading_area || source.mini_workshop?.score_area)
+  const practiceFocus = toDisplayText(source.practice_focus || source.practiceFocus || source.mini_workshop?.practice_focus || source.mini_workshop?.area)
 
   return {
     ...source,
     kind,
-    criterion: toDisplayText(source.criterion || source.title || source.area || area, defaultCriterion),
+    criterion: toDisplayText((kind === 'repair' && scoreArea) || source.criterion || source.title || source.area || area, defaultCriterion),
     feedback: toDisplayText(source.feedback || source.description || source.summary),
     rootCause: toDisplayText(source.rootCause || source.root_cause),
+    score_area: scoreArea,
+    score_area_id: toDisplayText(source.score_area_id || source.scoreAreaId || source.grading_area_id || source.mini_workshop?.score_area_id),
+    practice_focus: practiceFocus,
+    practice_focus_id: toDisplayText(source.practice_focus_id || source.practiceFocusId || source.mini_workshop?.practice_focus_id || source.mini_workshop?.area_id),
     evidence: asArray<any>(source.evidence).map(normalizeEvidence),
   }
 }
@@ -430,6 +445,7 @@ function SignalSummaryCard({ area, kind }: { area?: SignalArea | null; kind: Sig
   }
 
   const criterion = toDisplayText(area.criterion, kind === 'strength' ? 'Strong Interview Signal' : 'Priority Repair')
+  const practiceFocus = toDisplayText(area.practice_focus || area.mini_workshop?.practice_focus || area.mini_workshop?.area)
   const rootCause = getRootCauseForCriterion(criterion, area.rootCause)
   const tip = getImprovementTipForCriterion(criterion, rootCause)
   const score = parseScore(area.score)
@@ -446,6 +462,9 @@ function SignalSummaryCard({ area, kind }: { area?: SignalArea | null; kind: Sig
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">{kind === 'strength' ? 'Repeat This' : 'Flagged Issue'}</p>
             <h2 className="mt-2 line-clamp-2 text-lg font-bold leading-tight text-slate-950 sm:text-xl 2xl:text-2xl">{criterion}</h2>
+            {kind === 'repair' && practiceFocus && (
+              <p className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-accent-700">Practice focus: {practiceFocus}</p>
+            )}
           </div>
           {score > 0 && (
             <span className={`rounded-full border px-3 py-1 text-sm font-bold ${getScoreTone(score)}`}>
@@ -548,14 +567,15 @@ function RepairLessonSlide({
   }
 
   const criterion = toDisplayText(repair.criterion, 'Priority Repair')
-  const rootCause = getRootCauseForCriterion(criterion, repair.rootCause)
+  const miniWorkshop = repair.mini_workshop
+  const practiceFocus = toDisplayText(repair.practice_focus || miniWorkshop?.practice_focus || miniWorkshop?.area)
+  const rootCause = getRootCauseForCriterion(criterion, repair.practice_focus_id || repair.rootCause)
   const lesson = getIssueLesson(criterion, rootCause)
   const score = parseScore(repair.score)
   const feedbackText = toDisplayText(repair.feedback, 'This answer did not create enough interviewer confidence for the next round.')
   const evidence = getPrimaryEvidence(repair)
   const questionText = toDisplayText(evidence?.question)
   const proofText = toDisplayText(evidence?.excerpt)
-  const miniWorkshop = repair.mini_workshop
   const framework = toDisplayText(miniWorkshop?.framework, lesson.steps.map((step) => step.label).join(', '))
   const diagnosis = toDisplayText(miniWorkshop?.diagnosis, lesson.summary)
   const example = toDisplayText(miniWorkshop?.example)
@@ -568,6 +588,9 @@ function RepairLessonSlide({
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">Issue {issueNumber} of {totalIssues}</p>
             <h1 className="mt-1 text-lg font-bold leading-tight text-slate-950 lg:text-xl">{criterion}</h1>
+            {practiceFocus && (
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-accent-700">Practice focus: {practiceFocus}</p>
+            )}
           </div>
           {score > 0 && (
             <span className={`rounded-full border px-3 py-1 text-sm font-bold ${getScoreTone(score)}`}>
@@ -631,6 +654,7 @@ function RepairLessonSlide({
 
           <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Mini Workshop</p>
+            {practiceFocus && <p className="mt-1 text-xs font-bold leading-5 text-slate-900">Practice focus: {practiceFocus}</p>}
             <p className="mt-1 text-xs font-bold leading-5 text-slate-900">Framework: {framework}</p>
             <p className="mt-1 text-xs font-semibold leading-5 text-slate-700">{diagnosis}</p>
             {example ? (
@@ -712,6 +736,7 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
       <div className="grid h-full min-h-0 grid-cols-2 content-start gap-2 sm:grid-cols-3">
         {repairs.map((repair, index) => {
           const score = parseScore(repair.score)
+          const practiceFocus = toDisplayText(repair.practice_focus || repair.mini_workshop?.practice_focus || repair.mini_workshop?.area)
 
           return (
             <div key={`${repair.criterion}-${index}`} className="rounded-lg border border-rose-100 bg-rose-50/55 p-2.5">
@@ -720,6 +745,9 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
                 {score > 0 && <span className="shrink-0 text-[10px] font-bold text-rose-700">{score.toFixed(score % 1 ? 1 : 0)}/10</span>}
               </div>
               <h3 className="mt-1.5 text-xs font-bold leading-tight text-slate-950">{repair.criterion}</h3>
+              {practiceFocus && (
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-rose-700">Practice: {practiceFocus}</p>
+              )}
             </div>
           )
         })}

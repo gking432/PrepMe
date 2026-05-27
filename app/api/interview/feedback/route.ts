@@ -7,6 +7,7 @@ import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
 import { gradeHrScreenPassFail } from '@/lib/hr-pass-fail-grader'
+import { gradeHrScreenQuestionLevel } from '@/lib/hr-question-level-grader'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
 import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE } from '@/lib/feedback-config'
@@ -399,14 +400,15 @@ function buildHrCostEstimate({
 }) {
   const { interviewerWordCount, candidateWordCount } = getTranscriptWordCounts(structuredTranscript, transcript)
   const wordsPerMinute = numberFromEnv('HR_COST_AUDIO_WORDS_PER_MINUTE', 150)
-  const inputAudioCentsPerMinute = numberFromEnv('HR_REALTIME_INPUT_AUDIO_CENTS_PER_MINUTE', 0.06)
-  const outputAudioCentsPerMinute = numberFromEnv('HR_REALTIME_OUTPUT_AUDIO_CENTS_PER_MINUTE', 0.24)
+  const inputAudioCentsPerMinute = numberFromEnv('HR_REALTIME_INPUT_AUDIO_CENTS_PER_MINUTE', 0.6)
+  const outputAudioCentsPerMinute = numberFromEnv('HR_REALTIME_OUTPUT_AUDIO_CENTS_PER_MINUTE', 2.4)
   const candidateMinutes = candidateWordCount / wordsPerMinute
   const interviewerMinutes = interviewerWordCount / wordsPerMinute
   const estimatedRealtimeCents = (candidateMinutes * inputAudioCentsPerMinute) + (interviewerMinutes * outputAudioCentsPerMinute)
   const estimatedGradingCents = Number(graderCostEstimate?.estimated_grading_cents || 0)
 
   return {
+    pricing_version: 'openai-realtime-mini-audio-2026-05-27',
     duration_seconds: durationSeconds,
     interviewer_word_count: interviewerWordCount,
     candidate_word_count: candidateWordCount,
@@ -420,6 +422,10 @@ function buildHrCostEstimate({
       words_per_minute: wordsPerMinute,
       realtime_input_audio_cents_per_minute: inputAudioCentsPerMinute,
       realtime_output_audio_cents_per_minute: outputAudioCentsPerMinute,
+      realtime_audio_input_token_price_per_1m_usd: 10,
+      realtime_audio_output_token_price_per_1m_usd: 20,
+      input_audio_tokens_per_minute: 600,
+      output_audio_tokens_per_minute: 1200,
     },
   }
 }
@@ -1011,19 +1017,23 @@ Use the question IDs and timestamps from this structured transcript when providi
     // HR Screen: default to compact pass/fail grading. Keep Sonnet path available
     // for future paid-stage reuse by setting HR_SCREEN_GRADING_MODE=sonnet.
     if (stage === 'hr_screen') {
-      if (HR_SCREEN_GRADING_MODE === 'pass_fail') {
+      if (HR_SCREEN_GRADING_MODE === 'v2_question_level' || HR_SCREEN_GRADING_MODE === 'pass_fail') {
         try {
-          const rubric = await gradeHrScreenPassFail({
+          const gradingMaterials = {
             transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
             transcriptStructured: structuredTranscript,
             resume: resume || '',
             jobDescription: jobDescription || '',
             websiteContent: websiteContent || '',
-          })
+          }
+
+          const rubric = HR_SCREEN_GRADING_MODE === 'v2_question_level'
+            ? await gradeHrScreenQuestionLevel(gradingMaterials)
+            : await gradeHrScreenPassFail(gradingMaterials)
 
           if (!validateHrScreenRubric(rubric)) {
-            console.error('Pass/fail HR rubric validation failed:', JSON.stringify(rubric, null, 2).substring(0, 500))
-            throw new Error('Invalid pass/fail HR rubric structure')
+            console.error('Lean HR rubric validation failed:', JSON.stringify(rubric, null, 2).substring(0, 500))
+            throw new Error('Invalid lean HR rubric structure')
           }
 
           const costEstimate = buildHrCostEstimate({
@@ -1067,7 +1077,7 @@ Use the question IDs and timestamps from this structured transcript when providi
             .single()
 
           if (dbError) {
-            console.error('Error saving pass/fail HR feedback to database:', dbError)
+            console.error('Error saving lean HR feedback to database:', dbError)
             return NextResponse.json(
               { error: 'Failed to save feedback', details: dbError.message },
               { status: 500 }
@@ -1099,7 +1109,7 @@ Use the question IDs and timestamps from this structured transcript when providi
             },
           })
         } catch (passFailError: any) {
-          console.error('Pass/fail HR grading failed:', passFailError)
+          console.error('Lean HR grading failed:', passFailError)
           return NextResponse.json(
             { error: 'Failed to generate HR screen feedback', details: passFailError?.message || 'Unknown error' },
             { status: 500 }

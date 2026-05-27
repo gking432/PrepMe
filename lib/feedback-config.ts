@@ -16,7 +16,7 @@
 export const HR_DETAILED_REPORT_ENABLED = false
 
 export const HR_SCREEN_GRADING_MODE =
-  (process.env.HR_SCREEN_GRADING_MODE || 'pass_fail') as 'pass_fail' | 'sonnet'
+  (process.env.HR_SCREEN_GRADING_MODE || 'v2_question_level') as 'v2_question_level' | 'pass_fail' | 'sonnet'
 
 export const HR_SCREEN_PASS_FAIL_MODEL =
   process.env.HR_SCREEN_PASS_FAIL_MODEL || 'gpt-5-nano'

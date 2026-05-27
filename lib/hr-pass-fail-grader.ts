@@ -291,12 +291,24 @@ export async function gradeHrScreenPassFail(materials: HrPassFailMaterials) {
 
   const prompt = `Grade this HR screen as pass/fail in exactly six areas.
 
+This is an HR phone screen, not a final interview. A PASS means the candidate gave enough live evidence that a normal recruiter would not flag this area as a problem.
+Do not require a polished workshop answer. Do not fail an area only because the answer could be stronger.
+Default to FAIL only when evidence is missing, highly generic, contradicted, evasive, too brief to assess, or only present in resume/job context.
+
 Areas:
 ${HR_PASS_FAIL_AREAS.map((area) => `- ${area.id}: ${area.label}. PASS if ${area.passDescription} FAIL if ${area.failDescription}`).join('\n')}
 
+Area-specific gates:
+- professional_story: pass if the candidate gives a recognizable current lane plus relevant past/foundation and some direction, even if the answer is not perfectly structured.
+- specificity_proof: pass if at least one answer includes a specific project, situation, or accomplishment with personal ownership/action and concrete detail, result, or learning. A measurable metric is not required.
+- career_alignment: pass if the candidate connects role interest to relevant background, sales/client/team experience, role specifics, company specifics, or timing. A vague single phrase alone is not enough.
+- handling_uncertainty: pass only if the candidate answers uncertainty, stress, challenge, or missing-context questions with a composed process or grounded example. One-word answers, absolutes like "everything" or "I don't encounter them", bluffing, or dodging fail.
+- pace_natural_delivery: pass if answers are mostly understandable and conversational. Fail only if the transcript shows repeated unfinished answers, rambling, contradictions, or choppy flow that would make the conversation hard to follow.
+- preparation_curiosity: pass only if the candidate shows specific company/role preparation or asks a thoughtful non-logistical question. Generic readiness or no questions fails.
+
 Rules:
 - Return valid JSON only.
-- Every area must appear once.
+- Every area must appear once. Do not abbreviate the array.
 - Use only the transcript as demonstrated interview evidence.
 - Resume and job description may provide context, but they do not prove an interview area was demonstrated live.
 - "passed" must be boolean.
@@ -305,14 +317,13 @@ Rules:
 
 JSON shape:
 {
-  "areas": [
-    {
-      "id": "professional_story",
+  "areas": {
+    "professional_story": {
       "passed": true,
       "feedback": "One sentence.",
       "evidence": [{ "question_id": "q1", "question": "Question text", "timestamp": "0:30", "excerpt": "Candidate words" }]
     }
-  ]
+  }
 }`
 
   const userMessage = JSON.stringify({
@@ -323,26 +334,97 @@ JSON shape:
     company_website_content: materials.websiteContent || '',
   })
 
-  const completion = await getOpenAI().chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: prompt },
-      { role: 'user', content: userMessage },
-    ],
-    response_format: { type: 'json_object' },
-    max_completion_tokens: 1600,
-  } as any)
+  const requestGrade = (maxCompletionTokens: number) =>
+    getOpenAI().chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: userMessage },
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'hr_screen_pass_fail_grade',
+          strict: true,
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              areas: {
+                type: 'object',
+                additionalProperties: false,
+                properties: Object.fromEntries(
+                  HR_PASS_FAIL_AREAS.map((area) => [
+                    area.id,
+                    {
+                      type: 'object',
+                      additionalProperties: false,
+                      properties: {
+                        passed: { type: 'boolean' },
+                        feedback: { type: 'string' },
+                        evidence: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            additionalProperties: false,
+                            properties: {
+                              question_id: { type: 'string' },
+                              question: { type: 'string' },
+                              timestamp: { type: 'string' },
+                              excerpt: { type: 'string' },
+                            },
+                            required: ['question_id', 'question', 'timestamp', 'excerpt'],
+                          },
+                        },
+                      },
+                      required: ['passed', 'feedback', 'evidence'],
+                    },
+                  ])
+                ),
+                required: HR_PASS_FAIL_AREAS.map((area) => area.id),
+              },
+            },
+            required: ['areas'],
+          },
+        },
+      },
+      max_completion_tokens: maxCompletionTokens,
+      reasoning_effort: 'minimal',
+    } as any)
 
-  const outputText = completion.choices[0]?.message?.content || '{}'
-  let parsed: any
-  try {
-    parsed = parseJsonObject(outputText)
-  } catch (error) {
-    parsed = {
-      areas: buildFallbackAreas('The grader could not parse the transcript reliably, so this area should be practiced.'),
-    }
+  let completion = await requestGrade(4000)
+  let outputText = completion.choices[0]?.message?.content || ''
+
+  if (!outputText.trim() || completion.choices[0]?.finish_reason === 'length') {
+    console.warn('HR pass/fail grader returned incomplete output; retrying with larger completion budget', {
+      model,
+      finishReason: completion.choices[0]?.finish_reason,
+      usage: completion.usage,
+    })
+    completion = await requestGrade(8000)
+    outputText = completion.choices[0]?.message?.content || ''
   }
 
-  const areas = Array.isArray(parsed?.areas) ? parsed.areas : []
+  if (!outputText.trim()) {
+    throw new Error(`HR pass/fail grader returned empty output with finish_reason=${completion.choices[0]?.finish_reason || 'unknown'}`)
+  }
+
+  const parsed = parseJsonObject(outputText)
+  const areas = Array.isArray(parsed?.areas)
+    ? parsed.areas
+    : HR_PASS_FAIL_AREAS.map((definition) => ({
+        id: definition.id,
+        ...(parsed?.areas?.[definition.id] || {}),
+      }))
+  const recognizedAreaCount = new Set(
+    areas
+      .map((area: any) => area?.id)
+      .filter((id: string) => HR_PASS_FAIL_AREAS.some((definition) => definition.id === id))
+  ).size
+
+  if (recognizedAreaCount < HR_PASS_FAIL_AREAS.length) {
+    throw new Error(`HR pass/fail grader returned ${recognizedAreaCount}/${HR_PASS_FAIL_AREAS.length} recognized areas`)
+  }
+
   return buildRubricFromAreas(areas, model, estimateCostCents(materials, outputText))
 }

@@ -15,6 +15,10 @@ function textHash(text: string) {
   return crypto.createHash('sha1').update(text).digest('hex').slice(0, 12)
 }
 
+function normalizeAudioContentType(type: string) {
+  return type.split(';')[0]?.trim() || 'audio/webm'
+}
+
 async function ensureBucket() {
   const { error } = await supabaseAdmin.storage.getBucket(BUCKET)
   if (!error) return
@@ -57,11 +61,12 @@ export async function POST(request: NextRequest) {
 
     await ensureBucket()
 
-    const extension = audioFile.type.includes('mp4')
+    const contentType = normalizeAudioContentType(audioFile.type || 'audio/webm')
+    const extension = contentType.includes('mp4')
       ? 'mp4'
-      : audioFile.type.includes('mpeg')
+      : contentType.includes('mpeg')
       ? 'mp3'
-      : audioFile.type.includes('ogg')
+      : contentType.includes('ogg')
       ? 'ogg'
       : 'webm'
     const hash = textHash(questionText)
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET)
       .upload(audioPath, audioBuffer, {
-        contentType: audioFile.type || 'audio/webm',
+        contentType,
         upsert: true,
       })
 
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
       audio_cache: {
         bucket: BUCKET,
         path: audioPath,
-        content_type: audioFile.type || 'audio/webm',
+        content_type: contentType,
         source: 'realtime_output',
         text_hash: hash,
         captured_at: new Date().toISOString(),

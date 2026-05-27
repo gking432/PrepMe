@@ -51,6 +51,7 @@ export default function InterviewPage() {
   // Use refs for immediate synchronous access (state updates are async)
   const isInterviewActiveRef = useRef(false)
   const sessionIdRef = useRef<string | null>(null)
+  const transcriptRef = useRef<string[]>([])
   const conversationPhaseRef = useRef<'opening' | 'company_intro' | 'job_overview' | 'screening' | 'q_and_a' | 'closing' | null>(
     stage === 'hr_screen' ? 'opening' : null
   )
@@ -64,6 +65,10 @@ export default function InterviewPage() {
   useEffect(() => {
     askedQuestionsRef.current = askedQuestions
   }, [askedQuestions])
+
+  useEffect(() => {
+    transcriptRef.current = transcript
+  }, [transcript])
   
   const wsRef = useRef<WebSocket | null>(null)
   const pcRef = useRef<RTCPeerConnection | null>(null)
@@ -855,6 +860,7 @@ export default function InterviewPage() {
         updated.push(cleanedLine)
       }
 
+      transcriptRef.current = updated
       saveTranscriptToDatabase(updated).catch((err) => console.error('Error saving transcript:', err))
       saveRealtimeStructuredTurn(speaker, cleanedLine)
       return updated
@@ -1855,7 +1861,7 @@ export default function InterviewPage() {
     console.log('Ending interview - cleaning up')
     console.log('Current sessionId (state):', sessionId)
     console.log('Current sessionId (ref):', sessionIdRef.current)
-    console.log('Transcript length:', transcript.length)
+    console.log('Transcript length:', transcriptRef.current.length)
     
     // Use ref first (always up-to-date), then state, then look it up
     let currentSessionId = sessionIdRef.current || sessionId
@@ -1906,7 +1912,7 @@ export default function InterviewPage() {
 
       // Calculate duration and fetch current transcript from database
       let durationSeconds: number | null = null
-      let finalTranscript = transcript.join('\n') // Use local state if available
+      let finalTranscript = transcriptRef.current.join('\n') // Use ref because close timers can see stale React state
       
       const { data: sessionData } = await supabase
         .from('interview_sessions')

@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import crypto from 'crypto'
 import fs from 'fs/promises'
 import path from 'path'
+import { supabaseAdmin } from './supabase'
 
 let _openai: OpenAI | null = null
 
@@ -103,6 +104,26 @@ export async function loadCachedSpeech(fileName: string): Promise<string | null>
     const buffer = await fs.readFile(hrAudioPath(fileName))
     return buffer.toString('base64')
   } catch {
+    return null
+  }
+}
+
+export async function loadStoredInterviewAudioBase64(audioCache: any): Promise<string | null> {
+  const bucket = typeof audioCache?.bucket === 'string' ? audioCache.bucket : ''
+  const audioPath = typeof audioCache?.path === 'string' ? audioCache.path : ''
+  if (!bucket || !audioPath) return null
+
+  try {
+    const { data, error } = await supabaseAdmin.storage.from(bucket).download(audioPath)
+    if (error || !data) {
+      console.error('Stored interview audio download failed:', error)
+      return null
+    }
+
+    const arrayBuffer = await data.arrayBuffer()
+    return Buffer.from(arrayBuffer).toString('base64')
+  } catch (error) {
+    console.error('Stored interview audio load failed:', error)
     return null
   }
 }

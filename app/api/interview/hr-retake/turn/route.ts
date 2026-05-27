@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
-import { getOrCreateCachedSpeech } from '@/lib/interview-audio'
+import { getOrCreateCachedSpeech, loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,7 +44,11 @@ export async function POST(request: NextRequest) {
       : {}
     const retakeState = existingObserverNotes.hr_retake
 
-    if (!retakeState || retakeState.mode !== 'cached_questions_tts' || !Array.isArray(retakeState.script_prompts)) {
+    const isCachedRetakeMode =
+      retakeState?.mode === 'cached_questions_tts' ||
+      retakeState?.mode === 'cached_questions_audio'
+
+    if (!isCachedRetakeMode || !Array.isArray(retakeState.script_prompts)) {
       return NextResponse.json({ error: 'Cached retake state not found' }, { status: 400 })
     }
 
@@ -82,7 +86,10 @@ export async function POST(request: NextRequest) {
       questionId: nextPrompt?.questionId,
     })
 
-    audioBase64 = await getOrCreateCachedSpeech({
+    const storedRealtimeAudio = nextPrompt?.audio_cache
+      ? await loadStoredInterviewAudioBase64(nextPrompt.audio_cache)
+      : null
+    audioBase64 = storedRealtimeAudio || await getOrCreateCachedSpeech({
       cacheKey: nextPrompt?.cacheKey || `retake-close-${sessionId}`,
       text: assistantText,
       preferOpenAI: true,

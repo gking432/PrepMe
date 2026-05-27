@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion } from '@/lib/interview-session'
-import { getOrCreateCachedSpeech } from '@/lib/interview-audio'
+import { getOrCreateCachedSpeech, loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +37,7 @@ function getSourceQuestions(sourceSession: any) {
       .map((question: any, index: number) => ({
         id: question.id || question.question_id || `q${index + 1}`,
         question: String(question.question || question.text || '').trim(),
+        audio_cache: question.audio_cache || question.audioCache || null,
       }))
       .filter((question: any) => question.question)
   }
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
     const scriptPrompts = await Promise.all(
       questions.map(async (question: any) => {
         const cacheKey = `retake-${sourceSessionId}-${question.id}-${textHash(question.question)}`
-        const audioBase64 = await getOrCreateCachedSpeech({
+        const storedRealtimeAudio = await loadStoredInterviewAudioBase64(question.audio_cache)
+        const audioBase64 = storedRealtimeAudio || await getOrCreateCachedSpeech({
           cacheKey,
           text: question.question,
           preferOpenAI: true,
@@ -91,6 +93,8 @@ export async function POST(request: NextRequest) {
           questionId: question.id,
           text: question.question,
           audioBase64,
+          audioSource: storedRealtimeAudio ? 'realtime_audio_cache' : 'tts_fallback',
+          audioCache: question.audio_cache || null,
         }
       })
     )
@@ -126,12 +130,14 @@ export async function POST(request: NextRequest) {
           ...(targetSession?.observer_notes && typeof targetSession.observer_notes === 'object' ? targetSession.observer_notes : {}),
           hr_retake: {
             source_session_id: sourceSessionId,
-            mode: 'cached_questions_tts',
+            mode: 'cached_questions_audio',
             script_question_ids: scriptPrompts.map((prompt) => prompt.questionId),
             script_prompts: scriptPrompts.map((prompt) => ({
               questionId: prompt.questionId,
               text: prompt.text,
               cacheKey: `retake-${sourceSessionId}-${prompt.questionId}-${textHash(prompt.text)}`,
+              audioSource: prompt.audioSource,
+              audio_cache: prompt.audioCache,
             })),
             current_prompt_index: 0,
           },

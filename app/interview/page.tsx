@@ -77,6 +77,11 @@ export default function InterviewPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const remoteAssistantStreamRef = useRef<MediaStream | null>(null)
+  const assistantAudioRecorderRef = useRef<MediaRecorder | null>(null)
+  const assistantAudioChunksRef = useRef<Blob[]>([])
+  const latestAssistantTranscriptRef = useRef('')
+  const lastUploadedAssistantAudioKeyRef = useRef('')
   const interviewStartTimeRef = useRef<number | null>(null)
   const assistantSpeakingRef = useRef(false)
   const assistantSpeechResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -185,6 +190,100 @@ export default function InterviewPage() {
     }, 3200)
   }
 
+  const getAssistantAudioMimeType = () => {
+    const candidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+    ]
+
+    return candidates.find((type) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) || ''
+  }
+
+  const uploadRealtimeAssistantAudio = async (audioBlob: Blob, attempt = 0) => {
+    const currentSessionId = sessionIdRef.current || sessionId
+    const questionText = latestAssistantTranscriptRef.current.trim()
+
+    if (!questionText && attempt < 8) {
+      setTimeout(() => uploadRealtimeAssistantAudio(audioBlob, attempt + 1), 250)
+      return
+    }
+
+    if (stage !== 'hr_screen' || !currentSessionId || !questionText || !audioBlob.size) return
+
+    const uploadKey = `${currentSessionId}:${questionText}:${audioBlob.size}`
+    if (lastUploadedAssistantAudioKeyRef.current === uploadKey) return
+    lastUploadedAssistantAudioKeyRef.current = uploadKey
+
+    const formData = new FormData()
+    formData.append('sessionId', currentSessionId)
+    formData.append('questionText', questionText)
+    formData.append('audio', audioBlob, 'assistant-question.webm')
+
+    try {
+      await fetch('/api/interview/realtime-audio', {
+        method: 'POST',
+        body: formData,
+      })
+    } catch (error) {
+      console.error('Error saving realtime assistant audio:', error)
+    }
+  }
+
+  const startAssistantAudioCapture = () => {
+    if (stage !== 'hr_screen' || isCachedRetakeRef.current) return
+    if (assistantAudioRecorderRef.current?.state === 'recording') return
+
+    const stream = remoteAssistantStreamRef.current
+    if (!stream) return
+
+    try {
+      assistantAudioChunksRef.current = []
+      const mimeType = getAssistantAudioMimeType()
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream)
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          assistantAudioChunksRef.current.push(event.data)
+        }
+      }
+
+      recorder.onstop = () => {
+        const chunks = assistantAudioChunksRef.current
+        assistantAudioChunksRef.current = []
+        if (!chunks.length) return
+
+        const audioBlob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+        setTimeout(() => {
+          void uploadRealtimeAssistantAudio(audioBlob)
+        }, 600)
+      }
+
+      assistantAudioRecorderRef.current = recorder
+      recorder.start()
+    } catch (error) {
+      console.error('Error starting realtime assistant audio capture:', error)
+    }
+  }
+
+  const stopAssistantAudioCapture = () => {
+    const recorder = assistantAudioRecorderRef.current
+    if (!recorder) return
+
+    try {
+      if (recorder.state === 'recording') {
+        recorder.stop()
+      }
+    } catch (error) {
+      console.error('Error stopping realtime assistant audio capture:', error)
+    } finally {
+      assistantAudioRecorderRef.current = null
+    }
+  }
+
   const startRealtimeAssistantSpeech = () => {
     if (assistantSpeechResetTimeoutRef.current) {
       clearTimeout(assistantSpeechResetTimeoutRef.current)
@@ -202,6 +301,7 @@ export default function InterviewPage() {
       updateRealtimeTurnDetection(false)
       console.log('[realtime] assistant speech started')
     }
+    startAssistantAudioCapture()
   }
 
   const finishRealtimeAssistantSpeech = (reason: string) => {
@@ -216,6 +316,7 @@ export default function InterviewPage() {
 
     assistantSpeakingRef.current = false
     setIsPlayingAudio(false)
+    stopAssistantAudioCapture()
 
     if (!closingDetectedRef.current) {
       setRealtimeMicEnabled(true)
@@ -562,6 +663,7 @@ export default function InterviewPage() {
       audioEl.autoplay = true
       remoteAudioRef.current = audioEl
       pc.ontrack = (e) => {
+        remoteAssistantStreamRef.current = e.streams[0]
         audioEl.srcObject = e.streams[0]
         setIsPlayingAudio(true)
         e.streams[0].getTracks().forEach((t) => {
@@ -801,6 +903,7 @@ export default function InterviewPage() {
       case 'response.output_audio_transcript.done':
         // Final transcript
         const fullMessage = data.transcript || ''
+        latestAssistantTranscriptRef.current = fullMessage
         setCurrentMessage(fullMessage)
         updateRealtimeTranscript(`Interviewer: ${fullMessage}`, 'interviewer')
         setTurnCount((prev) => prev + 1)
@@ -901,9 +1004,11 @@ export default function InterviewPage() {
       assistantSpeechFailsafeRef.current = null
     }
     assistantSpeakingRef.current = false
+    stopAssistantAudioCapture()
     initialRealtimePromptSentRef.current = false
     turnDetectionDisabledRef.current = false
     closingDetectedRef.current = false
+    remoteAssistantStreamRef.current = null
     localAudioSenderRef.current = null
     localAudioTrackRef.current = null
     if (dcRef.current) {

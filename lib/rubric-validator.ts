@@ -144,7 +144,7 @@ export function validateHrScreenRubric(rubric: any): boolean {
       console.error('Rubric is not an object')
       return false
     }
-    if (!rubric.overall_assessment || !rubric.overall_assessment.overall_score) {
+    if (!rubric.overall_assessment || typeof rubric.overall_assessment.overall_score !== 'number') {
       console.error('Missing overall_assessment.overall_score')
       return false
     }
@@ -422,4 +422,3 @@ export function validateFinalRoundRubric(rubric: any): boolean {
 
   return true
 }
-

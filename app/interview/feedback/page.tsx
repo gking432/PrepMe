@@ -2174,6 +2174,10 @@ export default function InterviewDashboard() {
         }))
       }
 
+      if (stage === 'hr_screen') {
+        localStorage.setItem('prepme_retake_source_session_id', sessionRow.id)
+      }
+
       router.push(`/interview?stage=${stage}`)
     } catch (error) {
       console.error('Error preparing interview retake:', error)

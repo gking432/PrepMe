@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { stage, tempInterviewData, reuseInterviewDataId } = await request.json()
+    const { stage, tempInterviewData, reuseInterviewDataId, parentSessionId } = await request.json()
 
     // Get authenticated user if present
     const supabase = createRouteHandlerClient({ cookies })
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: session?.user.id || null,
         user_interview_data_id: interviewDataId,
+        parent_session_id: parentSessionId || null,
         stage,
         status: 'in_progress',
       })

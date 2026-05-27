@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   email TEXT,
   full_name TEXT,
+  practice_memory JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS public.interview_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Nullable for anonymous HR screen interviews
   user_interview_data_id UUID REFERENCES public.user_interview_data(id) ON DELETE SET NULL,
+  parent_session_id UUID REFERENCES public.interview_sessions(id) ON DELETE SET NULL, -- Source session for retakes
   stage TEXT NOT NULL, -- 'hr_screen', 'hiring_manager', 'team_interview'
   transcript TEXT,
   transcript_structured JSONB, -- Structured transcript with question tracking (for HR screen)
@@ -498,4 +500,3 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-

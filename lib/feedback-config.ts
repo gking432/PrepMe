@@ -14,3 +14,9 @@
 //
 // Flip to true to restore the full HR report end-to-end. Nothing is deleted.
 export const HR_DETAILED_REPORT_ENABLED = false
+
+export const HR_SCREEN_GRADING_MODE =
+  (process.env.HR_SCREEN_GRADING_MODE || 'pass_fail') as 'pass_fail' | 'sonnet'
+
+export const HR_SCREEN_PASS_FAIL_MODEL =
+  process.env.HR_SCREEN_PASS_FAIL_MODEL || 'gpt-5-nano'

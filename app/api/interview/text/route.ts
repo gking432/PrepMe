@@ -172,7 +172,6 @@ ${isHrScreen ? `When asking questions:
 - Do NOT ask questions that require domain expertise to evaluate the answer
 - Do NOT praise or gush. Use neutral filler: "Okay." / "Got it." / "Mm-hm."
 - Before salary or start-date questions, ask ONE tougher but still recruiter-appropriate curveball question such as:
-  - "What's one part of this role you think would stretch you most?"
   - "What would you want to learn quickly if you started here?"
   - "Tell me about an area where you're still developing professionally."
   - "What's something on your resume you'd want to explain more clearly?"
@@ -226,7 +225,7 @@ Depth Level: ${depthGuidance[depthLevel as keyof typeof depthGuidance] || depthG
 
 Interview Guidelines:
 - Ask questions naturally based on the candidate's responses. Do not use predefined question lists.
-- Keep responses concise and natural for voice conversation (under 60 words).
+${isHrScreen ? '- Normal HR turns are 6-18 words. Opening and closing turns are 24 words max. Candidate Q&A answers are 20 words max.\n- Ask one direct question, then stop.' : '- Keep responses concise and natural for voice conversation (under 60 words).'}
 - Do NOT praise, gush, or over-validate answers. Acknowledge briefly and move on.
 - Use neutral filler: "Mm-hm." / "Okay." / "Got it." — not "Wow!" or "That's incredible!"
 ${isHrScreen ? '- Maximum ONE follow-up per topic, surface-level only. You are a gatekeeper, not an evaluator.' : '- Ask follow-up questions when appropriate based on the candidate\'s answers.'}
@@ -248,7 +247,7 @@ ${contextSection}`,
       model: 'gpt-4o-mini',
       messages,
       temperature: 0.7,
-      max_tokens: 200,
+      max_tokens: isHrScreen ? 180 : 200,
     })
 
     const assistantMessage = completion.choices[0]?.message?.content || 'I see. Can you tell me more?'

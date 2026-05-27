@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { hasStageAccess, deductCredit } from '@/lib/credit-check'
 import OpenAI from 'openai'
+import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -57,12 +57,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if user has credits or subscription for this stage
-      const canAccess = await hasStageAccess(authSession.user.id, stage)
-      if (!canAccess) {
-        return NextResponse.json(
-          { error: 'You need to purchase access to this interview stage.', code: 'NO_CREDITS' },
-          { status: 403 }
-        )
+      if (shouldEnforceInterviewStageAccess()) {
+        const { hasStageAccess } = await import('@/lib/credit-check')
+        const canAccess = await hasStageAccess(authSession.user.id, stage)
+        if (!canAccess) {
+          return NextResponse.json(
+            { error: 'You need to purchase access to this interview stage.', code: 'NO_CREDITS' },
+            { status: 403 }
+          )
+        }
       }
     }
 
@@ -223,7 +226,7 @@ export async function POST(request: NextRequest) {
         
         // OPTIMIZED: Skip "good time" question - user already clicked "Start Interview"
         // Jump straight to screening with standard opening question
-        initialMessage = `Hi, this is ${randomName} with ${companyName} calling about the ${positionName} position. I have a few quick questions, then you can ask me anything. Tell me a bit about yourself.`
+        initialMessage = `Hi, this is ${randomName} with ${companyName} about the ${positionName} role. I have a few quick questions. Tell me about yourself.`
         conversationPhase = 'screening'
         // HR Screen - starting with screening phase
         
@@ -353,4 +356,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

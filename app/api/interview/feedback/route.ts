@@ -6,9 +6,10 @@ import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
+import { gradeHrScreenPassFail } from '@/lib/hr-pass-fail-grader'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
-import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
+import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE } from '@/lib/feedback-config'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -24,11 +25,11 @@ function getAnthropicHaiku() {
 
 const HR_SIX_CRITERIA = [
   'Professional Story',
-  'Specific Examples and Evidence',
+  'Specificity / Proof',
+  'Career Alignment',
+  'Handling Uncertainty',
+  'Pace / Natural Delivery',
   'Preparation / Curiosity',
-  'Handling Uncertain/Difficult Questions',
-  'Alignment of Career Goals with Position',
-  'Pace and Conversation Flow',
 ] as const
 
 type RewriteMethod = {
@@ -344,6 +345,85 @@ function isBlankInterviewTranscript(structuredTranscript: any, transcript: strin
   return true
 }
 
+function countWords(text: any) {
+  if (typeof text !== 'string') return 0
+  const matches = text.trim().match(/\b[\w']+\b/g)
+  return matches ? matches.length : 0
+}
+
+function getTranscriptWordCounts(structuredTranscript: any, transcript: string) {
+  let interviewerWordCount = 0
+  let candidateWordCount = 0
+
+  const messages = Array.isArray(structuredTranscript?.messages)
+    ? structuredTranscript.messages
+    : []
+
+  if (messages.length > 0) {
+    for (const message of messages) {
+      if (message?.speaker === 'interviewer') {
+        interviewerWordCount += countWords(message.text)
+      } else if (message?.speaker === 'candidate') {
+        candidateWordCount += countWords(message.text)
+      }
+    }
+  } else {
+    const lines = (transcript || '').split('\n')
+    for (const line of lines) {
+      if (/^Interviewer:\s*/i.test(line)) {
+        interviewerWordCount += countWords(line.replace(/^Interviewer:\s*/i, ''))
+      } else if (/^(You|Candidate):\s*/i.test(line)) {
+        candidateWordCount += countWords(line.replace(/^(You|Candidate):\s*/i, ''))
+      }
+    }
+  }
+
+  return { interviewerWordCount, candidateWordCount }
+}
+
+function numberFromEnv(name: string, fallback: number) {
+  const value = Number(process.env[name])
+  return Number.isFinite(value) ? value : fallback
+}
+
+function buildHrCostEstimate({
+  transcript,
+  structuredTranscript,
+  durationSeconds,
+  graderCostEstimate,
+}: {
+  transcript: string
+  structuredTranscript: any
+  durationSeconds: number | null
+  graderCostEstimate: any
+}) {
+  const { interviewerWordCount, candidateWordCount } = getTranscriptWordCounts(structuredTranscript, transcript)
+  const wordsPerMinute = numberFromEnv('HR_COST_AUDIO_WORDS_PER_MINUTE', 150)
+  const inputAudioCentsPerMinute = numberFromEnv('HR_REALTIME_INPUT_AUDIO_CENTS_PER_MINUTE', 0.06)
+  const outputAudioCentsPerMinute = numberFromEnv('HR_REALTIME_OUTPUT_AUDIO_CENTS_PER_MINUTE', 0.24)
+  const candidateMinutes = candidateWordCount / wordsPerMinute
+  const interviewerMinutes = interviewerWordCount / wordsPerMinute
+  const estimatedRealtimeCents = (candidateMinutes * inputAudioCentsPerMinute) + (interviewerMinutes * outputAudioCentsPerMinute)
+  const estimatedGradingCents = Number(graderCostEstimate?.estimated_grading_cents || 0)
+
+  return {
+    duration_seconds: durationSeconds,
+    interviewer_word_count: interviewerWordCount,
+    candidate_word_count: candidateWordCount,
+    realtime_model: process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-mini',
+    grader_model: graderCostEstimate?.grader_model,
+    rewrite_count: 0,
+    estimated_realtime_cents: Number(estimatedRealtimeCents.toFixed(4)),
+    estimated_grading_cents: Number(estimatedGradingCents.toFixed(4)),
+    estimated_total_cents: Number((estimatedRealtimeCents + estimatedGradingCents).toFixed(4)),
+    assumptions: {
+      words_per_minute: wordsPerMinute,
+      realtime_input_audio_cents_per_minute: inputAudioCentsPerMinute,
+      realtime_output_audio_cents_per_minute: outputAudioCentsPerMinute,
+    },
+  }
+}
+
 function applyBlankInterviewGuardrailToHrRubric(rubric: any) {
   const blankFeedback =
     'Candidate provided no substantive verbal response in the interview, so this area was not demonstrated live and should be practiced before the next round.'
@@ -483,15 +563,19 @@ export async function POST(request: NextRequest) {
     // Fetch structured transcript and observer notes for graded stages
     let structuredTranscript = null
     let observerNotes = null
+    let sessionDurationSeconds: number | null = null
     if (['hr_screen', 'hiring_manager', 'culture_fit', 'final'].includes(sessionData.stage)) {
       const { data: sessionWithData } = await supabaseAdmin
         .from('interview_sessions')
-        .select('transcript_structured, observer_notes, user_id')
+        .select('transcript_structured, observer_notes, user_id, duration_seconds')
         .eq('id', sessionId)
         .single()
 
       structuredTranscript = sessionWithData?.transcript_structured || null
       observerNotes = sessionWithData?.observer_notes || null
+      sessionDurationSeconds = typeof sessionWithData?.duration_seconds === 'number'
+        ? sessionWithData.duration_seconds
+        : null
     }
 
     // Delete any existing feedback for this session before generating new (prevent duplicates)
@@ -924,8 +1008,105 @@ Use the question IDs and timestamps from this structured transcript when providi
     systemPrompt += '\n- Calculate overall_score as a weighted average of area_scores using the weights provided.'
     systemPrompt += '\n- Remember: You can write encouraging, actionable feedback while still giving honest scores that match your analysis.'
 
-    // HR Screen: Use Claude Grader (three-agent architecture)
+    // HR Screen: default to compact pass/fail grading. Keep Sonnet path available
+    // for future paid-stage reuse by setting HR_SCREEN_GRADING_MODE=sonnet.
     if (stage === 'hr_screen') {
+      if (HR_SCREEN_GRADING_MODE === 'pass_fail') {
+        try {
+          const rubric = await gradeHrScreenPassFail({
+            transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
+            transcriptStructured: structuredTranscript,
+            resume: resume || '',
+            jobDescription: jobDescription || '',
+            websiteContent: websiteContent || '',
+          })
+
+          if (!validateHrScreenRubric(rubric)) {
+            console.error('Pass/fail HR rubric validation failed:', JSON.stringify(rubric, null, 2).substring(0, 500))
+            throw new Error('Invalid pass/fail HR rubric structure')
+          }
+
+          const costEstimate = buildHrCostEstimate({
+            transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
+            structuredTranscript,
+            durationSeconds: sessionDurationSeconds,
+            graderCostEstimate: rubric.cost_estimate,
+          })
+          rubric.cost_estimate = costEstimate
+
+          const feedback = {
+            overall_score: rubric.overall_assessment.overall_score,
+            area_scores: Object.fromEntries((rubric.areas || []).map((area: any) => [area.id, area.points_awarded])),
+            area_feedback: Object.fromEntries((rubric.areas || []).map((area: any) => [area.id, area.feedback])),
+            strengths: rubric.overall_assessment.key_strengths || [],
+            weaknesses: rubric.overall_assessment.key_weaknesses || [],
+            suggestions: rubric.next_steps_preparation?.improvement_suggestions || [],
+            detailed_feedback: rubric.overall_assessment.summary || '',
+            hr_screen_six_areas: rubric.hr_screen_six_areas || {
+              what_went_well: [],
+              what_needs_improve: [],
+            },
+          }
+
+          const insertData: any = {
+            interview_session_id: sessionId,
+            overall_score: Math.round(feedback.overall_score),
+            strengths: feedback.strengths,
+            weaknesses: feedback.weaknesses,
+            suggestions: feedback.suggestions,
+            detailed_feedback: feedback.detailed_feedback,
+            area_scores: feedback.area_scores,
+            area_feedback: feedback.area_feedback,
+            full_rubric: rubric,
+          }
+
+          const { error: dbError } = await supabaseAdmin
+            .from('interview_feedback')
+            .insert(insertData)
+            .select()
+            .single()
+
+          if (dbError) {
+            console.error('Error saving pass/fail HR feedback to database:', dbError)
+            return NextResponse.json(
+              { error: 'Failed to save feedback', details: dbError.message },
+              { status: 500 }
+            )
+          }
+
+          await supabaseAdmin
+            .from('interview_sessions')
+            .update({
+              observer_notes: {
+                ...(observerNotes && typeof observerNotes === 'object' ? observerNotes : {}),
+                cost_estimate: costEstimate,
+              },
+            })
+            .eq('id', sessionId)
+
+          return NextResponse.json({
+            success: true,
+            feedback: {
+              overall_score: Math.round(feedback.overall_score),
+              area_scores: feedback.area_scores,
+              area_feedback: feedback.area_feedback,
+              strengths: feedback.strengths,
+              weaknesses: feedback.weaknesses,
+              suggestions: feedback.suggestions,
+              detailed_feedback: feedback.detailed_feedback,
+              hr_screen_six_areas: feedback.hr_screen_six_areas,
+              full_rubric: rubric,
+            },
+          })
+        } catch (passFailError: any) {
+          console.error('Pass/fail HR grading failed:', passFailError)
+          return NextResponse.json(
+            { error: 'Failed to generate HR screen feedback', details: passFailError?.message || 'Unknown error' },
+            { status: 500 }
+          )
+        }
+      }
+
       try {
         // Build grading materials
         // Pass the full system prompt as gradingInstructions so Claude gets all the requirements
@@ -947,8 +1128,6 @@ Use the question IDs and timestamps from this structured transcript when providi
         if (isBlankInterviewTranscript(structuredTranscript, Array.isArray(transcript) ? transcript.join('\n') : transcript)) {
           applyBlankInterviewGuardrailToHrRubric(rubric)
         }
-
-        await enrichHrWeakSignalsWithHaikuRewrites(rubric, structuredTranscript)
 
         // Validate rubric
         if (!validateHrScreenRubric(rubric)) {

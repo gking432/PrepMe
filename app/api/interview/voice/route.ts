@@ -367,7 +367,6 @@ ${askedQuestionsCount >= 6 ?
         )
 
         const hasAskedCurveball = askedQuestionsPreview.some((q: string) =>
-          q.toLowerCase().includes('stretch you most') ||
           q.toLowerCase().includes('learn quickly') ||
           q.toLowerCase().includes('developing professionally') ||
           q.toLowerCase().includes('resume you') && q.toLowerCase().includes('explain more clearly') ||
@@ -413,7 +412,7 @@ ${!hasAskedAboutLeaving ?
   '✗ Already covered leaving reasons'}
 
 ${!hasAskedCurveball ?
-  '✓ Ask ONE tougher but still recruiter-appropriate curveball before salary/start date (for example: "What\'s one part of this role you think would stretch you most?", "What would you want to learn quickly if you started here?", "How do you handle stressful situations?", or "How do you stay organized?")' :
+  "✓ Ask ONE tougher but still recruiter-appropriate curveball before salary/start date (for example: \"What would you want to learn quickly if you started here?\", \"Tell me about an area where you're still developing professionally.\", \"How do you handle stressful situations?\", or \"How do you stay organized?\")" :
   '✗ Already covered the tougher HR curveball question'}
 
 ${!hasAskedAboutSalary ?
@@ -434,7 +433,7 @@ DEPTH RULES — CRITICAL:
       } else if (currentPhaseForPrompt === 'q_and_a') {
         phaseInstructions = `PHASE: Q&A
 
-Candidate asks questions. Answer briefly (under 30 words).
+Candidate asks questions. Answer briefly (under 20 words).
 After 2-3 questions → say: "Perfect. I'll follow up about next steps. Thanks for your time."`
       } else if (currentPhaseForPrompt === 'closing') {
         phaseInstructions = `PHASE: Closing
@@ -696,7 +695,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
       model: 'gpt-4o', // Upgraded from gpt-4o-mini for better conversation flow
       messages,
       temperature: 0.75, // Natural variation for conversational flow
-      max_tokens: 200, // Allow complete thoughts and natural responses
+      max_tokens: stage === 'hr_screen' ? 180 : 200,
       // Removed penalties to allow natural conversation
     })
     
@@ -706,7 +705,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     if (stage === 'hr_screen' && currentPhaseForPrompt === 'screening') {
       const wordCount = assistantMessage.split(/\s+/).length
       if (wordCount > 50) {
-        console.warn(`Response longer than ideal (${wordCount} words) - target is 15-35 words`)
+          console.warn(`Response longer than ideal (${wordCount} words) - target is 6-18 words`)
       }
     }
 

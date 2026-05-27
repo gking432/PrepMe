@@ -62,7 +62,6 @@ const TERMINATION_LINES = [
 ]
 
 const CURVEBALL_QUESTIONS = [
-  "What's one part of this role you think would stretch you most?",
   'What would you want to learn quickly if you started here?',
   "Tell me about an area where you're still developing professionally.",
   "What's something on your resume you'd want to explain more clearly?",
@@ -92,7 +91,7 @@ export function buildInitialHrState(args: {
 }): HrScriptState {
   const interviewerName = INTERVIEWER_NAMES[Math.floor(Math.random() * INTERVIEWER_NAMES.length)]
 
-  const opening = `Hi, this is ${interviewerName} calling from ${args.companyName} about the ${args.roleTitle} position. Thanks for taking the time to chat today. I have a few quick questions, and then we’ll wrap up. To start, can you tell me a bit about yourself?`
+  const opening = `Hi, this is ${interviewerName} from ${args.companyName} about the ${args.roleTitle} role. I have a few quick questions. Tell me about yourself.`
   const companyKnowledge = 'Okay, and then, what do you know about our company so far?'
   const roleMotivation = 'Got it. So then, what interests you about this role specifically?'
   const curveballQuestion = CURVEBALL_QUESTIONS[Math.floor(Math.random() * CURVEBALL_QUESTIONS.length)]

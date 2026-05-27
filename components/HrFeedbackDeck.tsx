@@ -36,6 +36,13 @@ type SignalArea = {
   rewritten_answer?: string
   rewrite_explanation?: string
   original_answer?: string
+  mini_workshop?: {
+    area?: string
+    framework?: string
+    diagnosis?: string
+    example?: string
+    prompt?: string
+  }
 }
 
 type SignalKind = 'strength' | 'repair'
@@ -139,7 +146,7 @@ function getSixAreas(feedback: any, stageKey: StageKey = 'hr_screen') {
 }
 
 function getOverallScore(feedback: any) {
-  return parseScore(feedback?.overall_score || feedback?.full_rubric?.overall_assessment?.overall_score || 0)
+  return parseScore(feedback?.overall_score ?? feedback?.full_rubric?.overall_assessment?.overall_score ?? 0)
 }
 
 function getLikelihood(feedback: any, score: number) {
@@ -382,7 +389,7 @@ function ScoreOrb({ score }: { score: number }) {
         style={{ background: `conic-gradient(#2563eb ${percentage}%, transparent ${percentage}% 100%)` }}
       />
       <div className="relative flex h-[5.4rem] w-[5.4rem] flex-col items-center justify-center rounded-full bg-white 2xl:h-[7.2rem] 2xl:w-[7.2rem]">
-        <span className="text-3xl font-bold text-slate-950 2xl:text-4xl">{score ? score.toFixed(score % 1 ? 1 : 0) : '-'}</span>
+        <span className="text-3xl font-bold text-slate-950 2xl:text-4xl">{Number.isFinite(score) ? score.toFixed(score % 1 ? 1 : 0) : '-'}</span>
         <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">out of 10</span>
       </div>
     </div>
@@ -485,6 +492,49 @@ function RepairLessonSlide({
   issueNumber: number
   totalIssues: number
 }) {
+  const storageCriterion = toDisplayText(repair?.criterion, 'Priority Repair')
+  const storageEvidence = getPrimaryEvidence(repair)
+  const draftStorageKey = `prepme_hr_mini_workshop_${storageCriterion}_${storageEvidence?.question_id || issueNumber}`
+  const [draft, setDraft] = useState('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setDraft(localStorage.getItem(draftStorageKey) || '')
+  }, [draftStorageKey])
+
+  useEffect(() => {
+    if (!draft.trim()) return
+    const timer = window.setTimeout(() => {
+      fetch('/api/profile/practice-memory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: draftStorageKey,
+          value: draft,
+          meta: {
+            source: 'hr_screen_mini_workshop',
+            criterion: storageCriterion,
+            question_id: storageEvidence?.question_id || null,
+            question: storageEvidence?.question || null,
+            framework: repair?.mini_workshop?.framework || null,
+            prompt: repair?.mini_workshop?.prompt || null,
+          },
+        }),
+      }).catch(() => {
+        // Local storage remains the fallback for anonymous users and offline exits.
+      })
+    }, 800)
+
+    return () => window.clearTimeout(timer)
+  }, [draft, draftStorageKey, repair?.mini_workshop?.framework, repair?.mini_workshop?.prompt, storageCriterion, storageEvidence?.question, storageEvidence?.question_id])
+
+  const saveDraft = (value: string) => {
+    setDraft(value)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(draftStorageKey, value)
+    }
+  }
+
   if (!repair) {
     return (
       <div className="flex h-full min-h-[24rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
@@ -505,9 +555,11 @@ function RepairLessonSlide({
   const evidence = getPrimaryEvidence(repair)
   const questionText = toDisplayText(evidence?.question)
   const proofText = toDisplayText(evidence?.excerpt)
-  const rewrittenAnswer = toDisplayText(repair.rewritten_answer)
-  const rewriteMethod = toDisplayText(repair.rewrite_method)
-  const rewriteExplanation = toDisplayText(repair.rewrite_explanation)
+  const miniWorkshop = repair.mini_workshop
+  const framework = toDisplayText(miniWorkshop?.framework, lesson.steps.map((step) => step.label).join(', '))
+  const diagnosis = toDisplayText(miniWorkshop?.diagnosis, lesson.summary)
+  const example = toDisplayText(miniWorkshop?.example)
+  const draftPrompt = toDisplayText(miniWorkshop?.prompt, lesson.tryThis)
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:p-4">
@@ -578,20 +630,24 @@ function RepairLessonSlide({
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Better Version</p>
-              {rewriteMethod && <span className="rounded-full bg-accent-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-accent-700">{rewriteMethod}</span>}
-            </div>
-            {rewrittenAnswer ? (
-              <>
-                <p className="mt-2 text-xs font-semibold leading-5 text-slate-800">"{rewrittenAnswer}"</p>
-                {rewriteExplanation && <p className="mt-2 text-[11px] font-bold leading-4 text-accent-700">{rewriteExplanation}</p>}
-              </>
-            ) : (
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-700">
-                Not enough candidate answer text was captured to rewrite this without inventing details. The next completed interview answer for this signal will generate here automatically.
-              </p>
-            )}
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Mini Workshop</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-slate-900">Framework: {framework}</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-slate-700">{diagnosis}</p>
+            {example ? (
+              <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Example</p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-slate-800">"{example}"</p>
+              </div>
+            ) : null}
+            <label className="mt-2 block">
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent-700">{draftPrompt}</span>
+              <textarea
+                value={draft}
+                onChange={(event) => saveDraft(event.target.value)}
+                placeholder="Write your version here. This saves on this device."
+                className="mt-2 min-h-[6.5rem] w-full resize-y rounded-xl border border-accent-200 bg-accent-50/40 px-3 py-2 text-sm font-semibold leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-accent-400 focus:bg-white"
+              />
+            </label>
           </div>
         </div>
       </section>

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
 import { Mic, MicOff, X, MessageSquare, Eye, EyeOff, Phone, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 
 type Stage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -38,6 +39,7 @@ export default function InterviewPage() {
   const [showQuestion, setShowQuestion] = useState(false)
   const [showQuestionWarning, setShowQuestionWarning] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [isCachedRetake, setIsCachedRetake] = useState(false)
   
   // HR Screen conversation state tracking (only for hr_screen stage)
   // Initialize to 'opening' for hr_screen, null for other stages
@@ -83,6 +85,7 @@ export default function InterviewPage() {
   const closingDetectedRef = useRef(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialRealtimePromptSentRef = useRef(false)
+  const isCachedRetakeRef = useRef(false)
   const supabase = createClient()
 
   const getOrCreateInterviewMediaStream = async () => {
@@ -361,7 +364,7 @@ export default function InterviewPage() {
       }
 
       // Check access for paid stages before proceeding
-      if (stageToUse !== 'hr_screen') {
+      if (stageToUse !== 'hr_screen' && shouldEnforceInterviewStageAccess()) {
         try {
           const paymentRes = await fetch('/api/payments/status')
           if (paymentRes.ok) {
@@ -380,15 +383,35 @@ export default function InterviewPage() {
 
       // Get user interview data (handle case where none exists or multiple rows)
       // Use limit(1) and take first result to handle multiple rows gracefully
-      const { data: interviewDataArray, error: interviewError } = await supabase
-        .from('user_interview_data')
-        .select('id, resume_text, job_description_text, company_website')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-      
-      // Take the first result (most recent)
-      const interviewData = interviewDataArray && interviewDataArray.length > 0 ? interviewDataArray[0] : null
+      const selectedInterviewDataId = typeof window !== 'undefined'
+        ? localStorage.getItem('prepme_selected_interview_data_id') || localStorage.getItem('prepme_retake_interview_data_id')
+        : null
+
+      let interviewData = null
+      let interviewError = null
+
+      if (selectedInterviewDataId) {
+        const selectedResult = await supabase
+          .from('user_interview_data')
+          .select('id, resume_text, job_description_text, company_website')
+          .eq('id', selectedInterviewDataId)
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+        interviewData = selectedResult.data
+        interviewError = selectedResult.error
+      }
+
+      if (!interviewData) {
+        const latestResult = await supabase
+          .from('user_interview_data')
+          .select('id, resume_text, job_description_text, company_website')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        interviewData = latestResult.data && latestResult.data.length > 0 ? latestResult.data[0] : null
+        interviewError = latestResult.error
+      }
       
       if (interviewError) {
         console.error('Error fetching interview data:', interviewError)
@@ -476,7 +499,9 @@ export default function InterviewPage() {
           return
         }
       } else {
-        reuseInterviewDataId = localStorage.getItem('prepme_retake_interview_data_id')
+        reuseInterviewDataId =
+          localStorage.getItem('prepme_retake_interview_data_id') ||
+          localStorage.getItem('prepme_selected_interview_data_id')
       }
 
       // Create session via API (uses supabaseAdmin to bypass RLS for anonymous users)
@@ -495,6 +520,7 @@ export default function InterviewPage() {
       sessionIdRef.current = newSessionId
       console.log('Created new interview session:', newSessionId)
       localStorage.removeItem('prepme_retake_interview_data_id')
+      localStorage.removeItem('prepme_selected_interview_data_id')
       
       // Mark interview as active before connecting
       isInterviewActiveRef.current = true
@@ -580,7 +606,7 @@ export default function InterviewPage() {
                 voice: 'marin',
               },
             },
-            max_output_tokens: 400,
+            max_output_tokens: stage === 'hr_screen' ? 180 : 400,
           },
         }))
         setIsConnected(true)
@@ -672,6 +698,28 @@ export default function InterviewPage() {
     }
   }
 
+  const saveRealtimeStructuredTurn = async (speaker: 'user' | 'interviewer', line: string) => {
+    const currentSessionId = sessionIdRef.current || sessionId
+    if (stage !== 'hr_screen' || !currentSessionId) return
+
+    const text = line.replace(/^(Interviewer|You):\s*/i, '').trim()
+    if (!text) return
+
+    try {
+      await fetch('/api/interview/realtime-turn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          speaker: speaker === 'user' ? 'candidate' : 'interviewer',
+          text,
+        }),
+      })
+    } catch (error) {
+      console.error('Error saving realtime structured turn:', error)
+    }
+  }
+
   const updateRealtimeTranscript = (
     line: string,
     speaker: 'user' | 'interviewer',
@@ -704,6 +752,7 @@ export default function InterviewPage() {
       }
 
       saveTranscriptToDatabase(updated).catch((err) => console.error('Error saving transcript:', err))
+      saveRealtimeStructuredTurn(speaker, cleanedLine)
       return updated
     })
   }
@@ -888,10 +937,110 @@ export default function InterviewPage() {
     setIsListening(false)
   }
 
+  const startCachedHrRetake = async (sourceSessionId: string) => {
+    await getOrCreateInterviewMediaStream()
+    setHasUserPermission(true)
+
+    const {
+      data: { session: authSession },
+    } = await supabase.auth.getSession()
+
+    let tempInterviewData = null
+    let reuseInterviewDataId: string | null = null
+    if (!authSession) {
+      const tempDataStr = localStorage.getItem('temp_interview_data')
+      if (tempDataStr) {
+        tempInterviewData = JSON.parse(tempDataStr)
+      } else {
+        router.push('/auth/login')
+        return
+      }
+    } else {
+      reuseInterviewDataId =
+        localStorage.getItem('prepme_retake_interview_data_id') ||
+        localStorage.getItem('prepme_selected_interview_data_id')
+    }
+
+    const sessionRes = await fetch('/api/interview/create-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stage,
+        tempInterviewData,
+        reuseInterviewDataId,
+        parentSessionId: sourceSessionId,
+      }),
+    })
+
+    if (!sessionRes.ok) {
+      const err = await sessionRes.json()
+      console.error('Error creating cached retake session:', err)
+      throw new Error('Failed to create interview retake session')
+    }
+
+    const { sessionId: newSessionId } = await sessionRes.json()
+    setSessionId(newSessionId)
+    sessionIdRef.current = newSessionId
+    localStorage.removeItem('prepme_retake_interview_data_id')
+    localStorage.removeItem('prepme_selected_interview_data_id')
+    localStorage.removeItem('prepme_retake_source_session_id')
+
+    isCachedRetakeRef.current = true
+    setIsCachedRetake(true)
+    isInterviewActiveRef.current = true
+    setIsInterviewActive(true)
+
+    const response = await fetch('/api/interview/hr-retake/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: newSessionId,
+        sourceSessionId,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+      throw new Error(errorData.error || 'Failed to start cached retake')
+    }
+
+    const data = await response.json()
+    setCurrentMessage(data.message)
+    setTranscript([`Interviewer: ${data.message}`])
+    setConversationPhase(data.conversationPhase || 'screening')
+    setIsListening(true)
+
+    if (data.audioBase64) {
+      await playAudio(data.audioBase64)
+    } else {
+      setTimeout(() => startVoiceInput(), 500)
+    }
+  }
+
   const startInterview = async () => {
     // Record start time for HR screen time tracking
     interviewStartTimeRef.current = Date.now()
     closingDetectedRef.current = false
+
+    const retakeSourceSessionId =
+      stage === 'hr_screen' && typeof window !== 'undefined'
+        ? localStorage.getItem('prepme_retake_source_session_id')
+        : null
+
+    if (retakeSourceSessionId) {
+      try {
+        await startCachedHrRetake(retakeSourceSessionId)
+        return
+      } catch (error) {
+        console.error('Cached HR retake failed:', error)
+        setError('Could not start the saved-question retake. Please try again.')
+        setIsLoading(false)
+        return
+      }
+    }
+
+    isCachedRetakeRef.current = false
+    setIsCachedRetake(false)
 
     // Try Realtime API first, fallback to optimized traditional approach
     try {
@@ -935,7 +1084,9 @@ export default function InterviewPage() {
           return
         }
       } else {
-        reuseInterviewDataId = localStorage.getItem('prepme_retake_interview_data_id')
+        reuseInterviewDataId =
+          localStorage.getItem('prepme_retake_interview_data_id') ||
+          localStorage.getItem('prepme_selected_interview_data_id')
       }
 
       // Reuse existing session if one was already created, otherwise create new
@@ -958,6 +1109,7 @@ export default function InterviewPage() {
         sessionIdRef.current = newSessionId
         console.log('Created new interview session:', newSessionId)
         localStorage.removeItem('prepme_retake_interview_data_id')
+        localStorage.removeItem('prepme_selected_interview_data_id')
       } else {
         console.log('Reusing existing session from Realtime attempt:', activeSessionId)
       }
@@ -1390,7 +1542,9 @@ export default function InterviewPage() {
         console.log('Sending request to /api/interview/voice', { stage })
       }
       
-      const voiceRoute = '/api/interview/voice'
+      const voiceRoute = isCachedRetakeRef.current
+        ? '/api/interview/hr-retake/turn'
+        : '/api/interview/voice'
 
       const responsePromise = fetch(voiceRoute, {
         method: 'POST',
@@ -1799,6 +1953,11 @@ export default function InterviewPage() {
 
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-slate-200">{STAGE_NAMES[stage]}</span>
+          {isCachedRetake && (
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-200">
+              Saved-question retake
+            </span>
+          )}
           {isListening && (
             <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-mono text-slate-400">{formatTime(elapsedTime)}</span>
           )}

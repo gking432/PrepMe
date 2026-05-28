@@ -3,14 +3,13 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
-import { Briefcase, Target, LogOut, ChevronDown, UserRound } from 'lucide-react'
+import { Briefcase, Target, LogOut, ChevronDown } from 'lucide-react'
 
-type Tab = 'preps' | 'practice' | 'account'
+type Tab = 'preps' | 'practice'
 
 const NAV: { key: Tab; label: string; href: string; icon: any }[] = [
   { key: 'preps', label: 'Interviews', href: '/dashboard', icon: Briefcase },
   { key: 'practice', label: 'Practice', href: '/practice', icon: Target },
-  { key: 'account', label: 'Account', href: '/profile', icon: UserRound },
 ]
 
 interface AppChromeProps {
@@ -55,7 +54,7 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hi
               <span className="text-[17px] font-bold tracking-tight text-slate-900">PrepMe</span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
-              {NAV.filter((n) => n.key !== 'account').map((n) => {
+              {NAV.map((n) => {
                 const Icon = n.icon
                 const on = active === n.key
                 return (
@@ -92,13 +91,6 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hi
                   <p className="text-xs font-medium text-slate-400">Signed in as</p>
                   <p className="truncate text-sm font-semibold text-slate-800">{email || 'Account'}</p>
                 </div>
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  <UserRound className="h-4 w-4 text-slate-400" />
-                  Profile &amp; billing
-                </Link>
                 <button
                   type="button"
                   onClick={signOut}
@@ -117,7 +109,7 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hi
       <main className={`mx-auto w-full ${maxWidth} px-4 pb-24 pt-6 sm:px-6 md:pb-14`}>{children}</main>
 
       {/* Mobile bottom tabs */}
-      <nav className={`fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden ${hideMobileTabs ? 'hidden' : ''}`}>
+      <nav className={`fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden ${hideMobileTabs ? 'hidden' : ''}`}>
         {NAV.map((n) => {
           const Icon = n.icon
           const on = active === n.key

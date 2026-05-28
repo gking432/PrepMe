@@ -202,12 +202,12 @@ export function validateHiringManagerRubric(rubric: any): boolean {
   }
 
   const requiredHmCriteria = [
-    'depth_of_knowledge',
-    'problem_solving',
-    'impact_and_results',
-    'role_alignment',
-    'growth_and_self_awareness',
-    'red_flags',
+    'role_specific_capability_domain_depth',
+    'applied_problem_solving_tradeoffs',
+    'evidence_ownership_impact',
+    'work_style_communication_collaboration',
+    'coachability_self_awareness_pressure',
+    'candidate_questions_manager_fit',
   ]
 
   for (const criterion of requiredHmCriteria) {

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { buildSystemPrompt as buildHrScreenPrompt } from '@/lib/interview-prompts/hr_screen'
+import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-prompts/hiring_manager'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
@@ -25,12 +26,14 @@ export async function POST(request: NextRequest) {
     // First try to get from session, but also get the latest interview data as fallback
     // Use supabaseAdmin to bypass RLS since we're filtering by user_id
     let interviewData = null
+    let sessionUserId: string | null = null
     if (sessionId) {
       const { data: sessionData } = await supabaseAdmin
         .from('interview_sessions')
         .select('user_interview_data_id, user_id')
         .eq('id', sessionId)
         .single()
+      sessionUserId = sessionData?.user_id || null
 
       // Try to get interview data from session link first
       if (sessionData?.user_interview_data_id) {
@@ -327,6 +330,59 @@ QUESTION BOUNDARIES:
   - one unclear-path / uncertainty example
   - one resume verification prompt
   - one tougher but still recruiter-appropriate curveball question
+        `,
+      })
+    } else if (stage === 'hiring_manager') {
+      let priorRoundContext = ''
+      if (sessionUserId) {
+        const { data: hrSession } = await supabaseAdmin
+          .from('interview_sessions')
+          .select('id')
+          .eq('user_id', sessionUserId)
+          .eq('stage', 'hr_screen')
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (hrSession?.id) {
+          const { data: hrFeedback } = await supabaseAdmin
+            .from('interview_feedback')
+            .select('overall_score, strengths, weaknesses, suggestions, full_rubric, hr_screen_six_areas')
+            .eq('interview_session_id', hrSession.id)
+            .maybeSingle()
+
+          if (hrFeedback) {
+            const sixAreas = (hrFeedback.hr_screen_six_areas || (hrFeedback.full_rubric as any)?.hr_screen_six_areas || {}) as any
+            const wentWell = Array.isArray(sixAreas.what_went_well) ? sixAreas.what_went_well : []
+            const needsImprove = Array.isArray(sixAreas.what_needs_improve) ? sixAreas.what_needs_improve : []
+            priorRoundContext = `
+PRIOR HR SCREEN CONTEXT:
+- HR score: ${hrFeedback.overall_score ?? 'unknown'}/10
+- HR strengths: ${(hrFeedback.strengths || []).slice(0, 4).join('; ') || wentWell.map((item: any) => item.criterion).join('; ') || 'none noted'}
+- HR weaknesses: ${(hrFeedback.weaknesses || []).slice(0, 4).join('; ') || needsImprove.map((item: any) => item.criterion).join('; ') || 'none noted'}
+- Suggested follow-ups: ${(hrFeedback.suggestions || []).slice(0, 4).join('; ') || 'none noted'}
+
+Use this to go deeper. Do not repeat the HR screen. Probe whether weak signals persist under role-specific pressure.
+`
+          }
+        }
+      }
+
+      optimizedSystemPrompt = buildHiringManagerPrompt({
+        dataSection: sharedDataSection,
+        conversationContext: priorRoundContext,
+        phaseInstructions: `
+OPENING:
+- You speak first.
+- Start as Alex, the hiring manager.
+- Set the expectation that this is a deeper conversation about the role, their experience, and how they work.
+- Begin with their most relevant resume project, role, or achievement and ask them to walk you through it.
+
+INTERVIEW LENGTH:
+- Aim for roughly 10-14 substantive interviewer questions including follow-ups.
+- Do not wrap after a few exchanges unless the candidate refuses to participate.
+- Near the end, ask what questions they have about the team, expectations, or success measures.
 `,
       })
     }

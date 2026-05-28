@@ -181,37 +181,37 @@ You will receive the full interview transcript, candidate resume, job descriptio
 Your task is to assess the candidate using TWO tiers:
 
 TIER 1 - UNIVERSAL HIRING MANAGER CRITERIA (score each 1-10):
-These apply to every candidate regardless of industry or role:
+These apply to every paid Hiring Manager round regardless of industry or role:
 
-1. Technical Depth / Domain Knowledge
-   - Did they go beyond surface-level answers?
-   - Could they explain the "why" behind their decisions and approaches?
-   - Did they demonstrate mastery vs. mere familiarity?
+1. Role-Specific Capability / Domain Depth
+   - Did they show working knowledge of the role's actual responsibilities?
+   - Could they explain methods, tools, decisions, constraints, and tradeoffs?
+   - Did they demonstrate capability beyond surface familiarity?
 
-2. Problem-Solving Approach
-   - When given challenges or scenarios, how did they think through them?
-   - Did they show structured thinking (break down problems, consider tradeoffs)?
-   - Did they ask clarifying questions before jumping to solutions?
+2. Applied Problem-Solving & Tradeoffs
+   - Did they reason through ambiguous or realistic scenarios clearly?
+   - Did they ask or imply useful clarifying questions before jumping to solutions?
+   - Did they weigh tradeoffs, risks, stakeholders, and sequencing?
 
-3. Experience Storytelling (STAR Method)
-   - Did they anchor answers in specific, concrete past experiences?
-   - Did they follow a clear Situation → Task → Action → Result structure?
-   - Did they quantify outcomes with real numbers or measurable impact?
+3. Evidence, Ownership & Impact
+   - Did they anchor answers in specific past work?
+   - Was their personal contribution clear versus the team's contribution?
+   - Did they give measurable outcomes, business impact, or concrete consequences?
 
-4. Role-Specific Competencies
-   - Do their actual skills match what the job description requires?
-   - Did their answers demonstrate capability for THIS specific role?
-   - Are there critical skill gaps vs. nice-to-have gaps?
+4. Work Style, Communication & Collaboration
+   - Did they sound like someone a manager could trust on a team?
+   - Did they explain how they communicate progress, handle disagreement, and work cross-functionally?
+   - Did they show professional judgment and self-management?
 
-5. Critical Thinking Under Pressure
-   - When pushed back on or asked follow-up questions, did they hold up?
-   - Did they reason through ambiguous or novel scenarios calmly?
-   - Did they show intellectual honesty (admit uncertainty vs. bluff)?
+5. Coachability, Self-Awareness & Pressure Response
+   - Did they handle pushback, gaps, mistakes, or failure with maturity?
+   - Did they show honest self-awareness without blame-shifting or defensiveness?
+   - Did they stay composed and credible when pressed?
 
-6. Questions Asked to Interviewer
-   - Did they ask thoughtful, substantive questions about the role/team/company?
-   - Did their questions signal genuine interest and preparation?
-   - Did they avoid generic or surface-level questions?
+6. Candidate Questions & Manager Fit
+   - Did they ask thoughtful questions about the team, expectations, success measures, or role realities?
+   - Did their questions sound like someone preparing to do the job?
+   - Did they avoid generic or shallow questions?
 
 RED FLAGS (not scored — flag as present/absent with brief explanation):
 - Inconsistencies between resume claims and interview answers
@@ -245,7 +245,7 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
   "hiring_manager_six_areas": {
     "what_went_well": [
       {
-        "criterion": "Technical Depth / Domain Knowledge",
+        "criterion": "Role-Specific Capability / Domain Depth",
         "feedback": "[1-2 sentence explanation with specific transcript reference]",
         "evidence": [
           {
@@ -258,7 +258,7 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
     ],
     "what_needs_improve": [
       {
-        "criterion": "Experience Storytelling (STAR Method)",
+        "criterion": "Evidence, Ownership & Impact",
         "feedback": "[1-2 sentence explanation with specific transcript reference]",
         "evidence": [
           {
@@ -323,12 +323,12 @@ Use this context to:
 
   prompt += `\n\nMANDATORY REQUIREMENTS FOR hiring_manager_criteria:`
   prompt += `\nYou MUST include ALL 6 criteria in both "scores" and "feedback" objects with these EXACT names:`
-  prompt += `\n1. technical_depth_domain_knowledge`
-  prompt += `\n2. problem_solving_approach`
-  prompt += `\n3. experience_storytelling_star`
-  prompt += `\n4. role_specific_competencies`
-  prompt += `\n5. critical_thinking_under_pressure`
-  prompt += `\n6. questions_asked_to_interviewer`
+  prompt += `\n1. role_specific_capability_domain_depth`
+  prompt += `\n2. applied_problem_solving_tradeoffs`
+  prompt += `\n3. evidence_ownership_impact`
+  prompt += `\n4. work_style_communication_collaboration`
+  prompt += `\n5. coachability_self_awareness_pressure`
+  prompt += `\n6. candidate_questions_manager_fit`
   prompt += `\n\nDO NOT use alternative names. Every single one must be present with both a score and feedback text.`
 
   prompt += `\n\nSCORING SCALE (STRICT - SCORES MUST ALIGN WITH YOUR ANALYSIS):`

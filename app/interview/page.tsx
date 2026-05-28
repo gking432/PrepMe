@@ -943,8 +943,23 @@ export default function InterviewPage() {
             console.log('HR screen explicit close detected')
             markClosingAndFinish()
           }
+        } else if (stage === 'hiring_manager') {
+          const lowerMessage = fullMessage.toLowerCase()
+          const closingSignals = [
+            'thanks for the conversation',
+            'thanks for your time',
+            'much clearer sense',
+            'clearer sense of how you think',
+            'where your experience maps to the role',
+            'we\'ll be in touch',
+            'next steps',
+          ]
+          const hasClosingSignal = closingSignals.some(keyword => lowerMessage.includes(keyword))
+          if (turnCount >= 10 && hasClosingSignal) {
+            setTimeout(() => endInterview(), 2000)
+          }
         } else {
-          // Other stages: Check if should end interview (after 5-10 turns)
+          // Other paid stages keep the existing automatic guard until their prompts are hardened.
           if (turnCount >= 5) {
             setTimeout(() => endInterview(), 2000)
           }

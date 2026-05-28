@@ -2188,8 +2188,8 @@ export default function InterviewDashboard() {
   // Ordered interview gates: complete in order, pass (or premium) to proceed
   const canStartHiringManager1 = hasFeedback && (likelihood === 'likely' || isPremium)
   const handleUnlockNextStage = () => {
-    const stageOrder: Array<'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'> = ['hr_screen', 'hiring_manager', 'culture_fit', 'final']
-    const normalizedStage = (currentStage === 'final_round' ? 'final' : currentStage) as 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
+    const stageOrder: Array<'hr_screen' | 'hiring_manager' | 'final'> = ['hr_screen', 'hiring_manager', 'final']
+    const normalizedStage = (currentStage === 'final_round' || currentStage === 'culture_fit' ? 'final' : currentStage) as 'hr_screen' | 'hiring_manager' | 'final'
     const currentIndex = stageOrder.indexOf(normalizedStage)
     const nextStage = currentIndex >= 0 ? stageOrder[currentIndex + 1] : null
 

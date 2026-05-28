@@ -80,7 +80,7 @@ const STAGE_NAME: Record<StageKey, string> = {
 
 const NEXT_STAGE: Record<StageKey, StageKey | null> = {
   hr_screen: 'hiring_manager',
-  hiring_manager: 'culture_fit',
+  hiring_manager: 'final',
   culture_fit: 'final',
   final: null,
 }

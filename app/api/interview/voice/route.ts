@@ -544,7 +544,9 @@ ${websiteContent}
         const hasAskedTechnicalDeepDive = askedQuestionsPreview.some((q: string) =>
           q.toLowerCase().includes('walk me through') ||
           q.toLowerCase().includes('most complex') ||
-          q.toLowerCase().includes('technically challenging')
+          q.toLowerCase().includes('technically challenging') ||
+          q.toLowerCase().includes('most relevant project') ||
+          q.toLowerCase().includes('deep dive')
         )
         const hasAskedBehavioralSTAR = askedQuestionsPreview.some((q: string) =>
           q.toLowerCase().includes('tell me about a time') ||
@@ -562,21 +564,45 @@ ${websiteContent}
           q.toLowerCase().includes('mistake') ||
           q.toLowerCase().includes('challenge')
         )
+        const hasAskedWorkStyle = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('work style') ||
+          q.toLowerCase().includes('managed') ||
+          q.toLowerCase().includes('feedback') ||
+          q.toLowerCase().includes('disagree') ||
+          q.toLowerCase().includes('communicate progress')
+        )
+        const hasAskedImpact = askedQuestionsPreview.some((q: string) =>
+          q.toLowerCase().includes('impact') ||
+          q.toLowerCase().includes('metric') ||
+          q.toLowerCase().includes('outcome') ||
+          q.toLowerCase().includes('result') ||
+          q.toLowerCase().includes('measure')
+        )
         phaseInstructions = `
 HIRING MANAGER INTERVIEW - CURRENT STATE:
 
-Questions asked so far: ${askedQuestionsCount}/8 target
+Questions asked so far: ${askedQuestionsCount}/12 target
 
 QUESTION MIX (ensure variety):
-${!hasAskedTechnicalDeepDive ? '- NEEDED: Technical/Project Deep-Dive' : '- Already asked technical deep-dive'}
-${!hasAskedBehavioralSTAR ? '- NEEDED: Behavioral STAR Question' : '- Already asked behavioral question'}
-${!hasAskedProblemSolving ? '- NEEDED: Problem-Solving/Situational' : '- Already asked problem-solving question'}
-${!hasAskedAboutFailures ? '- NEEDED: Failure/Learning Question' : '- Already asked about failures/challenges'}
+${!hasAskedTechnicalDeepDive ? '- NEEDED: Resume/project deep-dive with ownership, constraints, decisions, and tradeoffs' : '- Already asked resume/project deep-dive'}
+${!hasAskedBehavioralSTAR ? '- NEEDED: Behavioral evidence question requiring a concrete past example' : '- Already asked behavioral evidence question'}
+${!hasAskedProblemSolving ? '- NEEDED: Role-specific problem-solving or situational scenario' : '- Already asked problem-solving scenario'}
+${!hasAskedImpact ? '- NEEDED: Impact/results/metrics follow-up' : '- Already asked impact/results question'}
+${!hasAskedWorkStyle ? '- NEEDED: Work style, communication, feedback, disagreement, or manager relationship' : '- Already asked work-style/team-fit question'}
+${!hasAskedAboutFailures ? '- NEEDED: Failure, mistake, learning, or growth question' : '- Already asked about failures/challenges'}
 
-${askedQuestionsCount === 0 ? 'Start with a warm-up: technical deep-dive on their most relevant project.' :
-  askedQuestionsCount < 3 ? 'Ask core competency questions (technical OR behavioral).' :
-  askedQuestionsCount < 6 ? 'Go deeper: follow-ups and challenging scenarios.' :
-  'Wrapping up: ask if they have questions, then close.'}
+DEPTH RULES:
+- This is a paid Hiring Manager round. It should be substantially harder than HR.
+- Ask ONE question at a time, but do not accept surface answers.
+- Use 1-3 follow-ups on important answers before moving on.
+- Push for personal contribution, actual decisions, metrics, tradeoffs, stakeholders, and what they would change now.
+- Include both functional/domain depth and personality/work-style signals.
+
+${askedQuestionsCount === 0 ? 'Start with their most relevant resume project or role and go deep.' :
+  askedQuestionsCount < 4 ? 'Stay in evidence-gathering mode: project depth, role-specific skill, and ownership.' :
+  askedQuestionsCount < 8 ? 'Increase difficulty: scenarios, tradeoffs, ambiguity, and work-style pressure.' :
+  askedQuestionsCount < 11 ? 'Close gaps: failure/growth, impact metrics, and any weak HR-screen signals.' :
+  'Wrapping up: ask what questions they have about the team, role, or success measures, then close.'}
 `
       } else if (stage === 'culture_fit') {
         const hasAskedWorkStyle = askedQuestionsPreview.some((q: string) =>
@@ -734,8 +760,12 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     const messageCount = transcript.length
     if (stage === 'hr_screen' && messageCount >= 6) {
       nextStage = 'hiring_manager'
-    } else if (stage === 'hiring_manager' && messageCount >= 8) {
-      nextStage = 'culture_fit'
+    } else if (stage === 'hiring_manager' && messageCount >= 18) {
+      if (assistantMessage.toLowerCase().includes('thanks for the conversation') ||
+          assistantMessage.toLowerCase().includes('thanks for your time') ||
+          assistantMessage.toLowerCase().includes('clearer sense')) {
+        complete = true
+      }
     } else if (stage === 'culture_fit' && messageCount >= 8) {
       nextStage = 'final'
     } else if (stage === 'final' && messageCount >= 7) {

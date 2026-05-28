@@ -15,6 +15,7 @@ import MobileNav from '@/components/MobileNav'
 import AppChrome from '@/components/AppChrome'
 import WorkspaceSidebar from '@/components/WorkspaceSidebar'
 import { isAdminPreview, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
+import { isInterviewStageLocked, TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type OnboardStep = 'welcome' | 'job' | 'resume' | 'stage'
@@ -359,8 +360,7 @@ export default function DashboardPage() {
   }
 
   const isStageLockedFn = (stage: InterviewStage): boolean => {
-    if (stage === 'hr_screen') return false
-    return !stageAccess?.[stage]?.hasAccess
+    return isInterviewStageLocked(stageAccess?.[stage]?.hasAccess, stage)
   }
 
   const hasResume = interviewData.resumeText.length > 0 || !!interviewData.resumeFile
@@ -1111,7 +1111,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Bundle unlock */}
-            {user && PAID_STAGES.some(s => isStageLockedFn(s)) && (
+            {user && !TEST_ALL_INTERVIEW_STAGES_UNLOCKED && PAID_STAGES.some(s => isStageLockedFn(s)) && (
               <button
                 onClick={() => { setPurchaseHighlightStage(undefined); setShowPurchaseFlow(true) }}
                 className="flex items-center justify-center gap-2 py-2 text-sm text-primary-600 font-medium hover:text-primary-700 transition-colors"

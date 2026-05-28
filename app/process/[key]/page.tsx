@@ -19,6 +19,7 @@ import {
 import { createClient } from '@/lib/supabase-client'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import AppChrome from '@/components/AppChrome'
+import { isInterviewStageLocked } from '@/lib/interview-stage-access'
 
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -152,7 +153,7 @@ export default function ProcessSpinePage() {
 
   const computed = useMemo(() => {
     if (!process) return null
-    const isLocked = (stage: StageKey) => stage !== 'hr_screen' && !stageAccess?.[stage]?.hasAccess
+    const isLocked = (stage: StageKey) => isInterviewStageLocked(stageAccess?.[stage]?.hasAccess, stage)
     const statusOf = (stage: StageKey): NodeStatus => {
       if (process.stages[stage].done) return 'complete'
       if (isLocked(stage)) return 'locked'

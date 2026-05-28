@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Briefcase, Check, Crown, Lock, Phone, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
+import { isInterviewStageLocked } from '@/lib/interview-stage-access'
 
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -113,7 +114,7 @@ export default function ProcessSidebar({ currentStageKey, currentSessionData, on
     if (stage === currentStageKey) return 'current'
     if (!stages) return 'available'
     if (stages[stage].done) return 'complete'
-    if (stage !== 'hr_screen' && !stageAccess?.[stage]?.hasAccess) return 'locked'
+    if (isInterviewStageLocked(stageAccess?.[stage]?.hasAccess, stage)) return 'locked'
     return 'available'
   }
 

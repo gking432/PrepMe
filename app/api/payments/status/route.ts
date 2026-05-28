@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,8 +35,14 @@ export async function GET(request: NextRequest) {
       final: { hasAccess: false, creditsRemaining: 0, source: 'none' },
     }
 
+    if (TEST_ALL_INTERVIEW_STAGES_UNLOCKED) {
+      for (const stage of ['hiring_manager', 'culture_fit', 'final']) {
+        stageAccess[stage] = { hasAccess: true, creditsRemaining: -1, source: 'test' }
+      }
+    }
+
     // Check credits
-    if (credits) {
+    if (!TEST_ALL_INTERVIEW_STAGES_UNLOCKED && credits) {
       for (const credit of credits) {
         if (credit.credits_remaining > 0) {
           stageAccess[credit.stage] = {
@@ -49,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Check subscription (overrides credits if active)
     const hasActiveSubscription = subscription?.status === 'active'
-    if (hasActiveSubscription) {
+    if (!TEST_ALL_INTERVIEW_STAGES_UNLOCKED && hasActiveSubscription) {
       const withinLimit = (subscription.interview_count_this_period || 0) < (subscription.max_interviews_per_period || 5)
       for (const stage of ['hiring_manager', 'culture_fit', 'final']) {
         if (withinLimit || stageAccess[stage].hasAccess) {

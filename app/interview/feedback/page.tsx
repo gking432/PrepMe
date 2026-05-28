@@ -24,6 +24,7 @@ import AppChrome from '@/components/AppChrome'
 import ProcessSidebar from '@/components/ProcessSidebar'
 import ImprovementTip from '@/components/ImprovementTip'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
+import { TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getImprovementTipForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
 
@@ -39,7 +40,7 @@ function parseSessionRoleContext(jobDescriptionText?: string | null) {
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('results')
-  const [isPremium, setIsPremium] = useState(false)
+  const [isPremium, setIsPremium] = useState(TEST_ALL_INTERVIEW_STAGES_UNLOCKED)
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
   const [purchaseHighlightStage, setPurchaseHighlightStage] = useState<string | undefined>(undefined)
@@ -837,7 +838,7 @@ export default function InterviewDashboard() {
             const hasAnyPaidAccess = ['hiring_manager', 'culture_fit', 'final'].some(
               s => paymentData.stageAccess?.[s]?.hasAccess
             )
-            setIsPremium(hasAnyPaidAccess || paymentData.subscription?.active || false)
+            setIsPremium(TEST_ALL_INTERVIEW_STAGES_UNLOCKED || hasAnyPaidAccess || paymentData.subscription?.active || false)
           }
         } catch (err) {
           console.error('Error loading payment status:', err)

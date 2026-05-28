@@ -12,6 +12,7 @@ import { buildSystemPrompt as buildHrScreenPrompt } from '@/lib/interview-prompt
 import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-prompts/hiring_manager'
 import { buildSystemPrompt as buildCultureFitPrompt } from '@/lib/interview-prompts/culture_fit'
 import { buildSystemPrompt as buildFinalPrompt } from '@/lib/interview-prompts/final'
+import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { recordTurn } from '@/lib/observer-agent'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
@@ -191,33 +192,31 @@ export async function POST(request: NextRequest) {
 
     // Fetch HR screen feedback if this is a hiring_manager interview
     let hrScreenContext = ''
-    if (stage === 'hiring_manager' && userId) {
-      const { data: hrSession } = await supabaseAdmin
-        .from('interview_sessions')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('stage', 'hr_screen')
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+    if (stage === 'hiring_manager') {
+      const hrFeedback = await fetchRelatedHrScreenFeedback({
+        interviewDataId: interviewData?.id,
+        userId,
+      })
 
-      if (hrSession) {
-        const { data: hrFeedback } = await supabaseAdmin
-          .from('interview_feedback')
-          .select('strengths, weaknesses, suggestions, detailed_feedback, hr_screen_six_areas')
-          .eq('interview_session_id', hrSession.id)
-          .maybeSingle()
+      if (hrFeedback) {
+        const sixAreas = hrFeedback.hr_screen_six_areas && typeof hrFeedback.hr_screen_six_areas === 'object'
+          ? hrFeedback.hr_screen_six_areas
+          : {}
+        const wentWell = Array.isArray(sixAreas.what_went_well) ? sixAreas.what_went_well : []
+        const needsImprove = Array.isArray(sixAreas.what_needs_improve) ? sixAreas.what_needs_improve : []
+        const formatAreaItem = (item: any) => {
+          const criterion = item?.criterion || item?.area || item?.name || 'Area'
+          const reason = item?.reason || item?.summary || item?.feedback || 'No notes'
+          return `- ${criterion}: ${reason}`
+        }
+        const sixAreasFormatted = [
+          ...wentWell.map(formatAreaItem),
+          ...needsImprove.map(formatAreaItem),
+        ].join('\n')
 
-        if (hrFeedback) {
-          const sixAreasFormatted = hrFeedback.hr_screen_six_areas && typeof hrFeedback.hr_screen_six_areas === 'object'
-            ? Object.entries(hrFeedback.hr_screen_six_areas).map(([area, data]: [string, unknown]) => {
-                const d = data as { score?: number; summary?: string }
-                return `- ${area}: ${d?.score ?? 'N/A'}/5 - ${d?.summary || 'No notes'}`
-              }).join('\n')
-            : ''
-          hrScreenContext = `
+        hrScreenContext = `
 === HR SCREEN FEEDBACK (reference this during the interview) ===
+Related HR session: ${hrFeedback.session_id}
 
 Strengths identified in HR screen:
 ${(hrFeedback.strengths ?? []).map((s: string) => `- ${s}`).join('\n') || '- None specifically noted'}
@@ -238,11 +237,8 @@ Use this context to:
 
 === END HR SCREEN FEEDBACK ===
 `
-        } else {
-          console.log('⚠️ No HR screen feedback found - proceeding without context')
-        }
       } else {
-        console.log('⚠️ No completed HR screen found for this user - proceeding without context')
+        console.log('⚠️ No related HR screen feedback found - proceeding without cross-stage context')
       }
     }
 

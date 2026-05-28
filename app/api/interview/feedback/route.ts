@@ -11,6 +11,7 @@ import { gradeHrScreenQuestionLevel } from '@/lib/hr-question-level-grader'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
 import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE } from '@/lib/feedback-config'
+import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -517,7 +518,7 @@ export async function POST(request: NextRequest) {
     // Use supabaseAdmin to bypass RLS and ensure access
     const { data: sessionData, error: sessionError } = await supabaseAdmin
       .from('interview_sessions')
-      .select('user_interview_data_id, stage')
+      .select('user_interview_data_id, stage, user_id')
       .eq('id', sessionId)
       .single()
 
@@ -593,41 +594,17 @@ export async function POST(request: NextRequest) {
     // Fetch HR screen feedback for cross-stage intelligence (hiring_manager and later stages)
     let hrScreenFeedback = null
     if (sessionData.stage === 'hiring_manager') {
-      // Get user_id from session
-      const { data: sessionForUser } = await supabaseAdmin
-        .from('interview_sessions')
-        .select('user_id')
-        .eq('id', sessionId)
-        .single()
+      const relatedHrFeedback = await fetchRelatedHrScreenFeedback({
+        interviewDataId: sessionData.user_interview_data_id,
+        userId: sessionData.user_id,
+      })
 
-      if (sessionForUser?.user_id) {
-        // Find the most recent completed HR screen for this user
-        const { data: hrSession } = await supabaseAdmin
-          .from('interview_sessions')
-          .select('id')
-          .eq('user_id', sessionForUser.user_id)
-          .eq('stage', 'hr_screen')
-          .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        if (hrSession) {
-          const { data: hrFeedbackRows } = await supabaseAdmin
-            .from('interview_feedback')
-            .select('overall_score, strengths, weaknesses, suggestions')
-            .eq('interview_session_id', hrSession.id)
-            .order('created_at', { ascending: false })
-          const hrFeedbackData = hrFeedbackRows?.[0] || null
-
-          if (hrFeedbackData) {
-            hrScreenFeedback = {
-              overall_score: hrFeedbackData.overall_score,
-              strengths: hrFeedbackData.strengths || [],
-              weaknesses: hrFeedbackData.weaknesses || [],
-              suggestions: hrFeedbackData.suggestions || [],
-            }
-          }
+      if (relatedHrFeedback) {
+        hrScreenFeedback = {
+          overall_score: relatedHrFeedback.overall_score,
+          strengths: relatedHrFeedback.strengths,
+          weaknesses: relatedHrFeedback.weaknesses,
+          suggestions: relatedHrFeedback.suggestions,
         }
       }
     }

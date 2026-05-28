@@ -5,6 +5,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
+import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -87,12 +88,14 @@ export async function POST(request: NextRequest) {
     // First try to get from session, but also get the latest interview data as fallback
     // Use supabaseAdmin to bypass RLS since we're filtering by user_id
     let interviewData = null
+    let sessionUserId: string | null = null
     if (sessionId) {
       const { data: sessionData } = await supabaseAdmin
         .from('interview_sessions')
         .select('user_interview_data_id, user_id')
         .eq('id', sessionId)
         .single()
+      sessionUserId = sessionData?.user_id || null
 
       // Try to get interview data from session link first
       if (sessionData?.user_interview_data_id) {
@@ -181,6 +184,12 @@ export async function POST(request: NextRequest) {
     const systemPrompt = promptData.system_prompt
     let initialMessage = ''
     let conversationPhase = 'opening'
+    const relatedHrFeedback = stage === 'hiring_manager'
+      ? await fetchRelatedHrScreenFeedback({
+          interviewDataId: interviewData?.id,
+          userId: sessionUserId,
+        })
+      : null
     
     if (stage === 'hr_screen') {
       // HR SCREEN: Structured opening script
@@ -285,7 +294,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        initialMessage = `Hi, I'm ${managerTitle} at ${companyName}. Thanks for speaking with our HR team. I've reviewed your background and our notes from that conversation. I'd like to spend the next 30 minutes diving deeper into your experience, particularly as it relates to the ${positionName} role. Then we'll leave time for your questions. Sound good?`
+        const priorRoundReference = relatedHrFeedback
+          ? 'I reviewed your background and the notes from your HR screen.'
+          : 'I reviewed your background and the role.'
+        initialMessage = `Hi, I'm ${managerTitle} at ${companyName}. ${priorRoundReference} I'd like to spend the next 30 minutes diving deeper into your experience, particularly as it relates to the ${positionName} role. Then we'll leave time for your questions. Sound good?`
         conversationPhase = 'screening'
         // Hiring Manager greeting created
       } else {

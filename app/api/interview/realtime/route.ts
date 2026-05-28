@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { buildSystemPrompt as buildHrScreenPrompt } from '@/lib/interview-prompts/hr_screen'
 import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-prompts/hiring_manager'
+import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
@@ -334,30 +335,18 @@ QUESTION BOUNDARIES:
       })
     } else if (stage === 'hiring_manager') {
       let priorRoundContext = ''
-      if (sessionUserId) {
-        const { data: hrSession } = await supabaseAdmin
-          .from('interview_sessions')
-          .select('id')
-          .eq('user_id', sessionUserId)
-          .eq('stage', 'hr_screen')
-          .eq('status', 'completed')
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+      const hrFeedback = await fetchRelatedHrScreenFeedback({
+        interviewDataId: interviewData?.id,
+        userId: sessionUserId,
+      })
 
-        if (hrSession?.id) {
-          const { data: hrFeedback } = await supabaseAdmin
-            .from('interview_feedback')
-            .select('overall_score, strengths, weaknesses, suggestions, full_rubric, hr_screen_six_areas')
-            .eq('interview_session_id', hrSession.id)
-            .maybeSingle()
-
-          if (hrFeedback) {
-            const sixAreas = (hrFeedback.hr_screen_six_areas || (hrFeedback.full_rubric as any)?.hr_screen_six_areas || {}) as any
-            const wentWell = Array.isArray(sixAreas.what_went_well) ? sixAreas.what_went_well : []
-            const needsImprove = Array.isArray(sixAreas.what_needs_improve) ? sixAreas.what_needs_improve : []
-            priorRoundContext = `
+      if (hrFeedback) {
+        const sixAreas = (hrFeedback.hr_screen_six_areas || {}) as any
+        const wentWell = Array.isArray(sixAreas.what_went_well) ? sixAreas.what_went_well : []
+        const needsImprove = Array.isArray(sixAreas.what_needs_improve) ? sixAreas.what_needs_improve : []
+        priorRoundContext = `
 PRIOR HR SCREEN CONTEXT:
+- Related HR session: ${hrFeedback.session_id}
 - HR score: ${hrFeedback.overall_score ?? 'unknown'}/10
 - HR strengths: ${(hrFeedback.strengths || []).slice(0, 4).join('; ') || wentWell.map((item: any) => item.criterion).join('; ') || 'none noted'}
 - HR weaknesses: ${(hrFeedback.weaknesses || []).slice(0, 4).join('; ') || needsImprove.map((item: any) => item.criterion).join('; ') || 'none noted'}
@@ -365,8 +354,6 @@ PRIOR HR SCREEN CONTEXT:
 
 Use this to go deeper. Do not repeat the HR screen. Probe whether weak signals persist under role-specific pressure.
 `
-          }
-        }
       }
 
       optimizedSystemPrompt = buildHiringManagerPrompt({

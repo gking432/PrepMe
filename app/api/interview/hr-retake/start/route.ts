@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion } from '@/lib/interview-session'
-import { getOrCreateCachedSpeech, loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
+import { loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,25 +79,40 @@ export async function POST(request: NextRequest) {
       questions.map(async (question: any) => {
         const cacheKey = `retake-${sourceSessionId}-${question.id}-${textHash(question.question)}`
         const storedRealtimeAudio = await loadStoredInterviewAudioBase64(question.audio_cache)
-        const audioBase64 = storedRealtimeAudio || await getOrCreateCachedSpeech({
-          cacheKey,
-          text: question.question,
-          preferOpenAI: true,
-        })
 
-        if (!audioBase64) {
-          throw new Error(`Failed to generate retake audio for ${question.id}`)
+        if (!storedRealtimeAudio) {
+          return {
+            questionId: question.id,
+            text: question.question,
+            audioBase64: null,
+            audioSource: 'missing_realtime_audio',
+            audioCache: question.audio_cache || null,
+            cacheKey,
+          }
         }
 
         return {
           questionId: question.id,
           text: question.question,
-          audioBase64,
-          audioSource: storedRealtimeAudio ? 'realtime_audio_cache' : 'tts_fallback',
+          audioBase64: storedRealtimeAudio,
+          audioSource: 'realtime_audio_cache',
           audioCache: question.audio_cache || null,
+          cacheKey,
         }
       })
     )
+
+    const missingAudioPrompts = scriptPrompts.filter((prompt) => !prompt.audioBase64)
+    if (missingAudioPrompts.length) {
+      return NextResponse.json(
+        {
+          error: 'This HR screen does not have saved realtime audio for every retake question. Please run a new HR screen before using same-voice retakes.',
+          code: 'RETAKE_AUDIO_CACHE_MISSING',
+          missingQuestionIds: missingAudioPrompts.map((prompt) => prompt.questionId),
+        },
+        { status: 409 }
+      )
+    }
 
     const firstPrompt = scriptPrompts[0]
 
@@ -135,7 +150,6 @@ export async function POST(request: NextRequest) {
             script_prompts: scriptPrompts.map((prompt) => ({
               questionId: prompt.questionId,
               text: prompt.text,
-              cacheKey: `retake-${sourceSessionId}-${prompt.questionId}-${textHash(prompt.text)}`,
               audioSource: prompt.audioSource,
               audio_cache: prompt.audioCache,
             })),
@@ -148,7 +162,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: firstPrompt.text,
       audioBase64: firstPrompt.audioBase64,
-      scriptPrompts,
+      scriptPrompts: scriptPrompts.map((prompt) => ({
+        questionId: prompt.questionId,
+        text: prompt.text,
+        audioSource: prompt.audioSource,
+        audio_cache: prompt.audioCache,
+      })),
       conversationPhase: 'screening',
       cachedRetakeMode: true,
     })

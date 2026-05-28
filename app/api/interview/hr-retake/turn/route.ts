@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
-import { getOrCreateCachedSpeech, loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
+import { loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,14 +86,22 @@ export async function POST(request: NextRequest) {
       questionId: nextPrompt?.questionId,
     })
 
-    const storedRealtimeAudio = nextPrompt?.audio_cache
-      ? await loadStoredInterviewAudioBase64(nextPrompt.audio_cache)
-      : null
-    audioBase64 = storedRealtimeAudio || await getOrCreateCachedSpeech({
-      cacheKey: nextPrompt?.cacheKey || `retake-close-${sessionId}`,
-      text: assistantText,
-      preferOpenAI: true,
-    })
+    if (nextPrompt) {
+      audioBase64 = nextPrompt.audio_cache
+        ? await loadStoredInterviewAudioBase64(nextPrompt.audio_cache)
+        : null
+
+      if (!audioBase64) {
+        return NextResponse.json(
+          {
+            error: 'Saved realtime audio was missing for the next retake question.',
+            code: 'RETAKE_AUDIO_CACHE_MISSING',
+            questionId: nextPrompt.questionId,
+          },
+          { status: 409 }
+        )
+      }
+    }
 
     const structured = await getStructuredTranscript(sessionId)
     const transcriptLines = structured.messages.map((message) => {

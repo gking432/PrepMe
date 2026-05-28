@@ -1151,7 +1151,7 @@ export default function InterviewPage() {
         return
       } catch (error) {
         console.error('Cached HR retake failed:', error)
-        setError('Could not start the saved-question retake. Please try again.')
+        setError(error instanceof Error ? error.message : 'Could not start the saved-question retake. Please try again.')
         setIsLoading(false)
         return
       }

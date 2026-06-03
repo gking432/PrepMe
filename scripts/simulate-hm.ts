@@ -1,15 +1,18 @@
 /**
  * HM interview simulator.
  *
- * Runs the live Hiring Manager interviewer prompt against four synthetic
- * candidate personas (poor / good / better / best), then hands each
- * transcript to the production grader and writes markdown reports.
+ * Runs the live Hiring Manager interviewer prompt against synthetic
+ * candidate personas (poor / good / better / best), then optionally hands
+ * each transcript to the production grader and writes markdown + JSON reports.
  *
  * Usage:
- *   npm run simulate:hm                # all four levels in one go
- *   npm run simulate:hm -- best        # one level
+ *   npm run simulate:hm                         # all four levels in one go
+ *   npm run simulate:hm -- best                 # one level
+ *   npm run simulate:hm -- poor,best            # comma-separated levels
  *   SIM_MODEL=gpt-4o npm run simulate:hm
  *   SIM_MAX_TURNS=8 npm run simulate:hm
+ *   SIM_RUNS_PER_LEVEL=25 npm run simulate:hm   # 100 total simulations
+ *   SIM_GRADE=0 npm run simulate:hm             # prompt-only, no Claude spend
  *
  * Requires OPENAI_API_KEY and ANTHROPIC_API_KEY in .env.local.
  */
@@ -26,6 +29,15 @@ type Level = (typeof LEVELS)[number]
 
 const MODEL = process.env.SIM_MODEL || 'gpt-4o'
 const MAX_TURNS = Number.parseInt(process.env.SIM_MAX_TURNS || '12', 10)
+const RUNS_PER_LEVEL = Math.max(1, Number.parseInt(process.env.SIM_RUNS_PER_LEVEL || '1', 10))
+const GRADER_ENABLED = !['0', 'false', 'off', 'no'].includes((process.env.SIM_GRADE || '1').toLowerCase())
+
+const EXPECTED_SCORE_BANDS: Record<Level, { min: number; max: number }> = {
+  poor: { min: 1, max: 4 },
+  good: { min: 5, max: 7 },
+  better: { min: 7, max: 8 },
+  best: { min: 8, max: 10 },
+}
 
 // ── Fixture ────────────────────────────────────────────────────────────────
 const FIXTURE = {
@@ -146,6 +158,27 @@ INTERVIEW RULES:
 // ── Conversation loop ──────────────────────────────────────────────────────
 type ChatMsg = { role: 'system' | 'user' | 'assistant'; content: string }
 
+interface GradeResult {
+  grade: any | null
+  error: string | null
+}
+
+interface SimulationResult {
+  level: Level
+  runNumber: number
+  model: string
+  transcript: string[]
+  grade: any | null
+  gradeError: string | null
+  score: number | null
+  likelihood: string
+  interviewerTurns: number
+  candidateTurns: number
+  flags: string[]
+  markdownFile: string
+  jsonFile: string
+}
+
 async function chat(openai: OpenAI, messages: ChatMsg[], maxTokens: number, temperature: number) {
   const res = await openai.chat.completions.create({
     model: MODEL,
@@ -203,7 +236,11 @@ async function runSimulation(level: Level): Promise<string[]> {
 }
 
 // ── Grading ────────────────────────────────────────────────────────────────
-async function gradeTranscript(transcript: string[]): Promise<any | null> {
+async function gradeTranscript(transcript: string[]): Promise<GradeResult> {
+  if (!GRADER_ENABLED) {
+    return { grade: null, error: 'grading skipped with SIM_GRADE=0' }
+  }
+
   const materials: GradingMaterials = {
     transcript: transcript.join('\n\n'),
     resume: FIXTURE.resume,
@@ -211,10 +248,12 @@ async function gradeTranscript(transcript: string[]): Promise<any | null> {
     stage: 'hiring_manager',
   }
   try {
-    return await gradeHiringManagerWithRetry(materials, 2)
+    const grade = await gradeHiringManagerWithRetry(materials, 2)
+    return { grade, error: null }
   } catch (err: any) {
-    console.error('  grading failed:', err?.message || err)
-    return null
+    const message = err?.message || String(err)
+    console.error('  grading failed:', message)
+    return { grade: null, error: message }
   }
 }
 
@@ -249,19 +288,57 @@ function renderTranscript(transcript: string[]): string {
     .join('\n\n')
 }
 
-function renderMarkdown(level: Level, transcript: string[], grade: any | null, model: string): string {
+function toScore(value: any): number | null {
+  const n = typeof value === 'number' ? value : Number.parseFloat(String(value))
+  return Number.isFinite(n) ? n : null
+}
+
+function containsClosing(transcript: string[]): boolean {
+  return transcript.some((line) => line.startsWith('Interviewer:') && isEndSignal(line))
+}
+
+function findRunFlags(level: Level, transcript: string[], grade: any | null, gradeError: string | null): string[] {
+  const flags: string[] = []
+  const interviewerTurns = transcript.filter((l) => l.startsWith('Interviewer:')).length
+  const score = toScore(grade?.overall_assessment?.overall_score)
+  const band = EXPECTED_SCORE_BANDS[level]
+  const interviewerText = transcript
+    .filter((l) => l.startsWith('Interviewer:'))
+    .join('\n')
+    .toLowerCase()
+
+  if (!GRADER_ENABLED) flags.push('grading_skipped')
+  if (GRADER_ENABLED && !grade) flags.push('grading_failed')
+  if (gradeError && GRADER_ENABLED) flags.push('grading_error_recorded')
+  if (score != null && (score < band.min || score > band.max)) flags.push('score_out_of_expected_band')
+  if (!containsClosing(transcript)) flags.push('no_interviewer_closing')
+  if (interviewerTurns < 8) flags.push('too_short')
+  if (interviewerTurns > 14) flags.push('too_long')
+  if (/that's impressive|great questions|excellent question|i appreciate your honesty|that's insightful/.test(interviewerText)) {
+    flags.push('possible_over_validation')
+  }
+
+  return flags
+}
+
+function renderMarkdown(result: SimulationResult): string {
+  const { level, transcript, grade, gradeError, model, runNumber, flags } = result
   const overall = grade?.overall_assessment || {}
   const hmSix = grade?.hiring_manager_six_areas
   const score = overall.overall_score ?? 'n/a'
   const likelihood = overall.likelihood_to_advance ?? 'n/a'
   const summary = overall.summary ?? '_(no summary)_'
   const interviewerTurns = transcript.filter((l) => l.startsWith('Interviewer:')).length
+  const expected = EXPECTED_SCORE_BANDS[level]
 
-  return `# HM Simulation — ${level}
+  return `# HM Simulation — ${level} #${runNumber}
 
 **Role:** ${FIXTURE.role} at ${FIXTURE.company}
 **Model:** ${model}
+**Grading:** ${GRADER_ENABLED ? 'enabled' : 'skipped'}
 **Interviewer turns:** ${interviewerTurns}
+**Expected score band:** ${expected.min}-${expected.max}/10
+**Flags:** ${flags.length ? flags.join(', ') : 'none'}
 
 ---
 
@@ -277,6 +354,8 @@ ${bulletList(overall.key_strengths)}
 
 ### Key weaknesses
 ${bulletList(overall.key_weaknesses)}
+
+${gradeError ? `### Grading error\n${gradeError}\n` : ''}
 
 ---
 
@@ -294,53 +373,189 @@ ${renderTranscript(transcript)}
 `
 }
 
-function renderSummary(rows: Array<{ level: Level; score: any; turns: number; file: string }>, model: string, ts: string): string {
+function summarizeLevel(rows: SimulationResult[], level: Level) {
+  const levelRows = rows.filter((r) => r.level === level)
+  const scores = levelRows.map((r) => r.score).filter((s): s is number => typeof s === 'number')
+  const avg = scores.length ? scores.reduce((sum, s) => sum + s, 0) / scores.length : null
+  const avgTurns = levelRows.length
+    ? levelRows.reduce((sum, r) => sum + r.interviewerTurns, 0) / levelRows.length
+    : 0
+  return {
+    runs: levelRows.length,
+    graded: scores.length,
+    avg,
+    min: scores.length ? Math.min(...scores) : null,
+    max: scores.length ? Math.max(...scores) : null,
+    gradeFailures: levelRows.filter((r) => r.flags.includes('grading_failed')).length,
+    avgTurns,
+  }
+}
+
+function findSuiteWarnings(rows: SimulationResult[]): string[] {
+  const warnings: string[] = []
+  const avgs = LEVELS.map((level) => ({ level, avg: summarizeLevel(rows, level).avg }))
+  for (let i = 1; i < avgs.length; i++) {
+    const prev = avgs[i - 1]
+    const current = avgs[i]
+    if (prev.avg != null && current.avg != null && current.avg <= prev.avg) {
+      warnings.push(`non_monotonic_average: ${current.level} avg ${current.avg.toFixed(1)} <= ${prev.level} avg ${prev.avg.toFixed(1)}`)
+    }
+  }
+  const failed = rows.filter((r) => r.flags.includes('grading_failed')).length
+  if (failed) warnings.push(`${failed} grading failure(s)`)
+  const noClose = rows.filter((r) => r.flags.includes('no_interviewer_closing')).length
+  if (noClose) warnings.push(`${noClose} run(s) hit max turns without clean close`)
+  return warnings
+}
+
+function renderSummary(rows: SimulationResult[], model: string, ts: string): string {
+  const suiteWarnings = findSuiteWarnings(rows)
+
   return `# HM Simulation Summary — ${ts}
 
 **Model:** ${model}
+**Grading:** ${GRADER_ENABLED ? 'enabled' : 'skipped'}
+**Runs per level:** ${RUNS_PER_LEVEL}
 
-| Level  | Score   | Turns | Report |
-|--------|---------|-------|--------|
-${rows.map((r) => `| ${r.level} | ${r.score}/10 | ${r.turns} | [${path.basename(r.file)}](./${path.basename(r.file)}) |`).join('\n')}
+## Aggregates
+
+| Level | Runs | Graded | Avg Score | Range | Avg Turns | Grade Failures |
+|-------|------|--------|-----------|-------|-----------|----------------|
+${LEVELS.map((level) => {
+    const s = summarizeLevel(rows, level)
+    return `| ${level} | ${s.runs} | ${s.graded} | ${s.avg == null ? 'n/a' : s.avg.toFixed(1)} | ${s.min == null ? 'n/a' : `${s.min}-${s.max}`} | ${s.avgTurns.toFixed(1)} | ${s.gradeFailures} |`
+  }).join('\n')}
+
+## Suite Warnings
+
+${suiteWarnings.length ? suiteWarnings.map((w) => `- ${w}`).join('\n') : '_(none)_'}
+
+## Runs
+
+| Level | Run | Score | Expected | Turns | Flags | Report | JSON |
+|-------|-----|-------|----------|-------|-------|--------|------|
+${rows.map((r) => {
+    const band = EXPECTED_SCORE_BANDS[r.level]
+    return `| ${r.level} | ${r.runNumber} | ${r.score ?? 'n/a'}/10 | ${band.min}-${band.max} | ${r.interviewerTurns} | ${r.flags.join(', ') || 'none'} | [md](./${path.basename(r.markdownFile)}) | [json](./${path.basename(r.jsonFile)}) |`
+  }).join('\n')}
 `
+}
+
+function writeJson(file: string, payload: any) {
+  fs.writeFileSync(file, JSON.stringify(payload, null, 2))
+}
+
+function parseLevelsFromArgs(): readonly Level[] {
+  const args = process.argv
+    .slice(2)
+    .filter((arg) => arg !== '--')
+    .flatMap((arg) => arg.split(',').map((part) => part.trim()))
+    .filter(Boolean)
+  const selected = args.filter((arg): arg is Level => LEVELS.includes(arg as Level))
+  return selected.length ? Array.from(new Set(selected)) : LEVELS
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────
 async function main() {
   if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY missing (set it in .env.local)')
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY missing (set it in .env.local)')
+  if (GRADER_ENABLED && !process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY missing (set it in .env.local)')
 
-  const arg = process.argv[2] as Level | undefined
-  const levels: readonly Level[] = arg && LEVELS.includes(arg) ? [arg] : LEVELS
+  const levels = parseLevelsFromArgs()
 
   const outDir = path.join(process.cwd(), 'simulations')
   fs.mkdirSync(outDir, { recursive: true })
   const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
 
-  console.log(`HM simulator — model=${MODEL} levels=${levels.join(',')} maxTurns=${MAX_TURNS}`)
+  console.log(`HM simulator — model=${MODEL} levels=${levels.join(',')} maxTurns=${MAX_TURNS} runsPerLevel=${RUNS_PER_LEVEL} grading=${GRADER_ENABLED ? 'on' : 'off'}`)
 
-  const summary: Array<{ level: Level; score: any; turns: number; file: string }> = []
+  const summary: SimulationResult[] = []
 
   for (const level of levels) {
-    console.log(`\n── Level: ${level} ──`)
-    const transcript = await runSimulation(level)
-    const interviewerTurns = transcript.filter((l) => l.startsWith('Interviewer:')).length
-    console.log(`  running grader…`)
-    const grade = await gradeTranscript(transcript)
-    const md = renderMarkdown(level, transcript, grade, MODEL)
-    const file = path.join(outDir, `hm-${level}-${ts}.md`)
-    fs.writeFileSync(file, md)
-    console.log(`  wrote ${path.relative(process.cwd(), file)}`)
-    summary.push({ level, score: grade?.overall_assessment?.overall_score ?? 'n/a', turns: interviewerTurns, file })
+    for (let runNumber = 1; runNumber <= RUNS_PER_LEVEL; runNumber++) {
+      console.log(`\n── Level: ${level} #${runNumber} ──`)
+      const transcript = await runSimulation(level)
+      const interviewerTurns = transcript.filter((l) => l.startsWith('Interviewer:')).length
+      const candidateTurns = transcript.filter((l) => l.startsWith('Candidate:')).length
+      console.log(`  ${GRADER_ENABLED ? 'running grader…' : 'skipping grader…'}`)
+      const { grade, error: gradeError } = await gradeTranscript(transcript)
+      const score = toScore(grade?.overall_assessment?.overall_score)
+      const likelihood = grade?.overall_assessment?.likelihood_to_advance ?? 'n/a'
+      const flags = findRunFlags(level, transcript, grade, gradeError)
+      const suffix = RUNS_PER_LEVEL > 1 ? `${String(runNumber).padStart(2, '0')}-${ts}` : ts
+      const markdownFile = path.join(outDir, `hm-${level}-${suffix}.md`)
+      const jsonFile = path.join(outDir, `hm-${level}-${suffix}.json`)
+      const result: SimulationResult = {
+        level,
+        runNumber,
+        model: MODEL,
+        transcript,
+        grade,
+        gradeError,
+        score,
+        likelihood,
+        interviewerTurns,
+        candidateTurns,
+        flags,
+        markdownFile,
+        jsonFile,
+      }
+
+      fs.writeFileSync(markdownFile, renderMarkdown(result))
+      writeJson(jsonFile, {
+        level,
+        runNumber,
+        model: MODEL,
+        maxTurns: MAX_TURNS,
+        graderEnabled: GRADER_ENABLED,
+        expectedScoreBand: EXPECTED_SCORE_BANDS[level],
+        score,
+        likelihood,
+        interviewerTurns,
+        candidateTurns,
+        flags,
+        gradeError,
+        transcript,
+        grade,
+      })
+      console.log(`  wrote ${path.relative(process.cwd(), markdownFile)} and ${path.relative(process.cwd(), jsonFile)}`)
+      console.log(`  score=${score ?? 'n/a'}/10 turns=${interviewerTurns} flags=${flags.join(', ') || 'none'}`)
+      summary.push(result)
+    }
   }
 
-  if (summary.length > 1) {
-    const summaryFile = path.join(outDir, `summary-${ts}.md`)
-    fs.writeFileSync(summaryFile, renderSummary(summary, MODEL, ts))
-    console.log(`\n── Summary ──`)
-    for (const row of summary) console.log(`  ${row.level.padEnd(7)} score=${row.score}/10 turns=${row.turns}`)
-    console.log(`  ${path.relative(process.cwd(), summaryFile)}`)
+  const summaryFile = path.join(outDir, `summary-${ts}.md`)
+  const summaryJsonFile = path.join(outDir, `summary-${ts}.json`)
+  fs.writeFileSync(summaryFile, renderSummary(summary, MODEL, ts))
+  writeJson(summaryJsonFile, {
+    timestamp: ts,
+    model: MODEL,
+    maxTurns: MAX_TURNS,
+    runsPerLevel: RUNS_PER_LEVEL,
+    graderEnabled: GRADER_ENABLED,
+    expectedScoreBands: EXPECTED_SCORE_BANDS,
+    suiteWarnings: findSuiteWarnings(summary),
+    runs: summary.map((r) => ({
+      level: r.level,
+      runNumber: r.runNumber,
+      score: r.score,
+      likelihood: r.likelihood,
+      interviewerTurns: r.interviewerTurns,
+      candidateTurns: r.candidateTurns,
+      flags: r.flags,
+      markdownFile: path.relative(outDir, r.markdownFile),
+      jsonFile: path.relative(outDir, r.jsonFile),
+    })),
+  })
+
+  console.log(`\n── Summary ──`)
+  for (const level of levels) {
+    const s = summarizeLevel(summary, level)
+    console.log(`  ${level.padEnd(7)} avg=${s.avg == null ? 'n/a' : s.avg.toFixed(1)} runs=${s.runs} graded=${s.graded} failures=${s.gradeFailures}`)
   }
+  const warnings = findSuiteWarnings(summary)
+  if (warnings.length) console.log(`  warnings=${warnings.join('; ')}`)
+  console.log(`  ${path.relative(process.cwd(), summaryFile)}`)
+  console.log(`  ${path.relative(process.cwd(), summaryJsonFile)}`)
 }
 
 main().catch((err) => {

@@ -12,6 +12,8 @@ function getOpenAI() {
   return _openai
 }
 
+const REALTIME_THINKING_SILENCE_MS = 3200
+
 export async function POST(request: NextRequest) {
   try {
     const { stage, sessionId } = await request.json()
@@ -202,10 +204,13 @@ Interview Guidelines:
 - Ask questions naturally based on the candidate's responses. Do not use predefined question lists.
 ${stage === 'hr_screen' ? '- Keep HR turns to 6-18 words unless opening, closing, or answering candidate Q&A.' : '- Keep responses under 60 words. Be concise and focused.'}
 - Ask ONE question at a time. Wait for the candidate's answer before proceeding.
+- Let candidates think. Do not fill silence, rush them, or ask the next question just because they paused for a few seconds.
+- If the candidate says "give me a second," "let me think," or similar, say only a brief "Sure" or "Take your time," then wait.
 - Do not explain concepts, teach, or chat casually. Stay in role as the interviewer.
 - Do NOT praise, gush, or over-validate answers. Acknowledge briefly and move on.
 - Use neutral filler: "Mm-hm." / "Okay." / "Got it." — not "Wow!" or "That's incredible!"
 ${stage === 'hr_screen' ? '' : '- End interview after 5-10 turns max unless user says continue.'}
+${stage === 'hr_screen' ? '- Ask at least one brief, recruiter-appropriate question that requires a real example.' : '- Ask concrete past-example questions throughout the round. Use prompts like "Tell me about a time..." and follow up for what they personally did, what changed, and what they learned.'}
 
 ${stageSpecificInstructions}
 
@@ -282,6 +287,8 @@ REALTIME HR SCREEN RULES:
 - Keep this to roughly 8-10 total questions.
 - Normal interviewer turns should be 6-18 words. Opening, Q&A answers, and closing should be 24 words max.
 - Use this pattern: brief acknowledgment, one direct question, stop.
+- Let the candidate pause to think. Do not treat a few seconds of silence as a weak answer or a reason to move on.
+- If they ask for a moment, say only "Sure" and wait for them to continue.
 - Do not summarize the candidate's answer, over-explain, or add multi-part setup before questions.
 - Stay surface-level even if the candidate says something impressive or unusual.
 - Ask at most ONE brief follow-up on any topic, then move on.
@@ -369,6 +376,9 @@ OPENING:
 INTERVIEW LENGTH:
 - Aim for roughly 10-14 substantive interviewer questions including follow-ups.
 - Do not wrap after a few exchanges unless the candidate refuses to participate.
+- Ask at least three concrete past-example questions across the round, including one that is not directly tied to a resume bullet.
+- Strong example prompts include: "Tell me about a time you had to face an uphill battle. What did you do, and how did you overcome it?" or "Tell me about a time you had to influence someone who disagreed with you."
+- When they answer, follow up for what they personally did, what changed, and what they learned.
 - Near the end, ask what questions they have about the team, expectations, or success measures.
 `,
       })
@@ -389,7 +399,7 @@ INTERVIEW LENGTH:
               type: 'server_vad',
               threshold: 0.8,
               prefix_padding_ms: 300,
-              silence_duration_ms: 900,
+              silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
               create_response: true,
               interrupt_response: false,
             },

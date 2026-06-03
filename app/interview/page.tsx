@@ -18,6 +18,9 @@ const STAGE_NAMES: Record<Stage, string> = {
   final: 'Final Round Interview',
 }
 
+const REALTIME_THINKING_SILENCE_MS = 3200
+const FALLBACK_THINKING_SILENCE_MS = 4500
+
 export default function InterviewPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -165,7 +168,7 @@ export default function InterviewPage() {
                   type: 'server_vad',
                   threshold: 0.8,
                   prefix_padding_ms: 300,
-                  silence_duration_ms: 900,
+                  silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
                   create_response: true,
                   interrupt_response: false,
                 }
@@ -706,7 +709,7 @@ export default function InterviewPage() {
                   type: 'server_vad',
                   threshold: 0.8,
                   prefix_padding_ms: 300,
-                  silence_duration_ms: 900,
+                  silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
                   create_response: true,
                   interrupt_response: false,
                 },
@@ -1561,7 +1564,7 @@ export default function InterviewPage() {
         const now = Date.now()
         const silenceDuration = now - lastAudioTime
         
-        if (silenceDuration > 2000 && audioChunksRef.current.length > 0) {
+        if (silenceDuration > FALLBACK_THINKING_SILENCE_MS && audioChunksRef.current.length > 0) {
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             console.log('Silence detected, stopping recording')
             mediaRecorderRef.current.stop()

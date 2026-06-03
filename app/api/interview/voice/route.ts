@@ -581,7 +581,7 @@ Questions asked so far: ${askedQuestionsCount}/12 target
 
 QUESTION MIX (ensure variety):
 ${!hasAskedTechnicalDeepDive ? '- NEEDED: Resume/project deep-dive with ownership, constraints, decisions, and tradeoffs' : '- Already asked resume/project deep-dive'}
-${!hasAskedBehavioralSTAR ? '- NEEDED: Behavioral evidence question requiring a concrete past example' : '- Already asked behavioral evidence question'}
+${!hasAskedBehavioralSTAR ? '- NEEDED: Behavioral evidence question requiring a concrete past example, such as an uphill battle, disagreement, mistake, pressure moment, or fast learning situation' : '- Already asked behavioral evidence question'}
 ${!hasAskedProblemSolving ? '- NEEDED: Role-specific problem-solving or situational scenario' : '- Already asked problem-solving scenario'}
 ${!hasAskedImpact ? '- NEEDED: Impact/results/metrics follow-up' : '- Already asked impact/results question'}
 ${!hasAskedWorkStyle ? '- NEEDED: Work style, communication, feedback, disagreement, or manager relationship' : '- Already asked work-style/team-fit question'}
@@ -592,6 +592,8 @@ DEPTH RULES:
 - Ask ONE question at a time, but do not accept surface answers.
 - Use 1-3 follow-ups on important answers before moving on.
 - Push for personal contribution, actual decisions, metrics, tradeoffs, stakeholders, and what they would change now.
+- Ask for concrete examples throughout the round. If they make a broad claim, ask: "Tell me about a time that actually happened."
+- Let the candidate pause to think. Do not rush in or move on because of a few seconds of silence.
 - Include both functional/domain depth and personality/work-style signals.
 
 ${askedQuestionsCount === 0 ? 'Start with their most relevant resume project or role and go deep.' :
@@ -633,6 +635,11 @@ ${!hasAskedTeamDynamics ? '- NEEDED: Team Dynamics & Collaboration' : '- Already
 ${!hasAskedFeedback ? '- NEEDED: Giving/Receiving Feedback' : '- Already covered feedback'}
 ${!hasAskedConflict ? '- NEEDED: Conflict Resolution' : '- Already covered conflict'}
 
+EVIDENCE RULE:
+- Ask "tell me about a time" questions for culture signals. Do not rely on general personality claims.
+- Good examples: different work styles, teammate disagreement, feedback, changing priorities, or communication breakdown.
+- Let the candidate pause to think before answering.
+
 ${askedQuestionsCount === 0 ? 'Start warm: ask about their ideal work environment or best team experience.' :
   askedQuestionsCount < 3 ? 'Explore their collaboration and communication style.' :
   askedQuestionsCount < 6 ? 'Go deeper on dynamics: feedback, conflict, adaptability.' :
@@ -666,6 +673,11 @@ TOPIC COVERAGE:
 ${!hasAskedStrategic ? '- NEEDED: Strategic Vision & Industry Thinking' : '- Already covered strategic vision'}
 ${!hasAskedLeadership ? '- NEEDED: Leadership Philosophy & Team Building' : '- Already covered leadership'}
 ${!hasAskedDecisionMaking ? '- NEEDED: High-Stakes Decision-Making' : '- Already covered decision-making'}
+
+EVIDENCE RULE:
+- Include concrete past-example questions under pressure, not just strategy opinions.
+- Good examples: uphill battle, wrong call, incomplete data, influencing without authority, conflict with leadership, or recovering from a miss.
+- Let the candidate pause to think. Silence is acceptable when the question is hard.
 
 ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think about the industry or what they would focus on first.' :
   askedQuestionsCount < 3 ? 'Explore leadership and cross-functional impact.' :

@@ -49,10 +49,23 @@ INTERVIEW ARC:
 5. Work Style And Team Fit From A Manager's View
    Ask about how they prefer to be managed, how they communicate progress, how they handle disagreement, how they receive feedback, and what kind of teammate they are under pressure.
 
-6. Growth, Failure, And Self-Awareness
+6. Role Fit Self-Assessment
+   Ask exactly one self-assessment question tied to this role. Choose naturally from:
+   - "What are three traits you have that would help you succeed in this role?"
+   - "What are three things about this role that could be challenging for you?"
+   - "What would your last manager say is your biggest strength and biggest area to improve?"
+   - "If you joined this team, what capability would you need to build fastest?"
+   - "What separates an average [role title] from a great one?"
+   After they answer, pick ONE item and press for proof or a plan:
+   - "Give me an example of that."
+   - "Where have you demonstrated that?"
+   - "Which of those is strongest for you, and which is least proven?"
+   - "How would you close that gap in your first 60 days?"
+
+7. Growth, Failure, And Self-Awareness
    Ask about a mistake, failure, gap, or area they are actively improving. Strong candidates can be honest without collapsing or blaming others.
 
-7. Candidate Questions
+8. Candidate Questions
    Ask what questions they have about the team, expectations, success measures, collaboration, or the work itself. Evaluate whether their questions sound like someone preparing to do the job.
 
 CRITICAL RULES FOR NATURAL FLOW:

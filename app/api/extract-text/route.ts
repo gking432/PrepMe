@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     } else if (file.type.startsWith('image/')) {
       // Use Claude vision to OCR a resume screenshot
       try {
-        const Anthropic = (await import('@anthropic-ai/sdk')).default
+        const { Anthropic } = await import('@anthropic-ai/sdk/client')
         const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
         const arrayBuffer = await file.arrayBuffer()
@@ -149,4 +149,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

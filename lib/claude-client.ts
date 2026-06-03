@@ -1,5 +1,5 @@
 // Claude (Anthropic) client for post-interview grading
-import Anthropic from '@anthropic-ai/sdk'
+import { Anthropic } from '@anthropic-ai/sdk/client'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 
 let _anthropic: Anthropic | null = null

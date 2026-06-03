@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
+import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -335,7 +336,7 @@ export async function POST(request: NextRequest) {
     try {
       const mp3 = await getOpenAI().audio.speech.create({
         model: 'tts-1',
-        voice: 'alloy', // Options: alloy, echo, fable, onyx, nova, shimmer
+        voice: getFallbackTtsVoiceForStage(stage),
         input: initialMessage,
       })
 

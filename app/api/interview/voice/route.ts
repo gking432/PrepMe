@@ -14,6 +14,7 @@ import { buildSystemPrompt as buildCultureFitPrompt } from '@/lib/interview-prom
 import { buildSystemPrompt as buildFinalPrompt } from '@/lib/interview-prompts/final'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { recordTurn } from '@/lib/observer-agent'
+import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import OpenAI from 'openai'
@@ -748,7 +749,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     try {
       const mp3 = await getOpenAI().audio.speech.create({
         model: 'tts-1',
-        voice: 'alloy', // Options: alloy, echo, fable, onyx, nova, shimmer
+        voice: getFallbackTtsVoiceForStage(stage),
         input: assistantMessage,
       })
 

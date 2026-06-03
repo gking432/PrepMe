@@ -4,6 +4,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { buildSystemPrompt as buildHrScreenPrompt } from '@/lib/interview-prompts/hr_screen'
 import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-prompts/hiring_manager'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
+import { getRealtimeVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
@@ -385,6 +386,7 @@ INTERVIEW LENGTH:
     }
 
     const realtimeModel = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-mini'
+    const realtimeVoice = getRealtimeVoiceForStage(stage)
     const realtimeSessionConfig = {
       session: {
         type: 'realtime',
@@ -406,7 +408,7 @@ INTERVIEW LENGTH:
           },
           output: {
             format: { type: 'audio/pcm', rate: 24000 },
-            voice: 'marin',
+            voice: realtimeVoice,
           },
         },
         output_modalities: ['audio'],
@@ -435,6 +437,7 @@ INTERVIEW LENGTH:
       hasValue: !!clientSecretResponse?.value,
       sessionId: clientSecretResponse?.session?.id,
       model: clientSecretResponse?.session?.model,
+      voice: realtimeVoice,
     })
 
     const clientSecret = clientSecretResponse?.value
@@ -448,6 +451,7 @@ INTERVIEW LENGTH:
         sessionData: clientSecretResponse,
         sessionId: clientSecretResponse?.session?.id,
         instructions: optimizedSystemPrompt,
+        voice: realtimeVoice,
       }, { status: 500 })
     }
 
@@ -461,6 +465,7 @@ INTERVIEW LENGTH:
       sessionId: clientSecretResponse?.session?.id,
       model: clientSecretResponse?.session?.model || realtimeModel,
       instructions: optimizedSystemPrompt,
+      voice: realtimeVoice,
       testMode: process.env.NODE_ENV === 'development',
     })
   } catch (error) {

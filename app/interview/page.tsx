@@ -655,9 +655,10 @@ export default function InterviewPage() {
         throw new Error(data.error)
       }
       
-      const { clientSecret, sessionId: realtimeSessionId, instructions, model } = data
+      const { clientSecret, sessionId: realtimeSessionId, instructions, model, voice } = data
+      const realtimeVoice = typeof voice === 'string' && voice.trim() ? voice : 'marin'
       
-      console.log('Session data received:', { hasClientSecret: !!clientSecret, sessionId: realtimeSessionId, model })
+      console.log('Session data received:', { hasClientSecret: !!clientSecret, sessionId: realtimeSessionId, model, voice: realtimeVoice })
       
       if (!clientSecret) {
         throw new Error('No client secret received from server')
@@ -715,7 +716,7 @@ export default function InterviewPage() {
                 },
               },
               output: {
-                voice: 'marin',
+                voice: realtimeVoice,
               },
             },
             max_output_tokens: stage === 'hr_screen' ? 180 : 400,

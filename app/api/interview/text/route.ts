@@ -1,6 +1,7 @@
 // API route to handle text input and generate responses
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
 
 let _openai: OpenAI | null = null
@@ -259,7 +260,7 @@ ${contextSection}`,
     try {
       const mp3 = await getOpenAI().audio.speech.create({
         model: 'tts-1',
-        voice: 'alloy', // Options: alloy, echo, fable, onyx, nova, shimmer
+        voice: getFallbackTtsVoiceForStage(stage),
         input: assistantMessage,
       })
 

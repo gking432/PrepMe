@@ -2,6 +2,12 @@
 // Prices are in cents (USD)
 
 export const PRICING = {
+  // Optional HR add-on
+  hr_detailed_report: {
+    label: 'Advanced HR Screen Report',
+    priceCents: 99,
+  },
+
   // Individual stage prices (includes initial attempt + 2 retakes = 3 total)
   single_hm: {
     label: 'Hiring Manager Interview',

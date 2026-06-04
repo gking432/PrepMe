@@ -170,6 +170,12 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
   }, []);
 
   const timingData = data.time_management_analysis?.time_per_question || data.time_management_analysis?.per_question_timing || [];
+  const reportStageLabel =
+    data.interview_type === 'final_round'
+      ? 'Final Round Interview Analysis'
+      : data.interview_type === 'culture_fit'
+        ? 'Culture Fit Interview Analysis'
+        : 'Hiring Manager Interview Analysis';
 
   return (
     <div className="max-w-5xl mx-auto bg-gray-50 p-6">
@@ -180,7 +186,7 @@ export default function DetailedHmRubricReport({ data }: { data: HmRubricData })
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Detailed Performance Report
             </h1>
-            <p className="text-gray-600">Hiring Manager Interview Analysis</p>
+            <p className="text-gray-600">{reportStageLabel}</p>
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-500 mb-1">Interview Date</div>

@@ -20,7 +20,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { productType } = await request.json() as { productType: ProductType }
+    const {
+      productType,
+      sessionId,
+      returnPath,
+    } = await request.json() as {
+      productType: ProductType
+      sessionId?: string
+      returnPath?: string
+    }
 
     if (!productType || !PRICING[productType]) {
       return NextResponse.json({ error: 'Invalid product type' }, { status: 400 })
@@ -29,15 +37,32 @@ export async function POST(request: NextRequest) {
     const product = PRICING[productType]
     const isSubscription = productType === 'subscription_monthly'
 
+    const safeReturnPath = typeof returnPath === 'string' && returnPath.startsWith('/')
+      ? returnPath
+      : '/interview/feedback'
+    const successUrl = new URL(safeReturnPath, request.nextUrl.origin)
+    successUrl.searchParams.set('payment', 'success')
+    successUrl.searchParams.set('product', productType)
+    if (sessionId && !successUrl.searchParams.get('sessionId')) {
+      successUrl.searchParams.set('sessionId', sessionId)
+    }
+    const cancelUrl = new URL(safeReturnPath, request.nextUrl.origin)
+    cancelUrl.searchParams.set('payment', 'canceled')
+    cancelUrl.searchParams.set('product', productType)
+    if (sessionId && !cancelUrl.searchParams.get('sessionId')) {
+      cancelUrl.searchParams.set('sessionId', sessionId)
+    }
+
     // Build Stripe checkout session
     const checkoutParams: Stripe.Checkout.SessionCreateParams = {
       customer_email: session.user.email,
       metadata: {
         user_id: session.user.id,
         product_type: productType,
+        ...(sessionId ? { session_id: sessionId } : {}),
       },
-      success_url: `${request.nextUrl.origin}/interview/feedback?payment=success&product=${productType}`,
-      cancel_url: `${request.nextUrl.origin}/interview/feedback?payment=canceled`,
+      success_url: successUrl.toString(),
+      cancel_url: cancelUrl.toString(),
     }
 
     if (isSubscription) {
@@ -76,7 +101,11 @@ export async function POST(request: NextRequest) {
         amount_cents: product.priceCents,
         product_type: productType,
         status: 'pending',
-        metadata: { checkout_url: checkoutSession.url },
+        metadata: {
+          checkout_url: checkoutSession.url,
+          ...(sessionId ? { session_id: sessionId } : {}),
+          return_path: safeReturnPath,
+        },
       })
 
     if (txError) {

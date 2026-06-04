@@ -17,6 +17,7 @@ export interface GradingMaterials {
   companyWebsite?: string
   websiteContent?: string
   stage: string
+  forceFullReport?: boolean
   rubricTemplate?: any
   gradingInstructions?: string
   hrScreenFeedback?: {
@@ -390,7 +391,7 @@ function buildGradingPrompt(materials: GradingMaterials): string {
   // Add output format requirements - CRITICAL: Must include all required fields
   prompt += `\n\nYou MUST respond with valid JSON matching the rubric template structure. Include ALL required fields:`
   prompt += `\n- overall_assessment (with overall_score, likelihood_to_advance, key_strengths, key_weaknesses, summary)`
-  const includeFullReport = HR_DETAILED_REPORT_ENABLED || materials.stage !== 'hr_screen'
+  const includeFullReport = materials.forceFullReport || HR_DETAILED_REPORT_ENABLED || materials.stage !== 'hr_screen'
   if (includeFullReport) {
     prompt += `\n- traditional_hr_criteria (with scores and feedback objects) - THIS IS REQUIRED`
     prompt += `\n- time_management_analysis`

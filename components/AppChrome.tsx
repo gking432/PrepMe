@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import { Briefcase, Target, LogOut, ChevronDown } from 'lucide-react'
 
-type Tab = 'preps' | 'practice'
+type Tab = 'preps' | 'practice' | 'account'
 
 const NAV: { key: Tab; label: string; href: string; icon: any }[] = [
   { key: 'preps', label: 'Interviews', href: '/dashboard', icon: Briefcase },

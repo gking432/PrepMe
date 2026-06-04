@@ -44,6 +44,7 @@ export default function InterviewDashboard() {
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
   const [purchaseHighlightStage, setPurchaseHighlightStage] = useState<string | undefined>(undefined)
+  const [detailedReportLoading, setDetailedReportLoading] = useState(false)
   const [feedback, setFeedback] = useState<any>(null)
   const [areaScores, setAreaScores] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -201,6 +202,64 @@ export default function InterviewDashboard() {
       console.error('Feedback generation timed out after 24 seconds')
     }
   }, [feedbackGenerating, pollingAttempts])
+
+  useEffect(() => {
+    const paymentStatus = searchParams?.get('payment')
+    const product = searchParams?.get('product')
+    const sessionId = currentSessionData?.id || sessionIdFromUrl
+    const stage = currentSessionData?.stage || stageFromUrl
+    const alreadyHasDetailedReport = !!feedback?.full_rubric?.traditional_hr_criteria
+
+    if (
+      paymentStatus !== 'success' ||
+      product !== 'hr_detailed_report' ||
+      stage !== 'hr_screen' ||
+      !sessionId ||
+      !feedback ||
+      alreadyHasDetailedReport ||
+      detailedReportLoading
+    ) {
+      return
+    }
+
+    let cancelled = false
+    const generatePaidReport = async () => {
+      setDetailedReportLoading(true)
+      try {
+        for (let attempt = 1; attempt <= 4; attempt += 1) {
+          const response = await fetch('/api/interview/detailed-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          })
+          const data = await response.json()
+          if (response.ok) {
+            if (!cancelled && data.feedback) {
+              setFeedback((prev: any) => ({ ...(prev || {}), ...data.feedback }))
+            }
+            return
+          }
+
+          if (response.status === 402 && attempt < 4) {
+            await new Promise((resolve) => setTimeout(resolve, 2000))
+            continue
+          }
+
+          console.error('Failed to generate paid HR detailed report:', data)
+          return
+        }
+      } catch (error) {
+        console.error('Error generating paid HR detailed report:', error)
+      } finally {
+        if (!cancelled) setDetailedReportLoading(false)
+      }
+    }
+
+    generatePaidReport()
+    return () => {
+      cancelled = true
+    }
+  }, [currentSessionData?.id, currentSessionData?.stage, detailedReportLoading, feedback, searchParams, sessionIdFromUrl, stageFromUrl])
 
   // Check if user is anonymous and prompt to create account before leaving
   useEffect(() => {
@@ -1942,8 +2001,8 @@ export default function InterviewDashboard() {
   ]
 
   const buildHrArtifactData = () => {
-    if (!HR_DETAILED_REPORT_ENABLED) return null
     const fullRubric = (feedback as any)?.full_rubric
+    if (!HR_DETAILED_REPORT_ENABLED && !fullRubric?.traditional_hr_criteria) return null
     if (!fullRubric) return null
     const normalizeScore = (score: number, maxScale: number = 10) => {
       if (typeof score !== 'number') return 0
@@ -2108,6 +2167,74 @@ export default function InterviewDashboard() {
     }
   }
 
+  const buildPremiumStageArtifactData = () => {
+    const fullRubric = (feedback as any)?.full_rubric
+    if (!fullRubric) return null
+
+    const context = parseSessionRoleContext(
+      currentSessionData?.job_description_text ||
+      currentSessionData?.user_interview_data?.job_description_text ||
+      ''
+    )
+    const baseMetadata = fullRubric.session_metadata || {
+      session_id: currentSessionData?.id || feedback?.interview_session_id || 'unknown',
+      candidate_name: currentSessionData?.candidate_name || 'Candidate',
+      position: currentSessionData?.job_title || currentSessionData?.position_title || context.role || 'Position',
+      company: currentSessionData?.company_name || context.company || 'Company',
+      interview_date: currentSessionData?.created_at || feedback?.created_at || new Date().toISOString(),
+      interview_duration_seconds: currentSessionData?.duration_seconds || 0,
+    }
+    const base = {
+      ...fullRubric,
+      rubric_version: fullRubric.rubric_version || '1.0',
+      session_metadata: baseMetadata,
+      grading_metadata: fullRubric.grading_metadata || {
+        graded_by_agent: 'Claude Sonnet 4',
+        grading_timestamp: feedback?.created_at || new Date().toISOString(),
+        confidence_in_assessment: 'High',
+      },
+    }
+
+    if (currentStageKey === 'hiring_manager' && fullRubric.hiring_manager_criteria) {
+      return {
+        ...base,
+        interview_type: 'hiring_manager',
+        hiring_manager_criteria: fullRubric.hiring_manager_criteria,
+        hiring_manager_six_areas: fullRubric.hiring_manager_six_areas || feedback?.hiring_manager_six_areas,
+      }
+    }
+
+    if (currentStageKey === 'final' && fullRubric.final_round_criteria) {
+      return {
+        ...base,
+        interview_type: 'final_round',
+        hiring_manager_criteria: fullRubric.final_round_criteria,
+        hiring_manager_six_areas: fullRubric.final_round_six_areas || feedback?.final_round_six_areas,
+      }
+    }
+
+    if (currentStageKey === 'culture_fit' && fullRubric.culture_fit_criteria) {
+      return {
+        ...base,
+        interview_type: 'culture_fit',
+        hiring_manager_criteria: fullRubric.culture_fit_criteria,
+        hiring_manager_six_areas: fullRubric.culture_fit_six_areas || feedback?.culture_fit_six_areas,
+      }
+    }
+
+    return null
+  }
+
+  const buildCurrentArtifact = () => {
+    if (currentStageKey === 'hr_screen') {
+      const hrArtifact = buildHrArtifactData()
+      return hrArtifact ? <DetailedRubricReport data={hrArtifact as any} /> : null
+    }
+
+    const premiumArtifact = buildPremiumStageArtifactData()
+    return premiumArtifact ? <DetailedHmRubricReport data={premiumArtifact as any} /> : null
+  }
+
   const dismissFeedbackTutorial = () => {
     if (currentSessionData?.id) {
       localStorage.setItem(`feedback_tutorial_seen_${currentSessionData.id}`, 'true')
@@ -2209,12 +2336,53 @@ export default function InterviewDashboard() {
     router.push(`/dashboard?new=1&stage=${nextStage}`)
   }
 
+  const handleDetailedReportAction = async () => {
+    if (currentStageKey !== 'hr_screen') return
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        setShowAccountPrompt(true)
+        return
+      }
+
+      if (!currentSessionData?.id) return
+
+      setDetailedReportLoading(true)
+      const returnPath = `/interview/feedback?sessionId=${currentSessionData.id}&stage=hr_screen`
+      const response = await fetch('/api/payments/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productType: 'hr_detailed_report',
+          sessionId: currentSessionData.id,
+          returnPath,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.url) {
+        console.error('Failed to create HR detailed report checkout:', data)
+        setDetailedReportLoading(false)
+        return
+      }
+
+      window.location.href = data.url
+    } catch (error) {
+      console.error('Error starting HR detailed report checkout:', error)
+      setDetailedReportLoading(false)
+    }
+  }
+
   const handleExitToProfile = () => {
     router.push('/dashboard')
   }
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
-    const deckArtifact = buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null
+    const deckArtifact = buildCurrentArtifact()
+    const reportLocked = !deckArtifact
     const deckProps = {
       feedback,
       currentSessionData,
@@ -2223,6 +2391,12 @@ export default function InterviewDashboard() {
       onExitToProfile: handleExitToProfile,
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
+      onReportAction: handleDetailedReportAction,
+      reportButtonLabel: reportLocked ? 'Unlock Report $1' : 'View Report',
+      reportLocked,
+      reportLoading: detailedReportLoading,
+      reportHelpText: 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.',
+      reportHelpSecondaryText: 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.',
     }
     return (
       <>
@@ -2258,7 +2432,8 @@ export default function InterviewDashboard() {
   }
 
   if (hasFeedback && !showLessonRoadmap) {
-    const deckArtifact = currentStageKey === 'hr_screen' && buildHrArtifactData() ? <DetailedRubricReport data={buildHrArtifactData() as any} /> : null
+    const deckArtifact = buildCurrentArtifact()
+    const reportLocked = currentStageKey === 'hr_screen' && !deckArtifact
     const deckProps = {
       feedback,
       currentSessionData,
@@ -2267,6 +2442,12 @@ export default function InterviewDashboard() {
       onExitToProfile: handleExitToProfile,
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
+      onReportAction: handleDetailedReportAction,
+      reportButtonLabel: reportLocked ? 'Unlock Report $1' : 'View Report',
+      reportLocked,
+      reportLoading: detailedReportLoading,
+      reportHelpText: reportLocked ? 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.' : undefined,
+      reportHelpSecondaryText: reportLocked ? 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.' : undefined,
       stageKey: currentStageKey,
     }
     return (

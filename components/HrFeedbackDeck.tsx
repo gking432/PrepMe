@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Crown,
   FileText,
+  HelpCircle,
   Lock,
   RefreshCw,
   Sparkles,
@@ -90,6 +91,12 @@ interface HrFeedbackDeckProps {
   currentSessionData?: any
   artifactContent?: ReactNode
   onPrintArtifact?: () => void
+  onReportAction?: () => void
+  reportButtonLabel?: string
+  reportLocked?: boolean
+  reportLoading?: boolean
+  reportHelpText?: string
+  reportHelpSecondaryText?: string
   onRetakeInterview?: () => void
   onUnlockNextStage?: () => void
   onExitToProfile?: () => void
@@ -837,7 +844,7 @@ function CoachFileModal({
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent-700">Saved Report</p>
-            <h2 className="text-xl font-bold text-slate-950">Coach File</h2>
+            <h2 className="text-xl font-bold text-slate-950">Detailed Interview Report</h2>
           </div>
           <div className="flex items-center gap-2">
             {onPrintArtifact && (
@@ -877,6 +884,12 @@ export default function HrFeedbackDeck({
   currentSessionData,
   artifactContent,
   onPrintArtifact,
+  onReportAction,
+  reportButtonLabel = 'View Report',
+  reportLocked = false,
+  reportLoading = false,
+  reportHelpText,
+  reportHelpSecondaryText,
   onRetakeInterview,
   onUnlockNextStage,
   onExitToProfile,
@@ -962,6 +975,15 @@ export default function HrFeedbackDeck({
   const progressPercent = ((step + 1) / deckSteps.length) * 100
   const isLastStep = step === deckSteps.length - 1
   const readyForHm = nextSteps?.ready_for_hiring_manager ?? likelihood === 'likely'
+  const retakeLabel = `Retake ${stageName.split(' ')[0]}`
+
+  const handleReportClick = () => {
+    if (reportLocked) {
+      onReportAction?.()
+      return
+    }
+    setShowCoachFile(true)
+  }
 
   const goNext = () => {
     if (isLastStep) {
@@ -1155,11 +1177,12 @@ export default function HrFeedbackDeck({
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setShowCoachFile(true)}
+                onClick={handleReportClick}
+                disabled={reportLoading}
                 className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
-                <FileText className="h-4 w-4" />
-                Coach File
+                {reportLocked ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                {reportLoading ? 'Preparing...' : reportButtonLabel}
               </button>
               <button
                 type="button"
@@ -1167,7 +1190,7 @@ export default function HrFeedbackDeck({
                 className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
               >
                 <RefreshCw className="h-4 w-4" />
-                Retake HR
+                {retakeLabel}
               </button>
             </div>
           </div>
@@ -1179,10 +1202,10 @@ export default function HrFeedbackDeck({
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
       {/* App top bar: close + story progress */}
-      <div className="flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
-        <button
-          type="button"
-          onClick={onExitToProfile}
+        <div className="flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
+          <button
+            type="button"
+            onClick={onExitToProfile}
           aria-label="Close"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
         >
@@ -1194,6 +1217,51 @@ export default function HrFeedbackDeck({
               <div className={`h-full rounded-full bg-accent-600 transition-all duration-300 ${index <= step ? 'w-full' : 'w-0'}`} />
             </div>
           ))}
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {reportHelpText && (
+            <div className="group relative">
+              <button
+                type="button"
+                aria-label="Report details"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </button>
+              <div className="pointer-events-none absolute right-0 top-11 z-20 hidden w-72 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-xl group-hover:block">
+                <p className="text-sm font-bold leading-5 text-slate-900">{reportHelpText}</p>
+                {reportHelpSecondaryText && (
+                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">{reportHelpSecondaryText}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleReportClick}
+            disabled={reportLoading}
+            className={`hidden h-9 items-center gap-2 rounded-full border px-3 text-xs font-bold transition sm:flex ${
+              reportLocked
+                ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+            } disabled:cursor-wait disabled:opacity-70`}
+          >
+            {reportLocked ? <Lock className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+            {reportLoading ? 'Preparing...' : reportButtonLabel}
+          </button>
+          <button
+            type="button"
+            onClick={handleReportClick}
+            disabled={reportLoading}
+            aria-label={reportButtonLabel}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border transition sm:hidden ${
+              reportLocked
+                ? 'border-amber-200 bg-amber-50 text-amber-800'
+                : 'border-slate-200 bg-white text-slate-700'
+            } disabled:cursor-wait disabled:opacity-70`}
+          >
+            {reportLocked ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 

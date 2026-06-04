@@ -13,14 +13,32 @@ interface FileUploadProps {
   maxSize?: number
 }
 
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 
 const DEFAULT_ACCEPT = {
   'application/pdf': ['.pdf'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
   'text/plain': ['.txt'],
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
   'image/webp': ['.webp'],
+}
+
+function getFileExtension(file: File) {
+  const name = file.name.toLowerCase()
+  const dotIndex = name.lastIndexOf('.')
+  return dotIndex >= 0 ? name.slice(dotIndex) : ''
+}
+
+function getFileKind(file: File) {
+  const type = (file.type || '').toLowerCase()
+  const ext = getFileExtension(file)
+
+  if (type === 'text/plain' || ext === '.txt') return 'text'
+  if (type === 'application/pdf' || ext === '.pdf') return 'pdf'
+  if (type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || ext === '.docx') return 'docx'
+  if (type.startsWith('image/') || IMAGE_EXTENSIONS.includes(ext)) return 'image'
+  return 'server'
 }
 
 export default function FileUpload({
@@ -43,14 +61,18 @@ export default function FileUpload({
       setIsProcessing(true)
 
       try {
-        if (file.type === 'text/plain') {
+        const kind = getFileKind(file)
+
+        if (kind === 'text') {
           const text = await file.text()
           onFileUploaded(file, text)
-        } else if (IMAGE_TYPES.includes(file.type)) {
+        } else if (kind === 'image' || kind === 'pdf' || kind === 'docx' || kind === 'server') {
           // Show local preview immediately
-          const previewUrl = URL.createObjectURL(file)
-          setImagePreview(previewUrl)
-          setProcessingLabel('Reading your resume...')
+          if (kind === 'image') {
+            const previewUrl = URL.createObjectURL(file)
+            setImagePreview(previewUrl)
+          }
+          setProcessingLabel(kind === 'pdf' ? 'Extracting resume...' : 'Reading your resume...')
 
           const formData = new FormData()
           formData.append('file', file)
@@ -62,23 +84,7 @@ export default function FileUpload({
 
           if (!response.ok) {
             const data = await response.json()
-            throw new Error(data.error || 'Failed to read image')
-          }
-
-          const data = await response.json()
-          onFileUploaded(file, data.text)
-        } else if (file.type === 'application/pdf') {
-          setProcessingLabel('Extracting resume...')
-          const formData = new FormData()
-          formData.append('file', file)
-
-          const response = await fetch('/api/extract-text', {
-            method: 'POST',
-            body: formData,
-          })
-
-          if (!response.ok) {
-            throw new Error('Failed to extract text from PDF')
+            throw new Error(data.error || 'Failed to read file')
           }
 
           const data = await response.json()
@@ -111,7 +117,7 @@ export default function FileUpload({
     onFileRemoved()
   }
 
-  const isImage = currentFile && IMAGE_TYPES.some(t => currentFile.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif)$/))
+  const isImage = currentFile && /\.(jpg|jpeg|png|webp|gif)$/i.test(currentFile.name)
 
   return (
     <div className="w-full">
@@ -169,7 +175,7 @@ export default function FileUpload({
                 Drop a file or tap to browse
               </p>
               <p className="text-xs text-gray-400">
-                PDF, screenshot, or photo of your resume
+                PDF, DOCX, screenshot, or photo of your resume
               </p>
             </div>
           )}

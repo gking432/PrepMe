@@ -9,6 +9,7 @@ import {
   Briefcase,
   Check,
   Crown,
+  ChevronDown,
   FileText,
   Lock,
   Phone,
@@ -37,12 +38,17 @@ interface StageState {
   score: number | null
   sessionId: string | null
   stageParam: string
+  attempts: number
+  reportReady: boolean
+  completedAt: string | null
 }
 
 interface ProcessData {
   companyName: string | null
   positionTitle: string | null
   interviewDataId: string | null
+  jobDescriptionText: string
+  resumeText: string
   stages: Record<StageKey, StageState>
 }
 
@@ -52,18 +58,28 @@ function groupKeyOf(companyName: string | null, positionTitle: string | null) {
   return `${companyName ?? ''}::${positionTitle ?? ''}`
 }
 
+function normalizeProcessKey(value: string) {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
 function emptyStages(): Record<StageKey, StageState> {
   return {
-    hr_screen: { done: false, score: null, sessionId: null, stageParam: 'hr_screen' },
-    hiring_manager: { done: false, score: null, sessionId: null, stageParam: 'hiring_manager' },
-    culture_fit: { done: false, score: null, sessionId: null, stageParam: 'culture_fit' },
-    final: { done: false, score: null, sessionId: null, stageParam: 'final' },
+    hr_screen: { done: false, score: null, sessionId: null, stageParam: 'hr_screen', attempts: 0, reportReady: false, completedAt: null },
+    hiring_manager: { done: false, score: null, sessionId: null, stageParam: 'hiring_manager', attempts: 0, reportReady: false, completedAt: null },
+    culture_fit: { done: false, score: null, sessionId: null, stageParam: 'culture_fit', attempts: 0, reportReady: false, completedAt: null },
+    final: { done: false, score: null, sessionId: null, stageParam: 'final', attempts: 0, reportReady: false, completedAt: null },
   }
 }
 
 function fmtScore(score: number | null) {
   if (score == null) return null
   return Number.isInteger(score) ? `${score}` : score.toFixed(1)
+}
+
+function previewText(text: string, maxLength = 1200) {
+  const trimmed = text.trim()
+  if (trimmed.length <= maxLength) return trimmed
+  return `${trimmed.slice(0, maxLength).trim()}...`
 }
 
 export default function ProcessSpinePage() {
@@ -104,8 +120,8 @@ export default function ProcessSpinePage() {
         .from('interview_sessions')
         .select(`
           id, stage, status, created_at, completed_at, user_interview_data_id,
-          user_interview_data ( job_description_text ),
-          interview_feedback ( id, overall_score, created_at )
+          user_interview_data ( job_description_text, resume_text ),
+          interview_feedback ( id, overall_score, created_at, full_rubric )
         `)
         .eq('user_id', session.user.id)
         .eq('status', 'completed')
@@ -114,12 +130,16 @@ export default function ProcessSpinePage() {
       if (cancelled) return
 
       let found: ProcessData | null = null
+      const normalizedDecodedKey = normalizeProcessKey(decodedKey)
       ;(sessions || []).forEach((row: any) => {
         if (!row.interview_feedback?.length) return
-        const text = row.user_interview_data?.job_description_text || ''
+        const interviewData = Array.isArray(row.user_interview_data)
+          ? row.user_interview_data[0]
+          : row.user_interview_data
+        const text = interviewData?.job_description_text || ''
         const companyName = text.match(/^Company:\s*(.+)$/m)?.[1]?.trim() || null
         const positionTitle = text.match(/^Position:\s*(.+)$/m)?.[1]?.trim() || null
-        if (groupKeyOf(companyName, positionTitle) !== decodedKey) return
+        if (normalizeProcessKey(groupKeyOf(companyName, positionTitle)) !== normalizedDecodedKey) return
 
         const stageKey: StageKey = row.stage === 'team_interview'
           ? 'culture_fit'
@@ -128,19 +148,36 @@ export default function ProcessSpinePage() {
           : row.stage
         if (!STAGE_ORDER.includes(stageKey)) return
 
-        const proc: ProcessData = found ?? { companyName, positionTitle, interviewDataId: null, stages: emptyStages() }
+        const proc: ProcessData = found ?? {
+          companyName,
+          positionTitle,
+          interviewDataId: null,
+          jobDescriptionText: text,
+          resumeText: interviewData?.resume_text || '',
+          stages: emptyStages(),
+        }
         found = proc
         if (!proc.interviewDataId && row.user_interview_data_id) {
           proc.interviewDataId = row.user_interview_data_id
         }
+        if (!proc.jobDescriptionText && text) proc.jobDescriptionText = text
+        if (!proc.resumeText && interviewData?.resume_text) proc.resumeText = interviewData.resume_text
+
         const st = proc.stages[stageKey]
-        if (!st.sessionId) {
-          const latestFb = [...row.interview_feedback].sort((a: any, b: any) =>
-            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-          )[0]
+        st.attempts += 1
+        const latestFb = [...row.interview_feedback].sort((a: any, b: any) =>
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        )[0]
+        const rowCompletedAt = row.completed_at || row.created_at || null
+        const isNewer = !st.completedAt ||
+          new Date(rowCompletedAt || 0).getTime() > new Date(st.completedAt || 0).getTime()
+
+        if (isNewer) {
           st.done = true
           st.score = latestFb?.overall_score ?? null
           st.sessionId = row.id
+          st.completedAt = rowCompletedAt
+          st.reportReady = !!latestFb?.full_rubric
         }
       })
 
@@ -212,6 +249,9 @@ export default function ProcessSpinePage() {
   const { statusOf, completedCount, nextStage } = computed
   const title = [process.positionTitle, process.companyName].filter(Boolean).join(' at ') || 'Interview Process'
   const nextStatus = nextStage ? statusOf(nextStage) : null
+  const completedStages = STAGE_ORDER.filter((stage) => process.stages[stage].done)
+  const jobDescriptionPreview = previewText(process.jobDescriptionText)
+  const resumePreview = previewText(process.resumeText)
 
   return (
     <AppChrome active="preps" maxWidth="max-w-2xl">
@@ -235,6 +275,87 @@ export default function ProcessSpinePage() {
             className="h-full rounded-full bg-accent-600 transition-all duration-500"
             style={{ width: `${(completedCount / 4) * 100}%` }}
           />
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Overview</p>
+              <h2 className="mt-1 text-lg font-bold text-slate-950">Process details</h2>
+            </div>
+            <span className="rounded-full bg-accent-50 px-3 py-1 text-xs font-bold text-accent-700">
+              {completedStages.length} completed
+            </span>
+          </div>
+
+          {completedStages.length > 0 && (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {completedStages.map((stage) => {
+                const st = process.stages[stage]
+                const score = fmtScore(st.score)
+                return (
+                  <button
+                    key={stage}
+                    type="button"
+                    onClick={() => openFeedback(stage)}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-left transition hover:border-accent-200 hover:bg-accent-50/60"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">{STAGE_META[stage].name}</p>
+                      <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                        {score ? `${score}/10` : 'Score saved'}
+                        {st.attempts > 1 ? ` · ${st.attempts - 1} retake${st.attempts - 1 === 1 ? '' : 's'}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-bold text-accent-700">
+                      {st.reportReady ? 'View report' : 'View feedback'}
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          <div className="mt-4 space-y-2">
+            <details className="group rounded-xl border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-bold text-slate-800">
+                <span className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-slate-400" />
+                  Job description
+                </span>
+                <ChevronDown className="h-4 w-4 text-slate-400 transition group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-slate-100 px-3 py-3">
+                {jobDescriptionPreview ? (
+                  <pre className="max-h-72 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-700">
+                    {jobDescriptionPreview}
+                  </pre>
+                ) : (
+                  <p className="text-sm font-semibold text-slate-500">No job description was saved for this process.</p>
+                )}
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-bold text-slate-800">
+                <span className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-400" />
+                  Resume used
+                </span>
+                <ChevronDown className="h-4 w-4 text-slate-400 transition group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-slate-100 px-3 py-3">
+                {resumePreview ? (
+                  <pre className="max-h-72 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-700">
+                    {resumePreview}
+                  </pre>
+                ) : (
+                  <p className="text-sm font-semibold text-slate-500">No resume text was saved for this process.</p>
+                )}
+              </div>
+            </details>
+          </div>
         </div>
 
         {/* The path */}

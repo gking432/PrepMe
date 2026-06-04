@@ -999,9 +999,59 @@ export default function CoachReportWorkspace({
       )}
 
       {showArtifact && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm">
-          <div className="relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.24)]">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div className="report-artifact-print-root fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm">
+          <style>{`
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+
+              .report-artifact-print-root,
+              .report-artifact-print-root * {
+                visibility: visible !important;
+              }
+
+              .report-artifact-print-root {
+                position: static !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+                padding: 0 !important;
+                backdrop-filter: none !important;
+              }
+
+              .report-artifact-print-panel {
+                width: 100% !important;
+                max-width: none !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+              }
+
+              .report-artifact-print-scroll {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+                padding: 0 !important;
+              }
+
+              .report-artifact-no-print {
+                display: none !important;
+              }
+
+              @page {
+                margin: 0.5in;
+              }
+            }
+          `}</style>
+          <div className="report-artifact-print-panel relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.24)]">
+            <div className="report-artifact-no-print flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-500">Performance Artifact</p>
                 <h2 className="mt-1 text-2xl font-black text-slate-900">Detailed performance rubric</h2>
@@ -1024,7 +1074,7 @@ export default function CoachReportWorkspace({
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto bg-slate-100 p-4">
+            <div className="report-artifact-print-scroll min-h-0 flex-1 overflow-y-auto bg-slate-100 p-4">
               {artifactContent || (
                 <div className="flex h-full items-center justify-center text-sm text-slate-500">
                   Detailed artifact unavailable for this round.

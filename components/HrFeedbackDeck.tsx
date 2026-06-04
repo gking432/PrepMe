@@ -839,9 +839,57 @@ function CoachFileModal({
   onPrintArtifact?: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/55 p-0 backdrop-blur-sm sm:p-4">
-      <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:rounded-2xl">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
+    <div className="coach-file-print-root fixed inset-0 z-50 bg-slate-950/55 p-0 backdrop-blur-sm sm:p-4">
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+
+          .coach-file-print-root,
+          .coach-file-print-root * {
+            visibility: visible !important;
+          }
+
+          .coach-file-print-root {
+            position: static !important;
+            inset: auto !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+            padding: 0 !important;
+            backdrop-filter: none !important;
+          }
+
+          .coach-file-print-panel {
+            width: 100% !important;
+            max-width: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+
+          .coach-file-print-scroll {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+            padding: 0 !important;
+          }
+
+          .coach-file-no-print {
+            display: none !important;
+          }
+
+          @page {
+            margin: 0.5in;
+          }
+        }
+      `}</style>
+      <div className="coach-file-print-panel mx-auto flex h-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:rounded-2xl">
+        <div className="coach-file-no-print flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent-700">Saved Report</p>
             <h2 className="text-xl font-bold text-slate-950">Detailed Interview Report</h2>
@@ -853,7 +901,7 @@ function CoachFileModal({
                 onClick={onPrintArtifact}
                 className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
               >
-                Print
+                Print / Save PDF
               </button>
             )}
             <button
@@ -866,7 +914,7 @@ function CoachFileModal({
             </button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6">
+        <div className="coach-file-print-scroll min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6">
           {artifactContent || (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
               <FileText className="mx-auto h-8 w-8 text-slate-400" />

@@ -475,7 +475,6 @@ export default function DashboardPage() {
   ]
 
   const renderProcessListItem = (group: InterviewGroup, idx: number, archived = false) => {
-    const latestSession = getLatestSessionForGroup(group)
     const completedCount = getCompletedCount(group)
     const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview Process ${idx + 1}`
     const subcopy = archived ? `${completedCount}/4 stages completed before archiving.` : 'All four stages completed.'
@@ -484,7 +483,7 @@ export default function DashboardPage() {
       <button
         key={`${title}-${idx}-${archived ? 'archived' : 'finished'}`}
         type="button"
-        onClick={() => latestSession && router.push(getFeedbackHref(latestSession))}
+        onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
         className="flex items-center justify-between gap-4 rounded-[1.35rem] border border-slate-200/80 bg-white/92 px-5 py-4 text-left transition-colors hover:border-slate-300 hover:bg-white"
       >
         <div className="min-w-0">
@@ -694,7 +693,6 @@ export default function DashboardPage() {
                     ) : (
                       <div className="space-y-2">
                         {activeInterviewGroups.map((group, idx) => {
-                          const latestSession = getLatestSessionForGroup(group)
                           const completedCount = getCompletedCount(group)
                           const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview ${idx + 1}`
                           const stages = ['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const
@@ -703,7 +701,7 @@ export default function DashboardPage() {
                               key={`${title}-${idx}`}
                               role="button"
                               tabIndex={0}
-                              onClick={() => latestSession ? router.push(getFeedbackHref(latestSession)) : router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
+                              onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
                               onKeyDown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLElement).click() }}
                               className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:bg-slate-50 cursor-pointer sm:gap-4 sm:px-5"
                             >

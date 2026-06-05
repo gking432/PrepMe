@@ -950,11 +950,11 @@ export default function DashboardPage() {
                                       <p className="text-sm font-semibold text-slate-800">{STAGE_CONFIG[stage].name}</p>
                                       <p className="text-xs text-slate-500">
                                         {score != null ? `Score: ${Number.isInteger(score) ? score : score.toFixed(1)}/10` : 'Completed'}
-                                        {hasReport ? ' · Full report available' : ''}
+                                        {hasReport ? ' · Detailed report included' : ''}
                                       </p>
                                     </div>
                                     <span className="flex items-center gap-1 text-xs font-bold text-accent-600">
-                                      View <ChevronRight className="h-3 w-3" />
+                                      View feedback <ChevronRight className="h-3 w-3" />
                                     </span>
                                   </Link>
                                 )

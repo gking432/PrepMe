@@ -2580,21 +2580,21 @@ export default function InterviewDashboard() {
 
       {/* Account Creation Prompt for Anonymous Users */}
       {showAccountPrompt && isAnonymous && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="premium-panel relative w-full max-w-md p-8">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-8 shadow-2xl">
             <button
               onClick={() => {
                 setShowAccountPrompt(false)
                 setAccountPromptDismissed(true)
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="eyebrow eyebrow-coach mb-3 w-fit">Save Your Progress</div>
-            <h3 className="mb-2 text-2xl font-bold text-gray-900">Create Your Free Account</h3>
-            <p className="mb-6 text-gray-600">
+            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">Save Your Progress</p>
+            <h3 className="mb-2 text-2xl font-black text-slate-900">Create Your Free Account</h3>
+            <p className="mb-6 text-slate-500">
               Save your results, track progress, and unlock more interview stages
             </p>
             <div className="space-y-3">
@@ -2732,18 +2732,18 @@ export default function InterviewDashboard() {
                 weaknesses={feedback?.weaknesses || []}
               />
             ) : (
-              <div className="premium-panel p-12 text-center">
-                <Phone className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">No Interview Completed Yet</h2>
-                <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-                  Complete an HR screen interview to see your performance feedback and detailed insights here.
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                <Phone className="w-16 h-16 text-slate-300 mx-auto mb-6" />
+                <h2 className="text-2xl font-black text-slate-900 mb-3">No Interview Completed Yet</h2>
+                <p className="text-base text-slate-500 mb-8 max-w-md mx-auto">
+                  Complete an interview to see your performance feedback and detailed insights here.
                 </p>
                 <Link
                   href="/dashboard"
-                  className="btn-coach-primary inline-flex items-center space-x-2 px-8 py-4"
+                  className="btn-coach-primary inline-flex items-center gap-2 px-6 py-3 text-sm"
                 >
                   <span>Start an Interview</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             )}
@@ -2757,54 +2757,55 @@ export default function InterviewDashboard() {
                 {/* All-criteria breakdown */}
                 {sixAreas && (wentWellAreas.length > 0 || needsImproveAreas.length > 0) && (
                   <div className="premium-panel overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-100">
+                    <div className="px-6 py-5 border-b border-slate-100">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900">Performance Breakdown</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">
+                          <h3 className="text-xl font-black text-slate-900">Performance Breakdown</h3>
+                          <p className="text-sm text-slate-500 mt-0.5">
                             {areasPassed} of {totalAreas} areas strong
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <div className="text-2xl font-extrabold text-primary-600">{areasPassed}/{totalAreas}</div>
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Passed</div>
+                            <div className="text-2xl font-black text-accent-600">{areasPassed}/{totalAreas}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Passed</div>
                           </div>
                           <svg className="w-14 h-14" viewBox="0 0 56 56">
-                            <circle cx="28" cy="28" r="20" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                            <circle cx="28" cy="28" r="20" stroke="#f1f5f9" strokeWidth="5" fill="none" />
                             <circle
                               cx="28" cy="28" r="20"
-                              stroke="#6366f1" strokeWidth="6" fill="none"
+                              stroke="currentColor" strokeWidth="5" fill="none"
                               strokeLinecap="round"
+                              className="text-accent-500"
                               strokeDasharray={2 * Math.PI * 20}
                               strokeDashoffset={2 * Math.PI * 20 - (areasPassed / (totalAreas || 1)) * 2 * Math.PI * 20}
-                              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.6s ease-out' }}
+                              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.8s ease-out' }}
                             />
                           </svg>
                         </div>
                       </div>
                     </div>
 
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-slate-50">
                       {/* Strengths */}
                       {wentWellAreas.map((area: any) => (
                         <div key={area.criterion} className="px-6 py-4 flex items-start gap-4">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
-                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+                            <CheckCircle className="w-5 h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-3 mb-1">
-                              <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
+                              <h4 className="text-sm font-bold text-slate-900">{area.criterion}</h4>
                               {area.score != null && (
-                                <span className="text-xs font-bold text-emerald-600 shrink-0 tabular-nums">{area.score}/10</span>
+                                <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-black text-emerald-600 tabular-nums">{area.score}/10</span>
                               )}
                             </div>
                             {area.score != null && (
-                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${area.score * 10}%` }} />
+                              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+                                <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-700" style={{ width: `${area.score * 10}%` }} />
                               </div>
                             )}
-                            <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
+                            <p className="text-xs text-slate-500 leading-relaxed">{area.feedback}</p>
                           </div>
                         </div>
                       ))}
@@ -2815,16 +2816,16 @@ export default function InterviewDashboard() {
                         const tip = getImprovementTipForCriterion(area.criterion, area.rootCause)
 
                         return (
-                          <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/40">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
-                              <AlertTriangle className="w-4 h-4 text-amber-600" />
+                          <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/30">
+                            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+                              <AlertTriangle className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-3 mb-1">
-                                <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
+                                <h4 className="text-sm font-bold text-slate-900">{area.criterion}</h4>
                                 <div className="flex items-center gap-2 shrink-0">
                                   {area.score != null && (
-                                    <span className="text-xs font-bold text-amber-600 tabular-nums">{area.score}/10</span>
+                                    <span className="rounded-lg bg-amber-50 px-2 py-0.5 text-xs font-black text-amber-600 tabular-nums">{area.score}/10</span>
                                   )}
                                   <ImprovementTip
                                     criterion={area.criterion}
@@ -2835,20 +2836,22 @@ export default function InterviewDashboard() {
                                 </div>
                               </div>
                               {area.score != null && (
-                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
                                   <div
-                                    className={`h-full rounded-full transition-all duration-700 ${area.score >= 5 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                    className={`h-full rounded-full transition-all duration-700 ${area.score >= 5 ? 'bg-gradient-to-r from-amber-300 to-amber-400' : 'bg-gradient-to-r from-red-400 to-red-500'}`}
                                     style={{ width: `${area.score * 10}%` }}
                                   />
                                 </div>
                               )}
-                              <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
-                              <p className="mt-1.5 text-xs font-semibold text-amber-700">
-                                Tip focus: {tip.title}
-                              </p>
-                              <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                                Before your next attempt, craft a stronger version of this answer on your own instead of memorizing a script.
-                              </p>
+                              <p className="text-xs text-slate-500 leading-relaxed">{area.feedback}</p>
+                              <div className="mt-3 rounded-xl border border-amber-200/60 bg-amber-50/60 px-3 py-2.5">
+                                <p className="text-xs font-bold text-amber-800">
+                                  {tip.title}
+                                </p>
+                                <p className="mt-1 text-xs leading-relaxed text-amber-700/80">
+                                  Craft a stronger version of this answer before your next attempt — don&apos;t memorize a script.
+                                </p>
+                              </div>
                             </div>
                           </div>
                         )
@@ -2861,16 +2864,18 @@ export default function InterviewDashboard() {
                 {HR_DETAILED_REPORT_ENABLED && (
                 <button
                   onClick={() => setShowRubricModal(true)}
-                  className="premium-card group flex w-full items-center justify-between p-5 text-left"
+                  className="group flex w-full items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
                 >
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900">View Full Performance Report</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Detailed rubric, scoring rationale, and evidence from your interview.</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 text-white">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900">View Full Performance Report</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Detailed rubric, scoring rationale, and evidence from your interview.</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-4">
-                    <FileText className="w-4 h-4 text-gray-400" />
-                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  <ArrowRight className="w-5 h-5 shrink-0 ml-4 text-slate-300 group-hover:text-accent-600 group-hover:translate-x-0.5 transition-all" />
                 </button>
                 )}
 
@@ -2886,7 +2891,7 @@ export default function InterviewDashboard() {
                       className="flex w-full items-center justify-between mb-4 text-left"
                     >
                       <div>
-                        <h3 className="text-2xl font-bold text-gray-900">
+                        <h3 className="text-2xl font-black text-slate-900">
                           Full Interview Transcript
                         </h3>
                         <div className="mt-1 flex space-x-4 text-sm text-gray-600">

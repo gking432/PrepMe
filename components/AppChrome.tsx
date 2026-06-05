@@ -44,7 +44,7 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hi
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#f8fafc]">
+    <div className="min-h-[100dvh] bg-[#fafaf9]">
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">

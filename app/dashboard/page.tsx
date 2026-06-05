@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { CheckCircle2, Lock, Crown, ChevronDown, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare, Archive, RotateCcw } from 'lucide-react'
+import { CheckCircle2, Lock, Crown, ChevronDown, ChevronRight, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare, Archive, RotateCcw, Play, Eye, ExternalLink, TrendingUp, X } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
@@ -59,6 +59,15 @@ const STAGE_CONFIG: Record<InterviewStage, {
 
 const PAID_STAGES: InterviewStage[] = ['hiring_manager', 'culture_fit', 'final']
 
+const STAGE_GRADIENT: Record<InterviewStage, string> = {
+  hr_screen: 'from-emerald-500 to-teal-600',
+  hiring_manager: 'from-blue-500 to-indigo-600',
+  culture_fit: 'from-violet-500 to-purple-600',
+  final: 'from-amber-500 to-orange-600',
+}
+
+const REPORT_FREE_STAGES: InterviewStage[] = ['hiring_manager', 'final']
+
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -89,6 +98,7 @@ export default function DashboardPage() {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null)
   const [processTab, setProcessTab] = useState<'active' | 'finished' | 'archived'>('active')
   const [archivedProcessKeys, setArchivedProcessKeys] = useState<string[]>([])
+  const [viewingResume, setViewingResume] = useState<{ id: string; label: string; resume_text: string } | null>(null)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -643,8 +653,8 @@ export default function DashboardPage() {
             <div className="min-w-0 space-y-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Interviews</h1>
-                <p className="mt-1 text-sm text-slate-500">Your interview prep. Pick up where you left off or start a new one.</p>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">Interviews</h1>
+                <p className="mt-1 text-sm text-slate-500">Pick up where you left off or start a new one.</p>
               </div>
               <Link href="/dashboard?new=1" className="btn-coach-primary inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm md:hidden">
                 <PlusSquare className="h-4 w-4" />
@@ -685,60 +695,135 @@ export default function DashboardPage() {
                   </div>
                   {processTab === 'active' && (
                     activeInterviewGroups.length === 0 ? (
-                      <div className="premium-panel p-8 text-center">
+                      <div className="rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-sm">
                         <Briefcase className="mx-auto h-12 w-12 text-slate-300" />
-                        <p className="mt-4 text-base font-semibold text-slate-700">No active interview processes right now.</p>
+                        <p className="mt-4 text-base font-bold text-slate-700">No active interview processes right now.</p>
                         <p className="mt-2 text-sm text-slate-500">Start a new process when the next role comes in.</p>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        {activeInterviewGroups.map((group, idx) => {
-                          const completedCount = getCompletedCount(group)
-                          const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview ${idx + 1}`
-                          const stages = ['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const
+                      <div className="space-y-4">
+                        {/* Hero card for the latest/most active process */}
+                        {(() => {
+                          const hero = activeInterviewGroups[0]
+                          const heroTitle = [hero.positionTitle, hero.companyName].filter(Boolean).join(' at ') || 'Interview Process'
+                          const heroCompleted = getCompletedCount(hero)
+                          const heroStages = ['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const
+                          const latestDoneStage = [...heroStages].reverse().find((s) => hero.stages[s]?.hasFeedback) || null
+                          const latestScore = latestDoneStage ? hero.stages[latestDoneStage]?.overallScore : null
+                          const nextStage = heroStages.find((s) => !hero.stages[s]?.hasFeedback) || null
+                          const latestGradient = latestDoneStage ? STAGE_GRADIENT[latestDoneStage] : 'from-accent-500 to-accent-700'
+
                           return (
                             <div
-                              key={`${title}-${idx}`}
                               role="button"
                               tabIndex={0}
-                              onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
+                              onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(hero))}`)}
                               onKeyDown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLElement).click() }}
-                              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:bg-slate-50 cursor-pointer sm:gap-4 sm:px-5"
+                              className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
                             >
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">{title}</p>
-                                <p className="mt-0.5 text-xs text-slate-500">{completedCount} of 4 rounds complete</p>
+                              <div className={`bg-gradient-to-r ${latestGradient} px-6 py-5 sm:px-8`}>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-white/60">Most recent</p>
+                                    <h3 className="mt-1 text-xl font-black text-white sm:text-2xl">{heroTitle}</h3>
+                                    <p className="mt-1 text-sm font-medium text-white/70">{heroCompleted} of 4 rounds complete</p>
+                                  </div>
+                                  {latestScore != null && (
+                                    <div className="flex flex-col items-center">
+                                      <div className="relative h-16 w-16">
+                                        <svg width="64" height="64" className="-rotate-90">
+                                          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
+                                          <circle cx="32" cy="32" r="28" fill="none" stroke="white" strokeWidth="4" strokeDasharray={2 * Math.PI * 28} strokeDashoffset={2 * Math.PI * 28 * (1 - latestScore / 10)} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.8s ease-out' }} />
+                                        </svg>
+                                        <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-white">
+                                          {Number.isInteger(latestScore) ? latestScore : latestScore.toFixed(1)}
+                                        </span>
+                                      </div>
+                                      <span className="mt-1 text-[10px] font-bold text-white/50">latest score</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="hidden shrink-0 items-center gap-1 sm:flex">
-                                {stages.map((stage) => {
-                                  const ss = group.stages[stage]
-                                  const done = !!ss?.hasFeedback
-                                  const locked = !done && isStageLockedFn(stage)
-                                  const tone = done
-                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                    : locked
-                                    ? 'border-slate-200 bg-slate-50 text-slate-400'
-                                    : 'border-accent-200 bg-accent-50 text-accent-700'
-                                  return (
-                                    <span key={stage} className={`flex h-6 items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold ${tone}`}>
-                                      {done ? <CheckCircle2 className="h-3 w-3" /> : locked ? <Lock className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                                      <span className="hidden md:inline">{STAGE_CONFIG[stage].name.split(' ')[0]}</span>
-                                    </span>
-                                  )
-                                })}
+                              <div className="flex items-center justify-between gap-4 px-6 py-4 sm:px-8">
+                                <div className="flex items-center gap-2">
+                                  {heroStages.map((stage) => {
+                                    const ss = hero.stages[stage]
+                                    const done = !!ss?.hasFeedback
+                                    const locked = !done && isStageLockedFn(stage)
+                                    return (
+                                      <span key={stage} className={`flex h-7 items-center gap-1.5 rounded-lg border px-2 text-[11px] font-bold ${
+                                        done
+                                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                          : locked
+                                          ? 'border-slate-200 bg-slate-50 text-slate-400'
+                                          : 'border-accent-200 bg-accent-50 text-accent-600'
+                                      }`}>
+                                        {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : locked ? <Lock className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                        <span className="hidden sm:inline">{STAGE_CONFIG[stage].name.split(' ')[0]}</span>
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                                <span className="flex items-center gap-1.5 text-sm font-bold text-accent-600 transition-colors group-hover:text-accent-700">
+                                  {nextStage ? `Continue` : 'View'} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                </span>
                               </div>
-                              <button
-                                type="button"
-                                onClick={(event) => { event.stopPropagation(); archiveProcess(group) }}
-                                className="hidden shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:inline-flex"
-                                aria-label={`Archive ${title}`}
-                              >
-                                <Archive className="h-4 w-4" />
-                              </button>
-                              <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
                             </div>
                           )
-                        })}
+                        })()}
+
+                        {/* Remaining active processes as compact rows */}
+                        {activeInterviewGroups.length > 1 && (
+                          <div className="space-y-2">
+                            {activeInterviewGroups.slice(1).map((group, idx) => {
+                              const completedCount = getCompletedCount(group)
+                              const title = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Interview ${idx + 2}`
+                              const stages = ['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const
+                              return (
+                                <div
+                                  key={`${title}-${idx}`}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => router.push(`/process/${encodeURIComponent(getGroupKey(group))}`)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLElement).click() }}
+                                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-bold text-slate-900 sm:text-base">{title}</p>
+                                    <p className="mt-0.5 text-xs text-slate-500">{completedCount} of 4 rounds complete</p>
+                                  </div>
+                                  <div className="hidden shrink-0 items-center gap-1 sm:flex">
+                                    {stages.map((stage) => {
+                                      const ss = group.stages[stage]
+                                      const done = !!ss?.hasFeedback
+                                      const locked = !done && isStageLockedFn(stage)
+                                      const tone = done
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                        : locked
+                                        ? 'border-slate-200 bg-slate-50 text-slate-400'
+                                        : 'border-accent-200 bg-accent-50 text-accent-700'
+                                      return (
+                                        <span key={stage} className={`flex h-6 items-center gap-1 rounded-full border px-1.5 text-[10px] font-semibold ${tone}`}>
+                                          {done ? <CheckCircle2 className="h-3 w-3" /> : locked ? <Lock className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                          <span className="hidden md:inline">{STAGE_CONFIG[stage].name.split(' ')[0]}</span>
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(event) => { event.stopPropagation(); archiveProcess(group) }}
+                                    className="hidden shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 sm:inline-flex"
+                                    aria-label={`Archive ${title}`}
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                  </button>
+                                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     )
                   )}
@@ -774,55 +859,131 @@ export default function DashboardPage() {
             )}
 
             {workspacePanel === 'documents' && (
-              <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-                <div className="premium-panel p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-accent-100">
-                      <FolderOpen className="h-6 w-6 text-accent-700" />
+              <div className="space-y-8">
+                {/* Resumes section */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 text-white">
+                      <FolderOpen className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-accent-500">Resumes</p>
-                      <h2 className="text-2xl font-black text-slate-900">Saved resume library</h2>
+                      <h2 className="text-lg font-black text-slate-900">Resumes</h2>
+                      <p className="text-xs text-slate-500">{savedResumes.length} saved</p>
                     </div>
                   </div>
-                  <div className="mt-5 space-y-3">
-                    {savedResumes.length === 0 ? (
-                      <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-5 text-sm text-slate-500">
-                        No saved resumes yet. Upload one when you start a new interview process.
-                      </div>
-                    ) : savedResumes.map((resume) => (
-                      <div key={resume.id} className="rounded-[1.4rem] border border-slate-200 bg-white/92 px-4 py-4">
-                        <p className="text-sm font-black text-slate-900">{resume.label}</p>
-                        <p className="mt-1 text-sm text-slate-500">Ready to use in a new interview process.</p>
-                      </div>
-                    ))}
-                  </div>
+                  {savedResumes.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-center shadow-sm">
+                      <FolderOpen className="mx-auto h-10 w-10 text-slate-300" />
+                      <p className="mt-3 text-sm font-semibold text-slate-600">No saved resumes yet</p>
+                      <p className="mt-1 text-xs text-slate-400">Upload one when you start a new interview process.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {savedResumes.map((resume) => (
+                        <button
+                          key={resume.id}
+                          type="button"
+                          onClick={() => setViewingResume(resume)}
+                          className="group flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-slate-900">{resume.label}</p>
+                            <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{resume.resume_text.slice(0, 80)}...</p>
+                          </div>
+                          <Eye className="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-accent-500" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="premium-panel p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-emerald-100">
-                      <FileText className="h-6 w-6 text-emerald-700" />
+                {/* Reports section */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+                      <FileText className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Coaching Artifacts</p>
-                      <h2 className="text-2xl font-black text-slate-900">Detailed reports</h2>
+                      <h2 className="text-lg font-black text-slate-900">Performance Reports</h2>
+                      <p className="text-xs text-slate-500">{completedReportCount} available</p>
                     </div>
                   </div>
-                  <div className="mt-5 grid gap-3">
-                    <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50/85 px-4 py-4">
-                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-600">Saved Reports</p>
-                      <p className="mt-2 text-3xl font-black text-emerald-800">{completedReportCount}</p>
+                  {interviewGroups.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-center shadow-sm">
+                      <FileText className="mx-auto h-10 w-10 text-slate-300" />
+                      <p className="mt-3 text-sm font-semibold text-slate-600">No reports yet</p>
+                      <p className="mt-1 text-xs text-slate-400">Complete interview rounds to generate performance reports.</p>
                     </div>
-                    <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 px-4 py-4">
-                      <p className="text-sm leading-7 text-slate-600">
-                        Every completed stage creates a downloadable coaching artifact inside that interview process.
-                      </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {interviewGroups.map((group, gIdx) => {
+                        const groupTitle = [group.positionTitle, group.companyName].filter(Boolean).join(' at ') || `Process ${gIdx + 1}`
+                        const completedForGroup = (['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).filter((s) => group.stages[s]?.hasFeedback)
+                        if (completedForGroup.length === 0) return null
+
+                        return (
+                          <div key={`reports-${gIdx}`} className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                            <div className="border-b border-slate-100 px-5 py-3">
+                              <p className="text-sm font-bold text-slate-900">{groupTitle}</p>
+                              <p className="text-xs text-slate-500">{completedForGroup.length} round{completedForGroup.length !== 1 ? 's' : ''} completed</p>
+                            </div>
+                            <div className="divide-y divide-slate-100">
+                              {completedForGroup.map((stage) => {
+                                const ss = group.stages[stage]
+                                const score = ss?.overallScore
+                                const hasReport = REPORT_FREE_STAGES.includes(stage)
+                                const feedbackHref = ss?.latestSession ? getFeedbackHref(ss.latestSession) : '#'
+
+                                return (
+                                  <Link
+                                    key={stage}
+                                    href={feedbackHref}
+                                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50"
+                                  >
+                                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${STAGE_GRADIENT[stage]} text-white`}>
+                                      <CheckCircle2 className="h-4 w-4" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-semibold text-slate-800">{STAGE_CONFIG[stage].name}</p>
+                                      <p className="text-xs text-slate-500">
+                                        {score != null ? `Score: ${Number.isInteger(score) ? score : score.toFixed(1)}/10` : 'Completed'}
+                                        {hasReport ? ' · Full report available' : ''}
+                                      </p>
+                                    </div>
+                                    <span className="flex items-center gap-1 text-xs font-bold text-accent-600">
+                                      View <ChevronRight className="h-3 w-3" />
+                                    </span>
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                    <Link href="/dashboard" className="btn-coach-secondary mt-2 flex items-center justify-center gap-2 py-3.5 text-sm">
-                      <Briefcase className="h-4 w-4" />
-                      Back to interview processes
-                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Resume viewer modal */}
+            {viewingResume && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setViewingResume(null)}>
+                <div className="relative max-h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-accent-600">Resume</p>
+                      <h3 className="mt-0.5 text-lg font-black text-slate-900">{viewingResume.label}</h3>
+                    </div>
+                    <button type="button" onClick={() => setViewingResume(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="max-h-[60vh] overflow-auto px-6 py-4">
+                    <pre className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{viewingResume.resume_text}</pre>
                   </div>
                 </div>
               </div>

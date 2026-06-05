@@ -75,7 +75,7 @@ export interface ApplyToYourselfExercise {
 }
 
 export interface LessonWorkshop {
-  type: 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty'
+  type: 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity'
 }
 
 export type Exercise =
@@ -501,6 +501,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
           },
         ],
+        workshop: {
+          type: 'star_proof',
+        },
       },
     ],
   },
@@ -817,6 +820,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
           },
         ],
+        workshop: {
+          type: 'pace_delivery',
+        },
       },
     ],
   },
@@ -1072,6 +1078,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
           },
         ],
+        workshop: {
+          type: 'preparation_curiosity',
+        },
       },
     ],
   },
@@ -1309,6 +1318,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
           },
         ],
+        workshop: {
+          type: 'preparation_curiosity',
+        },
       },
     ],
   },
@@ -1937,6 +1949,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
           },
         ],
+        workshop: {
+          type: 'handling_uncertainty',
+        },
       },
     ],
   },
@@ -2190,6 +2205,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             ],
           },
         ],
+        workshop: {
+          type: 'star_proof',
+        },
       },
     ],
   },

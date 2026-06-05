@@ -14,6 +14,8 @@ import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryW
 import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
 import CareerAlignmentWorkshop from '@/components/exercises/CareerAlignmentWorkshop'
 import HandlingUncertaintyWorkshop from '@/components/exercises/HandlingUncertaintyWorkshop'
+import PaceDeliveryWorkshop from '@/components/exercises/PaceDeliveryWorkshop'
+import PreparationCuriosityWorkshop from '@/components/exercises/PreparationCuriosityWorkshop'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
 
 interface PracticeLessonFlowProps {
@@ -168,7 +170,9 @@ export default function PracticeLessonFlow({
   const canSkipToWorkshop =
     subLesson.workshop?.type === 'star_proof' ||
     subLesson.workshop?.type === 'career_alignment' ||
-    subLesson.workshop?.type === 'handling_uncertainty'
+    subLesson.workshop?.type === 'handling_uncertainty' ||
+    subLesson.workshop?.type === 'pace_delivery' ||
+    subLesson.workshop?.type === 'preparation_curiosity'
 
   const [flowState, setFlowState] = useState<FlowState>('intro')
   const [round, setRound] = useState<'main' | 'retry'>('main')
@@ -188,9 +192,9 @@ export default function PracticeLessonFlow({
   const currentStepIndex = useMemo(() => {
     if (flowState === 'intro') return -1
     if (flowState === 'teach') return 0
+    if (flowState === 'workshop') return 1
+    if (flowState === 'complete') return 1 + workshopStepCount
     if (flowState === 'retry_intro') return 1 + exerciseCount
-    if (flowState === 'workshop') return 1 + exerciseCount + retryStepCount
-    if (flowState === 'complete') return 1 + exerciseCount + retryStepCount + workshopStepCount
     const match = flowState.match(/^exercise_(\d+)$/)
     if (!match) return 0
     const stepWithinRound = parseInt(match[1], 10)
@@ -211,9 +215,15 @@ export default function PracticeLessonFlow({
   const advanceFromTeach = useCallback(() => {
     addXp(XP_TEACH)
     triggerBurst()
-    setRound('main')
-    setFlowState('exercise_0')
-  }, [addXp, triggerBurst])
+    if (hasWorkshop) {
+      setFlowState('workshop')
+    } else if (exerciseCount > 0) {
+      setRound('main')
+      setFlowState('exercise_0')
+    } else {
+      setFlowState('complete')
+    }
+  }, [addXp, exerciseCount, hasWorkshop, triggerBurst])
 
   const moveToFinalPhase = useCallback(() => {
     if (hasWorkshop) {
@@ -268,7 +278,7 @@ export default function PracticeLessonFlow({
   const correctCount = solvedExerciseIndices.length
 
   const renderProgress = () => {
-    const totalSteps = 1 + exerciseCount + retryStepCount + workshopStepCount
+    const totalSteps = 1 + workshopStepCount
     const pct = flowState === 'complete'
       ? 100
       : currentStepIndex < 0
@@ -427,13 +437,9 @@ export default function PracticeLessonFlow({
               <BookOpen className="h-3.5 w-3.5 text-violet-700" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-800">
-                {mode === 'core' ? 'Real miss -> real fix' : 'Full lesson walkthrough'}
-              </p>
+              <p className="text-sm font-semibold text-gray-800">Learn the framework</p>
               <p className="text-xs text-gray-400">
-                {mode === 'core'
-                  ? 'We will start from the flagged answer and rebuild it.'
-                  : 'Learn the pattern before you answer anything'}
+                Quick teach with a before/after example
               </p>
             </div>
           </div>
@@ -443,14 +449,10 @@ export default function PracticeLessonFlow({
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800">
-                {mode === 'core'
-                  ? `${exerciseCount} focused drill${exerciseCount === 1 ? '' : 's'}${hasWorkshop ? ' + workshop' : ''}`
-                  : `${exerciseCount} drills${hasWorkshop ? ' + workshop' : ''} + a retry round`}
+                {hasWorkshop ? 'Interactive workshop' : 'Apply to your answer'}
               </p>
               <p className="text-xs text-gray-400">
-                {mode === 'core'
-                  ? 'Short on purpose so you can apply the fix right away.'
-                  : 'Misses come back after the full set, not immediately'}
+                Build your own version using the framework
               </p>
             </div>
           </div>
@@ -458,23 +460,13 @@ export default function PracticeLessonFlow({
 
         <div className="mb-6">
           <Preppi
-            message={mode === 'core'
-              ? 'First we will learn the pattern. Then we will pressure-test it with drills and finish by building your own answer.'
-              : 'We will learn the pattern first, then do the full round, then come back to anything you missed.'}
+            message="First we learn the pattern, then you apply it in a hands-on workshop. Short and focused."
             size="md"
           />
         </div>
       </div>
 
       <div className="shrink-0 flex items-end justify-end gap-3 border-t border-slate-200/80 pt-5">
-        {canSkipToWorkshop ? (
-          <button
-            onClick={() => setFlowState('workshop')}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
-          >
-            Skip to workshop
-          </button>
-        ) : null}
         <button onClick={() => setFlowState('teach')} className="btn-coach-primary flex items-center gap-2 px-8 py-4">
           Start
           <ArrowRight className="h-5 w-5" />
@@ -571,26 +563,17 @@ export default function PracticeLessonFlow({
           <CheckCircle className="h-10 w-10 text-white" />
         </div>
         <h2 className="mb-2 text-2xl font-extrabold text-gray-900">
-          {mode === 'core' ? 'Core lesson complete' : `Lesson ${lessonNumber} Complete!`}
+          Workshop complete
         </h2>
         <div className="mb-8 flex items-center gap-6">
           <div className="text-center">
             <p className="text-2xl font-extrabold text-amber-600">{xp}</p>
             <p className="text-xs font-semibold text-gray-400">XP Earned</p>
           </div>
-          <div className="h-10 w-px bg-gray-200" />
-          <div className="text-center">
-            <p className="text-2xl font-extrabold text-violet-700">{correctCount}/{exerciseCount}</p>
-            <p className="text-xs font-semibold text-gray-400">Solved</p>
-          </div>
         </div>
         <div className="mb-6">
           <Preppi
-            message={mode === 'core'
-              ? 'Good. The next step is to answer the original interview question again out loud.'
-              : lessonNumber < totalLessons
-                ? 'Good. Move to the next coaching step.'
-                : 'The drills are done. Next is the voice re-answer.'}
+            message="Good. The next step is to answer the original interview question again out loud."
             size="lg"
           />
         </div>
@@ -601,7 +584,7 @@ export default function PracticeLessonFlow({
           onClick={() => onComplete(true, xp)}
           className="btn-coach-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4"
         >
-          {mode === 'core' ? 'Voice Re-Answer' : lessonNumber < totalLessons ? 'Next Lesson' : 'Final Challenge'}
+          Voice Re-Answer
           <ArrowRight className="h-5 w-5" />
         </button>
       </div>
@@ -697,6 +680,57 @@ export default function PracticeLessonFlow({
           </div>
           <div className="min-h-0 flex-1">
             <HandlingUncertaintyWorkshop
+              originalQuestion={originalQuestion}
+              originalAnswer={originalAnswer}
+              onComplete={() => setFlowState('complete')}
+            />
+          </div>
+        </div>
+      )
+    }
+
+    if (subLesson.workshop?.type === 'pace_delivery') {
+      return (
+        <div className="flex h-full flex-col animate-slide-up">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Workshop
+            </p>
+          </div>
+          <div className="mb-4">
+            <Preppi
+              message="This is where we trim the filler, tighten the structure, and make your answer easier for the interviewer to follow."
+              size="sm"
+            />
+          </div>
+          <div className="min-h-0 flex-1">
+            <PaceDeliveryWorkshop
+              originalQuestion={originalQuestion}
+              originalAnswer={originalAnswer}
+              onComplete={() => setFlowState('complete')}
+            />
+          </div>
+        </div>
+      )
+    }
+
+    if (subLesson.workshop?.type === 'preparation_curiosity') {
+      return (
+        <div className="flex h-full flex-col animate-slide-up">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Workshop
+            </p>
+          </div>
+          <div className="mb-4">
+            <Preppi
+              message="This is where we turn generic interest into specific, informed questions that show you did the homework."
+              size="sm"
+            />
+          </div>
+          <div className="min-h-0 flex-1">
+            <PreparationCuriosityWorkshop
+              sessionId={sessionId}
               originalQuestion={originalQuestion}
               originalAnswer={originalAnswer}
               onComplete={() => setFlowState('complete')}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CheckCircle, AlertCircle, TrendingUp } from 'lucide-react'
+import { CheckCircle, AlertCircle, TrendingUp, Target, Zap } from 'lucide-react'
 import Preppi from './Preppi'
 
 interface ScoreRevealCardProps {
@@ -9,6 +9,10 @@ interface ScoreRevealCardProps {
   likelihood: 'likely' | 'unlikely' | null
   strengths?: string[]
   weaknesses?: string[]
+  role?: string
+  company?: string
+  strongCount?: number
+  flaggedCount?: number
 }
 
 function getPreppiMessage(score: number, likelihood: string | null): string {
@@ -26,19 +30,30 @@ function getScoreLabel(score: number): string {
   return 'Needs Work'
 }
 
-function getScoreGradient(score: number): string {
-  if (score >= 7) return 'from-emerald-500 to-teal-600'
-  if (score >= 5) return 'from-amber-400 to-orange-500'
-  return 'from-red-400 to-rose-500'
+function getVerdict(score: number, likelihood: string | null): string {
+  if (likelihood === 'likely' || score >= 7)
+    return "You'd likely advance past this round. Carry forward your strengths and patch the gaps before the next interviewer."
+  if (score >= 5)
+    return "Close to passing, but the flagged issues would make a real interviewer hesitate. Tighten those answers first."
+  return "This round needs repair before moving forward. The good news: every issue below is fixable with practice."
 }
 
-function getScoreColor(score: number): { ring: string; fill: string; text: string; bg: string } {
-  if (score >= 7) return { ring: 'stroke-emerald-500', fill: 'text-emerald-600', text: 'text-emerald-700', bg: 'bg-emerald-50' }
-  if (score >= 5) return { ring: 'stroke-amber-500', fill: 'text-amber-600', text: 'text-amber-700', bg: 'bg-amber-50' }
-  return { ring: 'stroke-red-500', fill: 'text-red-500', text: 'text-red-700', bg: 'bg-red-50' }
+function getScoreColor(score: number): { ring: string; fill: string; text: string; bg: string; gradient: string } {
+  if (score >= 7) return { ring: 'stroke-emerald-500', fill: 'text-emerald-600', text: 'text-emerald-700', bg: 'bg-emerald-50', gradient: 'from-emerald-500 to-teal-600' }
+  if (score >= 5) return { ring: 'stroke-amber-500', fill: 'text-amber-600', text: 'text-amber-700', bg: 'bg-amber-50', gradient: 'from-amber-400 to-orange-500' }
+  return { ring: 'stroke-red-500', fill: 'text-red-500', text: 'text-red-700', bg: 'bg-red-50', gradient: 'from-red-400 to-rose-500' }
 }
 
-export default function ScoreRevealCard({ score, likelihood, strengths = [], weaknesses = [] }: ScoreRevealCardProps) {
+export default function ScoreRevealCard({
+  score,
+  likelihood,
+  strengths = [],
+  weaknesses = [],
+  role,
+  company,
+  strongCount,
+  flaggedCount,
+}: ScoreRevealCardProps) {
   const [revealed, setRevealed] = useState(false)
   const [displayScore, setDisplayScore] = useState(0)
   const [showDetails, setShowDetails] = useState(false)
@@ -46,6 +61,9 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
   const colors = getScoreColor(score)
   const circumference = 2 * Math.PI * 44
   const progress = revealed ? ((score / 10) * circumference) : 0
+
+  const resolvedStrongCount = strongCount ?? strengths.length
+  const resolvedFlaggedCount = flaggedCount ?? weaknesses.length
 
   useEffect(() => {
     const t1 = setTimeout(() => setRevealed(true), 300)
@@ -70,6 +88,10 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
 
   if (!likelihood && score === 0) return null
 
+  const contextLine = role && company
+    ? `${role} at ${company}`
+    : role || company || null
+
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
       {/* Preppi reaction header — mobile only */}
@@ -81,7 +103,6 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
         />
       </div>
 
-      {/* Score reveal */}
       <div className="px-6 py-8 sm:px-8">
         <div className="flex flex-col sm:flex-row items-center gap-8">
           {/* Circular score */}
@@ -113,63 +134,50 @@ export default function ScoreRevealCard({ score, likelihood, strengths = [], wea
             </div>
           </div>
 
-          {/* Label + likelihood */}
+          {/* Label + verdict */}
           <div className="flex-1 text-center sm:text-left">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Round outcome</p>
+            {contextLine && (
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">{contextLine}</p>
+            )}
             <h3 className={`mb-2 text-3xl font-black ${colors.fill}`}>{getScoreLabel(score)}</h3>
-            <div className={`mb-4 inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold ${colors.bg} ${colors.text}`}>
+            <div className={`mb-3 inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold ${colors.bg} ${colors.text}`}>
               {likelihood === 'likely'
                 ? <><CheckCircle className="w-4 h-4" />Likely to advance</>
                 : <><AlertCircle className="w-4 h-4" />Needs improvement to advance</>
               }
             </div>
             <p className="text-sm leading-6 text-slate-500">
-              {likelihood === 'likely'
-                ? 'You cleared the HR Screen. Review your report and start the Hiring Manager interview.'
-                : 'Use the practice drill below to tighten your answers. Retakes are quick.'}
+              {getVerdict(score, likelihood)}
             </p>
           </div>
         </div>
 
-        {/* Strengths & weaknesses */}
-        {showDetails && (strengths.length > 0 || weaknesses.length > 0) && (
-          <div className="mt-6 grid gap-4 transition-all duration-300 sm:grid-cols-2">
-            {strengths.length > 0 && (
-              <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-teal-50/50 p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500 text-white">
-                    <TrendingUp className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-black text-emerald-800">What went well</span>
-                </div>
-                <ul className="space-y-2">
-                  {strengths.slice(0, 3).map((s, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-emerald-800">
-                      <span className="text-emerald-500 mt-0.5 shrink-0 font-black">+</span>
-                      <span>{s}</span>
-                    </li>
-                  ))}
-                </ul>
+        {/* Stats row */}
+        {showDetails && (resolvedStrongCount > 0 || resolvedFlaggedCount > 0) && (
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Strong</span>
               </div>
-            )}
-            {weaknesses.length > 0 && (
-              <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50/50 p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-white">
-                    <AlertCircle className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-black text-amber-800">Where to sharpen</span>
-                </div>
-                <ul className="space-y-2">
-                  {weaknesses.slice(0, 3).map((w, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-amber-800">
-                      <span className="text-amber-500 mt-0.5 shrink-0 font-black">&rarr;</span>
-                      <span>{w}</span>
-                    </li>
-                  ))}
-                </ul>
+              <span className="text-2xl font-black text-emerald-700">{resolvedStrongCount}</span>
+            </div>
+            <div className="rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Target className="w-3.5 h-3.5 text-amber-600" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Flagged</span>
               </div>
-            )}
+              <span className="text-2xl font-black text-amber-700">{resolvedFlaggedCount}</span>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Zap className="w-3.5 h-3.5 text-accent-600" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent-600">Ready</span>
+              </div>
+              <span className={`text-2xl font-black ${likelihood === 'likely' ? 'text-emerald-700' : 'text-amber-700'}`}>
+                {likelihood === 'likely' ? 'Yes' : 'Soon'}
+              </span>
+            </div>
           </div>
         )}
       </div>

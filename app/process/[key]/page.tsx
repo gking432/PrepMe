@@ -8,14 +8,21 @@ import {
   ArrowRight,
   Briefcase,
   Check,
-  Crown,
   ChevronDown,
+  ChevronRight,
+  Clock,
+  Crown,
+  ExternalLink,
   FileText,
   Lock,
   Phone,
+  Play,
   RotateCcw,
   Sparkles,
+  Star,
+  TrendingUp,
   Users,
+  Zap,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import PurchaseFlow from '@/components/PurchaseFlow'
@@ -26,11 +33,11 @@ type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
 const STAGE_ORDER: StageKey[] = ['hr_screen', 'hiring_manager', 'culture_fit', 'final']
 
-const STAGE_META: Record<StageKey, { name: string; blurb: string; price?: string; icon: any; optional?: boolean }> = {
-  hr_screen: { name: 'HR Screen', blurb: 'Recruiter phone screen — get past the gate.', icon: Phone },
-  hiring_manager: { name: 'Hiring Manager', blurb: 'Your future boss demands proof.', price: '$4.99', icon: Briefcase },
-  culture_fit: { name: 'Culture Fit', blurb: 'Values, judgment, working style.', price: '$3.99', icon: Users, optional: true },
-  final: { name: 'Final Round', blurb: 'Executive pressure and strategy.', price: '$5.99', icon: Crown },
+const STAGE_META: Record<StageKey, { name: string; shortName: string; blurb: string; price?: string; icon: any; optional?: boolean; color: string; gradient: string }> = {
+  hr_screen: { name: 'HR Screen', shortName: 'HR', blurb: 'Recruiter phone screen — get past the gate.', icon: Phone, color: 'emerald', gradient: 'from-emerald-500 to-teal-600' },
+  hiring_manager: { name: 'Hiring Manager', shortName: 'HM', blurb: 'Your future boss demands proof.', price: '$4.99', icon: Briefcase, color: 'blue', gradient: 'from-blue-500 to-indigo-600' },
+  culture_fit: { name: 'Culture Fit', shortName: 'CF', blurb: 'Values, judgment, working style.', price: '$3.99', icon: Users, optional: true, color: 'violet', gradient: 'from-violet-500 to-purple-600' },
+  final: { name: 'Final Round', shortName: 'Final', blurb: 'Executive pressure and strategy.', price: '$5.99', icon: Crown, color: 'amber', gradient: 'from-amber-500 to-orange-600' },
 }
 
 interface StageState {
@@ -82,6 +89,38 @@ function previewText(text: string, maxLength = 1200) {
   return `${trimmed.slice(0, maxLength).trim()}...`
 }
 
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'yesterday'
+  if (days < 7) return `${days}d ago`
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function ScoreRing({ score, size = 72, strokeWidth = 5 }: { score: number; size?: number; strokeWidth?: number }) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const progress = (score / 10) * circumference
+  const tone = score >= 7 ? 'text-emerald-500' : score >= 5 ? 'text-amber-500' : 'text-red-400'
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-100" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={circumference - progress} strokeLinecap="round" className={tone} style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className={`text-lg font-black ${tone}`}>{fmtScore(score)}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function ProcessSpinePage() {
   const router = useRouter()
   const params = useParams<{ key: string }>()
@@ -110,7 +149,6 @@ export default function ProcessSpinePage() {
       }
       if (!cancelled) setUserEmail(session.user.email || undefined)
 
-      // Payment access (non-blocking)
       fetch('/api/payments/status')
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => { if (data && !cancelled) setStageAccess(data.stageAccess || {}) })
@@ -197,9 +235,11 @@ export default function ProcessSpinePage() {
       return 'available'
     }
     const completedCount = STAGE_ORDER.filter((s) => process.stages[s].done).length
-    // Natural next step: earliest stage not yet done.
     const nextStage = STAGE_ORDER.find((s) => !process.stages[s].done) || null
-    return { isLocked, statusOf, completedCount, nextStage }
+
+    const mostRecentStage = [...STAGE_ORDER].reverse().find((s) => process.stages[s].done) || null
+
+    return { isLocked, statusOf, completedCount, nextStage, mostRecentStage }
   }, [process, stageAccess])
 
   const launchStage = (stage: StageKey) => {
@@ -225,7 +265,7 @@ export default function ProcessSpinePage() {
       <AppChrome active="preps">
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
           <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-accent-600" />
-          <p className="text-sm font-medium text-slate-500">Loading your prep…</p>
+          <p className="text-sm font-medium text-slate-500">Loading your prep...</p>
         </div>
       </AppChrome>
     )
@@ -246,243 +286,397 @@ export default function ProcessSpinePage() {
     )
   }
 
-  const { statusOf, completedCount, nextStage } = computed
+  const { statusOf, completedCount, nextStage, mostRecentStage } = computed
   const title = [process.positionTitle, process.companyName].filter(Boolean).join(' at ') || 'Interview Process'
   const nextStatus = nextStage ? statusOf(nextStage) : null
   const completedStages = STAGE_ORDER.filter((stage) => process.stages[stage].done)
   const jobDescriptionPreview = previewText(process.jobDescriptionText)
   const resumePreview = previewText(process.resumeText)
+  const mostRecentData = mostRecentStage ? process.stages[mostRecentStage] : null
+  const mostRecentMeta = mostRecentStage ? STAGE_META[mostRecentStage] : null
+  const avgScore = completedStages.length > 0
+    ? completedStages.reduce((sum, s) => sum + (process.stages[s].score || 0), 0) / completedStages.length
+    : null
 
   return (
-    <AppChrome active="preps" maxWidth="max-w-2xl">
-      <div className="flex flex-col">
-        {/* Header */}
-        <Link href="/dashboard" className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> My Preps
-        </Link>
+    <AppChrome active="preps" maxWidth="max-w-7xl">
+      {/* Back nav */}
+      <Link href="/dashboard" className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-slate-700">
+        <ArrowLeft className="h-4 w-4" /> Back to interviews
+      </Link>
 
-        <div className="mt-4 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">Interview Prep</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
-          </div>
-          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-            {completedCount}/4 done
-          </span>
-        </div>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-accent-600 transition-all duration-500"
-            style={{ width: `${(completedCount / 4) * 100}%` }}
-          />
-        </div>
+      {/* Desktop: sidebar + main */}
+      <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-8">
 
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Overview</p>
-              <h2 className="mt-1 text-lg font-bold text-slate-950">Process details</h2>
+        {/* ── Sidebar (desktop only) ── */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-20 space-y-4">
+            {/* Process info card */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 text-white">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-900">{process.positionTitle || 'Interview'}</p>
+                  <p className="truncate text-xs text-slate-500">{process.companyName || 'Company'}</p>
+                </div>
+              </div>
+
+              {/* Progress ring */}
+              <div className="mt-5 flex items-center gap-4">
+                <div className="relative h-14 w-14">
+                  <svg width="56" height="56" className="-rotate-90">
+                    <circle cx="28" cy="28" r="24" fill="none" stroke="#f1f5f9" strokeWidth="4" />
+                    <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={2 * Math.PI * 24} strokeDashoffset={2 * Math.PI * 24 * (1 - completedCount / 4)} strokeLinecap="round" className="text-accent-500" style={{ transition: 'stroke-dashoffset 0.8s ease-out' }} />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-black text-slate-900">{completedCount}/4</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{completedCount === 4 ? 'All done' : `${completedCount} of 4 rounds`}</p>
+                  <p className="text-xs text-slate-500">{completedCount === 4 ? 'You crushed it' : 'completed'}</p>
+                </div>
+              </div>
             </div>
-            <span className="rounded-full bg-accent-50 px-3 py-1 text-xs font-bold text-accent-700">
-              {completedStages.length} completed
-            </span>
+
+            {/* Stage nav */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
+              <p className="mb-2 px-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Stages</p>
+              <div className="space-y-0.5">
+                {STAGE_ORDER.map((stage) => {
+                  const meta = STAGE_META[stage]
+                  const st = process.stages[stage]
+                  const status = statusOf(stage)
+                  const isNext = stage === nextStage
+                  const score = fmtScore(st.score)
+
+                  return (
+                    <button
+                      key={stage}
+                      type="button"
+                      onClick={() => handleNodeClick(stage, status)}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
+                        isNext ? 'bg-accent-50 ring-1 ring-accent-200' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${
+                        status === 'complete'
+                          ? 'bg-emerald-100 text-emerald-600'
+                          : isNext
+                          ? 'bg-accent-100 text-accent-600'
+                          : status === 'locked'
+                          ? 'bg-slate-100 text-slate-400'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {status === 'complete' ? <Check className="h-4 w-4" /> : status === 'locked' ? <Lock className="h-3.5 w-3.5" /> : <meta.icon className="h-4 w-4" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-semibold ${isNext ? 'text-accent-700' : 'text-slate-800'}`}>{meta.name}</p>
+                        {status === 'complete' && score && (
+                          <p className="text-xs font-medium text-emerald-600">{score}/10</p>
+                        )}
+                        {status === 'locked' && (
+                          <p className="text-xs text-slate-400">{meta.price}</p>
+                        )}
+                        {isNext && status !== 'complete' && (
+                          <p className="text-xs font-medium text-accent-600">Up next</p>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Quick links */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-3 shadow-sm">
+              <p className="mb-2 px-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Details</p>
+              <details className="group">
+                <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                  <Briefcase className="h-4 w-4 text-slate-400" />
+                  <span className="flex-1">Job description</span>
+                  <ChevronDown className="h-4 w-4 text-slate-300 transition group-open:rotate-180" />
+                </summary>
+                <div className="px-3 pb-3">
+                  {jobDescriptionPreview ? (
+                    <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">{jobDescriptionPreview}</pre>
+                  ) : (
+                    <p className="mt-1 text-xs text-slate-400">No job description saved.</p>
+                  )}
+                </div>
+              </details>
+              <details className="group">
+                <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                  <FileText className="h-4 w-4 text-slate-400" />
+                  <span className="flex-1">Resume</span>
+                  <ChevronDown className="h-4 w-4 text-slate-300 transition group-open:rotate-180" />
+                </summary>
+                <div className="px-3 pb-3">
+                  {resumePreview ? (
+                    <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">{resumePreview}</pre>
+                  ) : (
+                    <p className="mt-1 text-xs text-slate-400">No resume saved.</p>
+                  )}
+                </div>
+              </details>
+            </div>
+          </div>
+        </aside>
+
+        {/* ── Main content ── */}
+        <div className="min-w-0 space-y-6">
+
+          {/* Title area (visible on all sizes) */}
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {completedCount === 0
+                ? 'Ready to start your first round'
+                : completedCount === 4
+                ? 'All four rounds complete — you\'re ready'
+                : `${completedCount} of 4 rounds complete`}
+            </p>
+
+            {/* Mobile progress bar */}
+            <div className="mt-4 lg:hidden">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                <span>Progress</span>
+                <span>{completedCount}/4</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-600 transition-all duration-500" style={{ width: `${(completedCount / 4) * 100}%` }} />
+              </div>
+            </div>
           </div>
 
-          {completedStages.length > 0 && (
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {completedStages.map((stage) => {
+          {/* ── Hero: Most recent session OR Next step CTA ── */}
+          {mostRecentStage && mostRecentData && mostRecentMeta ? (
+            <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+              <div className={`bg-gradient-to-r ${mostRecentMeta.gradient} px-6 py-5 sm:px-8 sm:py-6`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white/70">Latest result</p>
+                    <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">{mostRecentMeta.name}</h2>
+                    {mostRecentData.completedAt && (
+                      <p className="mt-1 text-xs font-medium text-white/60">{timeAgo(mostRecentData.completedAt)}</p>
+                    )}
+                  </div>
+                  {mostRecentData.score != null && (
+                    <div className="flex flex-col items-center">
+                      <ScoreRing score={mostRecentData.score} size={80} strokeWidth={6} />
+                      <span className="mt-1 text-[11px] font-bold text-white/60">out of 10</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 px-6 py-4 sm:px-8">
+                <button
+                  type="button"
+                  onClick={() => openFeedback(mostRecentStage)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  {mostRecentData.reportReady ? 'View full report' : 'View feedback'}
+                  <ExternalLink className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => launchStage(mostRecentStage)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Retake
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── Next step CTA ── */}
+          {nextStage && (
+            <button
+              type="button"
+              onClick={() => handleNodeClick(nextStage, nextStatus as NodeStatus)}
+              className="group flex w-full items-center gap-4 overflow-hidden rounded-2xl border-2 border-dashed border-accent-200 bg-accent-50/50 p-5 text-left transition-all hover:border-accent-300 hover:bg-accent-50 sm:p-6"
+            >
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 text-white shadow-lg shadow-accent-500/20">
+                {nextStatus === 'locked' ? <Lock className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-accent-600">Next up</p>
+                  {nextStatus === 'locked' && STAGE_META[nextStage].price && (
+                    <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700">
+                      {STAGE_META[nextStage].price}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-lg font-black text-slate-900">{nextStatus === 'locked' ? `Unlock ${STAGE_META[nextStage].name}` : `Start ${STAGE_META[nextStage].name}`}</p>
+                <p className="mt-0.5 text-sm text-slate-500">{STAGE_META[nextStage].blurb}</p>
+              </div>
+              <ArrowRight className="h-5 w-5 shrink-0 text-accent-400 transition-transform group-hover:translate-x-1" />
+            </button>
+          )}
+
+          {!nextStage && (
+            <div className="flex items-center gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-6">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-lg font-black text-emerald-900">Every round complete</p>
+                <p className="text-sm text-emerald-700">You&apos;ve done the work. Go get the offer.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Stats row ── */}
+          {completedCount > 0 && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
+                <p className="text-2xl font-black text-slate-900">{completedCount}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">Rounds done</p>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
+                <p className="text-2xl font-black text-slate-900">{4 - completedCount}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">Remaining</p>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
+                <p className={`text-2xl font-black ${avgScore && avgScore >= 7 ? 'text-emerald-600' : avgScore && avgScore >= 5 ? 'text-amber-600' : 'text-slate-900'}`}>
+                  {avgScore ? fmtScore(avgScore) : '-'}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">Avg score</p>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
+                <p className="text-2xl font-black text-slate-900">
+                  {completedStages.reduce((sum, s) => sum + process.stages[s].attempts, 0)}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-500">Total attempts</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── All stages grid ── */}
+          <div>
+            <h2 className="mb-4 text-lg font-black text-slate-900">All rounds</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {STAGE_ORDER.map((stage) => {
+                const meta = STAGE_META[stage]
                 const st = process.stages[stage]
+                const status = statusOf(stage)
+                const isNext = stage === nextStage
                 const score = fmtScore(st.score)
+                const Icon = meta.icon
+
                 return (
                   <button
                     key={stage}
                     type="button"
-                    onClick={() => openFeedback(stage)}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-left transition hover:border-accent-200 hover:bg-accent-50/60"
+                    onClick={() => handleNodeClick(stage, status)}
+                    className={`group relative flex items-start gap-4 rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${
+                      status === 'complete'
+                        ? 'border-emerald-200/80 bg-white'
+                        : isNext
+                        ? 'border-accent-200 bg-white shadow-sm'
+                        : status === 'locked'
+                        ? 'border-slate-200/60 bg-slate-50/50'
+                        : 'border-slate-200/80 bg-white'
+                    }`}
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900">{STAGE_META[stage].name}</p>
-                      <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                        {score ? `${score}/10` : 'Score saved'}
-                        {st.attempts > 1 ? ` · ${st.attempts - 1} retake${st.attempts - 1 === 1 ? '' : 's'}` : ''}
-                      </p>
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                      status === 'complete'
+                        ? `bg-gradient-to-br ${meta.gradient} text-white`
+                        : isNext
+                        ? 'bg-accent-100 text-accent-600'
+                        : status === 'locked'
+                        ? 'bg-slate-100 text-slate-400'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {status === 'complete' ? <Check className="h-5 w-5" /> : status === 'locked' ? <Lock className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-bold text-accent-700">
-                      {st.reportReady ? 'View report' : 'View feedback'}
-                      <ArrowRight className="h-4 w-4" />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-base font-bold text-slate-900">{meta.name}</p>
+                        {meta.optional && (
+                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Opt</span>
+                        )}
+                      </div>
+
+                      {status === 'complete' && (
+                        <div className="mt-1 flex items-center gap-3">
+                          <span className={`text-sm font-black ${st.score && st.score >= 7 ? 'text-emerald-600' : st.score && st.score >= 5 ? 'text-amber-600' : 'text-red-500'}`}>
+                            {score}/10
+                          </span>
+                          {st.attempts > 1 && (
+                            <span className="text-xs text-slate-400">{st.attempts} attempts</span>
+                          )}
+                          {st.completedAt && (
+                            <span className="text-xs text-slate-400">{timeAgo(st.completedAt)}</span>
+                          )}
+                        </div>
+                      )}
+                      {status === 'complete' && (
+                        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-accent-600">
+                          {st.reportReady ? 'View report' : 'View feedback'}
+                          <ChevronRight className="h-3 w-3" />
+                        </p>
+                      )}
+                      {status === 'locked' && (
+                        <p className="mt-1 text-sm text-slate-400">{meta.blurb}</p>
+                      )}
+                      {status === 'locked' && meta.price && (
+                        <p className="mt-1.5 text-xs font-bold text-accent-600">Unlock for {meta.price}</p>
+                      )}
+                      {status === 'available' && !isNext && (
+                        <p className="mt-1 text-sm text-slate-500">{meta.blurb}</p>
+                      )}
+                      {isNext && status !== 'complete' && (
+                        <>
+                          <p className="mt-1 text-sm text-slate-500">{meta.blurb}</p>
+                          <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-accent-600">
+                            Start round <ArrowRight className="h-3 w-3" />
+                          </p>
+                        </>
+                      )}
                     </div>
                   </button>
                 )
               })}
             </div>
-          )}
+          </div>
 
-          <div className="mt-4 space-y-2">
-            <details className="group rounded-xl border border-slate-200 bg-white">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-bold text-slate-800">
-                <span className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-slate-400" />
-                  Job description
-                </span>
-                <ChevronDown className="h-4 w-4 text-slate-400 transition group-open:rotate-180" />
+          {/* ── Mobile: Job description & resume (hidden on desktop, in sidebar there) ── */}
+          <div className="space-y-3 lg:hidden">
+            <details className="group rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm font-bold text-slate-800">
+                <Briefcase className="h-4 w-4 text-slate-400" />
+                <span className="flex-1">Job description</span>
+                <ChevronDown className="h-4 w-4 text-slate-300 transition group-open:rotate-180" />
               </summary>
-              <div className="border-t border-slate-100 px-3 py-3">
+              <div className="border-t border-slate-100 px-5 py-4">
                 {jobDescriptionPreview ? (
-                  <pre className="max-h-72 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-700">
-                    {jobDescriptionPreview}
-                  </pre>
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">{jobDescriptionPreview}</pre>
                 ) : (
-                  <p className="text-sm font-semibold text-slate-500">No job description was saved for this process.</p>
+                  <p className="text-sm text-slate-400">No job description saved.</p>
                 )}
               </div>
             </details>
-
-            <details className="group rounded-xl border border-slate-200 bg-white">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-bold text-slate-800">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-slate-400" />
-                  Resume used
-                </span>
-                <ChevronDown className="h-4 w-4 text-slate-400 transition group-open:rotate-180" />
+            <details className="group rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-sm font-bold text-slate-800">
+                <FileText className="h-4 w-4 text-slate-400" />
+                <span className="flex-1">Resume</span>
+                <ChevronDown className="h-4 w-4 text-slate-300 transition group-open:rotate-180" />
               </summary>
-              <div className="border-t border-slate-100 px-3 py-3">
+              <div className="border-t border-slate-100 px-5 py-4">
                 {resumePreview ? (
-                  <pre className="max-h-72 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-700">
-                    {resumePreview}
-                  </pre>
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">{resumePreview}</pre>
                 ) : (
-                  <p className="text-sm font-semibold text-slate-500">No resume text was saved for this process.</p>
+                  <p className="text-sm text-slate-400">No resume saved.</p>
                 )}
               </div>
             </details>
           </div>
-        </div>
 
-        {/* The path */}
-        <div className="relative mt-7">
-          <div className="pointer-events-none absolute bottom-6 left-[31px] top-6 w-0.5 bg-[linear-gradient(180deg,#dbe6fe_0%,#e2e8f0_100%)]" />
-          <div className="space-y-3">
-            {STAGE_ORDER.map((stage) => {
-              const meta = STAGE_META[stage]
-              const st = process.stages[stage]
-              const status = statusOf(stage)
-              const isNext = stage === nextStage
-              const Icon = meta.icon
-              const score = fmtScore(st.score)
-
-              const ring =
-                status === 'complete'
-                  ? 'border-emerald-500 bg-emerald-500 text-white'
-                  : isNext
-                  ? 'border-accent-500 bg-accent-600 text-white shadow-[0_0_0_6px_rgba(37,99,235,0.16)]'
-                  : status === 'locked'
-                  ? 'border-slate-300 bg-white text-slate-400'
-                  : 'border-slate-300 bg-white text-slate-500'
-
-              const cardTone =
-                status === 'complete'
-                  ? 'border-emerald-200 bg-emerald-50/70'
-                  : isNext
-                  ? 'border-accent-300 bg-white shadow-[0_16px_40px_rgba(37,99,235,0.10)]'
-                  : 'border-slate-200 bg-white/70'
-
-              return (
-                <button
-                  key={stage}
-                  type="button"
-                  onClick={() => handleNodeClick(stage, status)}
-                  className={`relative flex w-full items-center gap-4 rounded-2xl border p-3.5 text-left transition-all hover:-translate-y-0.5 ${cardTone}`}
-                >
-                  <div className={`relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-4 ${ring}`}>
-                    {status === 'complete' ? (
-                      <Check className="h-7 w-7" />
-                    ) : status === 'locked' ? (
-                      <Lock className="h-6 w-6" />
-                    ) : (
-                      <Icon className="h-6 w-6" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-bold text-slate-900">{meta.name}</p>
-                      {meta.optional && (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                          Optional
-                        </span>
-                      )}
-                      {status === 'complete' && score && (
-                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700">{score}/10</span>
-                      )}
-                      {isNext && status !== 'complete' && (
-                        <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-accent-700">
-                          Next step
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 truncate text-sm font-semibold text-slate-500">
-                      {status === 'complete'
-                        ? 'Completed — tap to review feedback'
-                        : status === 'locked'
-                        ? `Locked · ${meta.price}`
-                        : meta.blurb}
-                    </p>
-                  </div>
-
-                  <div className="shrink-0 text-slate-400">
-                    {status === 'complete' ? (
-                      <FileText className="h-5 w-5" />
-                    ) : status === 'locked' ? (
-                      <span className="text-sm font-bold text-accent-700">{meta.price}</span>
-                    ) : (
-                      <ArrowRight className="h-5 w-5" />
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* The single next step */}
-        <div className="mt-6">
-          {nextStage ? (
-            <button
-              type="button"
-              onClick={() => handleNodeClick(nextStage, nextStatus as NodeStatus)}
-              className="group flex w-full items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
-            >
-              {nextStatus === 'locked' ? (
-                <>
-                  <Lock className="h-5 w-5" />
-                  Unlock {STAGE_META[nextStage].name} · {STAGE_META[nextStage].price}
-                </>
-              ) : (
-                <>
-                  Start {STAGE_META[nextStage].name}
-                  <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-                </>
-              )}
-            </button>
-          ) : (
-            <div className="flex items-center justify-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base font-bold text-emerald-800">
-              <Sparkles className="h-5 w-5" />
-              Every round complete — go get the offer.
-            </div>
-          )}
-          {completedCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                const lastDone = [...STAGE_ORDER].reverse().find((s) => process.stages[s].done)
-                if (lastDone) launchStage(lastDone)
-              }}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-white"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Retake last round
-            </button>
-          )}
         </div>
       </div>
 

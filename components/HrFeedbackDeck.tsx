@@ -27,7 +27,7 @@ type Evidence = {
   timestamp?: string
 }
 
-type SignalArea = {
+export type SignalArea = {
   criterion?: string
   feedback?: string
   score?: number | string
@@ -100,6 +100,7 @@ interface HrFeedbackDeckProps {
   onRetakeInterview?: () => void
   onUnlockNextStage?: () => void
   onExitToProfile?: () => void
+  onPractice?: (repair: SignalArea) => void
   layout?: 'standalone' | 'embedded'
   stageKey?: StageKey
 }
@@ -274,118 +275,6 @@ function truncate(value: string | undefined, max = 150) {
   return `${text.slice(0, max).trim()}...`
 }
 
-function getFallbackTeachingBullets(criterion: string) {
-  return [
-    `Name the ${criterion.toLowerCase()} signal directly instead of making the interviewer infer it.`,
-    'Anchor the answer in one specific example with your action, decision, or tradeoff.',
-    'Close with the result, lesson, or business impact so the answer feels finished.',
-  ]
-}
-
-type IssueLesson = {
-  title: string
-  summary: string
-  steps: Array<{ label: string; text: string }>
-  tryThis: string
-}
-
-function getIssueLesson(criterion: string, rootCause?: string): IssueLesson {
-  const text = `${criterion} ${rootCause || ''}`.toLowerCase()
-
-  if (/professional story|professional_story|tell me about yourself|background/.test(text)) {
-    return {
-      title: 'Turn your background into a clear professional story',
-      summary:
-        'A strong answer explains what you do now, shows the foundation that shaped you, and makes it clear where you are headed next.',
-      steps: [
-        { label: 'Present', text: 'Start with what you do now and define your professional lane clearly.' },
-        { label: 'Past', text: 'Show the foundation that shaped you. Use specific details when they explain meaning, not when they just add chronology.' },
-        { label: 'Future', text: 'Explain where you want to go next in a way that sounds specific and logical.' },
-      ],
-      tryThis: 'Draft your answer using Present, Past, Future. Do not stop at the section label. Add a qualifier to each one.',
-    }
-  }
-
-  if (/specific examples|specificity|proof|evidence|lack_of_specificity|star|example/.test(text)) {
-    return {
-      title: 'Fix weak proof with stronger STAR',
-      summary:
-        'A STAR answer can look organized and still fail if the Action is broad, the Result is thin, or the Situation stays too generic to mean anything.',
-      steps: [
-        { label: 'Situation', text: 'Give enough context to make the problem real, but do not stay broad or drift into a long setup.' },
-        { label: 'Task', text: 'Make your responsibility clear so the interviewer knows what you owned inside the situation.' },
-        { label: 'Action', text: 'This is where proof usually lives. Show the real moves you made, not just traits like “I stayed organized.”' },
-        { label: 'Result', text: 'Close with what changed, improved, or got protected because of your actions.' },
-      ],
-      tryThis: 'Use STAR again, but put more weight into ownership, specific Action, and meaningful Result.',
-    }
-  }
-
-  if (/alignment|career goals|career_alignment|position|why this role|why this position/.test(text)) {
-    return {
-      title: 'Use Observation, Fit, Timing',
-      summary:
-        'Do not just say you want the role. Explain what you noticed, why it fits, and why now makes sense.',
-      steps: [
-        { label: 'Observation', text: 'What specifically stood out to you about the role or company?' },
-        { label: 'Fit', text: 'Why does that connect to your background?' },
-        { label: 'Timing', text: 'Why does this move make sense now?' },
-      ],
-      tryThis: 'Use Observation, Fit, Timing to explain what stands out, why it connects to you, and why the move makes sense now.',
-    }
-  }
-
-  if (/uncertain|difficult|handling_uncertainty|off_topic|gap|bluff|deflect/.test(text)) {
-    return {
-      title: 'Use Answer, Reason, Example when you are unsure',
-      summary:
-        'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, do not ramble while you search.',
-      steps: [
-        { label: 'Pause', text: 'Pause, choose one grounded answer, explain why, and then support it with a short real example.' },
-        { label: 'Answer', text: 'Give one clear answer early so the interviewer knows where the response is going.' },
-        { label: 'Reason', text: 'Explain why that answer makes sense instead of circling the topic.' },
-        { label: 'Example', text: 'Ground it with a short real example so the answer sounds credible and lived-in.' },
-      ],
-      tryThis: 'The recovery move is not to keep talking while you think. Pause, choose a direct answer, explain it, and ground it briefly.',
-    }
-  }
-
-  if (/pace|flow|natural delivery|weak_communication|conversation/.test(text)) {
-    return {
-      title: 'Make the conversation feel natural and easy to follow',
-      summary:
-        'A strong interview does not just depend on what you say. It also depends on how the conversation feels.',
-      steps: [
-        { label: 'Rhythm', text: 'A strong answer should sound calm and easy to track.' },
-        { label: 'Transition', text: 'One simple transition helps the answer begin naturally.' },
-        { label: 'Flow', text: 'The ideas should build clearly instead of piling up too fast.' },
-      ],
-      tryThis: 'Use one simple transition, focus on one main point first, and make the answer easier to follow out loud.',
-    }
-  }
-
-  if (/preparation|curiosity|questions_about_company|company|question/.test(text)) {
-    return {
-      title: 'Show you did enough homework to sound informed',
-      summary:
-        'In an HR screen, the interviewer is usually checking whether you did basic homework and whether your interest feels real.',
-      steps: [
-        { label: 'Basics', text: 'Know what the company does, who it serves, and one thing that stood out.' },
-        { label: 'No generic praise', text: 'Saying the company seems great is not the same as showing preparation.' },
-        { label: 'Connect interest', text: 'Say what stood out, then explain why it matters to you.' },
-        { label: 'Better questions', text: 'Strong questions focus on the role, team, culture, or company priorities.' },
-      ],
-      tryThis: 'Keep it short. You only need the basics plus one real point of interest.',
-    }
-  }
-
-  return {
-    title: `${criterion} repair`,
-    summary: 'Use the flagged feedback to make the answer clearer, more specific, and easier for the interviewer to trust.',
-    steps: getFallbackTeachingBullets(criterion).map((text, index) => ({ label: `Step ${index + 1}`, text })),
-    tryThis: 'Try answering again with more ownership, more specificity, and a clearer result.',
-  }
-}
 
 function getScoreTone(score?: number | string) {
   const numeric = parseScore(score)
@@ -564,53 +453,14 @@ function RepairLessonSlide({
   repair,
   issueNumber,
   totalIssues,
+  onPractice,
 }: {
   repair?: SignalArea | null
   issueNumber: number
   totalIssues: number
+  onPractice?: (repair: SignalArea) => void
 }) {
-  const storageCriterion = toDisplayText(repair?.criterion, 'Priority Repair')
-  const storageEvidence = getPrimaryEvidence(repair)
-  const draftStorageKey = `prepme_hr_mini_workshop_${storageCriterion}_${storageEvidence?.question_id || issueNumber}`
-  const [draft, setDraft] = useState('')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    setDraft(localStorage.getItem(draftStorageKey) || '')
-  }, [draftStorageKey])
-
-  useEffect(() => {
-    if (!draft.trim()) return
-    const timer = window.setTimeout(() => {
-      fetch('/api/profile/practice-memory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: draftStorageKey,
-          value: draft,
-          meta: {
-            source: 'hr_screen_mini_workshop',
-            criterion: storageCriterion,
-            question_id: storageEvidence?.question_id || null,
-            question: storageEvidence?.question || null,
-            framework: repair?.mini_workshop?.framework || null,
-            prompt: repair?.mini_workshop?.prompt || null,
-          },
-        }),
-      }).catch(() => {
-        // Local storage remains the fallback for anonymous users and offline exits.
-      })
-    }, 800)
-
-    return () => window.clearTimeout(timer)
-  }, [draft, draftStorageKey, repair?.mini_workshop?.framework, repair?.mini_workshop?.prompt, storageCriterion, storageEvidence?.question, storageEvidence?.question_id])
-
-  const saveDraft = (value: string) => {
-    setDraft(value)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(draftStorageKey, value)
-    }
-  }
+  const [showStronger, setShowStronger] = useState(false)
 
   if (!repair) {
     return (
@@ -627,28 +477,30 @@ function RepairLessonSlide({
   const criterion = toDisplayText(repair.criterion, 'Priority Repair')
   const miniWorkshop = repair.mini_workshop
   const practiceFocus = toDisplayText(repair.practice_focus || miniWorkshop?.practice_focus || miniWorkshop?.area)
-  const rootCause = getRootCauseForCriterion(criterion, repair.practice_focus_id || repair.rootCause)
-  const lesson = getIssueLesson(criterion, rootCause)
   const score = parseScore(repair.score)
   const feedbackText = toDisplayText(repair.feedback, 'This answer did not create enough interviewer confidence for the next round.')
   const evidence = getPrimaryEvidence(repair)
   const questionText = toDisplayText(evidence?.question)
   const proofText = toDisplayText(evidence?.excerpt)
-  const framework = toDisplayText(miniWorkshop?.framework, lesson.steps.map((step) => step.label).join(', '))
-  const diagnosis = toDisplayText(miniWorkshop?.diagnosis, lesson.summary)
-  const example = toDisplayText(miniWorkshop?.example)
-  const draftPrompt = toDisplayText(miniWorkshop?.prompt, lesson.tryThis)
+  const rewrittenAnswer = toDisplayText(repair.rewritten_answer)
+  const rewriteExplanation = toDisplayText(repair.rewrite_explanation)
+  const rewriteMethod = toDisplayText(repair.rewrite_method)
+  const originalAnswer = toDisplayText(repair.original_answer)
+  const diagnosis = toDisplayText(miniWorkshop?.diagnosis)
+  const rootCause = getRootCauseForCriterion(criterion, repair.practice_focus_id || repair.rootCause)
+  const tip = getImprovementTipForCriterion(criterion, rootCause)
+
+  const hasRewrite = !!rewrittenAnswer
+  const displayOriginal = originalAnswer || proofText
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:p-4">
-      <section className="min-h-0">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm lg:p-4">
+      {/* Header */}
+      <div className="shrink-0">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">Issue {issueNumber} of {totalIssues}</p>
             <h1 className="mt-1 text-lg font-bold leading-tight text-slate-950 lg:text-xl">{criterion}</h1>
-            {practiceFocus && (
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-accent-700">Practice focus: {practiceFocus}</p>
-            )}
           </div>
           {score > 0 && (
             <span className={`rounded-full border px-3 py-1 text-sm font-bold ${getScoreTone(score)}`}>
@@ -656,83 +508,111 @@ function RepairLessonSlide({
             </span>
           )}
         </div>
+      </div>
 
-        <div className={`mt-3 grid gap-2 ${(questionText || proofText) ? 'sm:grid-cols-2' : ''}`}>
-          <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-2.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-rose-600">Why Flagged</p>
-            <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-800">{feedbackText}</p>
-          </div>
+      {/* Scrollable content */}
+      <div className="min-h-0 flex-1 overflow-y-auto space-y-3 pr-1">
+        {/* Why flagged */}
+        <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-rose-600">Why This Was Flagged</p>
+          <p className="mt-1.5 text-sm font-semibold leading-6 text-slate-800">{feedbackText}</p>
+        </div>
 
-          {(questionText || proofText) && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{questionText ? 'Question / Evidence' : 'What The Interviewer Heard'}</p>
-                {evidence?.timestamp && <span className="rounded-full bg-white px-2 py-1 text-[11px] font-bold text-slate-500">{evidence.timestamp}</span>}
-              </div>
-              {questionText && <p className="mt-1.5 text-xs font-bold leading-4 text-slate-900">{questionText}</p>}
-              {proofText && <p className="mt-1.5 text-[11px] font-semibold leading-4 text-slate-700">"{proofText}"</p>}
+        {/* What the interviewer heard */}
+        {(questionText || proofText) && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">What The Interviewer Heard</p>
+              {evidence?.timestamp && <span className="rounded-full bg-white px-2 py-1 text-[11px] font-bold text-slate-500">{evidence.timestamp}</span>}
             </div>
-          )}
-        </div>
-      </section>
-
-      <section className="min-h-0 overflow-y-auto rounded-xl border border-accent-200 bg-accent-50 p-2.5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-accent-700 shadow-sm">
-            <Zap className="h-4 w-4" />
+            {questionText && <p className="mt-2 text-sm font-bold text-slate-900">{questionText}</p>}
+            {proofText && <p className="mt-1.5 text-sm font-semibold leading-6 text-slate-600">&ldquo;{proofText}&rdquo;</p>}
           </div>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">Mini Lesson</p>
-            <p className="text-xs font-bold leading-4 text-slate-950">{lesson.title}</p>
-          </div>
-        </div>
-        <p className="mt-2 text-xs font-semibold leading-5 text-slate-700">{lesson.summary}</p>
+        )}
 
-        <div className="mt-2 grid gap-2">
-          <div>
-            <div className={`grid gap-2 ${lesson.steps.length >= 4 ? 'sm:grid-cols-2 2xl:grid-cols-4' : 'sm:grid-cols-3'}`}>
-              {lesson.steps.map((item, index) => (
-                <div key={`${item}-${index}`} className="flex gap-2 rounded-lg bg-white px-2.5 py-1.5 shadow-sm sm:flex-col">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-600 text-[11px] font-bold text-white">
-                    {index + 1}
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-accent-700">{item.label}</p>
-                    <p className="text-xs font-bold leading-4 text-slate-800">{item.text}</p>
+        {/* Stronger version comparison */}
+        {hasRewrite && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+            <button
+              type="button"
+              onClick={() => setShowStronger(!showStronger)}
+              className="flex w-full items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-700">
+                  {showStronger ? 'Stronger Version' : 'See A Stronger Version'}
+                </p>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-emerald-600 transition-transform ${showStronger ? 'rotate-90' : ''}`} />
+            </button>
+            {showStronger && (
+              <div className="mt-3 space-y-3 animate-slide-up">
+                {rewriteMethod && (
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700">Method: {rewriteMethod}</p>
+                )}
+                {displayOriginal && (
+                  <div className="rounded-lg bg-white/60 p-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Your version</p>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600 line-through decoration-rose-300">{truncate(displayOriginal, 300)}</p>
                   </div>
+                )}
+                <div className="rounded-lg bg-white p-2.5 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600">Rewritten</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-900">{rewrittenAnswer}</p>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-2 rounded-lg border border-accent-200 bg-white/85 px-3 py-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent-700">Try this next</p>
-              <p className="mt-1 text-xs font-bold leading-5 text-slate-800 lg:text-sm">{lesson.tryThis}</p>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Mini Workshop</p>
-            {practiceFocus && <p className="mt-1 text-xs font-bold leading-5 text-slate-900">Practice focus: {practiceFocus}</p>}
-            <p className="mt-1 text-xs font-bold leading-5 text-slate-900">Framework: {framework}</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-slate-700">{diagnosis}</p>
-            {example ? (
-              <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Example</p>
-                <p className="mt-1 text-xs font-semibold leading-5 text-slate-800">"{example}"</p>
+                {rewriteExplanation && (
+                  <p className="text-xs font-semibold leading-5 text-emerald-800">{rewriteExplanation}</p>
+                )}
               </div>
-            ) : null}
-            <label className="mt-2 block">
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent-700">{draftPrompt}</span>
-              <textarea
-                value={draft}
-                onChange={(event) => saveDraft(event.target.value)}
-                placeholder="Write your version here. This saves on this device."
-                className="mt-2 min-h-[6.5rem] w-full resize-y rounded-xl border border-accent-200 bg-accent-50/40 px-3 py-2 text-sm font-semibold leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-accent-400 focus:bg-white"
-              />
-            </label>
+            )}
           </div>
-        </div>
-      </section>
+        )}
+
+        {/* Coach diagnosis — only show when no rewrite available */}
+        {!hasRewrite && (diagnosis || tip.summary) && (
+          <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-accent-700" />
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">Coach Note</p>
+            </div>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-800">{diagnosis || tip.summary}</p>
+            {tip.bullets.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                {tip.bullets.slice(0, 3).map((bullet) => (
+                  <div key={bullet} className="flex gap-2 text-xs font-semibold leading-5 text-slate-700">
+                    <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-600" />
+                    <span>{bullet}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* When rewrite IS available, show a compact coach note */}
+        {hasRewrite && (diagnosis || tip.summary) && (
+          <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-accent-700" />
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent-700">What To Practice</p>
+            </div>
+            <p className="mt-1.5 text-sm font-semibold leading-6 text-slate-800">{diagnosis || tip.summary}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Practice CTA */}
+      {onPractice && (
+        <button
+          type="button"
+          onClick={() => onPractice(repair)}
+          className="shrink-0 flex items-center justify-center gap-2 rounded-xl bg-accent-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-accent-700"
+        >
+          <Target className="h-4 w-4" />
+          Practice This Area
+        </button>
+      )}
     </div>
   )
 }
@@ -941,6 +821,7 @@ export default function HrFeedbackDeck({
   onRetakeInterview,
   onUnlockNextStage,
   onExitToProfile,
+  onPractice,
   layout = 'standalone',
   stageKey = 'hr_screen',
 }: HrFeedbackDeckProps) {
@@ -1120,7 +1001,7 @@ export default function HrFeedbackDeck({
       const repair = repairs[activeStep.repairIndex]
       const issueNumber = activeStep.repairIndex + 1
       const totalIssues = Math.max(repairs.length, 1)
-      return <RepairLessonSlide repair={repair} issueNumber={issueNumber} totalIssues={totalIssues} />
+      return <RepairLessonSlide repair={repair} issueNumber={issueNumber} totalIssues={totalIssues} onPractice={onPractice} />
     }
 
     if (activeStep.type === 'preview') {

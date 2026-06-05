@@ -96,6 +96,12 @@ export const MOCK_FEEDBACK = {
           'You used phrases like "I usually" and "I tend to" instead of citing specific instances with measurable outcomes.',
         score: 3.5,
         rootCause: 'lack_of_specificity',
+        rewrite_method: 'STAR with concrete metrics',
+        original_answer: 'I\'m generally good at managing multiple priorities. I usually just make a list and work through things.',
+        rewritten_answer:
+          'Last quarter I had three projects with overlapping deadlines: a client migration, a compliance audit, and an internal tool launch. I created a shared tracker, identified which deliverables had hard external deadlines versus internal flexibility, and negotiated a one-week extension on the tool launch. All three shipped on time, and the client migration finished two days early.',
+        rewrite_explanation:
+          'This replaces vague habits with a specific situation, clear actions, and measurable results the interviewer can verify.',
         evidence: [
           {
             question_id: 'q4',
@@ -112,6 +118,12 @@ export const MOCK_FEEDBACK = {
           'When asked about a gap in your experience, you deflected rather than addressing it directly with transferable skills.',
         score: 4.5,
         rootCause: 'off_topic',
+        rewrite_method: 'Acknowledge, Bridge, Prove',
+        original_answer: 'I haven\'t worked with enterprise clients directly, but I\'ve done some personal projects that involved large systems.',
+        rewritten_answer:
+          'I haven\'t managed enterprise accounts directly, but the complexity is familiar. At my last company I coordinated a cross-team integration that involved five stakeholders, a shared SLA, and weekly executive reviews. The dynamics — alignment, escalation paths, long sales cycles — mirror what enterprise work demands. I\'d ramp quickly on the account-specific context.',
+        rewrite_explanation:
+          'Instead of deflecting to personal projects, this names the gap honestly and immediately bridges to transferable proof the interviewer can trust.',
         evidence: [
           {
             question_id: 'q5',
@@ -128,6 +140,12 @@ export const MOCK_FEEDBACK = {
           'Your answers were filled with hedge words like "I think," "kind of," and "I guess," which undermine your credibility.',
         score: 3,
         rootCause: 'weak_communication',
+        rewrite_method: 'Remove hedges, lead with ownership',
+        original_answer: 'I think I kind of helped improve the process, I guess. We sort of streamlined things and it was basically better after that.',
+        rewritten_answer:
+          'I redesigned the intake workflow for our support team. The old process had three handoffs before a ticket reached an engineer. I cut it to one by building a triage form that auto-routed based on category. Ticket resolution time dropped 40% in the first month.',
+        rewrite_explanation:
+          'Every hedge word is replaced with a direct claim backed by a specific action and a measurable outcome.',
         evidence: [
           {
             question_id: 'q6',
@@ -144,6 +162,12 @@ export const MOCK_FEEDBACK = {
           'Your answer about why you want to work here was entirely generic — no evidence of company research.',
         score: 3,
         rootCause: 'missing_knowledge',
+        rewrite_method: 'Observation, Fit, Timing',
+        original_answer: 'It seems like a great company with a lot of opportunities to grow.',
+        rewritten_answer:
+          'I noticed you recently expanded into the healthcare vertical and hired a dedicated compliance team. That caught my attention because my last two roles were in regulated environments where I had to balance speed with audit requirements. Joining now, while the team is still forming its playbook, is exactly the stage where I do my best work.',
+        rewrite_explanation:
+          'This names something specific about the company, connects it to direct experience, and explains why the timing matters — instead of generic praise.',
         evidence: [
           {
             question_id: 'q7',
@@ -160,6 +184,12 @@ export const MOCK_FEEDBACK = {
           'Your answers were too brief — one or two sentences where three to five were needed. Interviewers need more substance.',
         score: 3.5,
         rootCause: 'too_short',
+        rewrite_method: 'STAR expansion',
+        original_answer: 'I led a project once. It went well.',
+        rewritten_answer:
+          'I led the migration of our billing system from a legacy vendor to Stripe. The scope was about 12,000 active subscriptions, and the constraint was zero billing interruptions during the cutover. I built the migration script, coordinated QA with finance, and ran a shadow period where both systems processed in parallel for two weeks. We completed the switch with no customer-facing errors, and the new system saved the company $8K per month in processing fees.',
+        rewrite_explanation:
+          'Two vague sentences become a full STAR answer with a real situation, clear ownership, specific actions, and a quantified result.',
         evidence: [
           {
             question_id: 'q8',

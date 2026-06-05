@@ -2390,6 +2390,12 @@ export default function InterviewDashboard() {
       onRetakeInterview: handleRetakeInterview,
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
+      onPractice: (repair: any) => {
+        const criterion = repair.criterion || ''
+        const rootCause = repair.practice_focus_id || repair.rootCause || ''
+        const evidence = Array.isArray(repair.evidence) ? repair.evidence[0] : undefined
+        setActivePracticeLesson({ criterion, rootCause, question: evidence?.question, answer: evidence?.excerpt })
+      },
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
       onReportAction: handleDetailedReportAction,
@@ -2441,6 +2447,12 @@ export default function InterviewDashboard() {
       onRetakeInterview: handleRetakeInterview,
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
+      onPractice: (repair: any) => {
+        const criterion = repair.criterion || ''
+        const rootCause = repair.practice_focus_id || repair.rootCause || ''
+        const evidence = Array.isArray(repair.evidence) ? repair.evidence[0] : undefined
+        setActivePracticeLesson({ criterion, rootCause, question: evidence?.question, answer: evidence?.excerpt })
+      },
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
       onReportAction: handleDetailedReportAction,

@@ -1333,6 +1333,15 @@ export default function HrFeedbackDeck({
               Start {nextStageName} Round
               <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
             </button>
+            {currentSessionData?.id && (
+              <a
+                href={`/interview/practice/${currentSessionData.id}`}
+                className="group flex w-full items-center justify-center gap-2 rounded-xl border-2 border-violet-300 bg-gradient-to-br from-violet-500 to-violet-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                Go to Practice
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </a>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"

@@ -668,11 +668,11 @@ function WorkshopSlide({
   isComplete: boolean
   onWorkshopComplete: () => void
 }) {
-  const [showContext, setShowContext] = useState(true)
+  const [showContextDrawer, setShowContextDrawer] = useState(false)
 
   if (!repair) {
     return (
-      <div className="flex h-full min-h-[24rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
+      <div className="flex h-full min-h-[20rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent-700">No Workshops</p>
           <h1 className="mt-2 text-2xl font-bold text-slate-950">No flagged issues to workshop.</h1>
@@ -686,6 +686,7 @@ function WorkshopSlide({
   const evidence = getPrimaryEvidence(repair)
   const questionText = toDisplayText(evidence?.question)
   const originalAnswerText = toDisplayText(repair.original_answer) || toDisplayText(evidence?.excerpt)
+  const hasContext = !!(questionText || originalAnswerText)
 
   const renderWorkshop = () => {
     if (!workshopType) {
@@ -721,57 +722,61 @@ function WorkshopSlide({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
-      {/* Compact header strip */}
-      <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-accent-700">
-                Workshop {issueNumber} of {totalIssues}
-              </span>
-              {isComplete && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
-                  <CheckCircle className="h-3 w-3" /> Done
-                </span>
-              )}
-            </div>
-            <h2 className="mt-1 text-base font-bold leading-tight text-slate-950 lg:text-lg">{criterion}</h2>
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
+      {/* Floating context drawer (overlay, no layout cost) */}
+      {showContextDrawer && hasContext && (
+        <div
+          className="absolute inset-0 z-30 flex items-start justify-center bg-slate-950/40 backdrop-blur-sm p-4 animate-slide-up"
+          onClick={() => setShowContextDrawer(false)}
+        >
+          <div
+            className="relative mt-12 max-w-xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowContextDrawer(false)}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">What you said in your interview</p>
+            {questionText && <p className="mt-2 text-sm font-bold leading-5 text-slate-900">{questionText}</p>}
+            {originalAnswerText && <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">&ldquo;{originalAnswerText}&rdquo;</p>}
           </div>
+        </div>
+      )}
+
+      {/* Ultra-compact header bar (~32px) */}
+      <div className="shrink-0 flex items-center justify-between gap-2 px-1 pb-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="shrink-0 rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-accent-700">
+            {issueNumber}/{totalIssues}
+          </span>
+          <h2 className="truncate text-sm font-bold leading-tight text-slate-900">{criterion}</h2>
+          {isComplete && <CheckCircle className="shrink-0 h-4 w-4 text-emerald-600" />}
+        </div>
+        <div className="shrink-0 flex items-center gap-1.5">
           {score > 0 && (
-            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${getScoreTone(score)}`}>
+            <span className={`hidden sm:inline-flex rounded-full border px-2 py-0.5 text-[11px] font-bold ${getScoreTone(score)}`}>
               {score.toFixed(score % 1 ? 1 : 0)}/10
             </span>
           )}
-        </div>
-
-        {(questionText || originalAnswerText) && (
-          <div className="mt-2">
+          {hasContext && (
             <button
               type="button"
-              onClick={() => setShowContext(!showContext)}
-              className="flex w-full items-center justify-between gap-2 text-left"
+              onClick={() => setShowContextDrawer(true)}
+              className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
             >
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                {showContext ? 'Hide your answer' : 'See what you said'}
-              </span>
-              <ChevronRight className={`h-3.5 w-3.5 text-slate-400 transition-transform ${showContext ? 'rotate-90' : ''}`} />
+              <FileText className="h-3 w-3" />
+              <span className="hidden sm:inline">Your answer</span>
             </button>
-            {showContext && (
-              <div className="mt-1.5 space-y-1.5 rounded-xl bg-slate-50 p-2.5 animate-slide-up">
-                {questionText && (
-                  <p className="text-xs font-bold leading-5 text-slate-900">{questionText}</p>
-                )}
-                {originalAnswerText && (
-                  <p className="text-[11px] font-semibold leading-5 text-slate-600">&ldquo;{truncate(originalAnswerText, 220)}&rdquo;</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* The actual workshop */}
+      {/* Workshop takes ALL remaining space */}
       <div className="min-h-0 flex-1 overflow-hidden">
         {renderWorkshop()}
       </div>
@@ -1326,7 +1331,7 @@ export default function HrFeedbackDeck({
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
       {/* App top bar: close + story progress */}
-        <div className="flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
+        <div className={`flex shrink-0 items-center gap-3 px-4 sm:px-6 ${activeStep.type === 'workshop' ? 'pt-2' : 'pt-4'}`}>
           <button
             type="button"
             onClick={onExitToProfile}
@@ -1394,39 +1399,54 @@ export default function HrFeedbackDeck({
       </div>
 
       {/* Slide */}
-      <div key={activeStep.key} className="slide-in-bottom min-h-0 flex-1 overflow-hidden px-4 py-5 sm:px-6 sm:py-6">
+      <div
+        key={activeStep.key}
+        className={`slide-in-bottom min-h-0 flex-1 overflow-hidden ${
+          activeStep.type === 'workshop'
+            ? 'px-3 pt-2 pb-1 sm:px-4 sm:pt-3 sm:pb-2'
+            : 'px-4 py-5 sm:px-6 sm:py-6'
+        }`}
+      >
         {renderStep()}
       </div>
 
       {/* App bottom bar */}
-      <div className="flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 py-4 sm:px-6">
+      <div
+        className={`flex shrink-0 items-center gap-3 border-t border-slate-100 px-4 sm:px-6 ${
+          activeStep.type === 'workshop' ? 'py-2' : 'py-4'
+        }`}
+      >
         {step > 0 && (
           <button
             type="button"
             onClick={goBack}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+            className={`flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 ${
+              activeStep.type === 'workshop' ? 'h-9 w-9' : 'h-12 w-12'
+            }`}
             aria-label="Back"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className={activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'} />
           </button>
         )}
         {activeStep.type === 'workshop' && !completedWorkshops.has(activeStep.repairIndex) ? (
           <button
             type="button"
             onClick={goNext}
-            className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-base font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+            className="group flex h-9 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
           >
-            <SkipForward className="h-4 w-4" />
+            <SkipForward className="h-3.5 w-3.5" />
             Skip this workshop
           </button>
         ) : (
           <button
             type="button"
             onClick={goNext}
-            className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
+            className={`group flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 font-semibold text-white transition hover:bg-accent-700 ${
+              activeStep.type === 'workshop' ? 'h-9 text-sm' : 'h-12 text-base'
+            }`}
           >
             {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'Done') : (activeStep.type === 'workshop' ? 'Next Workshop' : 'Continue')}
-            {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
+            {isLastStep ? <Crown className={activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'} /> : <ChevronRight className={`transition group-hover:translate-x-1 ${activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'}`} />}
           </button>
         )}
       </div>

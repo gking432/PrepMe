@@ -1004,9 +1004,11 @@ Use the question IDs and timestamps from this structured transcript when providi
             websiteContent: websiteContent || '',
           }
 
-          const rubric = HR_SCREEN_GRADING_MODE === 'v2_question_level'
+          let rubric = HR_SCREEN_GRADING_MODE === 'v2_question_level'
             ? await gradeHrScreenQuestionLevel(gradingMaterials)
             : await gradeHrScreenPassFail(gradingMaterials)
+
+          rubric = await enrichHrWeakSignalsWithHaikuRewrites(rubric, structuredTranscript)
 
           if (!validateHrScreenRubric(rubric)) {
             console.error('Lean HR rubric validation failed:', JSON.stringify(rubric, null, 2).substring(0, 500))
@@ -1110,11 +1112,13 @@ Use the question IDs and timestamps from this structured transcript when providi
         }
 
         // Call Claude grader with retry logic
-        const rubric = await gradeHrScreenWithRetry(gradingMaterials, 3)
+        let rubric = await gradeHrScreenWithRetry(gradingMaterials, 3)
 
         if (isBlankInterviewTranscript(structuredTranscript, Array.isArray(transcript) ? transcript.join('\n') : transcript)) {
           applyBlankInterviewGuardrailToHrRubric(rubric)
         }
+
+        rubric = await enrichHrWeakSignalsWithHaikuRewrites(rubric, structuredTranscript)
 
         // Validate rubric
         if (!validateHrScreenRubric(rubric)) {

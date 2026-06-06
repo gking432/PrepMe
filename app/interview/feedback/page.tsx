@@ -311,6 +311,30 @@ export default function InterviewDashboard() {
     setWalkthroughActive(!hasSeenTutorial)
   }, [currentSessionData?.id, feedback])
 
+  useEffect(() => {
+    if (!currentSessionData?.id || !feedback) return
+    const sixAreas = feedback?.hr_screen_six_areas || feedback?.full_rubric?.hr_screen_six_areas
+    const weakSignals = Array.isArray(sixAreas?.what_needs_improve) ? sixAreas.what_needs_improve : []
+    if (!weakSignals.length) return
+    const hasRewrites = weakSignals.some((s: any) => s.rewritten_answer)
+    if (hasRewrites) return
+    const enrichKey = `enrich_attempted_${currentSessionData.id}`
+    if (sessionStorage.getItem(enrichKey)) return
+    sessionStorage.setItem(enrichKey, 'true')
+    fetch('/api/interview/feedback/enrich-rewrites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: currentSessionData.id }),
+    })
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'enriched' && result.count > 0) {
+          window.location.reload()
+        }
+      })
+      .catch(() => {})
+  }, [currentSessionData?.id, feedback])
+
   // Prevent body scroll when modal is open and handle ESC key
   useEffect(() => {
     if (showRubricModal) {

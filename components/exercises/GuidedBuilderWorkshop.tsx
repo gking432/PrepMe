@@ -22,6 +22,8 @@ export type WorkshopType =
   | 'handling_uncertainty'
   | 'pace_delivery'
   | 'preparation_curiosity'
+  | 'role_depth'
+  | 'problem_solving'
 
 interface GuidedBuilderWorkshopProps {
   workshopType: WorkshopType
@@ -155,6 +157,38 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     practiceCta: 'Say the question out loud',
     tagPrompt: 'What about this company actually hooked you? Pick at least 4.',
     tags: ['vision', 'team', 'product', 'scale', 'recent-direction', 'technical-depth', 'customer-focus', 'mission', 'founders', 'growth', 'market', 'craft', 'culture', 'engineering-bar', 'design-quality', 'business-model', 'industry-position', 'leadership', 'velocity', 'ambition'],
+  },
+  role_depth: {
+    framework: 'Context · Method · Tradeoff · Outcome',
+    whyTitle: 'The hiring manager wants to see you think in the role.',
+    whyBody: 'Surface-level answers sound like you read about it. A hiring manager wants to hear how you actually think through the real work: the methods you choose, the tradeoffs you weigh, and what happened because of your decisions.',
+    whenItHits: 'Use it when asked about your approach, your process, how you\'d handle a scenario, or anything where the interviewer is testing domain depth — not just "tell me about a time".',
+    steps: [
+      { key: 'context', label: 'Context', description: 'Name the real situation — what you were working on, what the constraints were, and why it mattered.', prompt: 'Set the real context.', color: 'sky', emoji: '🔬' },
+      { key: 'method', label: 'Method', description: 'What approach did you choose and why? Name the specific tools, frameworks, or thinking you applied.', prompt: 'What was your method?', color: 'violet', emoji: '🛠️', connector: 'I approached it by' },
+      { key: 'tradeoff', label: 'Tradeoff', description: 'What did you weigh? What did you decide against and why?', prompt: 'What did you trade off?', color: 'amber', emoji: '⚖️', connector: 'The tradeoff was' },
+      { key: 'outcome', label: 'Outcome', description: 'What happened because of your approach? Be specific.', prompt: 'What was the result?', color: 'emerald', emoji: '📊', connector: 'That led to' },
+    ],
+    assembleHint: 'Notice how naming the tradeoff is what separates a working answer from a textbook answer.',
+    practiceCta: 'Walk through it out loud',
+    tagPrompt: 'How do you work in this domain? Pick at least 4.',
+    tags: ['analytical', 'hands-on', 'systematic', 'data-driven', 'pragmatic', 'iterative', 'risk-aware', 'creative', 'process-minded', 'cross-functional', 'detail-oriented', 'big-picture', 'deadline-driven', 'quality-focused', 'experimental', 'structured', 'resourceful', 'evidence-based', 'collaborative', 'independent'],
+  },
+  problem_solving: {
+    framework: 'Clarify · Approach · Execute · Reflect',
+    whyTitle: 'Hiring managers test how you think, not what you know.',
+    whyBody: 'When you jump straight to an answer, you skip the part that actually impresses hiring managers: your reasoning. Clarify-Approach-Execute-Reflect shows you can break down ambiguity, make deliberate choices, and learn from what happened.',
+    whenItHits: 'Use it for scenario questions, "how would you handle..." questions, case-style questions, or any time the interviewer is probing your problem-solving process rather than a specific past event.',
+    steps: [
+      { key: 'clarify', label: 'Clarify', description: 'What did you need to understand first? What assumptions did you test or questions did you ask?', prompt: 'What did you clarify first?', color: 'sky', emoji: '🔎' },
+      { key: 'approach', label: 'Approach', description: 'What was your plan? Name the options you considered and why you picked this path.', prompt: 'What was your approach?', color: 'violet', emoji: '🧭', connector: 'From there, I' },
+      { key: 'execute', label: 'Execute', description: 'What did you actually do? Concrete steps, not theory. Include who you worked with if relevant.', prompt: 'What did you do?', color: 'amber', emoji: '⚡', connector: 'In practice,' },
+      { key: 'reflect', label: 'Reflect', description: 'What worked, what would you do differently, and what did you take away?', prompt: 'What would you change?', color: 'emerald', emoji: '💡', connector: 'Looking back,' },
+    ],
+    assembleHint: 'The "Clarify" step is what most people skip — it\'s also what makes you sound senior.',
+    practiceCta: 'Walk through your reasoning out loud',
+    tagPrompt: 'How do you approach problems? Pick at least 4.',
+    tags: ['first-principles', 'collaborative', 'data-driven', 'iterative', 'risk-aware', 'stakeholder-focused', 'systematic', 'scrappy', 'creative', 'pragmatic', 'hypothesis-driven', 'customer-first', 'deadline-aware', 'thorough', 'decisive', 'inclusive', 'prioritization-focused', 'simplicity-driven', 'trade-off-aware', 'outcome-oriented'],
   },
 }
 

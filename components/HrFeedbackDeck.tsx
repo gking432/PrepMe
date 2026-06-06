@@ -22,7 +22,7 @@ import {
 import { getImprovementTipForCriterion, getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
 import GuidedBuilderWorkshop from '@/components/exercises/GuidedBuilderWorkshop'
 
-type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity'
+type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
 
 // Direct mapping from grader's coaching_bucket id → workshop type.
 // The bundle-based lookup (getRootCauseForCriterion → getBundleForRootCause)
@@ -31,10 +31,14 @@ type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | '
 const COACHING_BUCKET_TO_WORKSHOP: Record<string, WorkshopType> = {
   professional_story: 'professional_story',
   specificity_proof: 'star_proof',
+  star_proof: 'star_proof',
   career_alignment: 'career_alignment',
   handling_uncertainty: 'handling_uncertainty',
   pace_natural_delivery: 'pace_delivery',
+  pace_delivery: 'pace_delivery',
   preparation_curiosity: 'preparation_curiosity',
+  role_depth: 'role_depth',
+  problem_solving: 'problem_solving',
 }
 
 function getWorkshopTypeForRepair(repair?: SignalArea | null): WorkshopType | null {
@@ -69,6 +73,10 @@ function WORKSHOP_INTRO(type: WorkshopType): string {
       return "Let's trim filler, tighten the structure, and make the answer easy to follow."
     case 'preparation_curiosity':
       return "Let's turn generic interest into specific, informed questions that show you did the homework."
+    case 'role_depth':
+      return "Let's show you can think inside the role — name the methods, weigh the tradeoffs, and talk like someone who does the work."
+    case 'problem_solving':
+      return "Let's rebuild how you walk through problems — clarify first, approach deliberately, and show your reasoning."
   }
 }
 
@@ -327,6 +335,8 @@ const QUESTION_PATTERNS_BY_WORKSHOP: Record<WorkshopType, RegExp[]> = {
   preparation_curiosity: [/what do you know about (us|the company)/i, /(any|do you have).*questions/i, /what (research|interests you) about/i],
   handling_uncertainty: [],
   pace_delivery: [],
+  role_depth: [/how (would|do) you (approach|handle|think about)/i, /walk me through.*(process|approach|methodology)/i, /what('s| is) your (process|approach|framework)/i, /how do you (evaluate|decide|prioritize)/i, /what tools/i],
+  problem_solving: [/how would you (solve|handle|deal with|address)/i, /what would you do if/i, /imagine.*(scenario|situation)/i, /walk me through how you.*(solve|debug|diagnose|fix)/i, /biggest (challenge|problem|obstacle)/i],
 }
 
 function getEvidenceForWorkshop(area: SignalArea | null | undefined, workshopType: WorkshopType | null): Evidence | undefined {

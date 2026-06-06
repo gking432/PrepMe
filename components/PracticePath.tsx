@@ -69,6 +69,8 @@ const QUESTION_PATTERNS_BY_WORKSHOP: Record<WorkshopType, RegExp[]> = {
   preparation_curiosity: [/what do you know about (us|the company)/i, /(any|do you have).*questions/i, /what (research|interests you) about/i],
   handling_uncertainty: [],
   pace_delivery: [],
+  role_depth: [/how (would|do) you (approach|handle|think about)/i, /walk me through.*(process|approach|methodology)/i, /what('s| is) your (process|approach|framework)/i, /how do you (evaluate|decide|prioritize)/i, /what tools/i, /what methods/i],
+  problem_solving: [/how would you (solve|handle|deal with|address)/i, /what would you do if/i, /imagine.*(scenario|situation)/i, /walk me through how you.*(solve|debug|diagnose|fix)/i, /biggest (challenge|problem|obstacle)/i, /how do you (break down|approach).*(problem|challenge)/i],
 }
 
 function pickEvidence(signal: WeakSignal, workshopType: WorkshopType | null): Evidence | undefined {
@@ -86,10 +88,14 @@ function pickEvidence(signal: WeakSignal, workshopType: WorkshopType | null): Ev
 const COACHING_BUCKET_TO_WORKSHOP: Record<string, WorkshopType> = {
   professional_story: 'professional_story',
   specificity_proof: 'star_proof',
+  star_proof: 'star_proof',
   career_alignment: 'career_alignment',
   handling_uncertainty: 'handling_uncertainty',
   pace_natural_delivery: 'pace_delivery',
+  pace_delivery: 'pace_delivery',
   preparation_curiosity: 'preparation_curiosity',
+  role_depth: 'role_depth',
+  problem_solving: 'problem_solving',
 }
 
 function getWorkshopType(signal: WeakSignal): WorkshopType | null {

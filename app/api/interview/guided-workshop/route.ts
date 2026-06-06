@@ -17,6 +17,8 @@ type WorkshopType =
   | 'handling_uncertainty'
   | 'pace_delivery'
   | 'preparation_curiosity'
+  | 'role_depth'
+  | 'problem_solving'
 
 const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
   star_proof: {
@@ -51,6 +53,18 @@ const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
     what_stood_out: 'Given what they know, draft 2-3 WHAT STOOD OUT statements — 1 sentence each — naming a specific aspect that genuinely connects to the candidates resume arc.',
     your_question: 'Given the above, draft 2-3 sharp QUESTIONS the candidate could ask. Each one references the specific company/role context, not generic "what is the culture like".',
   },
+  role_depth: {
+    context: 'Pull 2-3 real CONTEXT lines from the resume — each one names a specific project, responsibility, or situation where the candidate had to apply domain knowledge. One sentence each, grounded in the resume.',
+    method: 'Given the chosen context, draft 2-3 METHOD statements — each names the specific tools, frameworks, processes, or thinking the candidate likely applied. Be specific to the domain in the JD. One sentence each.',
+    tradeoff: 'Given the context and method, draft 2-3 TRADEOFF statements — each names a real decision the candidate weighed: what they chose, what they rejected, and why. Avoid generic "pros and cons" — ground in the specific role.',
+    outcome: 'Given everything above, draft 2-3 OUTCOME statements — each names a concrete result: what shipped, what changed, what improved. Pull from resume metrics if available; otherwise use a vivid qualitative outcome.',
+  },
+  problem_solving: {
+    clarify: 'Draft 2-3 CLARIFY lines — each one names a real question, assumption, or constraint the candidate would need to check before acting. Pull from the domain context in the JD. One sentence each.',
+    approach: 'Given the clarifications, draft 2-3 APPROACH statements — each describes a deliberate plan: options considered, path chosen, and reasoning. Be specific to the resume and role.',
+    execute: 'Given the approach, draft 2-3 EXECUTE statements — each describes concrete steps the candidate took: who they involved, what they built/changed/delivered. Pull from resume projects.',
+    reflect: 'Given everything above, draft 2-3 REFLECT statements — each offers an honest takeaway: what worked, what they would do differently next time, and what they learned. Sound mature, not scripted.',
+  },
 }
 
 const WORKSHOP_CONTEXT: Record<WorkshopType, string> = {
@@ -60,6 +74,8 @@ const WORKSHOP_CONTEXT: Record<WorkshopType, string> = {
   handling_uncertainty: 'Recovering from an unexpected question using Recovery → Answer → Reason → Example. The candidate needs to avoid rambling.',
   pace_delivery: 'Rebuilding their existing answer with cleaner pacing — Opener → Main Point → Landing. Same content, sharper delivery, zero filler.',
   preparation_curiosity: 'Showing genuine company curiosity using What You Know → What Stood Out → Your Question. The candidate needs to sound informed, not generic.',
+  role_depth: 'Demonstrating domain depth using Context → Method → Tradeoff → Outcome. The candidate needs to show they can think inside the role — naming real tools, weighing real tradeoffs, and talking like someone who does the work, not someone who read about it.',
+  problem_solving: 'Walking through problem-solving using Clarify → Approach → Execute → Reflect. The candidate needs to show their reasoning process, not just the answer — clarifying assumptions, choosing deliberately, and reflecting honestly.',
 }
 
 async function fetchUserContext(sessionId?: string, userId?: string) {

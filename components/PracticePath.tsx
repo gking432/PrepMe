@@ -25,8 +25,29 @@ export interface WeakSignal {
 interface PracticePathProps {
   sessionId: string
   weakSignals: WeakSignal[]
+  transcript?: any
   stageName?: string
   onClose?: () => void
+}
+
+function findQAFromTranscript(transcript: any, workshopType: WorkshopType | null): { question: string; answer: string } | null {
+  if (!transcript || !workshopType) return null
+  const patterns = QUESTION_PATTERNS_BY_WORKSHOP[workshopType]
+  if (!patterns?.length) return null
+  const questions: any[] = Array.isArray(transcript?.questions_asked) ? transcript.questions_asked : []
+  const messages: any[] = Array.isArray(transcript?.messages) ? transcript.messages : []
+  const matchedQ = questions.find((q) => {
+    const text = String(q?.question || q?.text || '')
+    return patterns.some((p) => p.test(text))
+  })
+  if (!matchedQ) return null
+  const qId = String(matchedQ?.id || matchedQ?.question_id || '')
+  const qText = String(matchedQ?.question || matchedQ?.text || '')
+  const candidateMsgs = messages
+    .filter((m) => m?.speaker === 'candidate' && typeof m?.text === 'string' && String(m?.question_id || '') === qId)
+    .map((m) => String(m.text).trim())
+    .filter(Boolean)
+  return { question: qText, answer: candidateMsgs.join('\n\n') }
 }
 
 interface Draft {
@@ -62,7 +83,25 @@ function pickEvidence(signal: WeakSignal, workshopType: WorkshopType | null): Ev
   return list[0]
 }
 
+const COACHING_BUCKET_TO_WORKSHOP: Record<string, WorkshopType> = {
+  professional_story: 'professional_story',
+  specificity_proof: 'star_proof',
+  career_alignment: 'career_alignment',
+  handling_uncertainty: 'handling_uncertainty',
+  pace_natural_delivery: 'pace_delivery',
+  preparation_curiosity: 'preparation_curiosity',
+}
+
 function getWorkshopType(signal: WeakSignal): WorkshopType | null {
+  const candidates: Array<string | undefined> = [
+    signal.practice_focus_id,
+    signal.rootCause,
+    (signal as any).mini_workshop?.practice_focus_id,
+    (signal as any).mini_workshop?.area_id,
+  ]
+  for (const c of candidates) {
+    if (c && COACHING_BUCKET_TO_WORKSHOP[c]) return COACHING_BUCKET_TO_WORKSHOP[c]
+  }
   const rootCause = getRootCauseForCriterion(signal.criterion || '', signal.practice_focus_id || signal.rootCause)
   const bundle = getBundleForRootCause(rootCause)
   const first = bundle.lessons.find((lesson) => lesson.workshop?.type)
@@ -94,29 +133,36 @@ interface Node {
   draft?: Draft
 }
 
-export default function PracticePath({ sessionId, weakSignals, stageName = 'HR Screen', onClose }: PracticePathProps) {
+export default function PracticePath({ sessionId, weakSignals, transcript, stageName = 'HR Screen', onClose }: PracticePathProps) {
   const router = useRouter()
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
   const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const nodes: Node[] = useMemo(() => {
-    return weakSignals.map((signal, index) => {
-      const workshopType = getWorkshopType(signal)
-      const evidence = pickEvidence(signal, workshopType)
-      const question = evidence?.question || ''
-      const originalAnswer = signal.original_answer || evidence?.excerpt || ''
-      const key = workshopType ? `${workshopType}:${hashQuestion(question || signal.criterion || String(index))}` : `none:${index}`
-      return {
-        index,
-        signal,
-        workshopType,
-        question,
-        originalAnswer,
-        key,
-      }
-    })
-  }, [weakSignals])
+    const seenWorkshopTypes = new Set<WorkshopType>()
+    return weakSignals
+      .map((signal, index) => {
+        const workshopType = getWorkshopType(signal)
+        // Prefer the actual Q/A from the transcript by workshop type — the grader's
+        // evidence array can be mis-attributed if a single signal covers multiple
+        // failing questions. The transcript is the source of truth.
+        const fromTranscript = findQAFromTranscript(transcript, workshopType)
+        const evidence = pickEvidence(signal, workshopType)
+        const question = fromTranscript?.question || evidence?.question || ''
+        const originalAnswer = fromTranscript?.answer || signal.original_answer || evidence?.excerpt || ''
+        const key = workshopType ? `${workshopType}:${hashQuestion(question || signal.criterion || String(index))}` : `none:${index}`
+        return { index, signal, workshopType, question, originalAnswer, key }
+      })
+      // Dedupe by workshop type — if two signals both map to e.g. star_proof,
+      // collapse them into one node so the user doesn't see duplicate workshops.
+      .filter((node) => {
+        if (!node.workshopType) return true
+        if (seenWorkshopTypes.has(node.workshopType)) return false
+        seenWorkshopTypes.add(node.workshopType)
+        return true
+      })
+  }, [weakSignals, transcript])
 
   const nodesWithDrafts = useMemo(
     () => nodes.map((node) => ({ ...node, draft: drafts[node.key] })),

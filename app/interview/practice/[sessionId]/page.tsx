@@ -18,6 +18,7 @@ export default function PracticeForSessionPage() {
   const router = useRouter()
   const sessionId = params?.sessionId
   const [weakSignals, setWeakSignals] = useState<WeakSignal[]>([])
+  const [transcript, setTranscript] = useState<any>(null)
   const [stage, setStage] = useState<string>('hr_screen')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
@@ -36,11 +37,14 @@ export default function PracticeForSessionPage() {
       try {
         const { data: sessionRow } = await supabase
           .from('interview_sessions')
-          .select('id, stage')
+          .select('id, stage, structured_transcript, transcript_structured')
           .eq('id', sessionId)
           .maybeSingle()
 
         if (sessionRow?.stage) setStage(sessionRow.stage)
+        // Either column may be used depending on stage of the codebase
+        const ts = sessionRow?.structured_transcript || sessionRow?.transcript_structured || null
+        if (!cancelled && ts) setTranscript(ts)
 
         const { data: feedbackRows } = await supabase
           .from('interview_feedback')
@@ -103,6 +107,7 @@ export default function PracticeForSessionPage() {
     <PracticePath
       sessionId={sessionId}
       weakSignals={weakSignals}
+      transcript={transcript}
       stageName={STAGE_LABEL[stage] || 'Practice'}
       onClose={() => router.push(`/interview/feedback?sessionId=${sessionId}`)}
     />

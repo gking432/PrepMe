@@ -24,8 +24,31 @@ import GuidedBuilderWorkshop from '@/components/exercises/GuidedBuilderWorkshop'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity'
 
+// Direct mapping from grader's coaching_bucket id → workshop type.
+// The bundle-based lookup (getRootCauseForCriterion → getBundleForRootCause)
+// silently fell back to professional_story whenever it couldn't match an id,
+// which mis-attributed Communication & Professionalism etc. to the wrong workshop.
+const COACHING_BUCKET_TO_WORKSHOP: Record<string, WorkshopType> = {
+  professional_story: 'professional_story',
+  specificity_proof: 'star_proof',
+  career_alignment: 'career_alignment',
+  handling_uncertainty: 'handling_uncertainty',
+  pace_natural_delivery: 'pace_delivery',
+  preparation_curiosity: 'preparation_curiosity',
+}
+
 function getWorkshopTypeForRepair(repair?: SignalArea | null): WorkshopType | null {
   if (!repair) return null
+  const candidates: Array<string | undefined> = [
+    repair.practice_focus_id,
+    repair.rootCause,
+    (repair as any).mini_workshop?.practice_focus_id,
+    (repair as any).mini_workshop?.area_id,
+  ]
+  for (const c of candidates) {
+    if (c && COACHING_BUCKET_TO_WORKSHOP[c]) return COACHING_BUCKET_TO_WORKSHOP[c]
+  }
+  // Fall back to the bundle lookup only as a last resort (legacy data)
   const rootCause = getRootCauseForCriterion(repair.criterion || '', repair.practice_focus_id || repair.rootCause)
   const bundle = getBundleForRootCause(rootCause)
   const firstLessonWithWorkshop = bundle.lessons.find((lesson) => lesson.workshop?.type)
@@ -139,6 +162,7 @@ type DeckStep =
   | { key: 'strengths'; label: string; type: 'strengths' }
   | { key: 'weaknesses'; label: string; type: 'weaknesses' }
   | { key: string; label: string; type: 'workshop'; repairIndex: number; workshopType: WorkshopType | null }
+  | { key: 'practice_handoff'; label: string; type: 'practice_handoff' }
   | { key: 'preview'; label: string; type: 'preview' }
   | { key: 'upgrade'; label: string; type: 'upgrade' }
 
@@ -1059,22 +1083,14 @@ export default function HrFeedbackDeck({
   }, [currentSessionData, feedback, stageKey])
 
   const deckSteps = useMemo<DeckStep[]>(() => {
-    const issueSteps = repairs.length
-      ? repairs.map((repair, index) => ({
-          key: `issue-${index}`,
-          label: `Workshop ${index + 1}`,
-          type: 'workshop' as const,
-          repairIndex: index,
-          workshopType: getWorkshopTypeForRepair(repair),
-        }))
-      : [{ key: 'issue-none', label: 'Workshops', type: 'workshop' as const, repairIndex: 0, workshopType: null }]
-
     const base: DeckStep[] = [
       { key: 'outcome', label: 'Outcome', type: 'outcome' },
       { key: 'strengths', label: 'Strong', type: 'strengths' },
       { key: 'weaknesses', label: 'Weak', type: 'weaknesses' },
-      ...issueSteps,
     ]
+    if (repairs.length) {
+      base.push({ key: 'practice_handoff', label: 'Practice', type: 'practice_handoff' })
+    }
     if (nextStageKey) {
       base.push({ key: 'preview', label: 'Next Round', type: 'preview' })
       base.push({ key: 'upgrade', label: 'Unlock', type: 'upgrade' })
@@ -1177,10 +1193,49 @@ export default function HrFeedbackDeck({
         <StepShell
           eyebrow="What We'll Workshop"
           title={`${repairs.length} ${repairs.length === 1 ? 'workshop' : 'workshops'} to rebuild these answers.`}
-          body="Each weak area has its own interactive workshop. You'll rebuild the answer step-by-step — no reading, no quizzes, just doing."
-          preppiMessage="Workshop = do, not read. Let's go."
+          body="Each weak area has its own interactive workshop in your Practice Path."
+          preppiMessage="One quick stop and then we're off to practice."
         >
           <WeaknessesOverview repairs={repairs} />
+        </StepShell>
+      )
+    }
+
+    if (activeStep.type === 'practice_handoff') {
+      const sessionIdForLink = currentSessionData?.id
+      const workshopCount = repairs.length
+      return (
+        <StepShell
+          eyebrow="Practice Path"
+          title={`Time to build. Your way, your pace.`}
+          body={`You've got ${workshopCount} workshop${workshopCount !== 1 ? 's' : ''} waiting. Each one rebuilds one weak answer using your real resume and the job description.`}
+          preppiMessage="Tap below to enter the path. Close it anytime — your progress saves automatically."
+        >
+          <div className="flex h-full min-h-0 flex-col items-center justify-center gap-5 p-2">
+            <div className="rounded-2xl border border-accent-200 bg-accent-50/40 px-5 py-4 text-center max-w-md">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-600 text-white shadow-lg">
+                <Sparkles className="h-7 w-7" />
+              </div>
+              <p className="mt-3 text-base font-extrabold text-slate-900">
+                {workshopCount} interactive workshop{workshopCount !== 1 ? 's' : ''}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">
+                Voice/tone picker · resume-grounded suggestions · voice recall test. Saved to your profile.
+              </p>
+            </div>
+            {sessionIdForLink ? (
+              <a
+                href={`/interview/practice/${sessionIdForLink}`}
+                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 px-8 py-4 text-base font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Start Practice Path
+                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+              </a>
+            ) : (
+              <p className="text-sm font-bold text-slate-500">No session linked — open from the feedback page.</p>
+            )}
+            <p className="text-[11px] font-bold text-slate-400">You can also reach this from the feedback page anytime.</p>
+          </div>
         </StepShell>
       )
     }

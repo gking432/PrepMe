@@ -13,12 +13,46 @@ import {
   Lock,
   RefreshCw,
   Sparkles,
+  SkipForward,
   Target,
   Trophy,
   X,
   Zap,
 } from 'lucide-react'
-import { getImprovementTipForCriterion, getRootCauseForCriterion } from '@/lib/practice-bundles'
+import { getImprovementTipForCriterion, getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
+import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
+import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
+import CareerAlignmentWorkshop from '@/components/exercises/CareerAlignmentWorkshop'
+import HandlingUncertaintyWorkshop from '@/components/exercises/HandlingUncertaintyWorkshop'
+import PaceDeliveryWorkshop from '@/components/exercises/PaceDeliveryWorkshop'
+import PreparationCuriosityWorkshop from '@/components/exercises/PreparationCuriosityWorkshop'
+
+type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity'
+
+function getWorkshopTypeForRepair(repair?: SignalArea | null): WorkshopType | null {
+  if (!repair) return null
+  const rootCause = getRootCauseForCriterion(repair.criterion || '', repair.practice_focus_id || repair.rootCause)
+  const bundle = getBundleForRootCause(rootCause)
+  const firstLessonWithWorkshop = bundle.lessons.find((lesson) => lesson.workshop?.type)
+  return (firstLessonWithWorkshop?.workshop?.type as WorkshopType) || null
+}
+
+function WORKSHOP_INTRO(type: WorkshopType): string {
+  switch (type) {
+    case 'professional_story':
+      return "Let's reshape your background into a clear professional story — present, past, future."
+    case 'star_proof':
+      return "Let's turn your vague example into one that actually proves something. Build the situation, then put weight on Action and Result."
+    case 'career_alignment':
+      return "Let's make 'why this role' feel specific and intentional — start with the work, then build fit and timing."
+    case 'handling_uncertainty':
+      return "Let's practice recovering cleanly. Build a clean Answer, Reason, Example so you don't ramble."
+    case 'pace_delivery':
+      return "Let's trim filler, tighten the structure, and make the answer easy to follow."
+    case 'preparation_curiosity':
+      return "Let's turn generic interest into specific, informed questions that show you did the homework."
+  }
+}
 
 type Evidence = {
   question?: string
@@ -109,7 +143,7 @@ type DeckStep =
   | { key: 'outcome'; label: string; type: 'outcome' }
   | { key: 'strengths'; label: string; type: 'strengths' }
   | { key: 'weaknesses'; label: string; type: 'weaknesses' }
-  | { key: string; label: string; type: 'repair'; repairIndex: number }
+  | { key: string; label: string; type: 'workshop'; repairIndex: number; workshopType: WorkshopType | null }
   | { key: 'preview'; label: string; type: 'preview' }
   | { key: 'upgrade'; label: string; type: 'upgrade' }
 
@@ -617,6 +651,134 @@ function RepairLessonSlide({
   )
 }
 
+function WorkshopSlide({
+  repair,
+  issueNumber,
+  totalIssues,
+  workshopType,
+  sessionId,
+  isComplete,
+  onWorkshopComplete,
+}: {
+  repair?: SignalArea | null
+  issueNumber: number
+  totalIssues: number
+  workshopType: WorkshopType | null
+  sessionId?: string
+  isComplete: boolean
+  onWorkshopComplete: () => void
+}) {
+  const [showContext, setShowContext] = useState(true)
+
+  if (!repair) {
+    return (
+      <div className="flex h-full min-h-[24rem] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent-700">No Workshops</p>
+          <h1 className="mt-2 text-2xl font-bold text-slate-950">No flagged issues to workshop.</h1>
+        </div>
+      </div>
+    )
+  }
+
+  const criterion = toDisplayText(repair.criterion, 'Priority Repair')
+  const score = parseScore(repair.score)
+  const evidence = getPrimaryEvidence(repair)
+  const questionText = toDisplayText(evidence?.question)
+  const originalAnswerText = toDisplayText(repair.original_answer) || toDisplayText(evidence?.excerpt)
+
+  const renderWorkshop = () => {
+    if (!workshopType) {
+      return (
+        <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+          <p className="text-sm font-bold leading-6 text-slate-500">No interactive workshop is wired for this issue yet. Click Continue to move on.</p>
+        </div>
+      )
+    }
+
+    const commonProps = {
+      originalQuestion: questionText || undefined,
+      originalAnswer: originalAnswerText || undefined,
+      onComplete: onWorkshopComplete,
+    }
+
+    switch (workshopType) {
+      case 'professional_story':
+        return <ProfessionalStoryWorkshop onComplete={onWorkshopComplete} />
+      case 'star_proof':
+        return <StarProofWorkshop {...commonProps} />
+      case 'career_alignment':
+        return <CareerAlignmentWorkshop sessionId={sessionId} {...commonProps} />
+      case 'handling_uncertainty':
+        return <HandlingUncertaintyWorkshop {...commonProps} />
+      case 'pace_delivery':
+        return <PaceDeliveryWorkshop {...commonProps} />
+      case 'preparation_curiosity':
+        return <PreparationCuriosityWorkshop sessionId={sessionId} {...commonProps} />
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
+      {/* Compact header strip */}
+      <div className="shrink-0 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-accent-700">
+                Workshop {issueNumber} of {totalIssues}
+              </span>
+              {isComplete && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+                  <CheckCircle className="h-3 w-3" /> Done
+                </span>
+              )}
+            </div>
+            <h2 className="mt-1 text-base font-bold leading-tight text-slate-950 lg:text-lg">{criterion}</h2>
+          </div>
+          {score > 0 && (
+            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${getScoreTone(score)}`}>
+              {score.toFixed(score % 1 ? 1 : 0)}/10
+            </span>
+          )}
+        </div>
+
+        {(questionText || originalAnswerText) && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setShowContext(!showContext)}
+              className="flex w-full items-center justify-between gap-2 text-left"
+            >
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                {showContext ? 'Hide your answer' : 'See what you said'}
+              </span>
+              <ChevronRight className={`h-3.5 w-3.5 text-slate-400 transition-transform ${showContext ? 'rotate-90' : ''}`} />
+            </button>
+            {showContext && (
+              <div className="mt-1.5 space-y-1.5 rounded-xl bg-slate-50 p-2.5 animate-slide-up">
+                {questionText && (
+                  <p className="text-xs font-bold leading-5 text-slate-900">{questionText}</p>
+                )}
+                {originalAnswerText && (
+                  <p className="text-[11px] font-semibold leading-5 text-slate-600">&ldquo;{truncate(originalAnswerText, 220)}&rdquo;</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* The actual workshop */}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {renderWorkshop()}
+      </div>
+    </div>
+  )
+}
+
 function StrengthsOverview({ strengths }: { strengths: SignalCard[] }) {
   if (!strengths.length) {
     return (
@@ -670,21 +832,31 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
   }
 
   return (
-    <div className="h-full min-h-0 overflow-hidden">
-      <div className="grid h-full min-h-0 grid-cols-2 content-start gap-2 sm:grid-cols-3">
+    <div className="h-full min-h-0 overflow-y-auto pr-1">
+      <div className="rounded-2xl border border-accent-200 bg-accent-50/60 p-3 mb-3">
+        <p className="text-xs font-bold leading-5 text-accent-900">
+          We will workshop these one at a time — no reading, no clicking through tips. You will rebuild each answer hands-on.
+        </p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
         {repairs.map((repair, index) => {
           const score = parseScore(repair.score)
-          const practiceFocus = toDisplayText(repair.practice_focus || repair.mini_workshop?.practice_focus || repair.mini_workshop?.area)
-
+          const workshopType = getWorkshopTypeForRepair(repair)
           return (
-            <div key={`${repair.criterion}-${index}`} className="rounded-lg border border-rose-100 bg-rose-50/55 p-2.5">
+            <div key={`${repair.criterion}-${index}`} className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
               <div className="flex items-center justify-between gap-1.5">
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-rose-600">Weak {index + 1}</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-700">{index + 1}</span>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-rose-600">Workshop {index + 1}</p>
+                </div>
                 {score > 0 && <span className="shrink-0 text-[10px] font-bold text-rose-700">{score.toFixed(score % 1 ? 1 : 0)}/10</span>}
               </div>
-              <h3 className="mt-1.5 text-xs font-bold leading-tight text-slate-950">{repair.criterion}</h3>
-              {practiceFocus && (
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-rose-700">Practice: {practiceFocus}</p>
+              <h3 className="mt-1.5 text-sm font-bold leading-tight text-slate-950">{repair.criterion}</h3>
+              {workshopType && (
+                <div className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-accent-700">
+                  <Sparkles className="h-3 w-3" />
+                  {workshopType.replace('_', ' ')}
+                </div>
               )}
             </div>
           )
@@ -827,6 +999,7 @@ export default function HrFeedbackDeck({
 }: HrFeedbackDeckProps) {
   const [step, setStep] = useState(0)
   const [showCoachFile, setShowCoachFile] = useState(false)
+  const [completedWorkshops, setCompletedWorkshops] = useState<Set<number>>(new Set())
   const nextStageKey = NEXT_STAGE[stageKey]
   const stageName = STAGE_NAME[stageKey]
   const nextStageName = nextStageKey ? STAGE_NAME[nextStageKey] : null
@@ -873,13 +1046,14 @@ export default function HrFeedbackDeck({
 
   const deckSteps = useMemo<DeckStep[]>(() => {
     const issueSteps = repairs.length
-      ? repairs.map((_, index) => ({
+      ? repairs.map((repair, index) => ({
           key: `issue-${index}`,
-          label: `Issue ${index + 1}`,
-          type: 'repair' as const,
+          label: `Workshop ${index + 1}`,
+          type: 'workshop' as const,
           repairIndex: index,
+          workshopType: getWorkshopTypeForRepair(repair),
         }))
-      : [{ key: 'issue-none', label: 'Issues', type: 'repair' as const, repairIndex: 0 }]
+      : [{ key: 'issue-none', label: 'Workshops', type: 'workshop' as const, repairIndex: 0, workshopType: null }]
 
     const base: DeckStep[] = [
       { key: 'outcome', label: 'Outcome', type: 'outcome' },
@@ -987,21 +1161,42 @@ export default function HrFeedbackDeck({
     if (activeStep.type === 'weaknesses') {
       return (
         <StepShell
-          eyebrow="Weak Signals"
-          title="Here is the weak stuff."
-          body="These are the areas that could weaken the hiring manager round. Nothing is ranked or minimized; each one gets its own repair slide next."
-          preppiMessage="Equal attention. No drama. We just fix them one at a time."
+          eyebrow="What We'll Workshop"
+          title={`${repairs.length} ${repairs.length === 1 ? 'workshop' : 'workshops'} to rebuild these answers.`}
+          body="Each weak area has its own interactive workshop. You'll rebuild the answer step-by-step — no reading, no quizzes, just doing."
+          preppiMessage="Workshop = do, not read. Let's go."
         >
           <WeaknessesOverview repairs={repairs} />
         </StepShell>
       )
     }
 
-    if (activeStep.type === 'repair') {
+    if (activeStep.type === 'workshop') {
       const repair = repairs[activeStep.repairIndex]
       const issueNumber = activeStep.repairIndex + 1
       const totalIssues = Math.max(repairs.length, 1)
-      return <RepairLessonSlide repair={repair} issueNumber={issueNumber} totalIssues={totalIssues} onPractice={onPractice} />
+      const isComplete = completedWorkshops.has(activeStep.repairIndex)
+      return (
+        <WorkshopSlide
+          repair={repair}
+          issueNumber={issueNumber}
+          totalIssues={totalIssues}
+          workshopType={activeStep.workshopType}
+          sessionId={currentSessionData?.id}
+          isComplete={isComplete}
+          onWorkshopComplete={() => {
+            setCompletedWorkshops((prev) => {
+              const next = new Set(prev)
+              next.add(activeStep.repairIndex)
+              return next
+            })
+            // Auto-advance to next step shortly after completion
+            window.setTimeout(() => {
+              setStep((value) => Math.min(value + 1, deckSteps.length - 1))
+            }, 600)
+          }}
+        />
+      )
     }
 
     if (activeStep.type === 'preview') {
@@ -1141,11 +1336,15 @@ export default function HrFeedbackDeck({
           <X className="h-5 w-5" />
         </button>
         <div className="flex flex-1 gap-1.5">
-          {deckSteps.map((s, index) => (
-            <div key={s.key} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-              <div className={`h-full rounded-full bg-accent-600 transition-all duration-300 ${index <= step ? 'w-full' : 'w-0'}`} />
-            </div>
-          ))}
+          {deckSteps.map((s, index) => {
+            const isWorkshopComplete = s.type === 'workshop' && completedWorkshops.has(s.repairIndex)
+            const fillColor = isWorkshopComplete ? 'bg-emerald-500' : 'bg-accent-600'
+            return (
+              <div key={s.key} className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+                <div className={`h-full rounded-full ${fillColor} transition-all duration-300 ${index <= step || isWorkshopComplete ? 'w-full' : 'w-0'}`} />
+              </div>
+            )
+          })}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {reportHelpText && (
@@ -1211,14 +1410,25 @@ export default function HrFeedbackDeck({
             <ChevronLeft className="h-5 w-5" />
           </button>
         )}
-        <button
-          type="button"
-          onClick={goNext}
-          className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
-        >
-          {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'Done') : 'Continue'}
-          {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
-        </button>
+        {activeStep.type === 'workshop' && !completedWorkshops.has(activeStep.repairIndex) ? (
+          <button
+            type="button"
+            onClick={goNext}
+            className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-base font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+          >
+            <SkipForward className="h-4 w-4" />
+            Skip this workshop
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={goNext}
+            className="group flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-accent-600 text-base font-semibold text-white transition hover:bg-accent-700"
+          >
+            {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'Done') : (activeStep.type === 'workshop' ? 'Next Workshop' : 'Continue')}
+            {isLastStep ? <Crown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1" />}
+          </button>
+        )}
       </div>
 
       {showCoachFile && (

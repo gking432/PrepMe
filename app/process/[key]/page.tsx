@@ -250,6 +250,11 @@ export default function ProcessSpinePage() {
     if (st?.sessionId) router.push(`/interview/feedback?sessionId=${st.sessionId}&stage=${stage}`)
   }
 
+  const openPractice = (stage: StageKey) => {
+    const st = process?.stages[stage]
+    if (st?.sessionId) router.push(`/interview/practice/${st.sessionId}`)
+  }
+
   const handleNodeClick = (stage: StageKey, status: NodeStatus) => {
     if (status === 'complete') openFeedback(stage)
     else if (status === 'locked') setPurchaseStage(stage)
@@ -452,8 +457,15 @@ export default function ProcessSpinePage() {
                   onClick={() => openFeedback(mostRecentStage)}
                   className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
                 >
-                  View feedback
+                  Go to feedback
                   <ExternalLink className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openPractice(mostRecentStage)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-accent-700"
+                >
+                  Go to practice
                 </button>
                 <button
                   type="button"
@@ -600,10 +612,26 @@ export default function ProcessSpinePage() {
                         </div>
                       )}
                       {status === 'complete' && (
-                        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-accent-600">
-                          View feedback
-                          <ChevronRight className="h-3 w-3" />
-                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); openFeedback(stage) }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); openFeedback(stage) } }}
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Go to feedback
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); openPractice(stage) }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); openPractice(stage) } }}
+                            className="inline-flex items-center gap-1 rounded-lg bg-accent-600 px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-accent-700"
+                          >
+                            Go to practice
+                          </span>
+                        </div>
                       )}
                       {status === 'locked' && (
                         <p className="mt-1 text-sm text-slate-400">{meta.blurb}</p>

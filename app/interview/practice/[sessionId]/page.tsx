@@ -35,33 +35,40 @@ export default function PracticeForSessionPage() {
 
     async function load() {
       try {
-        const { data: sessionRow } = await supabase
+        const { data: sessionRow, error: sessionErr } = await supabase
           .from('interview_sessions')
-          .select('id, stage, structured_transcript, transcript_structured')
+          .select('*')
           .eq('id', sessionId)
           .maybeSingle()
 
+        if (sessionErr) console.error('practice-path: session load error', sessionErr)
         if (sessionRow?.stage) setStage(sessionRow.stage)
-        // Either column may be used depending on stage of the codebase
-        const ts = sessionRow?.structured_transcript || sessionRow?.transcript_structured || null
+        const ts =
+          (sessionRow as any)?.transcript_structured ||
+          (sessionRow as any)?.structured_transcript ||
+          null
         if (!cancelled && ts) setTranscript(ts)
 
-        const { data: feedbackRows } = await supabase
+        const { data: feedbackRows, error: feedbackErr } = await supabase
           .from('interview_feedback')
-          .select('hr_screen_six_areas, full_rubric')
+          .select('*')
           .eq('interview_session_id', sessionId)
           .order('created_at', { ascending: false })
-          .limit(1)
 
+        if (feedbackErr) console.error('practice-path: feedback load error', feedbackErr)
         const feedback = feedbackRows?.[0]
         const sixAreas =
-          feedback?.hr_screen_six_areas || feedback?.full_rubric?.hr_screen_six_areas
+          feedback?.hr_screen_six_areas ||
+          feedback?.full_rubric?.hr_screen_six_areas ||
+          feedback?.full_rubric?.hiring_manager_six_areas ||
+          feedback?.hiring_manager_six_areas
         const list = Array.isArray(sixAreas?.what_needs_improve) ? sixAreas.what_needs_improve : []
 
         if (!cancelled) {
           setWeakSignals(list as WeakSignal[])
         }
       } catch (e: any) {
+        console.error('practice-path: load failed', e)
         if (!cancelled) setError(e?.message || 'Failed to load practice items')
       } finally {
         if (!cancelled) setLoading(false)

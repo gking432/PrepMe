@@ -392,6 +392,10 @@ export default function DashboardPage() {
     const stage = sessionRow.stage === 'team_interview' ? 'culture_fit' : sessionRow.stage === 'final_interview' ? 'final' : sessionRow.stage
     return `/interview/feedback?sessionId=${sessionRow.id}&stage=${stage}`
   }
+  const getPracticeHref = (sessionRow: any) => {
+    if (!sessionRow || sessionRow.previewMock) return null
+    return `/interview/practice/${sessionRow.id}`
+  }
   const sortedInterviewGroups = useMemo(
     () => [...interviewGroups].sort((a, b) => getGroupLatestDate(b) - getGroupLatestDate(a)),
     [interviewGroups]
@@ -936,12 +940,12 @@ export default function DashboardPage() {
                                 const score = ss?.overallScore
                                 const hasReport = REPORT_FREE_STAGES.includes(stage)
                                 const feedbackHref = ss?.latestSession ? getFeedbackHref(ss.latestSession) : '#'
+                                const practiceHref = ss?.latestSession ? getPracticeHref(ss.latestSession) : null
 
                                 return (
-                                  <Link
+                                  <div
                                     key={stage}
-                                    href={feedbackHref}
-                                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50"
+                                    className="flex flex-col gap-3 px-5 py-3 sm:flex-row sm:items-center"
                                   >
                                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${STAGE_GRADIENT[stage]} text-white`}>
                                       <CheckCircle2 className="h-4 w-4" />
@@ -953,10 +957,23 @@ export default function DashboardPage() {
                                         {hasReport ? ' · Detailed report included' : ''}
                                       </p>
                                     </div>
-                                    <span className="flex items-center gap-1 text-xs font-bold text-accent-600">
-                                      View feedback <ChevronRight className="h-3 w-3" />
-                                    </span>
-                                  </Link>
+                                    <div className="flex shrink-0 items-center gap-2">
+                                      <Link
+                                        href={feedbackHref}
+                                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
+                                      >
+                                        Go to feedback
+                                      </Link>
+                                      {practiceHref && (
+                                        <Link
+                                          href={practiceHref}
+                                          className="inline-flex items-center gap-1 rounded-lg bg-accent-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-700"
+                                        >
+                                          Go to practice
+                                        </Link>
+                                      )}
+                                    </div>
+                                  </div>
                                 )
                               })}
                             </div>

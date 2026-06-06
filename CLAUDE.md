@@ -44,7 +44,7 @@ hooks/
 
 ---
 
-## Current State (Last Updated: 2026-03-26)
+## Current State (Last Updated: 2026-06-06)
 
 ### What's Built & Working
 - Preppi-guided walkthrough (PreppiWalkthrough.tsx) — full Duolingo-style flow
@@ -232,3 +232,23 @@ The post-interview experience should feel like **Duolingo for interview prep**:
   - Future idea logged: Zoom-like interview UI and eventual AI avatar interviewer
 
 **Next session should**: Turn the clarified direction into a concrete product spec covering stage-specific feedback/practice, progression memory, UI boundaries, and implementation priorities before major code changes.
+
+### 2026-06-06 (Session 5)
+- **Major workshop overhaul**: replaced all 6 template workshops in HrFeedbackDeck with a single unified `GuidedBuilderWorkshop` that pulls from the user's resume + JD + original answer via Haiku
+- Created `app/api/interview/guided-workshop/route.ts` — Haiku-based suggestion endpoint (~$0.003-0.005 per call) that returns 3 distinct, grounded suggestions per build step
+- Created `components/exercises/GuidedBuilderWorkshop.tsx` — 7-phase state machine:
+  1. **Intro** — why this matters + when to use it (teaches the WHY/WHEN)
+  2. **Method** — animated framework breakdown, tap each step to expand (teaches the WHAT/HOW)
+  3. **Diagnose** — maps the user's original answer against the method, shows what was missing
+  4. **Build** — loops through framework steps; for each step Haiku produces 3 resume-grounded suggestions; user picks, refreshes for more, or writes their own
+  5. **Assemble** — animated reveal of all chosen pieces snapping together into a full answer
+  6. **Compare** — before/after side-by-side with a coaching insight
+  7. **Done** — final answer + drill instructions
+- Each workshop type (`star_proof`, `professional_story`, `career_alignment`, `handling_uncertainty`, `pace_delivery`, `preparation_curiosity`) is configured via a single `CONFIGS` object — adding new ones is now trivial
+- Resume + JD + companyWebsite are fetched server-side from `user_interview_data` and `user_resumes` (Supabase admin). All suggestions cite real user details — Haiku prompt explicitly forbids inventing facts.
+- HrFeedbackDeck.tsx now imports only `GuidedBuilderWorkshop`; removed 6 individual workshop imports
+- Old workshop components (StarProofWorkshop, etc.) are still in the codebase but no longer rendered. Safe to delete later if not used elsewhere.
+
+**Why this change**: Template workshops (multiple choice, drag-to-sort) taught generic patterns but didn't help users build *their specific better answer*. Haiku rewrites showed users what a better answer looked like, but reading isn't practicing. The new builder is interactive enough to feel like doing, grounded enough to teach the right thing, and cheap enough to ship (~$0.02-0.04 per interview total for 3-4 workshops).
+
+**Next session should**: Test end-to-end on `?preview=mock` and real HR interview. Verify Haiku suggestions feel personalized to actual resumes. Consider deleting unused workshop components. Wire HM/CF/FR stages into the new builder.

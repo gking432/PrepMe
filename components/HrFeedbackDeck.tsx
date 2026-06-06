@@ -20,12 +20,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { getImprovementTipForCriterion, getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
-import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
-import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
-import CareerAlignmentWorkshop from '@/components/exercises/CareerAlignmentWorkshop'
-import HandlingUncertaintyWorkshop from '@/components/exercises/HandlingUncertaintyWorkshop'
-import PaceDeliveryWorkshop from '@/components/exercises/PaceDeliveryWorkshop'
-import PreparationCuriosityWorkshop from '@/components/exercises/PreparationCuriosityWorkshop'
+import GuidedBuilderWorkshop from '@/components/exercises/GuidedBuilderWorkshop'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity'
 
@@ -697,28 +692,15 @@ function WorkshopSlide({
       )
     }
 
-    const commonProps = {
-      originalQuestion: questionText || undefined,
-      originalAnswer: originalAnswerText || undefined,
-      onComplete: onWorkshopComplete,
-    }
-
-    switch (workshopType) {
-      case 'professional_story':
-        return <ProfessionalStoryWorkshop onComplete={onWorkshopComplete} />
-      case 'star_proof':
-        return <StarProofWorkshop {...commonProps} />
-      case 'career_alignment':
-        return <CareerAlignmentWorkshop sessionId={sessionId} {...commonProps} />
-      case 'handling_uncertainty':
-        return <HandlingUncertaintyWorkshop {...commonProps} />
-      case 'pace_delivery':
-        return <PaceDeliveryWorkshop {...commonProps} />
-      case 'preparation_curiosity':
-        return <PreparationCuriosityWorkshop sessionId={sessionId} {...commonProps} />
-      default:
-        return null
-    }
+    return (
+      <GuidedBuilderWorkshop
+        workshopType={workshopType}
+        sessionId={sessionId}
+        originalQuestion={questionText || undefined}
+        originalAnswer={originalAnswerText || undefined}
+        onComplete={onWorkshopComplete}
+      />
+    )
   }
 
   return (

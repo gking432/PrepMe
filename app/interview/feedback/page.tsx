@@ -2877,6 +2877,25 @@ export default function InterviewDashboard() {
                 )}
 
                 {/* Weaknesses section — expandable signal cards */}
+                {sixAreas && needsImproveAreas.length > 0 && currentSessionData?.id && (
+                  <Link
+                    href={`/interview/practice/${currentSessionData.id}`}
+                    className="group flex items-center justify-between rounded-2xl border-2 border-violet-300 bg-gradient-to-br from-violet-500 to-violet-600 px-5 py-4 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                        <Mic className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/80">Practice Path</p>
+                        <p className="text-base font-black">Workshop {needsImproveAreas.length} weak area{needsImproveAreas.length !== 1 ? 's' : ''} — your way, your pace</p>
+                        <p className="mt-0.5 text-xs text-white/85">Save your spot, come back anytime</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 shrink-0 transition group-hover:translate-x-1" />
+                  </Link>
+                )}
+
                 {sixAreas && needsImproveAreas.length > 0 && (
                   <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
                     <div className="flex items-center gap-2.5 border-b border-slate-100 px-6 py-4">

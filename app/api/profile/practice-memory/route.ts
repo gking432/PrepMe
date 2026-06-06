@@ -9,6 +9,38 @@ function sanitizeKey(key: string) {
   return key.replace(/[^\w:-]/g, '_').slice(0, 180)
 }
 
+export async function GET() {
+  try {
+    const supabaseAuth = createRouteHandlerClient({ cookies })
+    const {
+      data: { session },
+    } = await supabaseAuth.auth.getSession()
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('practice_memory')
+      .eq('id', session.user.id)
+      .maybeSingle()
+
+    const memory =
+      profile?.practice_memory && typeof profile.practice_memory === 'object'
+        ? profile.practice_memory
+        : {}
+    const hrScreen = memory.hr_screen && typeof memory.hr_screen === 'object' ? memory.hr_screen : {}
+    const drafts = hrScreen.workshop_drafts && typeof hrScreen.workshop_drafts === 'object'
+      ? hrScreen.workshop_drafts
+      : {}
+
+    return NextResponse.json({ drafts })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to load practice memory' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { key, value, meta } = await request.json()

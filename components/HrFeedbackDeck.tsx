@@ -1188,11 +1188,20 @@ export default function HrFeedbackDeck({
       return (
         <StepShell
           eyebrow="What We'll Workshop"
-          title={`${repairs.length} ${repairs.length === 1 ? 'workshop' : 'workshops'} to rebuild these answers.`}
-          body="Each weak area has its own interactive workshop in your Practice Path."
-          preppiMessage="One quick stop and then we're off to practice."
+          title={`${repairs.length} ${repairs.length === 1 ? 'area' : 'areas'} to work on.`}
+          body="Each one has an interactive workshop that builds a better answer from your real resume."
+          preppiMessage="Tap below to start — or close and come back anytime."
         >
           <WeaknessesOverview repairs={repairs} />
+          {currentSessionData?.id && (
+            <a
+              href={`/interview/practice/${currentSessionData.id}`}
+              className="mt-4 group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 px-6 py-4 text-base font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Start Practicing
+              <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+            </a>
+          )}
         </StepShell>
       )
     }
@@ -1466,7 +1475,7 @@ export default function HrFeedbackDeck({
               activeStep.type === 'workshop' ? 'h-9 text-sm' : 'h-12 text-base'
             }`}
           >
-            {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'Done') : (activeStep.type === 'workshop' ? 'Next Workshop' : 'Continue')}
+            {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'See your results') : (activeStep.type === 'workshop' ? 'Next Workshop' : 'Continue')}
             {isLastStep ? <Crown className={activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'} /> : <ChevronRight className={`transition group-hover:translate-x-1 ${activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'}`} />}
           </button>
         )}

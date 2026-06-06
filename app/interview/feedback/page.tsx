@@ -82,6 +82,7 @@ export default function InterviewDashboard() {
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [activePracticeLesson, setActivePracticeLesson] = useState<{ criterion: string; rootCause: string; question?: string; answer?: string } | null>(null)
   const [walkthroughActive, setWalkthroughActive] = useState(true)
+  const [practiceCompletionCount, setPracticeCompletionCount] = useState<number | null>(null)
   const [showLessonRoadmap, setShowLessonRoadmap] = useState(false)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
@@ -310,6 +311,16 @@ export default function InterviewDashboard() {
     const hasSeenTutorial = localStorage.getItem(`feedback_tutorial_seen_${currentSessionData.id}`) === 'true'
     setWalkthroughActive(!hasSeenTutorial)
   }, [currentSessionData?.id, feedback])
+
+  useEffect(() => {
+    fetch('/api/profile/practice-memory', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const drafts = data?.drafts && typeof data.drafts === 'object' ? data.drafts : {}
+        setPracticeCompletionCount(Object.keys(drafts).length)
+      })
+      .catch(() => setPracticeCompletionCount(0))
+  }, [walkthroughActive])
 
   useEffect(() => {
     if (!currentSessionData?.id || !feedback) return
@@ -2402,7 +2413,7 @@ export default function InterviewDashboard() {
   }
 
   const handleExitToProfile = () => {
-    router.push('/dashboard')
+    dismissFeedbackTutorial()
   }
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
@@ -2876,20 +2887,37 @@ export default function InterviewDashboard() {
                   </div>
                 )}
 
-                {/* Weaknesses section — expandable signal cards */}
+                {/* Practice CTA — contextual based on completion */}
                 {sixAreas && needsImproveAreas.length > 0 && currentSessionData?.id && (
                   <Link
                     href={`/interview/practice/${currentSessionData.id}`}
-                    className="group flex items-center justify-between rounded-2xl border-2 border-violet-300 bg-gradient-to-br from-violet-500 to-violet-600 px-5 py-4 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                    className={`group flex items-center justify-between rounded-2xl border-2 px-5 py-4 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl ${
+                      practiceCompletionCount && practiceCompletionCount > 0
+                        ? 'border-emerald-300 bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
+                        : 'border-violet-300 bg-gradient-to-br from-violet-500 to-violet-600 text-white'
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-                        <Mic className="h-5 w-5" />
+                        {practiceCompletionCount && practiceCompletionCount > 0 ? (
+                          <CheckCircle className="h-5 w-5" />
+                        ) : (
+                          <Mic className="h-5 w-5" />
+                        )}
                       </div>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/80">Practice Path</p>
-                        <p className="text-base font-black">Workshop {needsImproveAreas.length} weak area{needsImproveAreas.length !== 1 ? 's' : ''} — your way, your pace</p>
-                        <p className="mt-0.5 text-xs text-white/85">Save your spot, come back anytime</p>
+                        {practiceCompletionCount && practiceCompletionCount > 0 ? (
+                          <>
+                            <p className="text-base font-black">View your crafted answers</p>
+                            <p className="mt-0.5 text-xs text-white/85">{practiceCompletionCount} workshop{practiceCompletionCount !== 1 ? 's' : ''} completed — review or redo anytime</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-base font-black">Start Practicing</p>
+                            <p className="mt-0.5 text-xs text-white/85">{needsImproveAreas.length} workshop{needsImproveAreas.length !== 1 ? 's' : ''} to rebuild your weak answers</p>
+                          </>
+                        )}
                       </div>
                     </div>
                     <ArrowRight className="h-5 w-5 shrink-0 transition group-hover:translate-x-1" />

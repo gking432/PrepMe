@@ -442,6 +442,48 @@ summary {
   animation: preppi-bounce 0.45s ease-out forwards;
 }
 
+/* 3D flip card for workshop method discovery */
+.flip-card {
+  perspective: 1000px;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+.flip-card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+@keyframes wiggle-attention {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2deg); }
+  75% { transform: rotate(2deg); }
+}
+.animate-wiggle {
+  animation: wiggle-attention 1.4s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+}
+.animate-recording-pulse {
+  animation: recording-pulse 1.4s ease-in-out infinite;
+}
+
 @media (max-width: 768px) {
   body {
     background:

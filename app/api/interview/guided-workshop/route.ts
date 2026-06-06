@@ -144,6 +144,9 @@ export async function POST(request: NextRequest) {
   const originalQuestion = String(body.originalQuestion || '').slice(0, 2000)
   const originalAnswer = String(body.originalAnswer || '').slice(0, 4000)
   const previousChoices = (body.previousChoices && typeof body.previousChoices === 'object') ? body.previousChoices : {}
+  const tags = Array.isArray(body.tags)
+    ? body.tags.map((t: unknown) => String(t || '').trim()).filter(Boolean).slice(0, 8)
+    : []
 
   if (!workshopType || !STEP_GUIDANCE[workshopType] || !STEP_GUIDANCE[workshopType][stepKey]) {
     return NextResponse.json({ error: 'Invalid workshopType or stepKey' }, { status: 400 })
@@ -153,12 +156,16 @@ export async function POST(request: NextRequest) {
 
   const stepGuidance = STEP_GUIDANCE[workshopType][stepKey]
   const workshopContext = WORKSHOP_CONTEXT[workshopType]
+  const tagHint = tags.length
+    ? `The candidate self-described their voice/approach for this answer as: ${tags.join(', ')}. Let those subtly color tone and word choice — but never override what's actually in the resume.`
+    : ''
 
   const system = `You are a sharp, no-nonsense interview coach helping a candidate build one part of one answer.
 
 Workshop: ${workshopContext}
 Current step: ${stepKey}
 Step task: ${stepGuidance}
+${tagHint}
 
 Hard rules:
 - Suggestions must sound natural spoken aloud. Conversational. Confident.
@@ -175,6 +182,7 @@ Hard rules:
     original_question: originalQuestion || '(not provided)',
     original_flagged_answer: originalAnswer || '(not provided)',
     previous_choices: previousChoices,
+    candidate_voice_tags: tags,
     candidate_resume: resumeText || '(resume not available — use generic patterns)',
     job_description: jobDescription || '(JD not available — use general best practices)',
     company_website: companyWebsite || '',

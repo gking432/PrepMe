@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   Check,
   CheckCircle2,
   Edit3,
   Lightbulb,
-  Loader2,
+  Lock,
+  Mic,
+  MicOff,
   RefreshCw,
   Sparkles,
   Target,
@@ -31,16 +33,16 @@ interface GuidedBuilderWorkshopProps {
   onComplete: () => void
 }
 
-type Phase = 'intro' | 'method' | 'diagnose' | 'build' | 'assemble' | 'compare' | 'done'
+type Phase = 'intro' | 'method' | 'diagnose' | 'tags' | 'build' | 'assemble' | 'compare' | 'recall' | 'done'
 
 interface FrameworkStep {
   key: string
   label: string
   description: string
   prompt: string
-  color: string // tailwind color suffix family, e.g. 'violet', 'emerald'
+  color: string
   emoji: string
-  connector?: string // sentence connector when assembling, e.g. "and so"
+  connector?: string
 }
 
 interface WorkshopConfig {
@@ -51,49 +53,16 @@ interface WorkshopConfig {
   steps: FrameworkStep[]
   assembleHint: string
   practiceCta: string
+  tagPrompt: string
+  tags: string[]
 }
 
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; ring: string; soft: string; chip: string }> = {
-  violet: {
-    bg: 'bg-violet-500',
-    border: 'border-violet-300',
-    text: 'text-violet-700',
-    ring: 'ring-violet-400',
-    soft: 'bg-violet-50',
-    chip: 'bg-violet-100 text-violet-800',
-  },
-  emerald: {
-    bg: 'bg-emerald-500',
-    border: 'border-emerald-300',
-    text: 'text-emerald-700',
-    ring: 'ring-emerald-400',
-    soft: 'bg-emerald-50',
-    chip: 'bg-emerald-100 text-emerald-800',
-  },
-  sky: {
-    bg: 'bg-sky-500',
-    border: 'border-sky-300',
-    text: 'text-sky-700',
-    ring: 'ring-sky-400',
-    soft: 'bg-sky-50',
-    chip: 'bg-sky-100 text-sky-800',
-  },
-  amber: {
-    bg: 'bg-amber-500',
-    border: 'border-amber-300',
-    text: 'text-amber-700',
-    ring: 'ring-amber-400',
-    soft: 'bg-amber-50',
-    chip: 'bg-amber-100 text-amber-800',
-  },
-  rose: {
-    bg: 'bg-rose-500',
-    border: 'border-rose-300',
-    text: 'text-rose-700',
-    ring: 'ring-rose-400',
-    soft: 'bg-rose-50',
-    chip: 'bg-rose-100 text-rose-800',
-  },
+  violet: { bg: 'bg-violet-500', border: 'border-violet-300', text: 'text-violet-700', ring: 'ring-violet-400', soft: 'bg-violet-50', chip: 'bg-violet-100 text-violet-800' },
+  emerald: { bg: 'bg-emerald-500', border: 'border-emerald-300', text: 'text-emerald-700', ring: 'ring-emerald-400', soft: 'bg-emerald-50', chip: 'bg-emerald-100 text-emerald-800' },
+  sky: { bg: 'bg-sky-500', border: 'border-sky-300', text: 'text-sky-700', ring: 'ring-sky-400', soft: 'bg-sky-50', chip: 'bg-sky-100 text-sky-800' },
+  amber: { bg: 'bg-amber-500', border: 'border-amber-300', text: 'text-amber-700', ring: 'ring-amber-400', soft: 'bg-amber-50', chip: 'bg-amber-100 text-amber-800' },
+  rose: { bg: 'bg-rose-500', border: 'border-rose-300', text: 'text-rose-700', ring: 'ring-rose-400', soft: 'bg-rose-50', chip: 'bg-rose-100 text-rose-800' },
 }
 
 const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
@@ -110,6 +79,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     ],
     assembleHint: 'Notice the answer leads with scene, narrows fast to ownership, then puts most weight on what you did.',
     practiceCta: 'Say it out loud',
+    tagPrompt: 'How did you show up in this story? Pick at least 4.',
+    tags: ['hands-on', 'scrappy', 'methodical', 'decisive', 'calm-under-pressure', 'collaborative', 'persistent', 'analytical', 'creative', 'direct', 'patient', 'resourceful'],
   },
   professional_story: {
     framework: 'Present · Past · Future',
@@ -123,6 +94,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     ],
     assembleHint: 'Notice how each part hands off to the next — there\'s a logic to why you\'re sitting there.',
     practiceCta: 'Say your story out loud',
+    tagPrompt: 'How do you want to come across? Pick at least 4.',
+    tags: ['builder', 'communicator', 'problem-solver', 'learner', 'leader', 'executor', 'mentor', 'strategist', 'generalist', 'specialist', 'connector', 'finisher'],
   },
   career_alignment: {
     framework: 'Observation · Fit · Timing',
@@ -136,6 +109,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     ],
     assembleHint: 'Lead with the role, then yourself, then timing. The order signals you put their need first.',
     practiceCta: 'Try the full answer out loud',
+    tagPrompt: 'What\'s actually drawing you to this work? Pick at least 4.',
+    tags: ['autonomy', 'mission', 'growth', 'ownership', 'impact', 'scale', 'craft', 'team', 'learning', 'customer-focus', 'ambiguity', 'recognition'],
   },
   handling_uncertainty: {
     framework: 'Recovery · Answer · Reason · Example',
@@ -150,6 +125,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     ],
     assembleHint: 'Notice the structure shows composure — even if you don\'t have a perfect answer, you sound steady.',
     practiceCta: 'Practice the recovery out loud',
+    tagPrompt: 'How do you want to come across under pressure? Pick at least 4.',
+    tags: ['composed', 'honest', 'curious', 'thoughtful', 'decisive', 'humble', 'grounded', 'confident', 'direct', 'reflective', 'candid', 'level-headed'],
   },
   pace_delivery: {
     framework: 'Opener · Main Point · Landing',
@@ -163,6 +140,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     ],
     assembleHint: 'Same facts you had before — but the listener can actually hold onto them now.',
     practiceCta: 'Say the tightened version',
+    tagPrompt: 'What\'s your natural delivery? Pick at least 4.',
+    tags: ['direct', 'warm', 'energetic', 'measured', 'precise', 'conversational', 'confident', 'dry', 'candid', 'structured', 'expressive', 'deliberate'],
   },
   preparation_curiosity: {
     framework: 'What You Know · What Stood Out · Your Question',
@@ -176,8 +155,12 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     ],
     assembleHint: 'A question built from real research lands completely differently than a generic one.',
     practiceCta: 'Say the question out loud',
+    tagPrompt: 'What about this company actually hooked you? Pick at least 4.',
+    tags: ['vision', 'team', 'product', 'scale', 'recent-direction', 'technical-depth', 'customer-focus', 'mission', 'founders', 'growth', 'market', 'craft'],
   },
 }
+
+const MIN_TAGS = 4
 
 function cleanInput(value: string) {
   return value.trim().replace(/\s+/g, ' ')
@@ -203,9 +186,32 @@ function assembleAnswer(config: WorkshopConfig, choices: Record<string, string>)
     .join(' ')
 }
 
+function hashQuestion(question: string) {
+  let h = 0
+  for (let i = 0; i < question.length; i++) {
+    h = (h << 5) - h + question.charCodeAt(i)
+    h |= 0
+  }
+  return Math.abs(h).toString(36).slice(0, 8)
+}
+
+function scoreColor(score: number) {
+  if (score >= 75) return 'text-emerald-700 bg-emerald-100'
+  if (score >= 50) return 'text-amber-700 bg-amber-100'
+  return 'text-rose-700 bg-rose-100'
+}
+
 interface SuggestResponse {
   suggestions: string[]
   hint: string
+}
+
+interface RecallResult {
+  transcript: string
+  scores: { coverage: number; structure: number; delivery: number }
+  feedback: string
+  kept: string[]
+  dropped: string[]
 }
 
 export default function GuidedBuilderWorkshop({
@@ -219,23 +225,32 @@ export default function GuidedBuilderWorkshop({
   const [phase, setPhase] = useState<Phase>('intro')
   const [stepIndex, setStepIndex] = useState(0)
   const [choices, setChoices] = useState<Record<string, string>>({})
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [hint, setHint] = useState<string>('')
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [showCustom, setShowCustom] = useState(false)
   const [customDraft, setCustomDraft] = useState('')
-  const [methodTappedSteps, setMethodTappedSteps] = useState<Set<number>>(new Set())
+  const [flippedMethodSteps, setFlippedMethodSteps] = useState<Set<number>>(new Set())
   const [revealedSteps, setRevealedSteps] = useState<Set<string>>(new Set())
 
-  const activeStep = config.steps[stepIndex]
+  // Recall phase state
+  const [recallStage, setRecallStage] = useState<'reading' | 'memorizing' | 'recording' | 'submitting' | 'result'>('reading')
+  const [recording, setRecording] = useState(false)
+  const [recallResult, setRecallResult] = useState<RecallResult | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+
   const questionLabel = useMemo(
     () => originalQuestion?.trim() || 'Practice this answer pattern.',
     [originalQuestion]
   )
   const answerSummary = useMemo(() => summarize(originalAnswer, 220), [originalAnswer])
+  const activeStep = config.steps[stepIndex]
+  const finalAnswer = useMemo(() => assembleAnswer(config, choices), [config, choices])
 
-  // Fetch suggestions whenever we enter a build step or hit refresh
+  // Fetch suggestions
   useEffect(() => {
     if (phase !== 'build' || !activeStep) return
     let cancelled = false
@@ -255,6 +270,7 @@ export default function GuidedBuilderWorkshop({
             originalAnswer,
             stepKey: activeStep.key,
             previousChoices: choices,
+            tags: selectedTags,
           }),
         })
         if (!response.ok) throw new Error('suggest_failed')
@@ -278,7 +294,7 @@ export default function GuidedBuilderWorkshop({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, stepIndex, refreshKey])
 
-  // Animate step reveal in assemble phase
+  // Animated assemble reveal
   useEffect(() => {
     if (phase !== 'assemble') return
     setRevealedSteps(new Set())
@@ -289,6 +305,34 @@ export default function GuidedBuilderWorkshop({
       }, 300 + i * 500)
     })
   }, [phase, choices, config.steps])
+
+  // Save to practice memory after recall completes (fire-and-forget)
+  const saveToProfile = useCallback(
+    (transcript: string, scores: RecallResult['scores'] | null) => {
+      const questionHash = hashQuestion(questionLabel)
+      const key = `${workshopType}:${questionHash}`
+      const value = finalAnswer
+      const meta = {
+        workshop_type: workshopType,
+        original_question: questionLabel,
+        original_answer: originalAnswer || '',
+        chosen_tags: selectedTags,
+        choices,
+        transcript,
+        scores,
+        session_id: sessionId || null,
+        timestamp: new Date().toISOString(),
+      }
+      fetch('/api/profile/practice-memory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value, meta }),
+      }).catch(() => {
+        // best-effort
+      })
+    },
+    [workshopType, questionLabel, finalAnswer, originalAnswer, selectedTags, choices, sessionId]
+  )
 
   function pickSuggestion(text: string) {
     setChoices((prev) => ({ ...prev, [activeStep.key]: cleanInput(text) }))
@@ -315,17 +359,84 @@ export default function GuidedBuilderWorkshop({
     }
   }
 
-  function tapMethodStep(i: number) {
-    setMethodTappedSteps((prev) => {
+  function flipMethodStep(i: number) {
+    setFlippedMethodSteps((prev) => {
       const next = new Set(prev)
       next.add(i)
       return next
     })
   }
 
-  const allMethodStepsTapped = methodTappedSteps.size >= config.steps.length
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
 
-  const finalAnswer = useMemo(() => assembleAnswer(config, choices), [config, choices])
+  const allMethodFlipped = flippedMethodSteps.size >= config.steps.length
+  const enoughTags = selectedTags.length >= MIN_TAGS
+
+  // Recall: start recording
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      mediaRecorderRef.current = mr
+      audioChunksRef.current = []
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        await submitRecall(blob)
+      }
+      mr.start()
+      setRecording(true)
+      setRecallStage('recording')
+    } catch {
+      alert('Microphone access is required for the voice test.')
+    }
+  }, [])
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop()
+      setRecording(false)
+      setRecallStage('submitting')
+    }
+  }, [])
+
+  const submitRecall = useCallback(
+    async (blob: Blob) => {
+      try {
+        const fd = new FormData()
+        fd.append('audio', blob, 'recall.webm')
+        fd.append('built_answer', finalAnswer)
+        fd.append('workshop_type', workshopType)
+        const res = await fetch('/api/interview/guided-workshop/voice-eval', { method: 'POST', body: fd })
+        const data = (await res.json()) as RecallResult
+        setRecallResult(data)
+        saveToProfile(data.transcript || '', data.scores || null)
+      } catch {
+        const fallback: RecallResult = {
+          transcript: '',
+          scores: { coverage: 0, structure: 0, delivery: 0 },
+          feedback: 'Could not score that attempt — but you said it out loud, which is the part that matters.',
+          kept: [],
+          dropped: [],
+        }
+        setRecallResult(fallback)
+        saveToProfile('', null)
+      } finally {
+        setRecallStage('result')
+      }
+    },
+    [finalAnswer, workshopType, saveToProfile]
+  )
+
+  function retryRecall() {
+    setRecallResult(null)
+    setRecallStage('memorizing')
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
@@ -341,9 +452,7 @@ export default function GuidedBuilderWorkshop({
                 {config.framework}
               </span>
             </div>
-            <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">
-              {config.whyTitle}
-            </h2>
+            <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">{config.whyTitle}</h2>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
@@ -375,7 +484,9 @@ export default function GuidedBuilderWorkshop({
                     Your answer in the interview
                   </p>
                   <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{answerSummary}&rdquo;</p>
-                  <p className="mt-3 text-xs font-bold text-rose-700">We&apos;re going to rebuild this together — in your words, using your real experience.</p>
+                  <p className="mt-3 text-xs font-bold text-rose-700">
+                    We&apos;re going to rebuild this together — in your words, using your real experience.
+                  </p>
                 </div>
               )}
             </div>
@@ -393,78 +504,98 @@ export default function GuidedBuilderWorkshop({
         </div>
       )}
 
-      {/* METHOD */}
+      {/* METHOD - flip cards with progressive unlock */}
       {phase === 'method' && (
         <div className="flex h-full flex-col">
           <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
-                The Method
-              </span>
-            </div>
+            <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
+              The Method
+            </span>
             <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">{config.framework}</h2>
-            <p className="mt-1 text-xs font-bold text-slate-500">Tap each step to learn what goes in it.</p>
+            <p className="mt-1 text-xs font-bold text-slate-500">
+              Flip each card in order to unlock the next.
+            </p>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
             <div className="space-y-3">
               {config.steps.map((step, i) => {
                 const colors = COLOR_MAP[step.color]
-                const tapped = methodTappedSteps.has(i)
+                const flipped = flippedMethodSteps.has(i)
+                const previousFlipped = i === 0 || flippedMethodSteps.has(i - 1)
+                const isNext = !flipped && previousFlipped
+                const locked = !flipped && !previousFlipped
+
                 return (
-                  <button
+                  <div
                     key={step.key}
-                    onClick={() => tapMethodStep(i)}
-                    className={`w-full rounded-2xl border-2 px-4 py-3 text-left transition ${
-                      tapped
-                        ? `${colors.border} ${colors.soft} shadow-sm`
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                    className={`flip-card relative ${flipped ? 'flipped' : ''}`}
+                    style={{ height: '92px' }}
                   >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition ${
-                          tapped ? `${colors.bg} text-white` : 'bg-slate-100 text-slate-400'
+                    <div className="flip-card-inner">
+                      {/* FRONT - face down */}
+                      <button
+                        type="button"
+                        onClick={() => isNext && flipMethodStep(i)}
+                        disabled={!isNext}
+                        className={`flip-card-face w-full rounded-2xl border-2 px-4 py-3 text-left transition ${
+                          locked
+                            ? 'border-slate-200 bg-slate-100 opacity-50 cursor-not-allowed'
+                            : `border-dashed ${colors.border} ${colors.soft} ${isNext ? 'animate-wiggle cursor-pointer hover:shadow-md' : ''}`
                         }`}
                       >
-                        {tapped ? step.emoji : i + 1}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className={`text-sm font-extrabold ${tapped ? colors.text : 'text-slate-900'}`}>
-                            {step.label}
-                          </p>
-                          {tapped && <Check className={`h-4 w-4 ${colors.text}`} />}
+                        <div className="flex h-full items-center gap-3">
+                          <div
+                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${
+                              locked ? 'bg-slate-200 text-slate-400' : `${colors.bg} text-white`
+                            }`}
+                          >
+                            {locked ? <Lock className="h-5 w-5" /> : i + 1}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-sm font-extrabold ${locked ? 'text-slate-400' : colors.text}`}>
+                              Step {i + 1}
+                            </p>
+                            <p className={`text-xs font-bold ${locked ? 'text-slate-400' : 'text-slate-600'}`}>
+                              {locked ? 'Flip the previous card first' : 'Tap to flip'}
+                            </p>
+                          </div>
                         </div>
-                        {tapped && (
-                          <p className="mt-1 text-xs leading-5 text-slate-700 animate-fade-in">
-                            {step.description}
-                          </p>
-                        )}
+                      </button>
+
+                      {/* BACK - description */}
+                      <div className={`flip-card-face flip-card-back w-full rounded-2xl border-2 ${colors.border} ${colors.soft} px-4 py-3 shadow-sm`}>
+                        <div className="flex h-full items-start gap-3">
+                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${colors.bg} text-xl text-white`}>
+                            {step.emoji}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={`text-sm font-extrabold ${colors.text}`}>{step.label}</p>
+                              <Check className={`h-4 w-4 ${colors.text}`} />
+                            </div>
+                            <p className="mt-0.5 text-xs leading-5 text-slate-700">{step.description}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
 
-            {!allMethodStepsTapped && (
-              <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
-                {methodTappedSteps.size}/{config.steps.length} explored
-              </p>
-            )}
+            <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              {flippedMethodSteps.size}/{config.steps.length} flipped
+            </p>
           </div>
 
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
             <button
-              onClick={() => {
-                setPhase(originalAnswer ? 'diagnose' : 'build')
-                setStepIndex(0)
-              }}
-              disabled={!allMethodStepsTapped}
+              onClick={() => setPhase(originalAnswer ? 'diagnose' : 'tags')}
+              disabled={!allMethodFlipped}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
             >
-              {allMethodStepsTapped ? 'Now let\'s use it' : 'Tap every step to continue'}
+              {allMethodFlipped ? "Now let's use it" : 'Flip every card to continue'}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -496,10 +627,7 @@ export default function GuidedBuilderWorkshop({
               {config.steps.map((step, i) => {
                 const colors = COLOR_MAP[step.color]
                 return (
-                  <div
-                    key={step.key}
-                    className={`flex items-center gap-3 rounded-xl border ${colors.border} ${colors.soft} px-3 py-2`}
-                  >
+                  <div key={step.key} className={`flex items-center gap-3 rounded-xl border ${colors.border} ${colors.soft} px-3 py-2`}>
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colors.bg} text-sm text-white`}>
                       {step.emoji}
                     </div>
@@ -519,9 +647,75 @@ export default function GuidedBuilderWorkshop({
               <div className="flex items-start gap-2">
                 <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
                 <p className="text-xs leading-5 text-emerald-900">
-                  We&apos;ll build each part together. We&apos;ll pull suggestions from your real resume and the job
-                  — you pick what fits or write your own. Nothing gets invented.
+                  Next: we&apos;ll capture your voice and approach, then build each part together — pulling from your
+                  real resume and the job.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+            <button
+              onClick={() => setPhase('tags')}
+              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
+            >
+              Tell me about your voice
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TAGS - voice/approach picker */}
+      {phase === 'tags' && (
+        <div className="flex h-full flex-col">
+          <div className="border-b border-slate-200 bg-gradient-to-br from-amber-50 via-white to-violet-50 px-5 py-4">
+            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">
+              Your voice
+            </span>
+            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">{config.tagPrompt}</h2>
+            <p className="mt-1 text-xs font-bold text-slate-500">
+              We&apos;ll use these to shape the suggestions you see next.
+            </p>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <div className="flex flex-wrap gap-2">
+              {config.tags.map((tag) => {
+                const selected = selectedTags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`rounded-full border-2 px-3.5 py-1.5 text-sm font-bold transition active:scale-95 ${
+                      selected
+                        ? 'border-violet-400 bg-violet-500 text-white shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50'
+                    }`}
+                  >
+                    {selected && <Check className="mr-1 -ml-1 inline h-3.5 w-3.5" />}
+                    {tag}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-700">
+                  {selectedTags.length} picked · need at least {MIN_TAGS}
+                </p>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: MIN_TAGS }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-2 w-2 rounded-full ${
+                        i < selectedTags.length ? 'bg-violet-500' : 'bg-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -532,9 +726,10 @@ export default function GuidedBuilderWorkshop({
                 setPhase('build')
                 setStepIndex(0)
               }}
-              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
+              disabled={!enoughTags}
+              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
             >
-              Start building
+              {enoughTags ? 'Start building' : `Pick ${MIN_TAGS - selectedTags.length} more`}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -612,9 +807,7 @@ export default function GuidedBuilderWorkshop({
                           onClick={() => pickSuggestion(suggestion)}
                           className={`group w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-left transition hover:${colors.border} hover:${colors.soft} hover:shadow-md`}
                         >
-                          <p className="text-sm leading-6 text-slate-800 group-hover:text-slate-900">
-                            {suggestion}
-                          </p>
+                          <p className="text-sm leading-6 text-slate-800 group-hover:text-slate-900">{suggestion}</p>
                           <p className={`mt-2 text-[10px] font-black uppercase tracking-[0.16em] opacity-0 transition group-hover:opacity-100 ${colors.text}`}>
                             Tap to use this
                           </p>
@@ -672,11 +865,10 @@ export default function GuidedBuilderWorkshop({
                   )}
                 </div>
 
-                {/* Choices made so far - chip strip */}
                 {Object.keys(choices).length > 0 && (
                   <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-5 py-2">
                     <div className="flex items-center gap-1.5 overflow-x-auto">
-                      <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 shrink-0">
+                      <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
                         Built so far:
                       </span>
                       {config.steps.map((s, i) => {
@@ -731,9 +923,7 @@ export default function GuidedBuilderWorkshop({
                         {step.emoji}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>
-                          {step.label}
-                        </p>
+                        <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>{step.label}</p>
                         <p className="text-sm leading-6 text-slate-800">{value}</p>
                       </div>
                     </div>
@@ -746,9 +936,7 @@ export default function GuidedBuilderWorkshop({
               <div className="mt-5 rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-4 animate-fade-in">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
-                    Your full answer
-                  </p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your full answer</p>
                 </div>
                 <p className="mt-2 text-sm leading-7 text-slate-900">{finalAnswer}</p>
               </div>
@@ -775,9 +963,7 @@ export default function GuidedBuilderWorkshop({
             <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
               Before · After
             </span>
-            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
-              See the difference.
-            </h2>
+            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">See the difference.</h2>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-3">
@@ -805,12 +991,202 @@ export default function GuidedBuilderWorkshop({
 
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
             <button
-              onClick={() => setPhase('done')}
+              onClick={() => {
+                setPhase('recall')
+                setRecallStage('reading')
+              }}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
             >
-              I&apos;m ready to practice
-              <ArrowRight className="h-4 w-4" />
+              {config.practiceCta}
+              <Mic className="h-4 w-4" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* RECALL - voice test */}
+      {phase === 'recall' && (
+        <div className="flex h-full flex-col">
+          <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-5 py-4">
+            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
+              Voice check
+            </span>
+            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
+              {recallStage === 'reading' && 'Read it. Say it twice silently.'}
+              {recallStage === 'memorizing' && 'Now say it from memory.'}
+              {recallStage === 'recording' && 'Recording — speak your answer.'}
+              {recallStage === 'submitting' && 'Scoring your attempt…'}
+              {recallStage === 'result' && 'How that landed'}
+            </h2>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            {/* READING */}
+            {recallStage === 'reading' && (
+              <>
+                <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your built answer</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-900">{finalAnswer}</p>
+                </div>
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-bold text-slate-700">
+                    Read it through twice. Don&apos;t memorize word-for-word — just get the shape and the key
+                    beats. When you&apos;re ready, we&apos;ll hide it and you&apos;ll say it out loud.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* MEMORIZING - answer hidden, prep to record */}
+            {recallStage === 'memorizing' && (
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="rounded-2xl bg-slate-100 px-6 py-10">
+                  <div className="text-4xl">🤫</div>
+                  <p className="mt-3 text-sm font-bold text-slate-700">Answer hidden.</p>
+                  <p className="mt-1 text-xs text-slate-500">When you tap the mic, say the answer from memory.</p>
+                </div>
+              </div>
+            )}
+
+            {/* RECORDING */}
+            {recallStage === 'recording' && (
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="relative">
+                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-red-500 text-white animate-recording-pulse">
+                    <Mic className="h-12 w-12" />
+                  </div>
+                </div>
+                <p className="mt-6 text-sm font-bold text-red-700">Recording…</p>
+                <p className="mt-1 text-xs text-slate-500">Speak naturally. Tap below when you&apos;re done.</p>
+              </div>
+            )}
+
+            {/* SUBMITTING */}
+            {recallStage === 'submitting' && (
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-500" />
+                <p className="mt-4 text-sm font-bold text-slate-700">Listening and scoring…</p>
+                <p className="mt-1 text-xs text-slate-500">This takes about 5 seconds.</p>
+              </div>
+            )}
+
+            {/* RESULT */}
+            {recallStage === 'result' && recallResult && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {(['coverage', 'structure', 'delivery'] as const).map((dim) => {
+                    const value = recallResult.scores[dim]
+                    return (
+                      <div key={dim} className={`rounded-xl px-3 py-3 text-center ${scoreColor(value)}`}>
+                        <p className="text-2xl font-black">{value}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.14em]">{dim}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {recallResult.feedback && (
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <Zap className="mt-0.5 h-4 w-4 shrink-0 text-violet-700" />
+                      <p className="text-xs leading-5 text-violet-900">{recallResult.feedback}</p>
+                    </div>
+                  </div>
+                )}
+
+                {recallResult.kept.length > 0 && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">You nailed</p>
+                    <ul className="mt-1 space-y-1">
+                      {recallResult.kept.map((item, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-xs leading-5 text-emerald-900">
+                          <Check className="mt-0.5 h-3 w-3 shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {recallResult.dropped.length > 0 && (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Watch for</p>
+                    <ul className="mt-1 space-y-1">
+                      {recallResult.dropped.map((item, i) => (
+                        <li key={i} className="text-xs leading-5 text-amber-900">
+                          · {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {recallResult.transcript && (
+                  <details className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2">
+                    <summary className="cursor-pointer text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">
+                      What we heard
+                    </summary>
+                    <p className="mt-2 text-xs italic leading-5 text-slate-700">&ldquo;{recallResult.transcript}&rdquo;</p>
+                  </details>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+            {recallStage === 'reading' && (
+              <button
+                onClick={() => setRecallStage('memorizing')}
+                className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
+              >
+                I&apos;m ready — hide it
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+            {recallStage === 'memorizing' && (
+              <button
+                onClick={startRecording}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 py-3 text-sm font-bold text-white shadow-sm hover:bg-red-600"
+              >
+                <Mic className="h-4 w-4" />
+                Tap to record
+              </button>
+            )}
+            {recallStage === 'recording' && (
+              <button
+                onClick={stopRecording}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-800"
+              >
+                <MicOff className="h-4 w-4" />
+                Done
+              </button>
+            )}
+            {recallStage === 'submitting' && (
+              <button
+                disabled
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-300 py-3 text-sm font-bold text-white"
+              >
+                Scoring…
+              </button>
+            )}
+            {recallStage === 'result' && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={retryRecall}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Try again
+                </button>
+                <button
+                  onClick={() => setPhase('done')}
+                  className="btn-coach-primary flex flex-1 items-center justify-center gap-2 py-3 text-sm font-bold"
+                >
+                  Finish
+                  <CheckCircle2 className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -820,28 +1196,28 @@ export default function GuidedBuilderWorkshop({
         <div className="flex h-full flex-col">
           <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-5 py-4">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
-              {config.practiceCta}
+              Saved
             </span>
             <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
-              Read it twice. Then say it without looking.
+              Workshop locked in.
             </h2>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
             <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-4">
-              <p className="text-sm leading-7 text-slate-900">{finalAnswer}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your answer</p>
+              <p className="mt-2 text-sm leading-7 text-slate-900">{finalAnswer}</p>
             </div>
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <div className="flex items-start gap-2">
                 <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <div>
-                  <p className="text-xs font-extrabold text-slate-900">Drill it</p>
-                  <ul className="mt-1 space-y-1 text-xs leading-5 text-slate-700">
-                    <li>· Read it once. Say it once exactly. Then say it without reading.</li>
-                    <li>· Each time you repeat it, drop one word. Keep the meaning.</li>
-                    <li>· When you can say it in your own voice — not memorized — you&apos;ve got it.</li>
-                  </ul>
+                  <p className="text-xs font-extrabold text-slate-900">We&apos;ve saved this for you</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-700">
+                    Your built answer and voice attempt are in your profile so you can revisit them before the
+                    next round.
+                  </p>
                 </div>
               </div>
             </div>

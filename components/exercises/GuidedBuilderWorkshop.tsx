@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  Edit3,
   Lightbulb,
   Lock,
   Mic,
@@ -13,7 +12,6 @@ import {
   RefreshCw,
   Sparkles,
   Target,
-  Wand2,
   Zap,
 } from 'lucide-react'
 
@@ -33,7 +31,7 @@ interface GuidedBuilderWorkshopProps {
   onComplete: () => void
 }
 
-type Phase = 'intro' | 'method' | 'diagnose' | 'tags' | 'build' | 'assemble' | 'compare' | 'recall' | 'done'
+type Phase = 'intro' | 'method' | 'tags' | 'build' | 'assemble' | 'recall' | 'done'
 
 interface FrameworkStep {
   key: string
@@ -80,7 +78,7 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     assembleHint: 'Notice the answer leads with scene, narrows fast to ownership, then puts most weight on what you did.',
     practiceCta: 'Say it out loud',
     tagPrompt: 'How did you show up in this story? Pick at least 4.',
-    tags: ['hands-on', 'scrappy', 'methodical', 'decisive', 'calm-under-pressure', 'collaborative', 'persistent', 'analytical', 'creative', 'direct', 'patient', 'resourceful'],
+    tags: ['hands-on', 'scrappy', 'methodical', 'decisive', 'calm-under-pressure', 'collaborative', 'persistent', 'analytical', 'creative', 'direct', 'patient', 'resourceful', 'curious', 'adaptable', 'detail-oriented', 'fast-moving', 'principled', 'pragmatic', 'humble', 'thorough'],
   },
   professional_story: {
     framework: 'Present · Past · Future',
@@ -95,7 +93,7 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     assembleHint: 'Notice how each part hands off to the next — there\'s a logic to why you\'re sitting there.',
     practiceCta: 'Say your story out loud',
     tagPrompt: 'How do you want to come across? Pick at least 4.',
-    tags: ['builder', 'communicator', 'problem-solver', 'learner', 'leader', 'executor', 'mentor', 'strategist', 'generalist', 'specialist', 'connector', 'finisher'],
+    tags: ['builder', 'communicator', 'problem-solver', 'learner', 'leader', 'executor', 'mentor', 'strategist', 'generalist', 'specialist', 'connector', 'finisher', 'operator', 'researcher', 'creative', 'analyst', 'organizer', 'fixer', 'storyteller', 'systems-thinker'],
   },
   career_alignment: {
     framework: 'Observation · Fit · Timing',
@@ -110,7 +108,7 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     assembleHint: 'Lead with the role, then yourself, then timing. The order signals you put their need first.',
     practiceCta: 'Try the full answer out loud',
     tagPrompt: 'What\'s actually drawing you to this work? Pick at least 4.',
-    tags: ['autonomy', 'mission', 'growth', 'ownership', 'impact', 'scale', 'craft', 'team', 'learning', 'customer-focus', 'ambiguity', 'recognition'],
+    tags: ['autonomy', 'mission', 'growth', 'ownership', 'impact', 'scale', 'craft', 'team', 'learning', 'customer-focus', 'ambiguity', 'recognition', 'stability', 'pace', 'visibility', 'mentorship', 'product-quality', 'company-stage', 'industry', 'leadership-style'],
   },
   handling_uncertainty: {
     framework: 'Recovery · Answer · Reason · Example',
@@ -126,7 +124,7 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     assembleHint: 'Notice the structure shows composure — even if you don\'t have a perfect answer, you sound steady.',
     practiceCta: 'Practice the recovery out loud',
     tagPrompt: 'How do you want to come across under pressure? Pick at least 4.',
-    tags: ['composed', 'honest', 'curious', 'thoughtful', 'decisive', 'humble', 'grounded', 'confident', 'direct', 'reflective', 'candid', 'level-headed'],
+    tags: ['composed', 'honest', 'curious', 'thoughtful', 'decisive', 'humble', 'grounded', 'confident', 'direct', 'reflective', 'candid', 'level-headed', 'self-aware', 'measured', 'open', 'principled', 'pragmatic', 'inquisitive', 'steady', 'sincere'],
   },
   pace_delivery: {
     framework: 'Opener · Main Point · Landing',
@@ -141,7 +139,7 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     assembleHint: 'Same facts you had before — but the listener can actually hold onto them now.',
     practiceCta: 'Say the tightened version',
     tagPrompt: 'What\'s your natural delivery? Pick at least 4.',
-    tags: ['direct', 'warm', 'energetic', 'measured', 'precise', 'conversational', 'confident', 'dry', 'candid', 'structured', 'expressive', 'deliberate'],
+    tags: ['direct', 'warm', 'energetic', 'measured', 'precise', 'conversational', 'confident', 'dry', 'candid', 'structured', 'expressive', 'deliberate', 'enthusiastic', 'thoughtful', 'crisp', 'animated', 'calm', 'punchy', 'narrative', 'concise'],
   },
   preparation_curiosity: {
     framework: 'What You Know · What Stood Out · Your Question',
@@ -156,7 +154,7 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     assembleHint: 'A question built from real research lands completely differently than a generic one.',
     practiceCta: 'Say the question out loud',
     tagPrompt: 'What about this company actually hooked you? Pick at least 4.',
-    tags: ['vision', 'team', 'product', 'scale', 'recent-direction', 'technical-depth', 'customer-focus', 'mission', 'founders', 'growth', 'market', 'craft'],
+    tags: ['vision', 'team', 'product', 'scale', 'recent-direction', 'technical-depth', 'customer-focus', 'mission', 'founders', 'growth', 'market', 'craft', 'culture', 'engineering-bar', 'design-quality', 'business-model', 'industry-position', 'leadership', 'velocity', 'ambition'],
   },
 }
 
@@ -230,8 +228,6 @@ export default function GuidedBuilderWorkshop({
   const [hint, setHint] = useState<string>('')
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [showCustom, setShowCustom] = useState(false)
-  const [customDraft, setCustomDraft] = useState('')
   const [flippedMethodSteps, setFlippedMethodSteps] = useState<Set<number>>(new Set())
   const [revealedSteps, setRevealedSteps] = useState<Set<string>>(new Set())
 
@@ -339,23 +335,12 @@ export default function GuidedBuilderWorkshop({
     advanceStep()
   }
 
-  function submitCustom() {
-    const value = cleanInput(customDraft)
-    if (!value) return
-    setChoices((prev) => ({ ...prev, [activeStep.key]: value }))
-    setShowCustom(false)
-    setCustomDraft('')
-    advanceStep()
-  }
-
   function advanceStep() {
     if (stepIndex + 1 >= config.steps.length) {
       setPhase('assemble')
       setStepIndex(0)
     } else {
       setStepIndex((prev) => prev + 1)
-      setShowCustom(false)
-      setCustomDraft('')
     }
   }
 
@@ -481,8 +466,13 @@ export default function GuidedBuilderWorkshop({
               {answerSummary && (
                 <div className="rounded-2xl border border-rose-100 bg-rose-50/50 px-4 py-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">
-                    Your answer in the interview
+                    What you said in the interview
                   </p>
+                  {originalQuestion && (
+                    <p className="mt-1 text-[11px] font-bold leading-5 text-rose-800">
+                      Q: {originalQuestion}
+                    </p>
+                  )}
                   <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{answerSummary}&rdquo;</p>
                   <p className="mt-3 text-xs font-bold text-rose-700">
                     We&apos;re going to rebuild this together — in your words, using your real experience.
@@ -591,75 +581,11 @@ export default function GuidedBuilderWorkshop({
 
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
             <button
-              onClick={() => setPhase(originalAnswer ? 'diagnose' : 'tags')}
+              onClick={() => setPhase('tags')}
               disabled={!allMethodFlipped}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
             >
               {allMethodFlipped ? "Now let's use it" : 'Flip every card to continue'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* DIAGNOSE */}
-      {phase === 'diagnose' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-rose-50 via-white to-amber-50 px-5 py-4">
-            <span className="rounded-full bg-rose-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-rose-700">
-              Where you landed
-            </span>
-            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
-              Here&apos;s your answer, mapped to the method.
-            </h2>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <div className="rounded-2xl border border-rose-100 bg-rose-50/50 px-4 py-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">You said</p>
-              <p className="mt-1 text-sm italic leading-6 text-rose-900">&ldquo;{answerSummary}&rdquo;</p>
-            </div>
-
-            <p className="mt-5 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-              The strong version would have these parts:
-            </p>
-            <div className="mt-3 space-y-2">
-              {config.steps.map((step, i) => {
-                const colors = COLOR_MAP[step.color]
-                return (
-                  <div key={step.key} className={`flex items-center gap-3 rounded-xl border ${colors.border} ${colors.soft} px-3 py-2`}>
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colors.bg} text-sm text-white`}>
-                      {step.emoji}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-extrabold ${colors.text}`}>{step.label}</p>
-                      <p className="text-xs leading-5 text-slate-600">{step.description}</p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                      Step {i + 1}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-              <div className="flex items-start gap-2">
-                <Wand2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                <p className="text-xs leading-5 text-emerald-900">
-                  Next: we&apos;ll capture your voice and approach, then build each part together — pulling from your
-                  real resume and the job.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
-            <button
-              onClick={() => setPhase('tags')}
-              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
-            >
-              Tell me about your voice
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -821,48 +747,14 @@ export default function GuidedBuilderWorkshop({
                     </div>
                   )}
 
-                  <div className="mt-3 flex items-center gap-2">
-                    <button
-                      onClick={() => setRefreshKey((k) => k + 1)}
-                      disabled={loadingSuggestions}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      <RefreshCw className={`h-3.5 w-3.5 ${loadingSuggestions ? 'animate-spin' : ''}`} />
-                      Give me more options
-                    </button>
-                    <button
-                      onClick={() => setShowCustom((v) => !v)}
-                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition ${
-                        showCustom
-                          ? `${colors.border} ${colors.soft} ${colors.text}`
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                      Write my own
-                    </button>
-                  </div>
-
-                  {showCustom && (
-                    <div className={`mt-3 rounded-2xl border-2 ${colors.border} ${colors.soft} p-3 animate-fade-in`}>
-                      <textarea
-                        value={customDraft}
-                        onChange={(e) => setCustomDraft(e.target.value)}
-                        placeholder={activeStep.prompt}
-                        className="min-h-[88px] w-full resize-none border-0 bg-transparent text-sm leading-6 text-slate-800 outline-none placeholder:text-slate-400"
-                      />
-                      <div className="flex items-center justify-end">
-                        <button
-                          onClick={submitCustom}
-                          disabled={!cleanInput(customDraft)}
-                          className={`flex items-center gap-1.5 rounded-xl ${colors.bg} px-4 py-2 text-xs font-bold text-white shadow-sm disabled:opacity-50`}
-                        >
-                          Use this
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => setRefreshKey((k) => k + 1)}
+                    disabled={loadingSuggestions}
+                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${loadingSuggestions ? 'animate-spin' : ''}`} />
+                    Show me different options
+                  </button>
                 </div>
 
                 {Object.keys(choices).length > 0 && (
@@ -932,61 +824,6 @@ export default function GuidedBuilderWorkshop({
               })}
             </div>
 
-            {revealedSteps.size === config.steps.length && finalAnswer && (
-              <div className="mt-5 rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-4 animate-fade-in">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your full answer</p>
-                </div>
-                <p className="mt-2 text-sm leading-7 text-slate-900">{finalAnswer}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
-            <button
-              onClick={() => setPhase('compare')}
-              disabled={revealedSteps.size < config.steps.length}
-              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
-            >
-              {revealedSteps.size < config.steps.length ? 'Assembling…' : 'See what changed'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* COMPARE */}
-      {phase === 'compare' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-emerald-50 px-5 py-4">
-            <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
-              Before · After
-            </span>
-            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">See the difference.</h2>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-3">
-            {answerSummary && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/60 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">Before</p>
-                <p className="mt-1 text-sm italic leading-6 text-rose-900">&ldquo;{answerSummary}&rdquo;</p>
-              </div>
-            )}
-            <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">After</p>
-              <p className="mt-1 text-sm leading-7 text-slate-900">{finalAnswer}</p>
-            </div>
-
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
-              <div className="flex items-start gap-2">
-                <Zap className="mt-0.5 h-4 w-4 shrink-0 text-violet-700" />
-                <div>
-                  <p className="text-xs font-extrabold text-violet-900">Why this lands harder</p>
-                  <p className="mt-1 text-xs leading-5 text-violet-800">{config.assembleHint}</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
@@ -995,9 +832,10 @@ export default function GuidedBuilderWorkshop({
                 setPhase('recall')
                 setRecallStage('reading')
               }}
-              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
+              disabled={revealedSteps.size < config.steps.length}
+              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
             >
-              {config.practiceCta}
+              {revealedSteps.size < config.steps.length ? 'Assembling…' : config.practiceCta}
               <Mic className="h-4 w-4" />
             </button>
           </div>
@@ -1029,9 +867,13 @@ export default function GuidedBuilderWorkshop({
                   <p className="mt-2 text-sm leading-7 text-slate-900">{finalAnswer}</p>
                 </div>
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs font-bold text-slate-700">
-                    Read it through twice. Don&apos;t memorize word-for-word — just get the shape and the key
-                    beats. When you&apos;re ready, we&apos;ll hide it and you&apos;ll say it out loud.
+                  <p className="text-xs leading-5 text-slate-700">
+                    Say this out loud to yourself as many times as you need and try to remember the key beats —
+                    not word-for-word. When you tap &ldquo;I&apos;m ready&rdquo;, we&apos;ll hide it and record
+                    you so we can see how much stuck.
+                  </p>
+                  <p className="mt-2 text-xs font-bold text-emerald-700">
+                    Don&apos;t worry — we&apos;ll save this answer to your profile either way.
                   </p>
                 </div>
               </>

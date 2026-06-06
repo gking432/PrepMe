@@ -297,6 +297,27 @@ function getPrimaryEvidence(area?: SignalArea | null) {
   return asArray<Evidence>(area?.evidence)[0]
 }
 
+const QUESTION_PATTERNS_BY_WORKSHOP: Record<WorkshopType, RegExp[]> = {
+  professional_story: [/tell me about yourself/i, /walk me through.*(background|experience|resume)/i, /your (background|story)/i],
+  star_proof: [/tell me about a time/i, /give me an example/i, /describe a time/i, /walk me through.*(time|when|how you)/i, /significant (challenge|accomplishment)/i],
+  career_alignment: [/why (this|are you interested|do you want).*(role|company|position|here|us)/i, /what draws you/i, /what (interests|attracted) you/i],
+  preparation_curiosity: [/what do you know about (us|the company)/i, /(any|do you have).*questions/i, /what (research|interests you) about/i],
+  handling_uncertainty: [],
+  pace_delivery: [],
+}
+
+function getEvidenceForWorkshop(area: SignalArea | null | undefined, workshopType: WorkshopType | null): Evidence | undefined {
+  const list = asArray<Evidence>(area?.evidence)
+  if (!list.length) return undefined
+  if (!workshopType) return list[0]
+  const patterns = QUESTION_PATTERNS_BY_WORKSHOP[workshopType]
+  if (patterns?.length) {
+    const matched = list.find((ev) => patterns.some((p) => p.test(ev?.question || '')))
+    if (matched) return matched
+  }
+  return list[0]
+}
+
 function truncate(value: string | undefined, max = 150) {
   const text = toDisplayText(value)
   if (!text) return ''
@@ -678,9 +699,15 @@ function WorkshopSlide({
 
   const criterion = toDisplayText(repair.criterion, 'Priority Repair')
   const score = parseScore(repair.score)
-  const evidence = getPrimaryEvidence(repair)
+  const evidence = getEvidenceForWorkshop(repair, workshopType)
   const questionText = toDisplayText(evidence?.question)
-  const originalAnswerText = toDisplayText(repair.original_answer) || toDisplayText(evidence?.excerpt)
+  // Only use stored original_answer if the matched evidence is the same as the primary one
+  // (otherwise the enriched original_answer was captured against a different question)
+  const primaryEvidence = getPrimaryEvidence(repair)
+  const storedOriginalAnswerSafe = evidence?.question_id && primaryEvidence?.question_id && evidence.question_id === primaryEvidence.question_id
+    ? toDisplayText(repair.original_answer)
+    : ''
+  const originalAnswerText = storedOriginalAnswerSafe || toDisplayText(evidence?.excerpt)
   const hasContext = !!(questionText || originalAnswerText)
 
   const renderWorkshop = () => {

@@ -20,15 +20,15 @@ type WorkshopType =
 
 const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
   star_proof: {
-    situation: 'Pull 2-3 brief setting lines from the candidate resume that could plausibly anchor this answer. Each one names a real project/role/team in 1 sentence so they can pick the right scene.',
-    task: 'Given the picked situation, suggest 2-3 different ways to frame what was specifically at stake or what the candidate owned. Keep each to one sentence and make ownership clear.',
-    action: 'Given the picked situation and task, draft 2-3 different action-first sentences describing concrete steps the candidate likely took. Use the resume to ground the actions. Each one should sound like real ownership, not generic verbs.',
-    result: 'Given everything chosen so far, draft 2-3 short result lines. Prefer concrete outcomes hinted at in the resume (numbers, scope, time saved, decision made). If no metric exists, use a vivid qualitative outcome — never invent numbers.',
+    situation: 'Pull 2-3 brief setting lines from the candidate resume that could plausibly anchor this answer. Prefer the MOST RECENT role (latest end date or "present"). Do not mix experiences across multiple jobs in a single suggestion. Each one names a real project/role/team in 1 sentence so they can pick the right scene.',
+    task: 'Given the picked situation (which came from one specific role), suggest 2-3 different ways to frame what was specifically at stake or what the candidate owned WITHIN that same role. One sentence each, ownership clear.',
+    action: 'Given the picked situation and task (both from one specific role), draft 2-3 different action-first sentences describing concrete steps the candidate likely took. Stay inside that same role. Each should sound like real ownership, not generic verbs.',
+    result: 'Given everything chosen so far (all from one specific role), draft 2-3 short result lines. Prefer concrete outcomes hinted at in the resume for that role. If no metric exists, use a vivid qualitative outcome — never invent numbers.',
   },
   professional_story: {
-    present: 'Pull 2-3 short PRESENT lines from the resume - what the candidate currently does or most recently did. Each in 1-2 sentences, naming the role and a single defining skill or focus.',
-    past: 'Given the chosen present, draft 2-3 PAST lines explaining the foundation - early roles, education, projects, or skill arcs that connect logically to the present. Pull directly from resume.',
-    future: 'Given present + past + the job description, draft 2-3 FUTURE lines on why this specific role is the natural next step. Each one names something concrete from the JD that matches the arc.',
+    present: 'Use ONLY the candidate\'s MOST RECENT role — the one with the latest end date, or labeled "present"/"current". Do NOT pull from older roles for this step. Draft 2-3 short PRESENT lines (1-2 sentences each) naming the current role and a single defining skill or focus. Each should start with present-tense framing like "I\'m currently...", "Right now I...", "These days I\'m focused on...".',
+    past: 'Use earlier roles, schooling, or skill arcs — NOT the current role (that was the previous step). Draft 2-3 PAST lines that explain the foundation. Each MUST start with a clear time-shift opener like "Before that,", "I got there by way of", "That grew out of", "Earlier in my career,", or "I started out in" so it sounds like a natural narrative shift, not a second present-tense line.',
+    future: 'Given present + past + the job description, draft 2-3 FUTURE lines on why THIS specific role is the natural next step. Each names something concrete from the JD that matches the candidate\'s arc. Start each with forward-looking framing like "Which is why", "What pulled me here was", "That\'s what made this role click".',
   },
   career_alignment: {
     observation: 'Pull 2-3 specific OBSERVATIONS about the role/team/company from the JD. Each one names a real responsibility, scope, or focus mentioned in the JD — not vague platitudes.',

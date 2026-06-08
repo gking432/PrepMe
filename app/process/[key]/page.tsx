@@ -17,7 +17,10 @@ import {
   Play,
   RotateCcw,
   Sparkles,
+  TrendingUp,
+  TrendingDown,
   Users,
+  X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import PurchaseFlow from '@/components/PurchaseFlow'
@@ -43,6 +46,8 @@ interface StageState {
   attempts: number
   reportReady: boolean
   completedAt: string | null
+  strengths: { criterion: string; score: number }[]
+  weaknesses: { criterion: string; score: number }[]
 }
 
 interface ProcessData {
@@ -66,10 +71,10 @@ function normalizeProcessKey(value: string) {
 
 function emptyStages(): Record<StageKey, StageState> {
   return {
-    hr_screen: { done: false, score: null, sessionId: null, stageParam: 'hr_screen', attempts: 0, reportReady: false, completedAt: null },
-    hiring_manager: { done: false, score: null, sessionId: null, stageParam: 'hiring_manager', attempts: 0, reportReady: false, completedAt: null },
-    culture_fit: { done: false, score: null, sessionId: null, stageParam: 'culture_fit', attempts: 0, reportReady: false, completedAt: null },
-    final: { done: false, score: null, sessionId: null, stageParam: 'final', attempts: 0, reportReady: false, completedAt: null },
+    hr_screen: { done: false, score: null, sessionId: null, stageParam: 'hr_screen', attempts: 0, reportReady: false, completedAt: null, strengths: [], weaknesses: [] },
+    hiring_manager: { done: false, score: null, sessionId: null, stageParam: 'hiring_manager', attempts: 0, reportReady: false, completedAt: null, strengths: [], weaknesses: [] },
+    culture_fit: { done: false, score: null, sessionId: null, stageParam: 'culture_fit', attempts: 0, reportReady: false, completedAt: null, strengths: [], weaknesses: [] },
+    final: { done: false, score: null, sessionId: null, stageParam: 'final', attempts: 0, reportReady: false, completedAt: null, strengths: [], weaknesses: [] },
   }
 }
 
@@ -135,6 +140,7 @@ export default function ProcessSpinePage() {
   const [viewingModal, setViewingModal] = useState<'job' | 'resume' | null>(null)
   const [feedbackSeen, setFeedbackSeen] = useState<Record<string, boolean>>({})
   const [practiceCount, setPracticeCount] = useState<number>(0)
+  const [selectedStage, setSelectedStage] = useState<StageKey | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -214,6 +220,10 @@ export default function ProcessSpinePage() {
           st.sessionId = row.id
           st.completedAt = rowCompletedAt
           st.reportReady = !!latestFb?.full_rubric
+          const rubric = latestFb?.full_rubric
+          const sixAreas = rubric?.hr_screen_six_areas || rubric?.hiring_manager_six_areas || rubric?.culture_fit_six_areas || rubric?.final_six_areas
+          st.strengths = (sixAreas?.what_went_well || []).map((s: any) => ({ criterion: s.criterion, score: s.score }))
+          st.weaknesses = (sixAreas?.what_needs_improve || []).map((s: any) => ({ criterion: s.criterion, score: s.score }))
         }
       })
 
@@ -289,7 +299,7 @@ export default function ProcessSpinePage() {
   }
 
   const handleNodeClick = (stage: StageKey, status: NodeStatus) => {
-    if (status === 'complete') openFeedback(stage)
+    if (status === 'complete') setSelectedStage(stage)
     else if (status === 'locked') setPurchaseStage(stage)
     else launchStage(stage)
   }
@@ -373,7 +383,9 @@ export default function ProcessSpinePage() {
                         type="button"
                         onClick={() => handleNodeClick(stage, status)}
                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
-                          isNext ? 'bg-accent-50 ring-1 ring-accent-200' : 'hover:bg-slate-50'
+                          selectedStage === stage
+                            ? 'bg-slate-100 ring-1 ring-slate-300'
+                            : isNext ? 'bg-accent-50 ring-1 ring-accent-200' : 'hover:bg-slate-50'
                         }`}
                       >
                         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${
@@ -666,28 +678,27 @@ export default function ProcessSpinePage() {
                           )}
                         </div>
                       )}
-                      {status === 'complete' && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => { e.stopPropagation(); openFeedback(stage) }}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); openFeedback(stage) } }}
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
-                          >
-                            Go to feedback
-                          </span>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => { e.stopPropagation(); openPractice(stage) }}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); openPractice(stage) } }}
-                            className="inline-flex items-center gap-1 rounded-lg bg-accent-600 px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-accent-700"
-                          >
-                            Go to practice
-                          </span>
-                        </div>
-                      )}
+                      {status === 'complete' && (() => {
+                        const smart = getSmartCta(stage)
+                        return smart ? (
+                          <div className="mt-2">
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => { e.stopPropagation(); smart.action() }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); smart.action() } }}
+                              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition ${
+                                smart.style === 'accent'
+                                  ? 'bg-accent-600 text-white hover:bg-accent-700'
+                                  : 'bg-slate-900 text-white hover:bg-slate-800'
+                              }`}
+                            >
+                              {smart.label}
+                              <ArrowRight className="h-3 w-3" />
+                            </span>
+                          </div>
+                        ) : null
+                      })()}
                       {status === 'locked' && (
                         <p className="mt-1 text-sm text-slate-400">{meta.blurb}</p>
                       )}
@@ -734,6 +745,146 @@ export default function ProcessSpinePage() {
 
         </div>
       </div>
+
+      {/* Stage summary panel */}
+      {selectedStage && process.stages[selectedStage].done && (() => {
+        const stage = selectedStage
+        const st = process.stages[stage]
+        const meta = STAGE_META[stage]
+        const smart = getSmartCta(stage)
+        const score = st.score ?? 0
+        const tone = score >= 7 ? 'emerald' : score >= 5 ? 'amber' : 'red'
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedStage(null)}>
+            <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              {/* Header with score */}
+              <div className={`relative bg-gradient-to-r ${meta.gradient} px-6 pb-6 pt-5`}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStage(null)}
+                  className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white/80 transition hover:bg-white/30"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <p className="text-xs font-bold uppercase tracking-widest text-white/50">Stage summary</p>
+                <h3 className="mt-1 text-xl font-black text-white">{meta.name}</h3>
+                {st.completedAt && (
+                  <p className="mt-0.5 text-xs text-white/50">{timeAgo(st.completedAt)} · {st.attempts} attempt{st.attempts !== 1 ? 's' : ''}</p>
+                )}
+                <div className="mt-4 flex items-center gap-5">
+                  <ScoreRing score={score} size={72} strokeWidth={5} />
+                  <div>
+                    <p className="text-sm font-bold text-white/80">Overall score</p>
+                    <p className="text-3xl font-black text-white">{fmtScore(score)}<span className="text-lg text-white/50">/10</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5 px-6 py-5">
+                {/* Flow status */}
+                <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3">
+                  {[
+                    { label: 'Feedback', done: feedbackSeen[stage] },
+                    { label: 'Practice', done: practiceCount > 0 },
+                    { label: 'Retake', done: st.attempts > 1 },
+                  ].map((step, i) => (
+                    <div key={step.label} className="flex flex-1 items-center gap-2">
+                      {i > 0 && <div className="h-px w-3 bg-slate-200" />}
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
+                        step.done
+                          ? 'bg-emerald-100 text-emerald-600'
+                          : 'bg-slate-200 text-slate-400'
+                      }`}>
+                        {step.done ? <Check className="h-3 w-3" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
+                      </div>
+                      <span className={`text-xs font-semibold ${step.done ? 'text-slate-700' : 'text-slate-400'}`}>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Strengths */}
+                {st.strengths.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-emerald-500" />
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Strengths</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      {st.strengths.map((s) => (
+                        <div key={s.criterion} className="flex items-center justify-between rounded-lg bg-emerald-50/60 px-3 py-2">
+                          <span className="text-sm font-medium text-slate-700">{s.criterion}</span>
+                          <span className="text-sm font-black text-emerald-600">{fmtScore(s.score)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Weaknesses */}
+                {st.weaknesses.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-red-400" />
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Areas to improve</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      {st.weaknesses.map((w) => (
+                        <div key={w.criterion} className="flex items-center justify-between rounded-lg bg-red-50/60 px-3 py-2">
+                          <span className="text-sm font-medium text-slate-700">{w.criterion}</span>
+                          <span className="text-sm font-black text-red-500">{fmtScore(w.score)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Smart CTA */}
+                {smart && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStage(null); smart.action() }}
+                    className={`group flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-bold text-white transition ${
+                      smart.style === 'accent'
+                        ? 'bg-accent-600 hover:bg-accent-700'
+                        : 'bg-slate-900 hover:bg-slate-800'
+                    }`}
+                  >
+                    {smart.label}
+                    <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+                  </button>
+                )}
+
+                {/* Secondary actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStage(null); openFeedback(stage) }}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Feedback
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStage(null); openPractice(stage) }}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Practice
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedStage(null); launchStage(stage) }}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Retake
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Details modal */}
       {viewingModal && (

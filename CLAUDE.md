@@ -44,7 +44,7 @@ hooks/
 
 ---
 
-## Current State (Last Updated: 2026-06-06)
+## Current State (Last Updated: 2026-06-08)
 
 ### What's Built & Working
 - Preppi-guided walkthrough (PreppiWalkthrough.tsx) — full Duolingo-style flow
@@ -274,17 +274,26 @@ The post-interview experience should feel like **Duolingo for interview prep**:
   - Locked stages show unlock CTA, available stages show start CTA
   - Mobile gets a horizontal stage pill picker
   - No more black buttons, no more modal
-- **Workshop assembly fix**: Haiku prompt now told not to start suggestions with the connector phrase. `assembleAnswer` strips duplicate connectors to prevent broken text like "My job was to i was responsible for".
+- **Connector system completely removed**: All connector fields deleted from every workshop config. `assembleAnswer` simplified to just join chosen pieces with spaces. Each Haiku suggestion now includes its own natural spoken transition.
+- **Workshop language overhauled for spoken delivery**: Haiku system prompt rewritten to enforce conversational speech — contractions required, 15-20 word max sentences, corporate cliches banned ("leveraged", "spearheaded", "passionate about", etc.).
 - **Approach picker diversity**: Removed from steps where it adds no value (recovery, landing, result, outcome, reflect). Remaining steps get contextual question text (e.g. "How do you want to set the scene?", "What angle shows your work best?") instead of uniform "What's your instinct?"
+- **Build phase UX simplified**: Shows 1 suggestion in a highlighted card with "Use this" button. "Show me other options" reveals the other 2 in list format. Previously dumped all 3 at once.
+- **Behavioral workshop prompt fix attempted**: Added `isBehavioral` flag for `star_proof`, `role_depth`, `problem_solving`, `handling_uncertainty`. System prompt now includes critical rule: "This is a behavioral answer workshop. The candidate already gave an answer — your job is to RESTRUCTURE it, NOT to invent a new answer." All STEP_GUIDANCE for these 4 types rewritten.
+
+#### ⚠️ CRITICAL UNSOLVED: Behavioral Workshop Content Fabrication
+The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_depth`, `problem_solving`, `handling_uncertainty`) have a **fundamental design flaw**: they generate content from the resume + JD instead of helping users structure their own specific stories. Example: for a "Tell me about a time you faced a challenge" STAR question, the workshop generated vague process descriptions about the target job (senior living accounts) instead of restructuring the user's actual past experience (e.g., a specific website redesign mess-up at TouchPoint). No amount of prompt engineering fixes this because **the specific incident lives in the user's head, not in any data passed to Haiku**. The resume lists responsibilities, not incidents. The original answer was vague (that's why it was flagged). Haiku can't restructure vagueness into specificity.
+
+**User's proposed solution**: "We should just have an adjective picker and an instinct picker before each part, and then we give the user one single piece for each of the areas." This means: the user PROVIDES the raw content (what actually happened), Haiku POLISHES it (tightens phrasing, adds structure, makes it sound professional). The current flow is inverted — Haiku generates, user picks — and that's wrong for behavioral answers.
 
 ### Active Branch
 `claude/bold-planck-rRxBf`
 
-### What Needs Work Next
-1. Test end-to-end on `?preview=mock` — verify process page, workshops, flow progress
-2. Test on a real HR interview — verify Haiku suggestions feel personalized, no broken assembly text
-3. Wire CF/FR stages into the workshop builder (HM is done)
-4. Retake display — how to show take 1 vs retake
-5. Consider deleting unused old workshop components (StarProofWorkshop, etc.)
-6. Custom Preppi SVG illustration (user will build in Figma)
-7. XP/badge persistence to Supabase
+### What Needs Work Next (Priority Order)
+1. **🔴 CRITICAL — Redesign behavioral workshop build phase**: The 4 behavioral workshops need a fundamentally different flow. User provides raw content per step → Haiku polishes it. NOT Haiku generates → user picks. See "Critical Unsolved" section above for full context and user's proposed approach.
+2. **Test everything end-to-end**: Process page (sidebar-driven layout, flow progress, smart CTAs), workshops (1-suggestion display, approach picker), mock data flow (`?preview=mock`), real HR interview
+3. **Wire CF/FR stages into the workshop builder** (HR and HM are done)
+4. **Non-behavioral workshops may need testing too**: The other 4 (`professional_story`, `career_alignment`, `pace_delivery`, `preparation_curiosity`) don't have the "specific incident" problem but should be verified for quality
+5. Retake display — how to show take 1 vs retake on process page
+6. Consider deleting unused old workshop components (StarProofWorkshop, etc.)
+7. Custom Preppi SVG illustration (user will build in Figma)
+8. XP/badge persistence to Supabase

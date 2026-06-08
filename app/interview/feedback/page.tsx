@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, AlertTriangle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap, FileText, FolderOpen } from 'lucide-react'
+import { Phone, Users, Briefcase, Target, TrendingUp, TrendingDown, Lock, ArrowRight, CheckCircle, AlertCircle, AlertTriangle, Clock, Crown, Mic, MicOff, MessageCircle, X, RefreshCw, User, Zap, FileText, FolderOpen, ChevronDown, ChevronUp, Sparkles, BookOpen } from 'lucide-react'
 import DetailedRubricReport from '@/components/DetailedRubricReport'
 import DetailedHmRubricReport from '@/components/DetailedHmRubricReport'
 import PurchaseFlow from '@/components/PurchaseFlow'
@@ -82,9 +82,11 @@ export default function InterviewDashboard() {
   const [activePracticeCriterion, setActivePracticeCriterion] = useState<string | null>(null)
   const [activePracticeLesson, setActivePracticeLesson] = useState<{ criterion: string; rootCause: string; question?: string; answer?: string } | null>(null)
   const [walkthroughActive, setWalkthroughActive] = useState(true)
+  const [practiceCompletionCount, setPracticeCompletionCount] = useState<number | null>(null)
   const [showLessonRoadmap, setShowLessonRoadmap] = useState(false)
   const [showTranscript, setShowTranscript] = useState(true)
   const [showBreakdown, setShowBreakdown] = useState(false)
+  const [expandedSignal, setExpandedSignal] = useState<string | null>(null)
   const [showRubricModal, setShowRubricModal] = useState(false)
   const [showHmRubricModal, setShowHmRubricModal] = useState(false)
   const [showCfRubricModal, setShowCfRubricModal] = useState(false)
@@ -308,6 +310,40 @@ export default function InterviewDashboard() {
     if (!currentSessionData?.id || !feedback) return
     const hasSeenTutorial = localStorage.getItem(`feedback_tutorial_seen_${currentSessionData.id}`) === 'true'
     setWalkthroughActive(!hasSeenTutorial)
+  }, [currentSessionData?.id, feedback])
+
+  useEffect(() => {
+    fetch('/api/profile/practice-memory', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const drafts = data?.drafts && typeof data.drafts === 'object' ? data.drafts : {}
+        setPracticeCompletionCount(Object.keys(drafts).length)
+      })
+      .catch(() => setPracticeCompletionCount(0))
+  }, [walkthroughActive])
+
+  useEffect(() => {
+    if (!currentSessionData?.id || !feedback) return
+    const sixAreas = feedback?.hr_screen_six_areas || feedback?.full_rubric?.hr_screen_six_areas
+    const weakSignals = Array.isArray(sixAreas?.what_needs_improve) ? sixAreas.what_needs_improve : []
+    if (!weakSignals.length) return
+    const hasRewrites = weakSignals.some((s: any) => s.rewritten_answer)
+    if (hasRewrites) return
+    const enrichKey = `enrich_attempted_${currentSessionData.id}`
+    if (sessionStorage.getItem(enrichKey)) return
+    sessionStorage.setItem(enrichKey, 'true')
+    fetch('/api/interview/feedback/enrich-rewrites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: currentSessionData.id }),
+    })
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'enriched' && result.count > 0) {
+          window.location.reload()
+        }
+      })
+      .catch(() => {})
   }, [currentSessionData?.id, feedback])
 
   // Prevent body scroll when modal is open and handle ESC key
@@ -2377,7 +2413,7 @@ export default function InterviewDashboard() {
   }
 
   const handleExitToProfile = () => {
-    router.push('/dashboard')
+    dismissFeedbackTutorial()
   }
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
@@ -2389,6 +2425,12 @@ export default function InterviewDashboard() {
       onRetakeInterview: handleRetakeInterview,
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
+      onPractice: (repair: any) => {
+        const criterion = repair.criterion || ''
+        const rootCause = repair.practice_focus_id || repair.rootCause || ''
+        const evidence = Array.isArray(repair.evidence) ? repair.evidence[0] : undefined
+        setActivePracticeLesson({ criterion, rootCause, question: evidence?.question, answer: evidence?.excerpt })
+      },
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
       onReportAction: handleDetailedReportAction,
@@ -2427,6 +2469,28 @@ export default function InterviewDashboard() {
             highlightStage={purchaseHighlightStage}
           />
         )}
+
+        {activePracticeLesson && (
+          <div className="fixed inset-0 z-50 bg-white md:bg-black/50 md:backdrop-blur-sm flex items-start md:items-center justify-center overflow-y-auto">
+            <div className="w-full md:max-w-3xl md:mx-4 md:my-8 md:bg-white md:rounded-2xl md:shadow-2xl md:max-h-[90vh] md:overflow-y-auto">
+              <SubLessonRoadmap
+                bundle={getBundleForRootCause(activePracticeLesson.rootCause)}
+                criterion={activePracticeLesson.criterion}
+                originalQuestion={activePracticeLesson.question}
+                originalAnswer={activePracticeLesson.answer}
+                sessionId={currentSessionData?.id}
+                currentStage={currentStage}
+                onAllComplete={() => {
+                  const criterion = activePracticeLesson.criterion
+                  setPracticedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                  setPassedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                  setActivePracticeLesson(null)
+                }}
+                onClose={() => setActivePracticeLesson(null)}
+              />
+            </div>
+          </div>
+        )}
       </>
     )
   }
@@ -2440,6 +2504,12 @@ export default function InterviewDashboard() {
       onRetakeInterview: handleRetakeInterview,
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
+      onPractice: (repair: any) => {
+        const criterion = repair.criterion || ''
+        const rootCause = repair.practice_focus_id || repair.rootCause || ''
+        const evidence = Array.isArray(repair.evidence) ? repair.evidence[0] : undefined
+        setActivePracticeLesson({ criterion, rootCause, question: evidence?.question, answer: evidence?.excerpt })
+      },
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
       onReportAction: handleDetailedReportAction,
@@ -2478,6 +2548,28 @@ export default function InterviewDashboard() {
             onClose={() => { setShowPurchaseFlow(false); setPurchaseHighlightStage(undefined) }}
             highlightStage={purchaseHighlightStage}
           />
+        )}
+
+        {activePracticeLesson && (
+          <div className="fixed inset-0 z-50 bg-white md:bg-black/50 md:backdrop-blur-sm flex items-start md:items-center justify-center overflow-y-auto">
+            <div className="w-full md:max-w-3xl md:mx-4 md:my-8 md:bg-white md:rounded-2xl md:shadow-2xl md:max-h-[90vh] md:overflow-y-auto">
+              <SubLessonRoadmap
+                bundle={getBundleForRootCause(activePracticeLesson.rootCause)}
+                criterion={activePracticeLesson.criterion}
+                originalQuestion={activePracticeLesson.question}
+                originalAnswer={activePracticeLesson.answer}
+                sessionId={currentSessionData?.id}
+                currentStage={currentStage}
+                onAllComplete={() => {
+                  const criterion = activePracticeLesson.criterion
+                  setPracticedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                  setPassedCriteria(prev => prev.includes(criterion) ? prev : [...prev, criterion])
+                  setActivePracticeLesson(null)
+                }}
+                onClose={() => setActivePracticeLesson(null)}
+              />
+            </div>
+          </div>
         )}
       </>
     )
@@ -2580,21 +2672,21 @@ export default function InterviewDashboard() {
 
       {/* Account Creation Prompt for Anonymous Users */}
       {showAccountPrompt && isAnonymous && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="premium-panel relative w-full max-w-md p-8">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-8 shadow-2xl">
             <button
               onClick={() => {
                 setShowAccountPrompt(false)
                 setAccountPromptDismissed(true)
               }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="eyebrow eyebrow-coach mb-3 w-fit">Save Your Progress</div>
-            <h3 className="mb-2 text-2xl font-bold text-gray-900">Create Your Free Account</h3>
-            <p className="mb-6 text-gray-600">
+            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">Save Your Progress</p>
+            <h3 className="mb-2 text-2xl font-black text-slate-900">Create Your Free Account</h3>
+            <p className="mb-6 text-slate-500">
               Save your results, track progress, and unlock more interview stages
             </p>
             <div className="space-y-3">
@@ -2705,24 +2797,6 @@ export default function InterviewDashboard() {
             ═══════════════════════════════════════════════════════════════ */}
 
         <div className="space-y-6">
-            {/* Replay Walkthrough button */}
-            {hasFeedback && (
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    if (currentSessionData?.id) {
-                      localStorage.removeItem(`walkthrough_seen_${currentSessionData.id}`)
-                    }
-                    setWalkthroughActive(true)
-                  }}
-                  className="inline-flex items-center gap-1 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  Replay Walkthrough
-                </button>
-              </div>
-            )}
-
             {/* Score Reveal Card */}
             {hasFeedback ? (
               <ScoreRevealCard
@@ -2730,126 +2804,246 @@ export default function InterviewDashboard() {
                 likelihood={likelihood}
                 strengths={feedback?.strengths || []}
                 weaknesses={feedback?.weaknesses || []}
+                role={(currentSessionData as any)?.job_title || ''}
+                company={(currentSessionData as any)?.company_name || ''}
+                strongCount={wentWellAreas.length}
+                flaggedCount={needsImproveAreas.length}
               />
             ) : (
-              <div className="premium-panel p-12 text-center">
-                <Phone className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">No Interview Completed Yet</h2>
-                <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-                  Complete an HR screen interview to see your performance feedback and detailed insights here.
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                <Phone className="w-16 h-16 text-slate-300 mx-auto mb-6" />
+                <h2 className="text-2xl font-black text-slate-900 mb-3">No Interview Completed Yet</h2>
+                <p className="text-base text-slate-500 mb-8 max-w-md mx-auto">
+                  Complete an interview to see your performance feedback and detailed insights here.
                 </p>
                 <Link
                   href="/dashboard"
-                  className="btn-coach-primary inline-flex items-center space-x-2 px-8 py-4"
+                  className="btn-coach-primary inline-flex items-center gap-2 px-6 py-3 text-sm"
                 >
                   <span>Start an Interview</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             )}
 
 
-            {/* ─── SECTION 2: Performance Breakdown ─── */}
+            {/* ─── SECTION 2: Signal Cards ─── */}
 
             {hasFeedback && (
               <div className="space-y-4">
 
-                {/* All-criteria breakdown */}
-                {sixAreas && (wentWellAreas.length > 0 || needsImproveAreas.length > 0) && (
-                  <div className="premium-panel overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-100">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900">Performance Breakdown</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            {areasPassed} of {totalAreas} areas strong
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-right">
-                            <div className="text-2xl font-extrabold text-primary-600">{areasPassed}/{totalAreas}</div>
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Passed</div>
-                          </div>
-                          <svg className="w-14 h-14" viewBox="0 0 56 56">
-                            <circle cx="28" cy="28" r="20" stroke="#e5e7eb" strokeWidth="6" fill="none" />
-                            <circle
-                              cx="28" cy="28" r="20"
-                              stroke="#6366f1" strokeWidth="6" fill="none"
-                              strokeLinecap="round"
-                              strokeDasharray={2 * Math.PI * 20}
-                              strokeDashoffset={2 * Math.PI * 20 - (areasPassed / (totalAreas || 1)) * 2 * Math.PI * 20}
-                              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.6s ease-out' }}
-                            />
-                          </svg>
-                        </div>
+                {/* Strengths section */}
+                {sixAreas && wentWellAreas.length > 0 && (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                    <div className="flex items-center gap-2.5 border-b border-slate-100 px-6 py-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-white">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">Strong Signals</h3>
+                        <p className="text-xs text-slate-500">{wentWellAreas.length} area{wentWellAreas.length !== 1 ? 's' : ''} working in your favor</p>
                       </div>
                     </div>
-
-                    <div className="divide-y divide-gray-50">
-                      {/* Strengths */}
-                      {wentWellAreas.map((area: any) => (
-                        <div key={area.criterion} className="px-6 py-4 flex items-start gap-4">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-100">
-                            <CheckCircle className="w-4 h-4 text-emerald-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-3 mb-1">
-                              <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
-                              {area.score != null && (
-                                <span className="text-xs font-bold text-emerald-600 shrink-0 tabular-nums">{area.score}/10</span>
-                              )}
-                            </div>
-                            {area.score != null && (
-                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${area.score * 10}%` }} />
-                              </div>
-                            )}
-                            <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Weaknesses */}
-                      {needsImproveAreas.map((area: any) => {
-                        const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
-                        const tip = getImprovementTipForCriterion(area.criterion, area.rootCause)
+                    <div className="divide-y divide-slate-100">
+                      {wentWellAreas.map((area: any) => {
+                        const isExpanded = expandedSignal === `s-${area.criterion}`
+                        const evidence = (area.evidence || [])[0]
 
                         return (
-                          <div key={area.criterion} className="px-6 py-4 flex items-start gap-4 bg-amber-50/40">
-                          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
-                              <AlertTriangle className="w-4 h-4 text-amber-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-3 mb-1">
-                                <h4 className="text-sm font-bold text-gray-900">{area.criterion}</h4>
-                                <div className="flex items-center gap-2 shrink-0">
+                          <div key={area.criterion}>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedSignal(isExpanded ? null : `s-${area.criterion}`)}
+                              className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-slate-50/50"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <h4 className="text-sm font-bold text-slate-900">{area.criterion}</h4>
                                   {area.score != null && (
-                                    <span className="text-xs font-bold text-amber-600 tabular-nums">{area.score}/10</span>
+                                    <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-black text-emerald-600 tabular-nums">{area.score}/10</span>
                                   )}
-                                  <ImprovementTip
-                                    criterion={area.criterion}
-                                    rootCause={area.rootCause}
-                                    rewrittenAnswer={area.rewritten_answer}
-                                    rewriteMethod={area.rewrite_method}
-                                  />
                                 </div>
+                                <p className="text-xs text-slate-500 leading-relaxed line-clamp-1">{area.feedback}</p>
                               </div>
-                              {area.score != null && (
-                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
-                                  <div
-                                    className={`h-full rounded-full transition-all duration-700 ${area.score >= 5 ? 'bg-amber-400' : 'bg-red-400'}`}
-                                    style={{ width: `${area.score * 10}%` }}
-                                  />
+                              {isExpanded ? <ChevronUp className="w-4 h-4 shrink-0 text-slate-400" /> : <ChevronDown className="w-4 h-4 shrink-0 text-slate-400" />}
+                            </button>
+                            {isExpanded && (
+                              <div className="border-t border-emerald-100 bg-emerald-50/30 px-6 py-4 space-y-3">
+                                <p className="text-sm leading-6 text-slate-700">{area.feedback}</p>
+                                {evidence?.excerpt && (
+                                  <div className="rounded-xl border border-emerald-200 bg-white px-4 py-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">From your interview</p>
+                                    {evidence.question && <p className="text-xs font-bold text-slate-800 mb-1.5">{evidence.question}</p>}
+                                    <p className="text-sm leading-6 text-slate-600 italic">&ldquo;{evidence.excerpt}&rdquo;</p>
+                                    {evidence.timestamp && <p className="mt-1.5 text-[10px] font-bold text-slate-400">{evidence.timestamp}</p>}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Practice CTA — contextual based on completion */}
+                {sixAreas && needsImproveAreas.length > 0 && currentSessionData?.id && (
+                  <Link
+                    href={`/interview/practice/${currentSessionData.id}`}
+                    className={`group flex items-center justify-between rounded-2xl border-2 px-5 py-4 shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl ${
+                      practiceCompletionCount && practiceCompletionCount > 0
+                        ? 'border-emerald-300 bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
+                        : 'border-violet-300 bg-gradient-to-br from-violet-500 to-violet-600 text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                        {practiceCompletionCount && practiceCompletionCount > 0 ? (
+                          <CheckCircle className="h-5 w-5" />
+                        ) : (
+                          <Mic className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/80">Practice Path</p>
+                        {practiceCompletionCount && practiceCompletionCount > 0 ? (
+                          <>
+                            <p className="text-base font-black">View your crafted answers</p>
+                            <p className="mt-0.5 text-xs text-white/85">{practiceCompletionCount} workshop{practiceCompletionCount !== 1 ? 's' : ''} completed — review or redo anytime</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-base font-black">Start Practicing</p>
+                            <p className="mt-0.5 text-xs text-white/85">{needsImproveAreas.length} workshop{needsImproveAreas.length !== 1 ? 's' : ''} to rebuild your weak answers</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 shrink-0 transition group-hover:translate-x-1" />
+                  </Link>
+                )}
+
+                {sixAreas && needsImproveAreas.length > 0 && (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                    <div className="flex items-center gap-2.5 border-b border-slate-100 px-6 py-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-white">
+                        <Target className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-black text-slate-900">Flagged Issues</h3>
+                        <p className="text-xs text-slate-500">{needsImproveAreas.length} area{needsImproveAreas.length !== 1 ? 's' : ''} that need repair</p>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {needsImproveAreas.map((area: any) => {
+                        const isExpanded = expandedSignal === `w-${area.criterion}`
+                        const rootCause = getRootCauseForCriterion(area.criterion, area.rootCause)
+                        const tip = getImprovementTipForCriterion(area.criterion, area.rootCause)
+                        const evidence = (area.evidence || [])[0]
+
+                        return (
+                          <div key={area.criterion}>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedSignal(isExpanded ? null : `w-${area.criterion}`)}
+                              className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-amber-50/30"
+                            >
+                              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
+                                <AlertTriangle className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-0.5">
+                                  <h4 className="text-sm font-bold text-slate-900">{area.criterion}</h4>
+                                  {area.score != null && (
+                                    <span className={`rounded-lg px-2 py-0.5 text-xs font-black tabular-nums ${area.score >= 5 ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'}`}>{area.score}/10</span>
+                                  )}
                                 </div>
-                              )}
-                              <p className="text-xs text-gray-500 leading-relaxed">{area.feedback}</p>
-                              <p className="mt-1.5 text-xs font-semibold text-amber-700">
-                                Tip focus: {tip.title}
-                              </p>
-                              <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                                Before your next attempt, craft a stronger version of this answer on your own instead of memorizing a script.
-                              </p>
-                            </div>
+                                <p className="text-xs text-slate-500 leading-relaxed line-clamp-1">{area.feedback}</p>
+                              </div>
+                              {isExpanded ? <ChevronUp className="w-4 h-4 shrink-0 text-slate-400" /> : <ChevronDown className="w-4 h-4 shrink-0 text-slate-400" />}
+                            </button>
+                            {isExpanded && (
+                              <div className="border-t border-amber-100 bg-amber-50/20 px-6 py-5 space-y-4">
+                                {/* What went wrong */}
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 mb-1.5">Why this was flagged</p>
+                                  <p className="text-sm leading-6 text-slate-700">{area.feedback}</p>
+                                </div>
+
+                                {/* Evidence: what you said */}
+                                {evidence && (evidence.excerpt || evidence.question) && (
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3">
+                                      <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600 mb-1.5">What you said</p>
+                                      {evidence.question && <p className="text-xs font-bold text-slate-800 mb-1.5">Q: {evidence.question}</p>}
+                                      {evidence.excerpt && <p className="text-sm leading-6 text-slate-700 italic">&ldquo;{evidence.excerpt}&rdquo;</p>}
+                                      {evidence.timestamp && <p className="mt-1.5 text-[10px] font-bold text-slate-400">{evidence.timestamp}</p>}
+                                    </div>
+
+                                    {/* Model answer: what you should say */}
+                                    {area.rewritten_answer && (
+                                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+                                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Stronger version</p>
+                                          {area.rewrite_method && (
+                                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">{area.rewrite_method}</span>
+                                          )}
+                                        </div>
+                                        <p className="text-sm leading-6 text-slate-700">&ldquo;{area.rewritten_answer}&rdquo;</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Coach tip */}
+                                <div className="rounded-xl border border-accent-200 bg-accent-50/60 px-4 py-3">
+                                  <div className="flex items-start gap-2.5">
+                                    <Sparkles className="w-4 h-4 mt-0.5 shrink-0 text-accent-600" />
+                                    <div>
+                                      <p className="text-sm font-bold text-slate-900">{tip.title}</p>
+                                      <p className="mt-1 text-xs leading-5 text-slate-600">{tip.summary}</p>
+                                      {tip.bullets.length > 0 && (
+                                        <div className="mt-2 grid gap-1.5">
+                                          {tip.bullets.slice(0, 3).map((bullet: string) => (
+                                            <div key={bullet} className="flex items-start gap-2 text-xs leading-5 text-slate-700">
+                                              <CheckCircle className="w-3.5 h-3.5 mt-0.5 shrink-0 text-accent-500" />
+                                              <span>{bullet}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Practice CTA */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const rc = getRootCauseForCriterion(area.criterion, area.rootCause)
+                                    setActivePracticeLesson({
+                                      criterion: area.criterion,
+                                      rootCause: rc,
+                                      question: evidence?.question,
+                                      answer: evidence?.excerpt,
+                                    })
+                                  }}
+                                  className="group flex w-full items-center justify-between rounded-xl border border-accent-200 bg-white px-4 py-3 text-left transition hover:border-accent-300 hover:bg-accent-50/40"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-600 text-white">
+                                      <BookOpen className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-bold text-slate-900">Practice this area</p>
+                                      <p className="text-[11px] text-slate-500">Workshop + voice re-answer drill</p>
+                                    </div>
+                                  </div>
+                                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-accent-600 group-hover:translate-x-0.5 transition-all" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )
                       })}
@@ -2861,181 +3055,208 @@ export default function InterviewDashboard() {
                 {HR_DETAILED_REPORT_ENABLED && (
                 <button
                   onClick={() => setShowRubricModal(true)}
-                  className="premium-card group flex w-full items-center justify-between p-5 text-left"
+                  className="group flex w-full items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
                 >
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900">View Full Performance Report</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Detailed rubric, scoring rationale, and evidence from your interview.</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 text-white">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900">View Full Performance Report</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Detailed rubric, scoring rationale, and evidence from your interview.</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-4">
-                    <FileText className="w-4 h-4 text-gray-400" />
-                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" />
-                  </div>
+                  <ArrowRight className="w-5 h-5 shrink-0 ml-4 text-slate-300 group-hover:text-accent-600 group-hover:translate-x-0.5 transition-all" />
                 </button>
                 )}
 
-                {/* Transcript Section (simplified, with green/red highlights for extremes only) */}
+                {/* Transcript Section */}
                 {structuredTranscript && (
                   (structuredTranscript.messages && structuredTranscript.messages.length > 0) ||
                   (structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0)
                 ) && (
-                  <div className="premium-panel p-8">
+                  <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
                     <button
                       type="button"
                       onClick={() => setShowTranscript((prev) => !prev)}
-                      className="flex w-full items-center justify-between mb-4 text-left"
+                      className="flex w-full items-center justify-between px-6 py-4 text-left transition hover:bg-slate-50/50"
                     >
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">
-                          Full Interview Transcript
-                        </h3>
-                        <div className="mt-1 flex space-x-4 text-sm text-gray-600">
-                          <span className="flex items-center space-x-1">
-                            <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                            <span>Strong</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                            <span>Weak</span>
-                          </span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+                          <MessageCircle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-black text-slate-900">Full Interview Transcript</h3>
+                          <div className="flex items-center gap-3 mt-0.5">
+                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                              <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+                              Strong
+                            </span>
+                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-red-500">
+                              <span className="w-2 h-2 bg-red-500 rounded-full" />
+                              Weak
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform ${
-                          showTranscript ? 'rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      {showTranscript ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                     </button>
 
                     {showTranscript && (
-                      <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                        {structuredTranscript.messages && structuredTranscript.messages.length > 0 ? (
-                          structuredTranscript.messages.map((msg: any, idx: number) => {
-                          const isCandidate = msg.speaker === 'candidate'
+                      <div className="border-t border-slate-100 px-6 py-4">
+                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                          {structuredTranscript.messages && structuredTranscript.messages.length > 0 ? (
+                            structuredTranscript.messages.map((msg: any, idx: number) => {
+                            const isCandidate = msg.speaker === 'candidate'
 
-                          let tone: 'strong' | 'weak' | 'neutral' = 'neutral'
-                          if (isCandidate && feedback?.hr_screen_six_areas) {
-                            const wentWell = feedback.hr_screen_six_areas.what_went_well || []
-                            const needsImprove =
-                              feedback.hr_screen_six_areas.what_needs_improve || []
+                            let tone: 'strong' | 'weak' | 'neutral' = 'neutral'
+                            if (isCandidate && feedback?.hr_screen_six_areas) {
+                              const wentWell = feedback.hr_screen_six_areas.what_went_well || []
+                              const needsImprove =
+                                feedback.hr_screen_six_areas.what_needs_improve || []
 
-                            // Check if this message matches any evidence from needs_improve
-                            const inNeeds = needsImprove.some((item: any) =>
-                              (item.evidence || []).some((ev: any) => {
-                                // Match by question_id or by excerpt similarity
-                                const questionMatch = ev.question_id && msg.question_id && 
-                                  ev.question_id === msg.question_id
-                                const excerptMatch = ev.excerpt && msg.text && 
-                                  msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
-                                return questionMatch || excerptMatch
-                              })
-                            )
-                            
-                            // Check if this message matches any evidence from what_went_well
-                            const inWell = wentWell.some((item: any) =>
-                              (item.evidence || []).some((ev: any) => {
-                                // Match by question_id or by excerpt similarity
-                                const questionMatch = ev.question_id && msg.question_id && 
-                                  ev.question_id === msg.question_id
-                                const excerptMatch = ev.excerpt && msg.text && 
-                                  msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
-                                return questionMatch || excerptMatch
-                              })
-                            )
+                              const inNeeds = needsImprove.some((item: any) =>
+                                (item.evidence || []).some((ev: any) => {
+                                  const questionMatch = ev.question_id && msg.question_id &&
+                                    ev.question_id === msg.question_id
+                                  const excerptMatch = ev.excerpt && msg.text &&
+                                    msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                                  return questionMatch || excerptMatch
+                                })
+                              )
 
-                            if (inNeeds) tone = 'weak'
-                            else if (inWell) tone = 'strong'
-                          }
+                              const inWell = wentWell.some((item: any) =>
+                                (item.evidence || []).some((ev: any) => {
+                                  const questionMatch = ev.question_id && msg.question_id &&
+                                    ev.question_id === msg.question_id
+                                  const excerptMatch = ev.excerpt && msg.text &&
+                                    msg.text.toLowerCase().includes(ev.excerpt.toLowerCase().substring(0, 50))
+                                  return questionMatch || excerptMatch
+                                })
+                              )
 
-                          const baseClasses =
-                            'p-4 rounded-lg border-2 transition-colors cursor-default'
-                          const toneClasses =
-                            tone === 'strong'
-                              ? 'border-green-300 bg-green-50'
-                              : tone === 'weak'
-                              ? 'border-red-300 bg-red-50'
-                              : 'border-gray-200 bg-white'
+                              if (inNeeds) tone = 'weak'
+                              else if (inWell) tone = 'strong'
+                            }
 
-                          return (
-                            <div
-                              key={idx}
-                              className={`${baseClasses} ${toneClasses}`}
-                            >
-                              <div className="flex space-x-3">
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
-                                  {isCandidate ? (
-                                    <Users className="w-5 h-5 text-gray-700" />
-                                  ) : (
-                                    <Phone className="w-5 h-5 text-primary-600" />
-                                  )}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex justify-between mb-1">
-                                    <span
-                                      className={`text-sm font-semibold ${
-                                        isCandidate
-                                          ? 'text-gray-900'
-                                          : 'text-primary-700'
-                                      }`}
-                                    >
-                                      {isCandidate ? 'You' : 'AI Interviewer'}
-                                    </span>
-                                    {msg.timestamp && (
-                                      <span className="text-xs text-gray-500">
-                                        {msg.timestamp}
-                                      </span>
+                            return (
+                              <div
+                                key={idx}
+                                className={`rounded-xl border px-4 py-3 ${
+                                  tone === 'strong'
+                                    ? 'border-emerald-200 bg-emerald-50/50'
+                                    : tone === 'weak'
+                                    ? 'border-red-200 bg-red-50/50'
+                                    : 'border-slate-200 bg-white'
+                                }`}
+                              >
+                                <div className="flex gap-3">
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isCandidate ? 'bg-slate-100' : 'bg-accent-100'}`}>
+                                    {isCandidate ? (
+                                      <User className="w-3.5 h-3.5 text-slate-600" />
+                                    ) : (
+                                      <Phone className="w-3.5 h-3.5 text-accent-600" />
                                     )}
                                   </div>
-                                  <p className="text-gray-800 text-sm">
-                                    {msg.text}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                          })
-                        ) : structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0 ? (
-                          // Fallback: Show questions list if messages are empty
-                          <div className="space-y-3">
-                            <p className="text-sm text-gray-600 mb-4">
-                              Full conversation transcript is not available, but here are the questions that were asked:
-                            </p>
-                            {structuredTranscript.questions_asked.map((q: any, idx: number) => (
-                              <div key={idx} className="p-4 rounded-lg border-2 border-gray-200 bg-white">
-                                <div className="flex items-start space-x-3">
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary-100">
-                                    <Phone className="w-5 h-5 text-primary-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex justify-between mb-1">
-                                      <span className="text-sm font-semibold text-primary-700">AI Interviewer</span>
-                                      {q.timestamp && (
-                                        <span className="text-xs text-gray-500">{q.timestamp}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between mb-0.5">
+                                      <span className={`text-xs font-bold ${isCandidate ? 'text-slate-900' : 'text-accent-700'}`}>
+                                        {isCandidate ? 'You' : 'Interviewer'}
+                                      </span>
+                                      {msg.timestamp && (
+                                        <span className="text-[10px] font-bold text-slate-400">{msg.timestamp}</span>
                                       )}
                                     </div>
-                                    <p className="text-gray-800 text-sm">{q.question}</p>
+                                    <p className="text-sm leading-6 text-slate-700">{msg.text}</p>
                                   </div>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-gray-600 text-sm">No transcript data available.</p>
-                        )}
+                            )
+                            })
+                          ) : structuredTranscript.questions_asked && structuredTranscript.questions_asked.length > 0 ? (
+                            <div className="space-y-3">
+                              <p className="text-xs text-slate-500 mb-3">
+                                Full conversation transcript is not available. Here are the questions that were asked:
+                              </p>
+                              {structuredTranscript.questions_asked.map((q: any, idx: number) => (
+                                <div key={idx} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-accent-100 shrink-0">
+                                      <Phone className="w-3.5 h-3.5 text-accent-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex justify-between mb-0.5">
+                                        <span className="text-xs font-bold text-accent-700">Interviewer</span>
+                                        {q.timestamp && (
+                                          <span className="text-[10px] font-bold text-slate-400">{q.timestamp}</span>
+                                        )}
+                                      </div>
+                                      <p className="text-sm leading-6 text-slate-700">{q.question}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-slate-500">No transcript data available.</p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
+
+                {/* ─── Next Steps Panel ─── */}
+                <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                  <h3 className="text-base font-black text-slate-900 mb-4">Next Steps</h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {needsImproveAreas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const firstWeak = needsImproveAreas[0]
+                          const rc = getRootCauseForCriterion(firstWeak.criterion, firstWeak.rootCause)
+                          const evidence = (firstWeak.evidence || [])[0]
+                          setActivePracticeLesson({
+                            criterion: firstWeak.criterion,
+                            rootCause: rc,
+                            question: evidence?.question,
+                            answer: evidence?.excerpt,
+                          })
+                        }}
+                        className="group flex items-center gap-3 rounded-xl border border-accent-200 bg-accent-50/40 px-4 py-3.5 text-left transition hover:border-accent-300 hover:bg-accent-50"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-600 text-white">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-slate-900">Practice weak areas</p>
+                          <p className="text-xs text-slate-500">Workshop drills + voice practice</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-accent-600 transition" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentSessionData?.id) {
+                          localStorage.removeItem(`walkthrough_seen_${currentSessionData.id}`)
+                        }
+                        setWalkthroughActive(true)
+                      }}
+                      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                        <RefreshCw className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-slate-900">Replay walkthrough</p>
+                        <p className="text-xs text-slate-500">Review the guided debrief again</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-600 transition" />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -3732,23 +3953,35 @@ export default function InterviewDashboard() {
 
                 {/* ─── SECTION 5: Readiness + Organic Upgrade CTA ─── */}
                 {!isPremium && (
-                  <div className="premium-panel overflow-hidden">
-                    <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-5 text-white">
-                      <h3 className="text-lg font-bold">Ready for the next round?</h3>
-                      <p className="text-primary-100 text-sm mt-1">
-                        You&apos;ve reviewed your feedback and tightened the weak spots. The next step in the real interview process is the Hiring Manager round.
+                  <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 px-6 py-5 text-white">
+                      <h3 className="text-lg font-black">Ready for the next round?</h3>
+                      <p className="text-slate-300 text-sm mt-1 leading-6">
+                        The Hiring Manager interview asks for proof. Continue the process to practice under tougher conditions.
                       </p>
                     </div>
-                    <div className="p-6">
-                      <p className="text-sm text-gray-600 mb-4">
-                        Continue your interview preparation with the full process — Hiring Manager, Culture Fit, and Final Round — each with the same detailed feedback and scoring.
-                      </p>
+                    <div className="px-6 py-5">
+                      <div className="grid grid-cols-3 gap-3 mb-5">
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-center">
+                          <Zap className="w-4 h-4 mx-auto text-accent-600 mb-1" />
+                          <p className="text-[10px] font-bold text-slate-700">Role-specific pressure</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-center">
+                          <Target className="w-4 h-4 mx-auto text-amber-600 mb-1" />
+                          <p className="text-[10px] font-bold text-slate-700">Proof-first scoring</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-center">
+                          <Crown className="w-4 h-4 mx-auto text-accent-600 mb-1" />
+                          <p className="text-[10px] font-bold text-slate-700">Full coaching report</p>
+                        </div>
+                      </div>
                       <button
                         onClick={() => setShowPurchaseFlow(true)}
-                        className="btn-coach-primary flex w-full items-center justify-center gap-2 px-6 py-3 sm:w-auto"
+                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-accent-600 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-accent-700"
                       >
                         <Crown className="w-4 h-4" />
                         Continue Your Interview Process
+                        <ArrowRight className="w-4 h-4 transition group-hover:translate-x-0.5" />
                       </button>
                     </div>
                   </div>

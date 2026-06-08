@@ -28,6 +28,7 @@ const ANONYMOUS_ALLOWED_API = [
   '/api/interview/voice',
   '/api/interview/start',
   '/api/interview/feedback',
+  '/api/interview/guided-workshop',
   '/api/interview/practice',
   '/api/interview/text',
 ]

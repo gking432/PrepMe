@@ -9,6 +9,10 @@ interface ScoreRevealCardProps {
   likelihood: 'likely' | 'unlikely' | null
   strengths?: string[]
   weaknesses?: string[]
+  role?: string
+  company?: string
+  strongCount?: number
+  flaggedCount?: number
 }
 
 function getPreppiMessage(score: number, likelihood: string | null): string {

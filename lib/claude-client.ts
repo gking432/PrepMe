@@ -248,9 +248,12 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
       {
         "criterion": "Role-Specific Capability / Domain Depth",
         "feedback": "[1-2 sentence explanation with specific transcript reference]",
+        "score": 8,
+        "practice_focus_id": "role_depth",
         "evidence": [
           {
             "question_id": "q2",
+            "question": "the interviewer's question text",
             "timestamp": "5:30",
             "excerpt": "candidate's response excerpt..."
           }
@@ -261,9 +264,12 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
       {
         "criterion": "Evidence, Ownership & Impact",
         "feedback": "[1-2 sentence explanation with specific transcript reference]",
+        "score": 4,
+        "practice_focus_id": "star_proof",
         "evidence": [
           {
             "question_id": "q4",
+            "question": "the interviewer's question text",
             "timestamp": "12:00",
             "excerpt": "candidate's response excerpt..."
           }
@@ -279,6 +285,17 @@ You MUST include a "hiring_manager_six_areas" field with this structure:
     ]
   }
 }
+
+PRACTICE_FOCUS_ID MAPPING — use exactly these IDs to tag each criterion:
+- "role_depth" → Role-Specific Capability / Domain Depth (candidate needs to show working knowledge of the role's actual responsibilities, methods, tools, decisions, constraints)
+- "problem_solving" → Applied Problem-Solving & Tradeoffs (candidate needs to reason through ambiguous scenarios, weigh tradeoffs, consider stakeholders)
+- "star_proof" → Evidence, Ownership & Impact (candidate needs to anchor answers in specific past work with clear personal contribution and measurable outcomes)
+- "pace_delivery" → Work Style, Communication & Collaboration (candidate needs cleaner delivery, clearer communication of how they work cross-functionally)
+- "handling_uncertainty" → Coachability, Self-Awareness & Pressure Response (candidate needs to handle pushback and gaps with maturity and composure)
+- "preparation_curiosity" → Candidate Questions & Manager Fit (candidate needs thoughtful questions that sound like someone preparing to do the job)
+
+Every item in what_went_well AND what_needs_improve MUST include a practice_focus_id from the list above.
+Every evidence item MUST include the "question" field with the interviewer's actual question text.
 
 Each of the 6 universal criteria must appear in either "what_went_well" or "what_needs_improve" (not both).
 Include "red_flags" as an array — use an empty array [] if none were observed.`

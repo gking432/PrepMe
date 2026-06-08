@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, ChevronRight, Lock, Mic, RotateCcw, Sparkles, X } from 'lucide-react'
 import { getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
 import GuidedBuilderWorkshop, { type WorkshopType } from '@/components/exercises/GuidedBuilderWorkshop'
+import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 
 interface Evidence {
   question?: string
@@ -381,13 +382,22 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-hidden p-2 sm:p-4">
-            <GuidedBuilderWorkshop
-              workshopType={activeNode.workshopType}
-              sessionId={sessionId}
-              originalQuestion={activeNode.question || undefined}
-              originalAnswer={activeNode.originalAnswer || undefined}
-              onComplete={handleWorkshopComplete}
-            />
+            {activeNode.workshopType === 'star_proof' ? (
+              <StarStoryBuilder
+                sessionId={sessionId}
+                originalQuestion={activeNode.question || undefined}
+                originalAnswer={activeNode.originalAnswer || undefined}
+                onComplete={handleWorkshopComplete}
+              />
+            ) : (
+              <GuidedBuilderWorkshop
+                workshopType={activeNode.workshopType}
+                sessionId={sessionId}
+                originalQuestion={activeNode.question || undefined}
+                originalAnswer={activeNode.originalAnswer || undefined}
+                onComplete={handleWorkshopComplete}
+              />
+            )}
           </div>
         </div>
       )}

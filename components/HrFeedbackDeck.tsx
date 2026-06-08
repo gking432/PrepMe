@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { getImprovementTipForCriterion, getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
 import GuidedBuilderWorkshop from '@/components/exercises/GuidedBuilderWorkshop'
+import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
 
@@ -749,6 +750,17 @@ function WorkshopSlide({
         <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
           <p className="text-sm font-bold leading-6 text-slate-500">No interactive workshop is wired for this issue yet. Click Continue to move on.</p>
         </div>
+      )
+    }
+
+    if (workshopType === 'star_proof') {
+      return (
+        <StarStoryBuilder
+          sessionId={sessionId}
+          originalQuestion={questionText || undefined}
+          originalAnswer={originalAnswerText || undefined}
+          onComplete={onWorkshopComplete}
+        />
       )
     }
 

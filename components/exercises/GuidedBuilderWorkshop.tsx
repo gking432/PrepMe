@@ -308,6 +308,7 @@ export default function GuidedBuilderWorkshop({
   const [hint, setHint] = useState<string>('')
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false)
   const [flippedMethodSteps, setFlippedMethodSteps] = useState<Set<number>>(new Set())
   const [revealedSteps, setRevealedSteps] = useState<Set<string>>(new Set())
   const [stepApproachPicked, setStepApproachPicked] = useState<Record<string, string>>({})
@@ -417,6 +418,7 @@ export default function GuidedBuilderWorkshop({
   }
 
   function advanceStep() {
+    setShowAllSuggestions(false)
     if (stepIndex + 1 >= config.steps.length) {
       setPhase('assemble')
       setStepIndex(0)
@@ -811,59 +813,71 @@ export default function GuidedBuilderWorkshop({
                     </div>
                   ) : (
                   <>
-                  {hint && !loadingSuggestions && (
-                    <div className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 px-3 py-2">
-                      <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
-                      <p className="text-xs leading-5 text-amber-900">{hint}</p>
-                    </div>
-                  )}
-
-                  <p className="mb-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-                    Pick the one that fits
-                  </p>
-
                   {loadingSuggestions ? (
-                    <div className="space-y-2">
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} className="animate-pulse rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                          <div className="h-3 w-full rounded bg-slate-200" />
-                          <div className="mt-2 h-3 w-4/5 rounded bg-slate-200" />
-                        </div>
-                      ))}
-                      <p className="pt-2 text-center text-[11px] font-bold text-slate-500">
-                        Reading your resume and the job description…
+                    <div className="space-y-3">
+                      <div className="animate-pulse rounded-2xl border border-slate-200 bg-slate-50 px-4 py-5">
+                        <div className="h-3 w-full rounded bg-slate-200" />
+                        <div className="mt-2 h-3 w-4/5 rounded bg-slate-200" />
+                        <div className="mt-2 h-3 w-3/5 rounded bg-slate-200" />
+                      </div>
+                      <p className="text-center text-[11px] font-bold text-slate-500">
+                        Building from your resume…
                       </p>
                     </div>
-                  ) : suggestions.length > 0 ? (
-                    <div className="space-y-2">
+                  ) : suggestions.length > 0 && !showAllSuggestions ? (
+                    <div className="space-y-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
+                        Here&apos;s what that could sound like
+                      </p>
+                      <div className={`rounded-2xl border-2 ${colors.border} ${colors.soft} px-4 py-4`}>
+                        <p className="text-sm leading-7 text-slate-800">{suggestions[0]}</p>
+                      </div>
+
+                      {hint && (
+                        <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-100 px-3 py-2">
+                          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+                          <p className="text-xs leading-5 text-amber-900">{hint}</p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => pickSuggestion(suggestions[0])}
+                        className={`group flex w-full items-center justify-center gap-2 rounded-xl ${colors.bg} px-5 py-3 text-sm font-bold text-white transition hover:opacity-90`}
+                      >
+                        Use this
+                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                      </button>
+                      {suggestions.length > 1 && (
+                        <button
+                          onClick={() => setShowAllSuggestions(true)}
+                          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Show me other options
+                        </button>
+                      )}
+                    </div>
+                  ) : suggestions.length > 0 && showAllSuggestions ? (
+                    <div className="space-y-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
+                        Pick the one that fits best
+                      </p>
                       {suggestions.map((suggestion, i) => (
                         <button
                           key={`${refreshKey}-${i}`}
                           onClick={() => pickSuggestion(suggestion)}
                           className={`group w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-left transition hover:${colors.border} hover:${colors.soft} hover:shadow-md`}
                         >
-                          <p className="text-sm leading-6 text-slate-800 group-hover:text-slate-900">{suggestion}</p>
-                          <p className={`mt-2 text-[10px] font-black uppercase tracking-[0.16em] opacity-0 transition group-hover:opacity-100 ${colors.text}`}>
-                            Tap to use this
-                          </p>
+                          <p className="text-sm leading-6 text-slate-800">{suggestion}</p>
                         </button>
                       ))}
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
                       <p className="text-sm font-bold text-slate-600">No suggestions right now.</p>
-                      <p className="mt-1 text-xs text-slate-500">Write your own below — that&apos;s the whole point anyway.</p>
+                      <p className="mt-1 text-xs text-slate-500">Write your own below.</p>
                     </div>
                   )}
-
-                  <button
-                    onClick={() => setRefreshKey((k) => k + 1)}
-                    disabled={loadingSuggestions}
-                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 ${loadingSuggestions ? 'animate-spin' : ''}`} />
-                    Show me different options
-                  </button>
                   </>
                   )}
                 </div>

@@ -22,10 +22,10 @@ type WorkshopType =
 
 const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
   star_proof: {
-    situation: 'Pull 2-3 brief setting lines from the candidate resume that could plausibly anchor this answer. Prefer the MOST RECENT role (latest end date or "present"). Do not mix experiences across multiple jobs in a single suggestion. Each one names a real project/role/team in 1 sentence so they can pick the right scene. Must sound spoken aloud.',
-    task: 'Given the picked situation, suggest 2-3 different ways to frame what was specifically at stake or what the candidate owned. Each must be a complete spoken sentence that flows after the situation — include a natural transition like "I was the one who...", "My piece of it was...", "I was responsible for...". One sentence each.',
-    action: 'Given the situation and task, draft 2-3 action sentences describing concrete steps. Each must start with a natural spoken transition like "So I...", "What I did was...", "I ended up...". Sound like real ownership, not generic verbs.',
-    result: 'Given everything chosen so far, draft 2-3 short result lines. Each must be a complete sentence with a natural closer feel — "We ended up...", "That got us...", "By the end of it,...". Prefer concrete outcomes from the resume. Never invent numbers.',
+    situation: 'The candidate gave an ORIGINAL ANSWER (below) to a behavioral question. Your job is to help them RESTRUCTURE that answer — not invent a new one. Pull the real situation from what they actually said. If their answer was vague, use the resume to find the specific project/role they were likely referring to. Draft 2-3 brief SITUATION openers grounded in what the candidate already described. Must sound spoken.',
+    task: 'Given the picked situation (from the candidate\'s ORIGINAL ANSWER), draft 2-3 ways to frame what was at stake or what they owned. The task MUST come from the original answer or resume — NOT from the job description. Each must be a complete spoken sentence with a natural transition. One sentence each.',
+    action: 'Given the situation and task (from the ORIGINAL ANSWER), draft 2-3 action sentences describing what the candidate actually did. Pull ONLY from what they said or what the resume confirms. Do NOT invent actions about the target role. Start with "So I...", "What I did was...", etc.',
+    result: 'Given everything chosen so far (all from the ORIGINAL ANSWER), draft 2-3 result lines. The outcome MUST be from the candidate\'s actual experience, NOT about the job they\'re applying to. Never invent numbers. "We ended up...", "That got us...", etc.',
   },
   professional_story: {
     present: 'Use ONLY the candidate\'s MOST RECENT role — the one with the latest end date, or labeled "present"/"current". Do NOT pull from older roles for this step. Draft 2-3 short PRESENT lines (1-2 sentences each) naming the current role and a single defining skill or focus. Must sound like someone talking: "Right now I\'m...", "So these days I...", "I\'m currently...".',
@@ -39,9 +39,9 @@ const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
   },
   handling_uncertainty: {
     recovery: 'Draft 2-3 short RECOVERY openers — calm, steady, 1 sentence each. Must sound like a real person talking: "Honestly, let me think about that for a second", "Good question — give me a beat". No filler, no apologizing.',
-    answer: 'Given the original question, draft 2-3 short ANSWER statements — direct positions or judgments. One sentence each, conversational. Pull from resume context where reasonable.',
-    reason: 'Given the chosen answer, draft 2-3 short REASON lines — one sentence each. Each must be a complete spoken sentence that flows naturally after the answer. Use natural transitions like "I\'ve just seen that...", "In my experience,...", "What I\'ve learned is...".',
-    example: 'Given answer + reason, pull 2-3 brief EXAMPLES from the resume. Each must start with a natural spoken bridge like "Like when...", "Actually, at [company],...", "A good example is...". One sentence.',
+    answer: 'The candidate gave an ORIGINAL ANSWER to a tough question (below). Help them restructure it with a clearer direct position. Draft 2-3 ANSWER statements based on what they were TRYING to say — not about the target job. One sentence each, conversational.',
+    reason: 'Given the chosen answer (restructured from the ORIGINAL), draft 2-3 REASON lines grounded in the candidate\'s actual experience — NOT the job description. "I\'ve just seen that...", "In my experience,...". One sentence each.',
+    example: 'Pull 2-3 brief EXAMPLES from the candidate\'s ORIGINAL ANSWER or resume — real experiences they actually had. Do NOT generate examples about the target role. "Like when I was at [actual company],...". One sentence.',
   },
   pace_delivery: {
     opener: 'Take the candidates original answer and draft 2-3 alternative OPENERS — each leads with the main point in 1 confident sentence. No warmup words. Must sound like a person talking, not writing.',
@@ -54,16 +54,16 @@ const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
     your_question: 'Given the above, draft 2-3 sharp QUESTIONS. Each must include a natural spoken bridge like "So I\'m curious —", "That makes me want to ask —", "I\'d love to know —". Reference the specific company/role context.',
   },
   role_depth: {
-    context: 'Pull 2-3 real CONTEXT lines from the resume — each one names a specific project or situation. One sentence each, spoken aloud. Must sound conversational.',
-    method: 'Given the chosen context, draft 2-3 METHOD statements. Each must be a complete sentence with a natural transition like "So I went with...", "My approach was...", "What I did was...". Name specific tools, frameworks, or thinking. One sentence each.',
-    tradeoff: 'Given context and method, draft 2-3 TRADEOFF statements. Each must flow naturally: "The main tradeoff was...", "I had to weigh...", "The hard part was choosing between...". Ground in the specific role.',
-    outcome: 'Given everything above, draft 2-3 OUTCOME statements. Each must start with a natural closer like "And it worked —", "That got us...", "By the end,...". Concrete results from the resume.',
+    context: 'The candidate gave an ORIGINAL ANSWER (below) about their domain work. Your job is to help them restructure it — not invent new content about the target job. Pull 2-3 real CONTEXT lines from what they actually said or from their resume. One sentence each, spoken aloud.',
+    method: 'Given the chosen context (from the ORIGINAL ANSWER), draft 2-3 METHOD statements about what the candidate actually did — tools, frameworks, thinking they applied in THEIR experience, not the target role. "So I went with...", "My approach was...". One sentence each.',
+    tradeoff: 'Given context and method (from the ORIGINAL ANSWER), draft 2-3 TRADEOFF statements about real decisions the candidate weighed in their ACTUAL experience. Do NOT generate tradeoffs about the target job. "The main tradeoff was...", "I had to weigh...".',
+    outcome: 'Given everything above (from the ORIGINAL ANSWER), draft 2-3 OUTCOME statements about what ACTUALLY happened in the candidate\'s experience. Do NOT project outcomes onto the target role. "And it worked —", "That got us...".',
   },
   problem_solving: {
-    clarify: 'Draft 2-3 CLARIFY lines — each one names a real question or assumption the candidate checked first. Must sound spoken: "First thing I needed to figure out was...", "I started by asking...", "Before doing anything, I wanted to understand...". One sentence each.',
-    approach: 'Given the clarifications, draft 2-3 APPROACH statements. Each must include a natural transition: "From there I...", "So I looked at a few options —", "My thinking was...". Describe the plan and reasoning. Keep it conversational.',
-    execute: 'Given the approach, draft 2-3 EXECUTE statements. Each must start with a natural bridge: "So I...", "What I actually did was...", "I ended up...". Concrete steps, who was involved. Pull from resume.',
-    reflect: 'Given everything above, draft 2-3 REFLECT statements. Must sound like genuine personal reflection: "Looking back,...", "If I did it again,...", "The biggest lesson was...". Honest, not scripted.',
+    clarify: 'The candidate gave an ORIGINAL ANSWER (below). Help them restructure it. Draft 2-3 CLARIFY lines based on what they actually needed to figure out in THEIR situation — not the target job. "First thing I needed to figure out was...", "I started by asking...". One sentence each.',
+    approach: 'Given the clarifications (from the ORIGINAL ANSWER), draft 2-3 APPROACH statements about how the candidate actually reasoned through THEIR problem — not a hypothetical about the target role. "From there I...", "So I looked at a few options —". Conversational.',
+    execute: 'Given the approach (from the ORIGINAL ANSWER), draft 2-3 EXECUTE statements about what the candidate ACTUALLY did. Pull from their answer and resume. Do NOT generate actions about the target job. "So I...", "What I actually did was...".',
+    reflect: 'Given everything above (from the ORIGINAL ANSWER), draft 2-3 REFLECT statements. Must be genuine personal reflection on THEIR real experience. "Looking back,...", "If I did it again,...". Honest, not about the target role.',
   },
 }
 
@@ -176,6 +176,11 @@ export async function POST(request: NextRequest) {
     ? `The candidate self-described their voice/approach for this answer as: ${tags.join(', ')}. Let those subtly color tone and word choice — but never override what's actually in the resume.`
     : ''
 
+  const isBehavioral = ['star_proof', 'role_depth', 'problem_solving', 'handling_uncertainty'].includes(workshopType)
+  const behavioralRule = isBehavioral
+    ? '\n- CRITICAL: This is a behavioral answer workshop. The candidate already gave an answer — your job is to RESTRUCTURE it with better structure, NOT to invent a new answer. The original answer and resume are the source of truth for WHAT HAPPENED. The job description tells you what the INTERVIEWER CARES ABOUT, but the content must come from the candidate\'s real experience. Never generate content about the target role as if the candidate already works there.'
+    : ''
+
   const system = `You are a sharp, no-nonsense interview coach helping a candidate build one part of one answer.
 
 Workshop: ${workshopContext}
@@ -183,7 +188,7 @@ Current step: ${stepKey}
 Step task: ${stepGuidance}
 ${tagHint}
 
-Hard rules:
+Hard rules:${behavioralRule}
 - SPOKEN LANGUAGE ONLY. The candidate will say this out loud in an interview. Write the way a confident, prepared person actually talks — short sentences, contractions, natural pauses. If it sounds like a cover letter or an essay, rewrite it.
 - Use contractions ("I'm", "that's", "didn't", "I've") — nobody says "I have been" or "that is" in conversation.
 - Keep sentences SHORT. Max 15-20 words per sentence. Break long compound sentences into two.

@@ -266,14 +266,25 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 - **Stage summary screen**: Clicking a stage in the sidebar or "All rounds" grid opens a summary modal showing: score ring, strengths/weaknesses from rubric, flow progress indicator (feedback → practice → retake), smart CTA, and secondary action buttons. Previously went directly to feedback.
 - **HrFeedbackDeck CTA fix**: "Start Practicing" is now the primary CTA on the deck's unlock-next-stage screen (was "Start [Next Stage] Round").
 
+### 2026-06-08 (Session 6b — continuation)
+- **Process page radical simplification**: Removed All Rounds grid, stats row, summary modal, and all secondary button rows. Main content is now driven entirely by sidebar selection:
+  - Clicking a stage in sidebar/mobile picker shows that stage's data inline (score, strengths/weaknesses)
+  - Selected stage is highlighted in sidebar (not "next up")
+  - Flow progress bar (Interview → Feedback → Practice → Retake) is the centerpiece with a single CTA
+  - Locked stages show unlock CTA, available stages show start CTA
+  - Mobile gets a horizontal stage pill picker
+  - No more black buttons, no more modal
+- **Workshop assembly fix**: Haiku prompt now told not to start suggestions with the connector phrase. `assembleAnswer` strips duplicate connectors to prevent broken text like "My job was to i was responsible for".
+- **Approach picker diversity**: Removed from steps where it adds no value (recovery, landing, result, outcome, reflect). Remaining steps get contextual question text (e.g. "How do you want to set the scene?", "What angle shows your work best?") instead of uniform "What's your instinct?"
+
 ### Active Branch
 `claude/bold-planck-rRxBf`
 
 ### What Needs Work Next
-1. Test end-to-end on `?preview=mock` — verify summary screen, smart CTAs, workshops with examples + approach picker
-2. Test on a real HR interview — verify Haiku suggestions feel personalized
+1. Test end-to-end on `?preview=mock` — verify process page, workshops, flow progress
+2. Test on a real HR interview — verify Haiku suggestions feel personalized, no broken assembly text
 3. Wire CF/FR stages into the workshop builder (HM is done)
-4. Retake display — how to show take 1 vs retake on the process page / summary screen
+4. Retake display — how to show take 1 vs retake
 5. Consider deleting unused old workshop components (StarProofWorkshop, etc.)
 6. Custom Preppi SVG illustration (user will build in Figma)
 7. XP/badge persistence to Supabase

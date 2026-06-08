@@ -22,48 +22,148 @@ type WorkshopType =
 
 const STEP_GUIDANCE: Record<WorkshopType, Record<string, string>> = {
   star_proof: {
-    situation: 'The candidate gave an ORIGINAL ANSWER (below) to a behavioral question. Your job is to help them RESTRUCTURE that answer — not invent a new one. Pull the real situation from what they actually said. If their answer was vague, use the resume to find the specific project/role they were likely referring to. Draft 2-3 brief SITUATION openers grounded in what the candidate already described. Must sound spoken.',
-    task: 'Given the picked situation (from the candidate\'s ORIGINAL ANSWER), draft 2-3 ways to frame what was at stake or what they owned. The task MUST come from the original answer or resume — NOT from the job description. Each must be a complete spoken sentence with a natural transition. One sentence each.',
-    action: 'Given the situation and task (from the ORIGINAL ANSWER), draft 2-3 action sentences describing what the candidate actually did. Pull ONLY from what they said or what the resume confirms. Do NOT invent actions about the target role. Start with "So I...", "What I did was...", etc.',
-    result: 'Given everything chosen so far (all from the ORIGINAL ANSWER), draft 2-3 result lines. The outcome MUST be from the candidate\'s actual experience, NOT about the job they\'re applying to. Never invent numbers. "We ended up...", "That got us...", etc.',
+    situation: `Generate 3 suggestions that each follow one of these EXACT structural patterns. Fill in the blanks from the candidate's resume and original answer:
+Pattern A: "[At/During/When] [company/project], [1-sentence scene-setter with who and what was happening]."
+Pattern B: "So this was at [company] — [brief context of the situation]."
+Pattern C: "This happened when I was [role] at [company]. [One sentence about what was going on]."
+Pull from the candidate's ORIGINAL ANSWER first for the specific story. If the original answer names a situation, USE THAT — don't invent a different one. Only fall back to resume details if the original answer is too vague to identify a scene. Each suggestion is 1-2 sentences max.`,
+    task: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "I was responsible for [specific ownership from the story]."
+Pattern B: "My piece of it was [what specifically fell to them]."
+Pattern C: "I was the one who had to [specific task they owned]."
+The content MUST come from what was described in the original answer or previous situation choice. Do NOT invent responsibilities — restructure what the candidate actually said they did. One sentence each.`,
+    action: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "What I actually did was [concrete step 1], [concrete step 2], and [concrete step 3]."
+Pattern B: "So I [first action], then [second action], and [third action if applicable]."
+Pattern C: "I ended up [specific action] — and then [follow-up action]."
+The actions MUST come from the candidate's original answer. Restructure and tighten what they actually said they did — do not invent new actions. This is the heaviest part of the answer. 1-2 sentences, but pack in the specifics.`,
+    result: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "In the end, [specific outcome — numbers if available, real result if not]."
+Pattern B: "We ended up [concrete outcome]. [One sentence about lasting impact if applicable]."
+Pattern C: "That got us [specific result] — [brief note on why it mattered]."
+Pull the result from the candidate's original answer. If the original answer had a result, USE IT. If it was vague, tighten it. Never invent metrics.`,
   },
   professional_story: {
-    present: 'Use ONLY the candidate\'s MOST RECENT role — the one with the latest end date, or labeled "present"/"current". Do NOT pull from older roles for this step. Draft 2-3 short PRESENT lines (1-2 sentences each) naming the current role and a single defining skill or focus. Must sound like someone talking: "Right now I\'m...", "So these days I...", "I\'m currently...".',
-    past: 'Use earlier roles, schooling, or skill arcs — NOT the current role (that was the previous step). Draft 2-3 PAST lines that explain the foundation. Each must include its own natural spoken transition like "Before that,", "I got into this through...", "That came from...", "Earlier on, I...". Keep it conversational — short sentences, contractions.',
-    future: 'Given present + past + the job description, draft 2-3 FUTURE lines on why THIS specific role is the natural next step. Each names something concrete from the JD that matches the candidate\'s arc. Start with a natural spoken bridge like "So that\'s why...", "That\'s what got me interested in...", "And now I want to...".',
+    present: `Generate 3 suggestions using the candidate's MOST RECENT role (latest end date or "present"). Each must follow one of these EXACT structural patterns:
+Pattern A: "Right now, at [company] I work as [title], where I'm mostly focused on [top 2-3 duties as gerunds]."
+Pattern B: "At [company], I've spent the last [timeframe] focused on [duties described conversationally]."
+Pattern C: "As [title] at [company], a lot of my work centers on [duties]."
+Fill in company, title, and duties from the resume. Convert resume bullet points into spoken gerund phrases (e.g. "managing orders, coordinating vendors"). One sentence each.`,
+    past: `Generate 3 suggestions using an EARLIER role from the resume (NOT the current one). Each must follow one of these EXACT structural patterns:
+Pattern A: "Before that, I spent time at [company] doing [duties], which is where I built [skill/strength]."
+Pattern B: "Earlier in my career, [company] shaped me a lot — that [title] role gave me real experience in [skills]."
+Pattern C: "A big part of what got me here was my time at [company], where I worked as [title] and developed [skills] through [duties]."
+Pull company, title, duties, and skills from an earlier resume role. Keep it to 1-2 sentences. Must sound spoken.`,
+    future: `Generate 3 suggestions that connect the candidate's arc to the TARGET JOB. Each must follow one of these EXACT structural patterns:
+Pattern A: "So that's why this [role title from JD] role makes sense — it's [connection to their arc]."
+Pattern B: "Going forward, I want to keep building in [area], and this role is [why it fits]."
+Pattern C: "That's what got me interested in this — I want [specific thing from JD] to be more central to what I do."
+Each must name something SPECIFIC from the job description and connect it to the candidate's background. 1-2 sentences.`,
   },
   career_alignment: {
-    observation: 'Pull 2-3 specific OBSERVATIONS about the role/team/company from the JD. Each one names a real responsibility, scope, or focus mentioned in the JD — not vague platitudes. Start each naturally, like you\'re talking to the interviewer.',
-    fit: 'Given the chosen observation, draft 2-3 FIT statements pulling concrete experience from the resume that matches. Each must be a COMPLETE sentence that flows naturally after the observation — include its own transition (e.g. "That\'s actually what I did at...", "I\'ve been doing exactly that at..."). Do NOT repeat content from the observation — add new information about the candidate\'s experience.',
-    timing: 'Given observation + fit, draft 2-3 TIMING statements on why now makes sense. Each must start with a natural spoken transition and explain why THIS role at THIS point in their career. Keep it personal and forward-looking.',
+    observation: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "What stood out to me is how central this role is to [specific responsibility/scope from JD]."
+Pattern B: "One thing that really caught my attention is that this role [specific detail from JD]."
+Pattern C: "What interests me most is that this role sits close to [specific aspect of the work from JD]."
+Each MUST cite a real, specific responsibility or focus from the job description — not generic praise like "great culture" or "exciting mission". One sentence each.`,
+    fit: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "That fits well with my background, because [concrete experience from resume that maps to the observation]."
+Pattern B: "That connects naturally to the work I've been doing — [specific experience or skill from resume]."
+Pattern C: "That's actually what I've been doing at [company] — [specific matching experience]."
+Each MUST pull a specific, concrete piece of the candidate's resume that directly maps to the chosen observation. Do NOT repeat the observation — add NEW information about the candidate. One sentence each.`,
+    timing: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "The timing makes sense because [career arc reason — why NOW, not just why generally]."
+Pattern B: "At this point, I'm looking for a role where [specific desire that maps to this opportunity]."
+Pattern C: "That's a big part of why this feels like a logical next step — [forward-looking reason tied to their arc]."
+Each must explain why THIS role at THIS point in their career makes sense. Keep it personal and forward-looking. One sentence each.`,
   },
   handling_uncertainty: {
-    recovery: 'Draft 2-3 short RECOVERY openers — calm, steady, 1 sentence each. Must sound like a real person talking: "Honestly, let me think about that for a second", "Good question — give me a beat". No filler, no apologizing.',
-    answer: 'The candidate gave an ORIGINAL ANSWER to a tough question (below). Help them restructure it with a clearer direct position. Draft 2-3 ANSWER statements based on what they were TRYING to say — not about the target job. One sentence each, conversational.',
-    reason: 'Given the chosen answer (restructured from the ORIGINAL), draft 2-3 REASON lines grounded in the candidate\'s actual experience — NOT the job description. "I\'ve just seen that...", "In my experience,...". One sentence each.',
-    example: 'Pull 2-3 brief EXAMPLES from the candidate\'s ORIGINAL ANSWER or resume — real experiences they actually had. Do NOT generate examples about the target role. "Like when I was at [actual company],...". One sentence.',
+    recovery: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "That's a good question — let me think about that for a second."
+Pattern B: "Good question. If I had to pick one area, it would be this:"
+Pattern C: "Honestly, that's something I've been thinking about — here's where I've landed."
+These are RECOVERY OPENERS — short, calm, buys time without sounding panicked. No apologies. No filler. One sentence each.`,
+    answer: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "One area I'm still developing is [specific skill/behavior — e.g. 'getting faster at making decisions when the path isn't fully clear']."
+Pattern B: "Something I'm actively working on is [specific behavior]."
+Pattern C: "The thing I'd point to is [specific area] — [brief elaboration]."
+Choose development areas that are REAL but not alarming — things like decision speed, delegation, speaking up earlier, prioritization under pressure. Pull from what's plausible given the candidate's resume level. One sentence each.`,
+    reason: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "I've improved a lot, but I still push myself to [specific improvement behavior]."
+Pattern B: "I've learned that [insight about why this matters] — so I work on [what they do about it]."
+Pattern C: "Being [positive trait] is useful, but [honest downside] if I don't [corrective behavior]."
+Each must explain WHY this is still something they work on. Must sound self-aware, not scripted. One sentence each.`,
+    example: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "For example, in one role I [brief situation], and I learned that [lesson]."
+Pattern B: "For example, when [brief scenario], I learned that [specific takeaway]."
+Pattern C: "For instance, [brief past moment] taught me that [insight]."
+Each starts with "For example" or "For instance" and gives a SHORT, real-sounding example. Pull from resume roles if possible. Keep to 1-2 sentences — this is a supporting detail, not a full story.`,
   },
   pace_delivery: {
-    opener: 'Take the candidates original answer and draft 2-3 alternative OPENERS — each leads with the main point in 1 confident sentence. No warmup words. Must sound like a person talking, not writing.',
-    main_point: 'Given the chosen opener, draft 2-3 MAIN BODY versions — 2-3 SHORT sentences each — restating the candidates same content with cleaner structure and zero filler. Conversational, with contractions. Do not invent facts.',
-    landing: 'Draft 2-3 short LANDINGS — 1 sentence each — that close the answer cleanly. Must sound like a natural spoken ending: "That\'s the kind of...", "And that\'s why...", "So yeah, that\'s what I want to keep doing."',
+    opener: 'Take the candidate\'s original answer and draft 3 alternative OPENERS — each leads with the main point in 1 confident sentence. No warmup words. Must sound like a person talking, not writing.',
+    main_point: 'Given the chosen opener, draft 3 MAIN BODY versions — 2-3 SHORT sentences each — restating the candidate\'s same content with cleaner structure and zero filler. Conversational, with contractions. Do not invent facts.',
+    landing: 'Draft 3 short LANDINGS — 1 sentence each — that close the answer cleanly. Must sound like a natural spoken ending: "That\'s the kind of...", "And that\'s why...", "So yeah, that\'s what I want to keep doing."',
   },
   preparation_curiosity: {
-    what_you_know: 'Pull 2-3 short WHAT YOU KNOW statements — 1 sentence each — citing real specifics from the JD/company website. Must sound spoken: "I saw that...", "I noticed...", "One thing that stood out was...".',
-    what_stood_out: 'Given what they know, draft 2-3 WHAT STOOD OUT statements — 1 sentence each. Each must flow naturally after the previous piece with its own transition: "What caught my attention was...", "The reason that stuck with me is...", "That hit home because...". Connect to the candidate\'s resume.',
-    your_question: 'Given the above, draft 2-3 sharp QUESTIONS. Each must include a natural spoken bridge like "So I\'m curious —", "That makes me want to ask —", "I\'d love to know —". Reference the specific company/role context.',
+    what_you_know: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "I saw that [specific detail from JD or company]."
+Pattern B: "I noticed [specific detail] — [brief reason it caught your attention]."
+Pattern C: "One thing that stood out was [specific detail from the JD]."
+Each MUST cite a REAL, specific detail from the JD or company website — not generic praise. One sentence each.`,
+    what_stood_out: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "What caught my attention was [why that detail matters, connected to candidate's experience]."
+Pattern B: "The reason that stuck with me is [connection to their background]."
+Pattern C: "That hit home because [tie to something real in the candidate's resume]."
+Each must flow after the previous piece and connect the company detail to the candidate's own experience. One sentence each.`,
+    your_question: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "So I'm curious — [specific question about the role/team]?"
+Pattern B: "That makes me want to ask — [specific question]?"
+Pattern C: "I'd love to know — [specific question tied to JD context]?"
+Each question must be specific enough that the interviewer can't answer with a generic reply. Reference the company/role context.`,
   },
   role_depth: {
-    context: 'The candidate gave an ORIGINAL ANSWER (below) about their domain work. Your job is to help them restructure it — not invent new content about the target job. Pull 2-3 real CONTEXT lines from what they actually said or from their resume. One sentence each, spoken aloud.',
-    method: 'Given the chosen context (from the ORIGINAL ANSWER), draft 2-3 METHOD statements about what the candidate actually did — tools, frameworks, thinking they applied in THEIR experience, not the target role. "So I went with...", "My approach was...". One sentence each.',
-    tradeoff: 'Given context and method (from the ORIGINAL ANSWER), draft 2-3 TRADEOFF statements about real decisions the candidate weighed in their ACTUAL experience. Do NOT generate tradeoffs about the target job. "The main tradeoff was...", "I had to weigh...".',
-    outcome: 'Given everything above (from the ORIGINAL ANSWER), draft 2-3 OUTCOME statements about what ACTUALLY happened in the candidate\'s experience. Do NOT project outcomes onto the target role. "And it worked —", "That got us...".',
+    context: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "[At/During] [company], [1-sentence scene-setter with the specific project/problem and constraints]."
+Pattern B: "So this was at [company] — [what we were working on and why it mattered]."
+Pattern C: "When I was [role] at [company], [specific situation and the real constraint]."
+Pull from the candidate's ORIGINAL ANSWER first for the story. Fall back to resume if the original answer is too vague. One sentence each.`,
+    method: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "So I went with [specific approach] — [brief why]."
+Pattern B: "My approach was [method], because [reasoning]."
+Pattern C: "What I did was [specific method/tool/framework] — [brief justification]."
+Name specific tools, frameworks, or thinking from the candidate's experience. One sentence each.`,
+    tradeoff: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "The main tradeoff was [option A] vs. [option B] — [why they chose what they chose]."
+Pattern B: "I had to weigh [consideration] against [consideration] — [what they decided]."
+Pattern C: "The hard part was choosing between [option A] and [option B], but [why they went the way they did]."
+Ground in the specific situation. One sentence each.`,
+    outcome: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "And it worked — [specific outcome with numbers if available]."
+Pattern B: "That got us [concrete result]. [Brief lasting impact]."
+Pattern C: "By the end, [what changed because of their approach]."
+Pull outcomes from the original answer or resume. Never invent metrics. One sentence each.`,
   },
   problem_solving: {
-    clarify: 'The candidate gave an ORIGINAL ANSWER (below). Help them restructure it. Draft 2-3 CLARIFY lines based on what they actually needed to figure out in THEIR situation — not the target job. "First thing I needed to figure out was...", "I started by asking...". One sentence each.',
-    approach: 'Given the clarifications (from the ORIGINAL ANSWER), draft 2-3 APPROACH statements about how the candidate actually reasoned through THEIR problem — not a hypothetical about the target role. "From there I...", "So I looked at a few options —". Conversational.',
-    execute: 'Given the approach (from the ORIGINAL ANSWER), draft 2-3 EXECUTE statements about what the candidate ACTUALLY did. Pull from their answer and resume. Do NOT generate actions about the target job. "So I...", "What I actually did was...".',
-    reflect: 'Given everything above (from the ORIGINAL ANSWER), draft 2-3 REFLECT statements. Must be genuine personal reflection on THEIR real experience. "Looking back,...", "If I did it again,...". Honest, not about the target role.',
+    clarify: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "First thing I needed to figure out was [specific question or assumption to test]."
+Pattern B: "I started by asking [specific question] — because [why it mattered]."
+Pattern C: "Before doing anything, I wanted to understand [specific constraint or unknown]."
+Name a real question or assumption the candidate checked first. One sentence each.`,
+    approach: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "From there, I looked at [option A] vs. [option B] — and went with [choice] because [reason]."
+Pattern B: "So I [approach] — mainly because [reasoning]."
+Pattern C: "My thinking was [plan], because [justification]."
+Describe the plan and reasoning. Keep it conversational. One sentence each.`,
+    execute: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "So I [concrete step 1], then [step 2], and [step 3 if applicable]."
+Pattern B: "What I actually did was [specific action] — [who was involved if relevant]."
+Pattern C: "I ended up [concrete steps taken]."
+Concrete steps, not theory. Pull from resume or original answer. One sentence each.`,
+    reflect: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+Pattern A: "Looking back, [what worked or what they'd change]."
+Pattern B: "If I did it again, I'd probably [specific adjustment] — [why]."
+Pattern C: "The biggest lesson was [honest takeaway]."
+Must sound like genuine personal reflection — honest, not scripted. One sentence each.`,
   },
 }
 
@@ -189,11 +289,12 @@ Step task: ${stepGuidance}
 ${tagHint}
 
 Hard rules:${behavioralRule}
+- FOLLOW THE STRUCTURAL PATTERNS EXACTLY. Each step has specific sentence starters and patterns (e.g. "Right now at [company]...", "I was responsible for...", "In the end,..."). Your suggestions MUST use those patterns. The whole point is teaching a framework — the output must match the framework.
 - SPOKEN LANGUAGE ONLY. The candidate will say this out loud in an interview. Write the way a confident, prepared person actually talks — short sentences, contractions, natural pauses. If it sounds like a cover letter or an essay, rewrite it.
 - Use contractions ("I'm", "that's", "didn't", "I've") — nobody says "I have been" or "that is" in conversation.
 - Keep sentences SHORT. Max 15-20 words per sentence. Break long compound sentences into two.
-- Each suggestion must be a COMPLETE, standalone piece — it gets combined with other parts into a full answer, so include a natural transition or opener that makes it flow from the previous piece. Don't start with a bare noun or dangling clause.
-- Pull specific details from the resume and job description provided.
+- Pull specific details from the resume, original answer, and job description provided.
+- ORIGINAL ANSWER IS THE PRIMARY SOURCE for behavioral workshops (STAR, role depth, problem solving). The candidate already told a story — your job is to restructure it into the framework, NOT invent a new story. If the original answer mentions a specific company, project, or situation, USE THAT.
 - NEVER invent companies, titles, metrics, dates, clients, or accomplishments not visible in the context.
 - If the resume is sparse, give options that the candidate can lightly personalize — use bracketed placeholders like [team size] or [project name] only when truly needed.
 - Each suggestion is 1-3 sentences max. Distinct in angle, not slight variations.

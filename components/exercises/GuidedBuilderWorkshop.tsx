@@ -199,31 +199,52 @@ const STEP_APPROACHES: Record<string, string[]> = {
   situation: ['Start with the most high-stakes moment', 'Set the scene with the team and the constraint', 'Lead with the timeline pressure'],
   task: ['Emphasize what was personally mine to own', 'Frame it as the gap no one else was filling', 'Focus on the specific deliverable'],
   action: ['Show the step-by-step moves I made', 'Highlight a judgment call I had to make', 'Focus on how I influenced others'],
-  result: ['Lead with the number or metric', 'Describe the before/after shift', 'Show what it unlocked for the team'],
   present: ['Lead with my current title and focus', 'Start with what I\'m known for right now', 'Open with the type of problems I solve'],
   past: ['Trace the thread from an early role', 'Name the skill that built over time', 'Pick the one experience that shaped me most'],
   future: ['Connect my arc to something specific in the JD', 'Name the natural next step for my growth', 'Show why this role is intentional, not random'],
   observation: ['Pull a detail from the JD that most people miss', 'Name something about the team structure', 'Reference a recent company move or decision'],
   fit: ['Map a specific past project to the observation', 'Show I already solve this kind of problem', 'Name the overlap between my background and the role'],
   timing: ['Explain the career momentum that points here', 'Show why now is different from a year ago', 'Connect a recent learning to the role\'s needs'],
-  recovery: ['Buy time honestly and calmly', 'Reframe the question slightly to buy space', 'Acknowledge the gap and pivot to what I do know'],
   answer: ['Give a direct position in one sentence', 'Start with a clear "yes" or "no" then explain', 'State a principle I\'d follow'],
   reason: ['Ground it in past experience', 'Explain the logic behind the position', 'Name what I\'ve seen go wrong the other way'],
   example: ['Pull from my most recent role', 'Use the story with the clearest outcome', 'Pick the one closest to the interviewer\'s question'],
   opener: ['Lead with the single strongest point', 'Start with a confident declarative sentence', 'Open with the result, then explain how'],
   main_point: ['Keep it to two clean supporting beats', 'Stack facts without editorializing', 'Use short sentences, no filler'],
-  landing: ['Tie it back to the role', 'End with what I took away', 'Close with forward-looking intent'],
   what_you_know: ['Cite a detail from the JD', 'Name a recent company move', 'Reference the team\'s specific focus area'],
   what_stood_out: ['Connect it to my own experience', 'Explain why it felt different from other companies', 'Name what signals quality to me'],
   your_question: ['Ask about how the team works day-to-day', 'Ask about what success looks like in 6 months', 'Ask about the biggest challenge they\'re solving'],
   context: ['Name the project and the real constraint', 'Describe the business problem we were solving', 'Set up the stakes and who depended on it'],
   method: ['Name the specific tools or frameworks I used', 'Explain why I picked this approach over alternatives', 'Describe my process step by step'],
   tradeoff: ['Name what I chose not to do and why', 'Explain the risk I accepted', 'Show the constraint that forced the decision'],
-  outcome: ['Lead with the measurable result', 'Describe the before/after change', 'Show what it meant for the team or customer'],
   clarify: ['Name the assumptions I tested first', 'List the questions I asked before acting', 'Describe the constraint I needed to understand'],
   approach: ['Explain the options I considered', 'Walk through my reasoning for picking this path', 'Name who I involved and why'],
   execute: ['Describe the concrete steps in order', 'Explain what I built or changed', 'Show how I coordinated with others'],
-  reflect: ['Name what I\'d do differently', 'Describe the biggest lesson', 'Share what worked better than expected'],
+}
+
+const STEP_APPROACH_QUESTION: Record<string, string> = {
+  situation: 'How do you want to set the scene?',
+  context: 'How do you want to set the scene?',
+  present: 'How do you want to set the scene?',
+  task: 'How do you frame your ownership?',
+  action: 'What angle shows your work best?',
+  execute: 'What angle shows your work best?',
+  method: 'What angle shows your work best?',
+  fit: 'What makes the connection?',
+  timing: 'What makes the connection?',
+  answer: 'What direction do you lean?',
+  observation: 'What caught your eye?',
+  what_you_know: 'What caught your eye?',
+  what_stood_out: 'What felt different?',
+  opener: 'How do you lead?',
+  main_point: 'How do you lead?',
+  past: 'What thread do you pull?',
+  future: 'What thread do you pull?',
+  approach: 'How do you frame your thinking?',
+  clarify: 'How do you frame your thinking?',
+  your_question: 'What do you want to know?',
+  reason: 'What direction do you lean?',
+  example: 'What direction do you lean?',
+  tradeoff: 'How do you frame your thinking?',
 }
 
 function cleanInput(value: string) {
@@ -243,6 +264,11 @@ function assembleAnswer(config: WorkshopConfig, choices: Record<string, string>)
       const value = cleanInput(choices[step.key] || '')
       if (!value) return ''
       if (!step.connector) return value
+      const connectorLower = step.connector.toLowerCase()
+      const valueLower = value.toLowerCase()
+      if (valueLower.startsWith(connectorLower)) {
+        return step.connector + ' ' + value.slice(step.connector.length).trimStart()
+      }
       const lower = value.charAt(0).toLowerCase() + value.slice(1)
       return `${step.connector} ${lower}`
     })
@@ -334,6 +360,7 @@ export default function GuidedBuilderWorkshop({
             stepKey: activeStep.key,
             previousChoices: choices,
             tags: selectedTags,
+            connector: activeStep.connector || '',
           }),
         })
         if (!response.ok) throw new Error('suggest_failed')
@@ -772,11 +799,10 @@ export default function GuidedBuilderWorkshop({
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-                  {/* Mini approach picker — gives ownership before suggestions load */}
                   {!stepApproachPicked[activeStep.key] && STEP_APPROACHES[activeStep.key] ? (
                     <div className="space-y-3">
                       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
-                        What&apos;s your instinct?
+                        {STEP_APPROACH_QUESTION[activeStep.key] || "What's your instinct?"}
                       </p>
                       <p className="text-xs leading-5 text-slate-600">
                         Pick the approach that feels most natural. We&apos;ll shape your options around it.

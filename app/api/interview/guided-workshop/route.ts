@@ -163,6 +163,7 @@ export async function POST(request: NextRequest) {
   const tags = Array.isArray(body.tags)
     ? body.tags.map((t: unknown) => String(t || '').trim()).filter(Boolean).slice(0, 8)
     : []
+  const connectorPrefix = typeof body.connector === 'string' ? body.connector.trim() : ''
 
   if (!workshopType || !STEP_GUIDANCE[workshopType] || !STEP_GUIDANCE[workshopType][stepKey]) {
     return NextResponse.json({ error: 'Invalid workshopType or stepKey' }, { status: 400 })
@@ -190,7 +191,7 @@ Hard rules:
 - If the resume is sparse, give options that the candidate can lightly personalize — use bracketed placeholders like [team size] or [project name] only when truly needed.
 - Each suggestion is 1-3 sentences max. Distinct in angle, not slight variations.
 - Do not use corporate cliches: "leveraged", "spearheaded", "passionate about", "team player".
-- Do not start suggestions with the same word as another suggestion in the set.
+- Do not start suggestions with the same word as another suggestion in the set.${connectorPrefix ? `\n- The UI will prepend the phrase "${connectorPrefix}" before the candidate's chosen text. Do NOT start any suggestion with that phrase or similar wording — jump straight into the substance so it reads cleanly after the connector.` : ''}
 - Return ONLY valid JSON.`
 
   const userMessage = JSON.stringify({
@@ -202,6 +203,7 @@ Hard rules:
     candidate_resume: resumeText || '(resume not available — use generic patterns)',
     job_description: jobDescription || '(JD not available — use general best practices)',
     company_website: companyWebsite || '',
+    connector_prefix: connectorPrefix || '(none — suggestion will be used as-is)',
     output_shape: {
       suggestions: ['option 1 text', 'option 2 text', 'option 3 text'],
       hint: 'One sentence telling the candidate what to look for when picking, or what makes one choice stronger than another.',

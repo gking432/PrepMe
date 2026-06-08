@@ -15,12 +15,9 @@ import {
   Lock,
   Phone,
   Play,
-  RotateCcw,
-  Sparkles,
-  TrendingUp,
   TrendingDown,
+  TrendingUp,
   Users,
-  X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import PurchaseFlow from '@/components/PurchaseFlow'
@@ -298,10 +295,13 @@ export default function ProcessSpinePage() {
     if (st?.sessionId) router.push(`/interview/practice/${st.sessionId}`)
   }
 
-  const handleNodeClick = (stage: StageKey, status: NodeStatus) => {
-    if (status === 'complete') setSelectedStage(stage)
-    else if (status === 'locked') setPurchaseStage(stage)
-    else launchStage(stage)
+  const handleNodeClick = (stage: StageKey) => {
+    const status = statusOf(stage)
+    if (status === 'locked') {
+      setPurchaseStage(stage)
+      return
+    }
+    setSelectedStage(stage)
   }
 
   if (loading) {
@@ -332,15 +332,13 @@ export default function ProcessSpinePage() {
 
   const { statusOf, completedCount, nextStage, mostRecentStage } = computed
   const title = [process.positionTitle, process.companyName].filter(Boolean).join(' at ') || 'Interview Process'
-  const nextStatus = nextStage ? statusOf(nextStage) : null
-  const completedStages = STAGE_ORDER.filter((stage) => process.stages[stage].done)
   const jobDescriptionPreview = previewText(process.jobDescriptionText)
   const resumePreview = previewText(process.resumeText)
-  const mostRecentData = mostRecentStage ? process.stages[mostRecentStage] : null
-  const mostRecentMeta = mostRecentStage ? STAGE_META[mostRecentStage] : null
-  const avgScore = completedStages.length > 0
-    ? completedStages.reduce((sum, s) => sum + (process.stages[s].score || 0), 0) / completedStages.length
-    : null
+
+  const activeStage = selectedStage || mostRecentStage || nextStage || STAGE_ORDER[0]
+  const activeSt = process.stages[activeStage]
+  const activeMeta = STAGE_META[activeStage]
+  const activeStatus = statusOf(activeStage)
 
   return (
     <AppChrome active="preps" maxWidth="max-w-7xl">
@@ -374,25 +372,23 @@ export default function ProcessSpinePage() {
                     const meta = STAGE_META[stage]
                     const st = process.stages[stage]
                     const status = statusOf(stage)
-                    const isNext = stage === nextStage
+                    const isActive = stage === activeStage
                     const score = fmtScore(st.score)
 
                     return (
                       <button
                         key={stage}
                         type="button"
-                        onClick={() => handleNodeClick(stage, status)}
+                        onClick={() => handleNodeClick(stage)}
                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
-                          selectedStage === stage
-                            ? 'bg-slate-100 ring-1 ring-slate-300'
-                            : isNext ? 'bg-accent-50 ring-1 ring-accent-200' : 'hover:bg-slate-50'
+                          isActive
+                            ? 'bg-accent-50 ring-1 ring-accent-200'
+                            : 'hover:bg-slate-50'
                         }`}
                       >
                         <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${
                           status === 'complete'
                             ? 'bg-emerald-100 text-emerald-600'
-                            : isNext
-                            ? 'bg-accent-100 text-accent-600'
                             : status === 'locked'
                             ? 'bg-slate-100 text-slate-400'
                             : 'bg-slate-100 text-slate-500'
@@ -400,18 +396,15 @@ export default function ProcessSpinePage() {
                           {status === 'complete' ? <Check className="h-4 w-4" /> : status === 'locked' ? <Lock className="h-3.5 w-3.5" /> : <meta.icon className="h-4 w-4" />}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className={`text-sm font-semibold ${isNext ? 'text-accent-700' : 'text-slate-800'}`}>{meta.name}</p>
+                          <p className={`text-sm font-semibold ${isActive ? 'text-accent-700' : 'text-slate-800'}`}>{meta.name}</p>
                           {status === 'complete' && score && (
                             <p className="text-xs font-medium text-emerald-600">{score}/10</p>
                           )}
                           {status === 'locked' && (
                             <p className="text-xs text-slate-400">{meta.price}</p>
                           )}
-                          {isNext && status !== 'complete' && (
-                            <p className="text-xs font-medium text-accent-600">Up next</p>
-                          )}
                         </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                        <ChevronRight className={`h-4 w-4 shrink-0 ${isActive ? 'text-accent-400' : 'text-slate-300'}`} />
                       </button>
                     )
                   })}
@@ -448,282 +441,218 @@ export default function ProcessSpinePage() {
           </div>
         </aside>
 
-        {/* ── Main content ── */}
-        <div className="min-w-0 space-y-6">
+        {/* ── Main content — driven by activeStage ── */}
+        <div className="min-w-0 space-y-5">
 
-          {/* Mobile: back link + title + progress */}
+          {/* Mobile: back link + title */}
           <div className="lg:hidden">
             <Link href="/dashboard" className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-slate-700">
               <ArrowLeft className="h-4 w-4" /> Back to interviews
             </Link>
             <h1 className="text-2xl font-black tracking-tight text-slate-900">{title}</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {completedCount === 0
-                ? 'Ready to start your first round'
-                : completedCount === 4
-                ? 'All four rounds complete — you\'re ready'
-                : `${completedCount} of 4 rounds complete`}
-            </p>
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                <span>Progress</span>
-                <span>{completedCount}/4</span>
-              </div>
-              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-600 transition-all duration-500" style={{ width: `${(completedCount / 4) * 100}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Hero: Most recent session with title integrated ── */}
-          {mostRecentStage && mostRecentData && mostRecentMeta ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className={`bg-gradient-to-r ${mostRecentMeta.gradient} px-6 py-5 sm:px-8 sm:py-6`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h1 className="hidden text-lg font-bold text-white/80 lg:block">{title}</h1>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/50 lg:mt-3">Latest result</p>
-                    <h2 className="mt-1 text-xl font-black text-white sm:text-2xl">{mostRecentMeta.name}</h2>
-                    {mostRecentData.completedAt && (
-                      <p className="mt-1 text-xs font-medium text-white/50">{timeAgo(mostRecentData.completedAt)}</p>
-                    )}
-                  </div>
-                  {mostRecentData.score != null && (
-                    <div className="flex flex-col items-center">
-                      <ScoreRing score={mostRecentData.score} size={80} strokeWidth={6} />
-                      <span className="mt-1 text-[11px] font-bold text-white/50">out of 10</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="px-6 py-4 sm:px-8">
-                {(() => {
-                  const smart = getSmartCta(mostRecentStage)
-                  return (
-                    <div className="space-y-3">
-                      {smart && (
-                        <button
-                          type="button"
-                          onClick={smart.action}
-                          className={`group flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-bold text-white transition ${
-                            smart.style === 'accent'
-                              ? 'bg-accent-600 hover:bg-accent-700'
-                              : 'bg-slate-900 hover:bg-slate-800'
-                          }`}
-                        >
-                          {smart.label}
-                          <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-                        </button>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openFeedback(mostRecentStage)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                        >
-                          Feedback
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openPractice(mostRecentStage)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                        >
-                          Practice
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => launchStage(mostRecentStage)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          Retake
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-            </div>
-          ) : (
-            /* No completed stages yet — show title in a gradient header */
-            <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="bg-gradient-to-r from-accent-500 to-accent-700 px-6 py-6 sm:px-8">
-                <h1 className="hidden text-lg font-bold text-white/80 lg:block">{title}</h1>
-                <p className="mt-1 hidden text-sm text-white/50 lg:block">Ready to start your first round</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Next step CTA ── */}
-          {nextStage && (
-            <button
-              type="button"
-              onClick={() => handleNodeClick(nextStage, nextStatus as NodeStatus)}
-              className="group flex w-full items-center gap-4 overflow-hidden rounded-2xl border-2 border-dashed border-accent-200 bg-accent-50/50 p-5 text-left transition-all hover:border-accent-300 hover:bg-accent-50 sm:p-6"
-            >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 text-white shadow-lg shadow-accent-500/20">
-                {nextStatus === 'locked' ? <Lock className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs font-bold uppercase tracking-widest text-accent-600">Next up</p>
-                  {nextStatus === 'locked' && STAGE_META[nextStage].price && (
-                    <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700">
-                      {STAGE_META[nextStage].price}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-lg font-black text-slate-900">{nextStatus === 'locked' ? `Unlock ${STAGE_META[nextStage].name}` : `Start ${STAGE_META[nextStage].name}`}</p>
-                <p className="mt-0.5 text-sm text-slate-500">{STAGE_META[nextStage].blurb}</p>
-              </div>
-              <ArrowRight className="h-5 w-5 shrink-0 text-accent-400 transition-transform group-hover:translate-x-1" />
-            </button>
-          )}
-
-          {!nextStage && (
-            <div className="flex items-center gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-lg font-black text-emerald-900">Every round complete</p>
-                <p className="text-sm text-emerald-700">You&apos;ve done the work. Go get the offer.</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Stats row ── */}
-          {completedCount > 0 && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
-                <p className="text-2xl font-black text-slate-900">{completedCount}</p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">Rounds done</p>
-              </div>
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
-                <p className="text-2xl font-black text-slate-900">{4 - completedCount}</p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">Remaining</p>
-              </div>
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
-                <p className={`text-2xl font-black ${avgScore && avgScore >= 7 ? 'text-emerald-600' : avgScore && avgScore >= 5 ? 'text-amber-600' : 'text-slate-900'}`}>
-                  {avgScore ? fmtScore(avgScore) : '-'}
-                </p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">Avg score</p>
-              </div>
-              <div className="rounded-xl border border-slate-200/80 bg-white p-4 text-center">
-                <p className="text-2xl font-black text-slate-900">
-                  {completedStages.reduce((sum, s) => sum + process.stages[s].attempts, 0)}
-                </p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-500">Total attempts</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── All stages grid ── */}
-          <div>
-            <h2 className="mb-4 text-lg font-black text-slate-900">All rounds</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+            {/* Mobile stage picker */}
+            <div className="mt-4 flex gap-1.5 overflow-x-auto">
               {STAGE_ORDER.map((stage) => {
-                const meta = STAGE_META[stage]
                 const st = process.stages[stage]
                 const status = statusOf(stage)
-                const isNext = stage === nextStage
-                const score = fmtScore(st.score)
-                const Icon = meta.icon
-
+                const isActive = stage === activeStage
                 return (
                   <button
                     key={stage}
                     type="button"
-                    onClick={() => handleNodeClick(stage, status)}
-                    className={`group relative flex items-start gap-4 rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${
-                      status === 'complete'
-                        ? 'border-emerald-200/80 bg-white'
-                        : isNext
-                        ? 'border-accent-200 bg-white shadow-sm'
-                        : status === 'locked'
-                        ? 'border-slate-200/60 bg-slate-50/50'
-                        : 'border-slate-200/80 bg-white'
+                    onClick={() => handleNodeClick(stage)}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                      isActive
+                        ? 'bg-accent-600 text-white'
+                        : status === 'complete'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-slate-100 text-slate-500'
                     }`}
                   >
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-                      status === 'complete'
-                        ? `bg-gradient-to-br ${meta.gradient} text-white`
-                        : isNext
-                        ? 'bg-accent-100 text-accent-600'
-                        : status === 'locked'
-                        ? 'bg-slate-100 text-slate-400'
-                        : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {status === 'complete' ? <Check className="h-5 w-5" /> : status === 'locked' ? <Lock className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-base font-bold text-slate-900">{meta.name}</p>
-                        {meta.optional && (
-                          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Opt</span>
-                        )}
-                      </div>
-
-                      {status === 'complete' && (
-                        <div className="mt-1 flex items-center gap-3">
-                          <span className={`text-sm font-black ${st.score && st.score >= 7 ? 'text-emerald-600' : st.score && st.score >= 5 ? 'text-amber-600' : 'text-red-500'}`}>
-                            {score}/10
-                          </span>
-                          {st.attempts > 1 && (
-                            <span className="text-xs text-slate-400">{st.attempts} attempts</span>
-                          )}
-                          {st.completedAt && (
-                            <span className="text-xs text-slate-400">{timeAgo(st.completedAt)}</span>
-                          )}
-                        </div>
-                      )}
-                      {status === 'complete' && (() => {
-                        const smart = getSmartCta(stage)
-                        return smart ? (
-                          <div className="mt-2">
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e) => { e.stopPropagation(); smart.action() }}
-                              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); smart.action() } }}
-                              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition ${
-                                smart.style === 'accent'
-                                  ? 'bg-accent-600 text-white hover:bg-accent-700'
-                                  : 'bg-slate-900 text-white hover:bg-slate-800'
-                              }`}
-                            >
-                              {smart.label}
-                              <ArrowRight className="h-3 w-3" />
-                            </span>
-                          </div>
-                        ) : null
-                      })()}
-                      {status === 'locked' && (
-                        <p className="mt-1 text-sm text-slate-400">{meta.blurb}</p>
-                      )}
-                      {status === 'locked' && meta.price && (
-                        <p className="mt-1.5 text-xs font-bold text-accent-600">Unlock for {meta.price}</p>
-                      )}
-                      {status === 'available' && !isNext && (
-                        <p className="mt-1 text-sm text-slate-500">{meta.blurb}</p>
-                      )}
-                      {isNext && status !== 'complete' && (
-                        <>
-                          <p className="mt-1 text-sm text-slate-500">{meta.blurb}</p>
-                          <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-accent-600">
-                            Start round <ArrowRight className="h-3 w-3" />
-                          </p>
-                        </>
-                      )}
-                    </div>
+                    {status === 'complete' && <Check className="h-3 w-3" />}
+                    {status === 'locked' && <Lock className="h-3 w-3" />}
+                    {STAGE_META[stage].shortName}
+                    {st.score != null && <span className="ml-0.5">{fmtScore(st.score)}</span>}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* ── Mobile: Details buttons ── */}
+          {/* ── Stage header ── */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+            <div className={`bg-gradient-to-r ${activeMeta.gradient} px-6 py-5 sm:px-8 sm:py-6`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="hidden text-lg font-bold text-white/80 lg:block">{title}</h1>
+                  <h2 className="mt-1 text-xl font-black text-white sm:text-2xl lg:mt-3">{activeMeta.name}</h2>
+                  {activeStatus === 'complete' && activeSt.completedAt && (
+                    <p className="mt-1 text-xs font-medium text-white/50">
+                      {timeAgo(activeSt.completedAt)}{activeSt.attempts > 1 ? ` · ${activeSt.attempts} attempts` : ''}
+                    </p>
+                  )}
+                  {activeStatus !== 'complete' && (
+                    <p className="mt-1 text-sm text-white/60">{activeMeta.blurb}</p>
+                  )}
+                </div>
+                {activeStatus === 'complete' && activeSt.score != null && (
+                  <div className="flex flex-col items-center">
+                    <ScoreRing score={activeSt.score} size={80} strokeWidth={6} />
+                    <span className="mt-1 text-[11px] font-bold text-white/50">out of 10</span>
+                  </div>
+                )}
+                {activeStatus === 'locked' && (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
+                    <Lock className="h-7 w-7 text-white/60" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Completed stage: flow + results ── */}
+          {activeStatus === 'complete' && (() => {
+            const smart = getSmartCta(activeStage)
+            const flowSteps = [
+              { label: 'Interview', done: true },
+              { label: 'Review feedback', done: feedbackSeen[activeStage], action: () => openFeedback(activeStage) },
+              { label: 'Practice', done: practiceCount > 0, action: () => openPractice(activeStage) },
+              { label: 'Retake', done: activeSt.attempts > 1, action: () => launchStage(activeStage) },
+            ]
+            const currentStepIdx = flowSteps.findIndex((s) => !s.done)
+
+            return (
+              <>
+                {/* Flow progress */}
+                <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
+                  <p className="mb-4 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Your progress</p>
+
+                  <div className="flex items-start">
+                    {flowSteps.map((step, i) => {
+                      const isCurrent = i === currentStepIdx
+                      const isDone = step.done
+                      return (
+                        <div key={step.label} className="flex flex-1 flex-col items-center">
+                          {/* Connector + dot */}
+                          <div className="flex w-full items-center">
+                            {i > 0 && (
+                              <div className={`h-0.5 flex-1 ${isDone || isCurrent ? 'bg-accent-400' : 'bg-slate-200'}`} />
+                            )}
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                              isDone
+                                ? 'bg-emerald-500 text-white'
+                                : isCurrent
+                                ? 'bg-accent-600 text-white ring-4 ring-accent-100'
+                                : 'bg-slate-200 text-slate-400'
+                            }`}>
+                              {isDone ? <Check className="h-4 w-4" /> : i + 1}
+                            </div>
+                            {i < flowSteps.length - 1 && (
+                              <div className={`h-0.5 flex-1 ${isDone ? 'bg-emerald-400' : 'bg-slate-200'}`} />
+                            )}
+                          </div>
+                          <p className={`mt-2 text-center text-xs font-semibold ${
+                            isDone ? 'text-emerald-600' : isCurrent ? 'text-accent-700' : 'text-slate-400'
+                          }`}>
+                            {step.label}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Single CTA */}
+                  {smart && (
+                    <button
+                      type="button"
+                      onClick={smart.action}
+                      className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-accent-600 px-5 py-3.5 text-base font-bold text-white transition hover:bg-accent-700"
+                    >
+                      {smart.label}
+                      <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Strengths & weaknesses */}
+                {(activeSt.strengths.length > 0 || activeSt.weaknesses.length > 0) && (
+                  <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm sm:p-6">
+                    {activeSt.strengths.length > 0 && (
+                      <div>
+                        <div className="mb-2 flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-emerald-500" />
+                          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Strengths</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          {activeSt.strengths.map((s) => (
+                            <div key={s.criterion} className="flex items-center justify-between rounded-lg bg-emerald-50/60 px-3 py-2">
+                              <span className="text-sm font-medium text-slate-700">{s.criterion}</span>
+                              <span className="text-sm font-black text-emerald-600">{fmtScore(s.score)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {activeSt.weaknesses.length > 0 && (
+                      <div className={activeSt.strengths.length > 0 ? 'mt-5' : ''}>
+                        <div className="mb-2 flex items-center gap-2">
+                          <TrendingDown className="h-4 w-4 text-red-400" />
+                          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Areas to improve</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          {activeSt.weaknesses.map((w) => (
+                            <div key={w.criterion} className="flex items-center justify-between rounded-lg bg-red-50/60 px-3 py-2">
+                              <span className="text-sm font-medium text-slate-700">{w.criterion}</span>
+                              <span className="text-sm font-black text-red-500">{fmtScore(w.score)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )
+          })()}
+
+          {/* ── Available stage: start CTA ── */}
+          {activeStatus === 'available' && (
+            <div className="rounded-2xl border border-slate-200/60 bg-white p-6 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 text-white shadow-lg shadow-accent-500/20">
+                <Play className="h-7 w-7" />
+              </div>
+              <p className="mt-4 text-lg font-black text-slate-900">Ready to start</p>
+              <p className="mt-1 text-sm text-slate-500">{activeMeta.blurb}</p>
+              <button
+                type="button"
+                onClick={() => launchStage(activeStage)}
+                className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-8 py-3.5 text-base font-bold text-white transition hover:bg-accent-700"
+              >
+                Start {activeMeta.name}
+                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+              </button>
+            </div>
+          )}
+
+          {/* ── Locked stage: unlock CTA ── */}
+          {activeStatus === 'locked' && (
+            <div className="rounded-2xl border border-slate-200/60 bg-white p-6 text-center shadow-sm">
+              <p className="text-lg font-black text-slate-900">Unlock {activeMeta.name}</p>
+              <p className="mt-1 text-sm text-slate-500">{activeMeta.blurb}</p>
+              {activeMeta.price && (
+                <button
+                  type="button"
+                  onClick={() => setPurchaseStage(activeStage)}
+                  className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-8 py-3.5 text-base font-bold text-white transition hover:bg-accent-700"
+                >
+                  Unlock for {activeMeta.price}
+                  <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Mobile: Details ── */}
           <div className="flex gap-3 lg:hidden">
             <button
               type="button"
@@ -745,146 +674,6 @@ export default function ProcessSpinePage() {
 
         </div>
       </div>
-
-      {/* Stage summary panel */}
-      {selectedStage && process.stages[selectedStage].done && (() => {
-        const stage = selectedStage
-        const st = process.stages[stage]
-        const meta = STAGE_META[stage]
-        const smart = getSmartCta(stage)
-        const score = st.score ?? 0
-        const tone = score >= 7 ? 'emerald' : score >= 5 ? 'amber' : 'red'
-
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedStage(null)}>
-            <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              {/* Header with score */}
-              <div className={`relative bg-gradient-to-r ${meta.gradient} px-6 pb-6 pt-5`}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedStage(null)}
-                  className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white/80 transition hover:bg-white/30"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <p className="text-xs font-bold uppercase tracking-widest text-white/50">Stage summary</p>
-                <h3 className="mt-1 text-xl font-black text-white">{meta.name}</h3>
-                {st.completedAt && (
-                  <p className="mt-0.5 text-xs text-white/50">{timeAgo(st.completedAt)} · {st.attempts} attempt{st.attempts !== 1 ? 's' : ''}</p>
-                )}
-                <div className="mt-4 flex items-center gap-5">
-                  <ScoreRing score={score} size={72} strokeWidth={5} />
-                  <div>
-                    <p className="text-sm font-bold text-white/80">Overall score</p>
-                    <p className="text-3xl font-black text-white">{fmtScore(score)}<span className="text-lg text-white/50">/10</span></p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-5 px-6 py-5">
-                {/* Flow status */}
-                <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3">
-                  {[
-                    { label: 'Feedback', done: feedbackSeen[stage] },
-                    { label: 'Practice', done: practiceCount > 0 },
-                    { label: 'Retake', done: st.attempts > 1 },
-                  ].map((step, i) => (
-                    <div key={step.label} className="flex flex-1 items-center gap-2">
-                      {i > 0 && <div className="h-px w-3 bg-slate-200" />}
-                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
-                        step.done
-                          ? 'bg-emerald-100 text-emerald-600'
-                          : 'bg-slate-200 text-slate-400'
-                      }`}>
-                        {step.done ? <Check className="h-3 w-3" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
-                      </div>
-                      <span className={`text-xs font-semibold ${step.done ? 'text-slate-700' : 'text-slate-400'}`}>{step.label}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Strengths */}
-                {st.strengths.length > 0 && (
-                  <div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-emerald-500" />
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Strengths</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      {st.strengths.map((s) => (
-                        <div key={s.criterion} className="flex items-center justify-between rounded-lg bg-emerald-50/60 px-3 py-2">
-                          <span className="text-sm font-medium text-slate-700">{s.criterion}</span>
-                          <span className="text-sm font-black text-emerald-600">{fmtScore(s.score)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Weaknesses */}
-                {st.weaknesses.length > 0 && (
-                  <div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-red-400" />
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Areas to improve</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      {st.weaknesses.map((w) => (
-                        <div key={w.criterion} className="flex items-center justify-between rounded-lg bg-red-50/60 px-3 py-2">
-                          <span className="text-sm font-medium text-slate-700">{w.criterion}</span>
-                          <span className="text-sm font-black text-red-500">{fmtScore(w.score)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Smart CTA */}
-                {smart && (
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedStage(null); smart.action() }}
-                    className={`group flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-bold text-white transition ${
-                      smart.style === 'accent'
-                        ? 'bg-accent-600 hover:bg-accent-700'
-                        : 'bg-slate-900 hover:bg-slate-800'
-                    }`}
-                  >
-                    {smart.label}
-                    <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-                  </button>
-                )}
-
-                {/* Secondary actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedStage(null); openFeedback(stage) }}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Feedback
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedStage(null); openPractice(stage) }}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Practice
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedStage(null); launchStage(stage) }}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Retake
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Details modal */}
       {viewingModal && (

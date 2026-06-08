@@ -22,6 +22,7 @@ import {
 import { getImprovementTipForCriterion, getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
 import GuidedBuilderWorkshop from '@/components/exercises/GuidedBuilderWorkshop'
 import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
+import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
 
@@ -756,6 +757,17 @@ function WorkshopSlide({
     if (workshopType === 'star_proof') {
       return (
         <StarStoryBuilder
+          sessionId={sessionId}
+          originalQuestion={questionText || undefined}
+          originalAnswer={originalAnswerText || undefined}
+          onComplete={onWorkshopComplete}
+        />
+      )
+    }
+
+    if (workshopType === 'professional_story') {
+      return (
+        <ProfessionalStoryBuilder
           sessionId={sessionId}
           originalQuestion={questionText || undefined}
           originalAnswer={originalAnswerText || undefined}

@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, ChevronRight, Lock, Mic, RotateCcw, Sparkles, 
 import { getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-bundles'
 import GuidedBuilderWorkshop, { type WorkshopType } from '@/components/exercises/GuidedBuilderWorkshop'
 import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
+import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 
 interface Evidence {
   question?: string
@@ -384,6 +385,13 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
           <div className="min-h-0 flex-1 overflow-hidden p-2 sm:p-4">
             {activeNode.workshopType === 'star_proof' ? (
               <StarStoryBuilder
+                sessionId={sessionId}
+                originalQuestion={activeNode.question || undefined}
+                originalAnswer={activeNode.originalAnswer || undefined}
+                onComplete={handleWorkshopComplete}
+              />
+            ) : activeNode.workshopType === 'professional_story' ? (
+              <ProfessionalStoryBuilder
                 sessionId={sessionId}
                 originalQuestion={activeNode.question || undefined}
                 originalAnswer={activeNode.originalAnswer || undefined}

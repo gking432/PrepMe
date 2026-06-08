@@ -56,14 +56,14 @@ hooks/
 - Walkthrough persistence via localStorage
 
 ### Active Branch
-`claude/read-project-docs-E36ZX` — current session work
+`claude/bold-planck-rRxBf` — current session work
 
 ### What Needs Work Next
-1. End-to-end test on `?preview=mock` — verify every flow state renders correctly
-2. Wire LessonRoadmap + practice for HM/CF/FR stages (currently only HR screen)
-3. Custom Preppi SVG illustration (currently using basic SVG) — user will build in Figma
-4. XP/badge persistence to Supabase
-5. Streak system (lower priority)
+1. Test end-to-end on `?preview=mock` — verify summary screen, smart CTAs, workshops
+2. Wire CF/FR stages into workshop builder (HM done, HR done)
+3. Retake display — take 1 vs retake on process page / summary screen
+4. Custom Preppi SVG illustration (currently using basic SVG) — user will build in Figma
+5. XP/badge persistence to Supabase
 6. Test voice re-answer scoring end-to-end with real microphone
 
 ---
@@ -252,3 +252,28 @@ The post-interview experience should feel like **Duolingo for interview prep**:
 **Why this change**: Template workshops (multiple choice, drag-to-sort) taught generic patterns but didn't help users build *their specific better answer*. Haiku rewrites showed users what a better answer looked like, but reading isn't practicing. The new builder is interactive enough to feel like doing, grounded enough to teach the right thing, and cheap enough to ship (~$0.02-0.04 per interview total for 3-4 workshops).
 
 **Next session should**: Test end-to-end on `?preview=mock` and real HR interview. Verify Haiku suggestions feel personalized to actual resumes. Consider deleting unused workshop components. Wire HM/CF/FR stages into the new builder.
+
+### 2026-06-08 (Session 6)
+- **Practice path data loading fix**: Changed `select('id, stage, structured_transcript...')` to `select('*')` because Supabase rejects queries with non-existent column names. Same for feedback query.
+- **Practice entry points moved**: Removed `practice_handoff` from walkthrough deck. Practice is now accessible from: static feedback view (after walkthrough), process page, and dashboard.
+- **HM practice support**: Updated HM grader to emit `practice_focus_id` on every signal. Added 2 new workshop types: `role_depth` (Context·Method·Tradeoff·Outcome) and `problem_solving` (Clarify·Approach·Execute·Reflect). Extended `COACHING_BUCKET_TO_WORKSHOP` mappings in HrFeedbackDeck and PracticePath.
+- **Workshop flip card examples**: Added generic, broadly applicable examples (in quotes) to all steps across all 8 workshop types. Flip card height auto-adjusts when example is present.
+- **Approach picker ("What's your instinct?")**: Added a mini selection before each build step — 3 approach options per step key. Gives user ownership before suggestions load. Data tracked but not used for generation (intentional).
+- **Smart CTAs on process page**: Hero card + per-stage "All rounds" cards now show contextual primary CTA based on flow state:
+  - Feedback not viewed → "View feedback" (primary)
+  - Feedback viewed but no practice → "Start practicing" (accent)
+  - Practice done → "Retake interview" (primary)
+- **Stage summary screen**: Clicking a stage in the sidebar or "All rounds" grid opens a summary modal showing: score ring, strengths/weaknesses from rubric, flow progress indicator (feedback → practice → retake), smart CTA, and secondary action buttons. Previously went directly to feedback.
+- **HrFeedbackDeck CTA fix**: "Start Practicing" is now the primary CTA on the deck's unlock-next-stage screen (was "Start [Next Stage] Round").
+
+### Active Branch
+`claude/bold-planck-rRxBf`
+
+### What Needs Work Next
+1. Test end-to-end on `?preview=mock` — verify summary screen, smart CTAs, workshops with examples + approach picker
+2. Test on a real HR interview — verify Haiku suggestions feel personalized
+3. Wire CF/FR stages into the workshop builder (HM is done)
+4. Retake display — how to show take 1 vs retake on the process page / summary screen
+5. Consider deleting unused old workshop components (StarProofWorkshop, etc.)
+6. Custom Preppi SVG illustration (user will build in Figma)
+7. XP/badge persistence to Supabase

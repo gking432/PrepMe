@@ -289,9 +289,9 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
 `claude/bold-planck-rRxBf`
 
 ### What Needs Work Next (Priority Order)
-1. **Test STAR Story Builder end-to-end**: Verify the full flow (story type → setting → situation → ... → generated output) works with real data and produces good answers. This is the litmus test — if it works, apply same pattern to other workshops. If not, scrap workshops and focus on grading + recommendations.
-2. **If STAR works well**: Design similar card-and-chip builders for role_depth, problem_solving, and potentially other workshop types
-3. **Test non-behavioral workshops** (`professional_story`, `career_alignment`, `pace_delivery`, `preparation_curiosity`) for quality with the GuidedBuilderWorkshop
+1. **Test STAR Story Builder end-to-end**: Verify the full flow works with real data and produces good answers.
+2. **Test Professional Story Builder end-to-end**: Verify resume/JD fetch, Haiku generation, alternate angle regeneration.
+3. **If builders work well**: Design similar purpose-built builders for remaining workshop types (role_depth, problem_solving, career_alignment, handling_uncertainty, pace_delivery, preparation_curiosity).
 4. **Wire CF/FR stages into workshop system** (HR and HM are done)
 5. Retake display — how to show take 1 vs retake on process page
 6. Consider deleting unused old workshop components (StarProofWorkshop, etc.)
@@ -309,3 +309,17 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
 - **Wired into both entry points**: HrFeedbackDeck and PracticePath now route `star_proof` to StarStoryBuilder instead of GuidedBuilderWorkshop
 - **Keeps intro + method flip cards**: The STAR framework teaching (why it matters, flip each card) is preserved. Everything after that is the new guided flow.
 - **Architecture**: This is a test run. If the card-and-chip approach works well for STAR, the same pattern will be applied to other workshop types. If not, workshops may be scrapped entirely in favor of grading + recommendations only.
+
+### 2026-06-08 (Session 8)
+- **Professional Story Builder (MVP)**: Built a purpose-built "Tell me about yourself" workshop using Present → Past → Future structure.
+  - **One API call by default**: Resume + JD + positioning + tone + length + avoidances → single Haiku call → full answer + PPF breakdown + 3 narrative angles + shorter/conversational versions + opening/closing lines + coaching notes
+  - **8 narrative angle types**: function_based, industry_based, skill_cluster, problem_solver, progression, transition, mission_fit, operator — AI generates custom labels for each
+  - **Optional second call**: Only fires if user clicks "Try this" on an alternate angle (with confirmation gate)
+  - **Rich output**: Tabbed answer view (full/shorter/casual), copy button, PPF color-coded breakdown, recommended + alternate angles, opening/closing line options, why-it-works, watch-outs, follow-up questions, collapsible resume/JD analysis
+  - **9 positioning options**: currently_in_role, job_searching, independent, building, transitioning, recently_left, student/grad, returning, other
+  - **6 tone options**: natural_confident, polished_professional, warm_conversational, direct_concise, executive, early_career
+  - **3 length options**: 30s (70-100 words), 60s (130-180 words), 90s (190-260 words)
+  - **15 avoidance options** with 3 auto-selected defaults, hidden under collapsible "Things to avoid" section
+- **3 new files**: `lib/professional-story-config.ts`, `components/exercises/ProfessionalStoryBuilder.tsx` (~980 lines), `app/api/interview/professional-story/route.ts`
+- **Wired into both entry points**: HrFeedbackDeck and PracticePath now route `professional_story` to ProfessionalStoryBuilder instead of GuidedBuilderWorkshop
+- **Resume/JD fetched server-side**: Same Supabase admin pattern as guided-workshop — fetches from interview_sessions → user_interview_data → user_resumes

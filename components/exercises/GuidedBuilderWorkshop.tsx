@@ -42,7 +42,6 @@ interface FrameworkStep {
   prompt: string
   color: string
   emoji: string
-  connector?: string
   example?: string
 }
 
@@ -74,9 +73,9 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it any time you hear "tell me about a time", "give me an example", or "walk me through how you handled..."',
     steps: [
       { key: 'situation', label: 'Situation', description: 'Set the scene in 1-2 sentences. Who, where, when. Just enough to follow.', prompt: 'Pick a real situation.', color: 'sky', emoji: '🎬', example: '"During a product launch at my last company, we had three teams on different timelines and no shared tracker."' },
-      { key: 'task', label: 'Task', description: 'What was specifically at stake or yours to own?', prompt: 'What was on your plate?', color: 'amber', emoji: '🎯', connector: 'My job was to', example: '"My job was to get all three teams shipping on the same date without anything falling through the cracks."' },
-      { key: 'action', label: 'Action', description: 'The biggest weight goes here. What did you actually do?', prompt: 'What did you actually do?', color: 'violet', emoji: '⚡', connector: 'So I', example: '"So I built a shared tracker, ran daily standups with each lead, and flagged blockers to our VP same-day."' },
-      { key: 'result', label: 'Result', description: 'Close with what changed. Numbers if you have them, real outcome if you don\'t.', prompt: 'What changed?', color: 'emerald', emoji: '✅', connector: 'In the end,', example: '"In the end, we shipped on time — the first cross-team launch that quarter to hit its date."' },
+      { key: 'task', label: 'Task', description: 'What was specifically at stake or yours to own?', prompt: 'What was on your plate?', color: 'amber', emoji: '🎯', example: '"I was the one responsible for getting all three teams shipping on the same date without anything falling through the cracks."' },
+      { key: 'action', label: 'Action', description: 'The biggest weight goes here. What did you actually do?', prompt: 'What did you actually do?', color: 'violet', emoji: '⚡', example: '"So I built a shared tracker, ran daily standups with each lead, and flagged blockers to our VP same-day."' },
+      { key: 'result', label: 'Result', description: 'Close with what changed. Numbers if you have them, real outcome if you don\'t.', prompt: 'What changed?', color: 'emerald', emoji: '✅', example: '"We ended up shipping on time — the first cross-team launch that quarter to hit its date."' },
     ],
     assembleHint: 'Notice the answer leads with scene, narrows fast to ownership, then puts most weight on what you did.',
     practiceCta: 'Say it out loud',
@@ -90,8 +89,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it for "tell me about yourself", "walk me through your background", or any open opener in the first 60 seconds.',
     steps: [
       { key: 'present', label: 'Present', description: 'Where you are right now. Role, focus, what you\'re known for.', prompt: 'Start with your now.', color: 'violet', emoji: '👋', example: '"Right now I\'m a project coordinator focused on keeping cross-functional launches on track."' },
-      { key: 'past', label: 'Past', description: 'The 1-2 things in your background that explain how you got here.', prompt: 'What shaped that?', color: 'sky', emoji: '🧭', connector: 'Before that,', example: '"Before that, I spent three years in client services where I learned how to manage competing priorities under pressure."' },
-      { key: 'future', label: 'Future', description: 'Why this role is the natural next step.', prompt: 'Why this role next?', color: 'emerald', emoji: '🚀', connector: 'Which is why', example: '"Which is why this operations role makes sense — it\'s the same coordination work but at a bigger scale."' },
+      { key: 'past', label: 'Past', description: 'The 1-2 things in your background that explain how you got here.', prompt: 'What shaped that?', color: 'sky', emoji: '🧭', example: '"Before that, I spent three years in client services where I learned how to manage competing priorities under pressure."' },
+      { key: 'future', label: 'Future', description: 'Why this role is the natural next step.', prompt: 'Why this role next?', color: 'emerald', emoji: '🚀', example: '"So that\'s why this operations role makes sense — it\'s the same coordination work but at a bigger scale."' },
     ],
     assembleHint: 'Notice how each part hands off to the next — there\'s a logic to why you\'re sitting there.',
     practiceCta: 'Say your story out loud',
@@ -105,8 +104,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it for "why this role", "why this company", "why are you interested", or anything probing intent.',
     steps: [
       { key: 'observation', label: 'Observation', description: 'One specific thing about the role/team that stood out.', prompt: 'What did you notice?', color: 'amber', emoji: '🔍', example: '"I noticed this role sits at the intersection of product and engineering — owning the handoff between both teams."' },
-      { key: 'fit', label: 'Fit', description: 'A concrete piece of your experience that maps to it.', prompt: 'How does it match you?', color: 'violet', emoji: '🧩', connector: 'That lines up with', example: '"That lines up with what I\'ve been doing for the past two years — translating technical constraints into project plans."' },
-      { key: 'timing', label: 'Timing', description: 'Why now makes sense in your arc.', prompt: 'Why now?', color: 'emerald', emoji: '⏱️', connector: 'And right now,', example: '"And right now, I want that translation work to be the job, not a side responsibility."' },
+      { key: 'fit', label: 'Fit', description: 'A concrete piece of your experience that maps to it.', prompt: 'How does it match you?', color: 'violet', emoji: '🧩', example: '"That\'s actually what I\'ve been doing for the past two years — translating technical constraints into project plans."' },
+      { key: 'timing', label: 'Timing', description: 'Why now makes sense in your arc.', prompt: 'Why now?', color: 'emerald', emoji: '⏱️', example: '"And right now, I want that translation work to be the job, not a side responsibility."' },
     ],
     assembleHint: 'Lead with the role, then yourself, then timing. The order signals you put their need first.',
     practiceCta: 'Try the full answer out loud',
@@ -120,9 +119,9 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it when you\'re thrown by a question, when you don\'t know the perfect answer, or when you feel yourself starting to ramble.',
     steps: [
       { key: 'recovery', label: 'Recovery', description: 'A calm 1-sentence opener that buys you a second without sounding panicked.', prompt: 'How do you steady yourself?', color: 'sky', emoji: '🌬️', example: '"That\'s a good question — let me think about it for a second so I can give you a real answer."' },
-      { key: 'answer', label: 'Answer', description: 'A direct position or judgment, one sentence.', prompt: 'What\'s the answer?', color: 'violet', emoji: '🎯', connector: '', example: '"I\'d start by understanding what success looks like before committing to a timeline."' },
-      { key: 'reason', label: 'Reason', description: 'One sentence explaining why that answer holds up.', prompt: 'Why does it hold up?', color: 'amber', emoji: '💭', connector: 'The reason is', example: '"The reason is I\'ve learned that rushing an answer usually creates more rework than taking a beat to scope it first."' },
-      { key: 'example', label: 'Example', description: 'A real moment from your work that backs it up.', prompt: 'What backs it up?', color: 'emerald', emoji: '📌', connector: 'For example,', example: '"For example, on a recent project I pushed back on an aggressive deadline, proposed a phased approach, and we shipped the MVP two weeks early."' },
+      { key: 'answer', label: 'Answer', description: 'A direct position or judgment, one sentence.', prompt: 'What\'s the answer?', color: 'violet', emoji: '🎯', example: '"I\'d start by understanding what success looks like before committing to a timeline."' },
+      { key: 'reason', label: 'Reason', description: 'One sentence explaining why that answer holds up.', prompt: 'Why does it hold up?', color: 'amber', emoji: '💭', example: '"I\'ve just learned that rushing an answer usually creates more rework than taking a beat to scope it first."' },
+      { key: 'example', label: 'Example', description: 'A real moment from your work that backs it up.', prompt: 'What backs it up?', color: 'emerald', emoji: '📌', example: '"Like on a recent project, I pushed back on an aggressive deadline, proposed a phased approach, and we shipped the MVP two weeks early."' },
     ],
     assembleHint: 'Notice the structure shows composure — even if you don\'t have a perfect answer, you sound steady.',
     practiceCta: 'Practice the recovery out loud',
@@ -136,8 +135,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it any time you catch yourself saying "um", "like", "kind of", or rambling toward an answer instead of leading with it.',
     steps: [
       { key: 'opener', label: 'Opener', description: 'Lead with the main point in one declarative sentence. No "so", no "um", no warmup.', prompt: 'What\'s the headline?', color: 'violet', emoji: '🎤', example: '"The biggest thing I bring is the ability to keep three workstreams moving without letting any one of them stall."' },
-      { key: 'main_point', label: 'Main Body', description: '2-3 sentences of clean support. Same content as before, no filler.', prompt: 'Add the supporting beats.', color: 'sky', emoji: '📣', connector: '', example: '"I ran the cross-team tracker for our last launch, owned the daily standups, and flagged blockers before they became problems."' },
-      { key: 'landing', label: 'Landing', description: 'Close cleanly. Don\'t trail off into "yeah, so, that\'s it".', prompt: 'How do you land it?', color: 'emerald', emoji: '🛬', connector: '', example: '"That\'s the kind of coordination work I want to do more of — and it\'s exactly what this role calls for."' },
+      { key: 'main_point', label: 'Main Body', description: '2-3 sentences of clean support. Same content as before, no filler.', prompt: 'Add the supporting beats.', color: 'sky', emoji: '📣', example: '"I ran the cross-team tracker for our last launch, owned the daily standups, and flagged blockers before they became problems."' },
+      { key: 'landing', label: 'Landing', description: 'Close cleanly. Don\'t trail off into "yeah, so, that\'s it".', prompt: 'How do you land it?', color: 'emerald', emoji: '🛬', example: '"That\'s the kind of coordination work I want to do more of — and it\'s exactly what this role calls for."' },
     ],
     assembleHint: 'Same facts you had before — but the listener can actually hold onto them now.',
     practiceCta: 'Say the tightened version',
@@ -151,8 +150,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it for "what do you know about us", "any questions for us", or any moment when you can show you did the homework.',
     steps: [
       { key: 'what_you_know', label: 'What You Know', description: 'One real specific from the JD or company — not "I love your mission".', prompt: 'What\'s the real specific?', color: 'sky', emoji: '📚', example: '"I saw that this team owns the full onboarding pipeline and recently rebuilt it from scratch last quarter."' },
-      { key: 'what_stood_out', label: 'What Stood Out', description: 'Why that one detail caught your attention.', prompt: 'Why did it catch you?', color: 'amber', emoji: '✨', connector: 'What stood out was', example: '"What stood out was that the rebuild was driven by user research, not just internal complaints."' },
-      { key: 'your_question', label: 'Your Question', description: 'A question that follows naturally from the above — not a generic culture question.', prompt: 'What do you want to ask?', color: 'violet', emoji: '❓', connector: 'Which makes me curious —', example: '"Which makes me curious — how does the team decide which user feedback to prioritize for the next iteration?"' },
+      { key: 'what_stood_out', label: 'What Stood Out', description: 'Why that one detail caught your attention.', prompt: 'Why did it catch you?', color: 'amber', emoji: '✨', example: '"What caught my attention was that the rebuild was driven by user research, not just internal complaints."' },
+      { key: 'your_question', label: 'Your Question', description: 'A question that follows naturally from the above — not a generic culture question.', prompt: 'What do you want to ask?', color: 'violet', emoji: '❓', example: '"So I\'m curious — how does the team decide which user feedback to prioritize for the next iteration?"' },
     ],
     assembleHint: 'A question built from real research lands completely differently than a generic one.',
     practiceCta: 'Say the question out loud',
@@ -166,9 +165,9 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it when asked about your approach, your process, how you\'d handle a scenario, or anything where the interviewer is testing domain depth — not just "tell me about a time".',
     steps: [
       { key: 'context', label: 'Context', description: 'Name the real situation — what you were working on, what the constraints were, and why it mattered.', prompt: 'Set the real context.', color: 'sky', emoji: '🔬', example: '"We needed to migrate 200k user records to a new system without any downtime during peak hours."' },
-      { key: 'method', label: 'Method', description: 'What approach did you choose and why? Name the specific tools, frameworks, or thinking you applied.', prompt: 'What was your method?', color: 'violet', emoji: '🛠️', connector: 'I approached it by', example: '"I approached it by running a dual-write strategy — new records went to both systems while we backfilled the old data in batches overnight."' },
-      { key: 'tradeoff', label: 'Tradeoff', description: 'What did you weigh? What did you decide against and why?', prompt: 'What did you trade off?', color: 'amber', emoji: '⚖️', connector: 'The tradeoff was', example: '"The tradeoff was speed vs. safety — a big-bang migration would have been faster, but any failure would have been visible to every customer."' },
-      { key: 'outcome', label: 'Outcome', description: 'What happened because of your approach? Be specific.', prompt: 'What was the result?', color: 'emerald', emoji: '📊', connector: 'That led to', example: '"That led to a zero-downtime migration completed in 10 days — the previous attempt by another team had taken 6 weeks with two rollbacks."' },
+      { key: 'method', label: 'Method', description: 'What approach did you choose and why? Name the specific tools, frameworks, or thinking you applied.', prompt: 'What was your method?', color: 'violet', emoji: '🛠️', example: '"So I went with a dual-write strategy — new records went to both systems while we backfilled the old data in batches overnight."' },
+      { key: 'tradeoff', label: 'Tradeoff', description: 'What did you weigh? What did you decide against and why?', prompt: 'What did you trade off?', color: 'amber', emoji: '⚖️', example: '"The main tradeoff was speed vs. safety — a big-bang migration would have been faster, but any failure would have been visible to every customer."' },
+      { key: 'outcome', label: 'Outcome', description: 'What happened because of your approach? Be specific.', prompt: 'What was the result?', color: 'emerald', emoji: '📊', example: '"And it worked — zero-downtime migration completed in 10 days. The previous attempt by another team had taken 6 weeks with two rollbacks."' },
     ],
     assembleHint: 'Notice how naming the tradeoff is what separates a working answer from a textbook answer.',
     practiceCta: 'Walk through it out loud',
@@ -182,9 +181,9 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     whenItHits: 'Use it for scenario questions, "how would you handle..." questions, case-style questions, or any time the interviewer is probing your problem-solving process rather than a specific past event.',
     steps: [
       { key: 'clarify', label: 'Clarify', description: 'What did you need to understand first? What assumptions did you test or questions did you ask?', prompt: 'What did you clarify first?', color: 'sky', emoji: '🔎', example: '"First I needed to understand whether the bottleneck was capacity, prioritization, or process — so I pulled the last 8 weeks of cycle time data."' },
-      { key: 'approach', label: 'Approach', description: 'What was your plan? Name the options you considered and why you picked this path.', prompt: 'What was your approach?', color: 'violet', emoji: '🧭', connector: 'From there, I', example: '"From there, I considered hiring vs. re-scoping vs. process changes — and chose process changes first because it was the fastest to test."' },
-      { key: 'execute', label: 'Execute', description: 'What did you actually do? Concrete steps, not theory. Include who you worked with if relevant.', prompt: 'What did you do?', color: 'amber', emoji: '⚡', connector: 'In practice,', example: '"In practice, I paired with the team lead to cut our review steps from four to two and moved one approval to async."' },
-      { key: 'reflect', label: 'Reflect', description: 'What worked, what would you do differently, and what did you take away?', prompt: 'What would you change?', color: 'emerald', emoji: '💡', connector: 'Looking back,', example: '"Looking back, the async approval was the biggest win. I\'d have started there instead of mapping the full process first."' },
+      { key: 'approach', label: 'Approach', description: 'What was your plan? Name the options you considered and why you picked this path.', prompt: 'What was your approach?', color: 'violet', emoji: '🧭', example: '"From there I looked at hiring vs. re-scoping vs. process changes — and went with process changes first because it was the fastest to test."' },
+      { key: 'execute', label: 'Execute', description: 'What did you actually do? Concrete steps, not theory. Include who you worked with if relevant.', prompt: 'What did you do?', color: 'amber', emoji: '⚡', example: '"So I paired with the team lead to cut our review steps from four to two and moved one approval to async."' },
+      { key: 'reflect', label: 'Reflect', description: 'What worked, what would you do differently, and what did you take away?', prompt: 'What would you change?', color: 'emerald', emoji: '💡', example: '"Looking back, the async approval was the biggest win. I\'d probably have started there instead of mapping the full process first."' },
     ],
     assembleHint: 'The "Clarify" step is what most people skip — it\'s also what makes you sound senior.',
     practiceCta: 'Walk through your reasoning out loud',
@@ -260,18 +259,7 @@ function summarize(text?: string, max = 180) {
 
 function assembleAnswer(config: WorkshopConfig, choices: Record<string, string>) {
   return config.steps
-    .map((step) => {
-      const value = cleanInput(choices[step.key] || '')
-      if (!value) return ''
-      if (!step.connector) return value
-      const connectorLower = step.connector.toLowerCase()
-      const valueLower = value.toLowerCase()
-      if (valueLower.startsWith(connectorLower)) {
-        return step.connector + ' ' + value.slice(step.connector.length).trimStart()
-      }
-      const lower = value.charAt(0).toLowerCase() + value.slice(1)
-      return `${step.connector} ${lower}`
-    })
+    .map((step) => cleanInput(choices[step.key] || ''))
     .filter(Boolean)
     .join(' ')
 }
@@ -360,7 +348,6 @@ export default function GuidedBuilderWorkshop({
             stepKey: activeStep.key,
             previousChoices: choices,
             tags: selectedTags,
-            connector: activeStep.connector || '',
           }),
         })
         if (!response.ok) throw new Error('suggest_failed')

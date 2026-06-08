@@ -289,11 +289,23 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
 `claude/bold-planck-rRxBf`
 
 ### What Needs Work Next (Priority Order)
-1. **🔴 CRITICAL — Redesign behavioral workshop build phase**: The 4 behavioral workshops need a fundamentally different flow. User provides raw content per step → Haiku polishes it. NOT Haiku generates → user picks. See "Critical Unsolved" section above for full context and user's proposed approach.
-2. **Test everything end-to-end**: Process page (sidebar-driven layout, flow progress, smart CTAs), workshops (1-suggestion display, approach picker), mock data flow (`?preview=mock`), real HR interview
-3. **Wire CF/FR stages into the workshop builder** (HR and HM are done)
-4. **Non-behavioral workshops may need testing too**: The other 4 (`professional_story`, `career_alignment`, `pace_delivery`, `preparation_curiosity`) don't have the "specific incident" problem but should be verified for quality
+1. **Test STAR Story Builder end-to-end**: Verify the full flow (story type → setting → situation → ... → generated output) works with real data and produces good answers. This is the litmus test — if it works, apply same pattern to other workshops. If not, scrap workshops and focus on grading + recommendations.
+2. **If STAR works well**: Design similar card-and-chip builders for role_depth, problem_solving, and potentially other workshop types
+3. **Test non-behavioral workshops** (`professional_story`, `career_alignment`, `pace_delivery`, `preparation_curiosity`) for quality with the GuidedBuilderWorkshop
+4. **Wire CF/FR stages into workshop system** (HR and HM are done)
 5. Retake display — how to show take 1 vs retake on process page
 6. Consider deleting unused old workshop components (StarProofWorkshop, etc.)
 7. Custom Preppi SVG illustration (user will build in Figma)
 8. XP/badge persistence to Supabase
+
+### 2026-06-08 (Session 7 continued)
+- **STAR Story Builder**: Built a completely new multi-step wizard that replaces the old `star_proof` GuidedBuilderWorkshop. Instead of open-ended text questions, users build their STAR answer through structured card and chip selections:
+  - 10 story types (customer problem, messy project, ownership moment, etc.)
+  - 10 branching situation arrays (each story type has its own set of specific situations)
+  - Stakes, role, actions (22 options with detail prompts), results, metrics/proof, competencies
+  - Haiku assembles a polished 60-second and 30-second answer from the structured data
+  - Follow-up questions the interviewer might ask
+- **3 new files**: `lib/star-story-config.ts` (all static config, ~800 lines), `components/exercises/StarStoryBuilder.tsx` (16-step wizard, ~960 lines), `app/api/interview/star-story/route.ts` (Haiku generation endpoint)
+- **Wired into both entry points**: HrFeedbackDeck and PracticePath now route `star_proof` to StarStoryBuilder instead of GuidedBuilderWorkshop
+- **Keeps intro + method flip cards**: The STAR framework teaching (why it matters, flip each card) is preserved. Everything after that is the new guided flow.
+- **Architecture**: This is a test run. If the card-and-chip approach works well for STAR, the same pattern will be applied to other workshop types. If not, workshops may be scrapped entirely in favor of grading + recommendations only.

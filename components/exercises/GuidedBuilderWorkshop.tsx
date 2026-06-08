@@ -33,7 +33,7 @@ interface GuidedBuilderWorkshopProps {
   onComplete: () => void
 }
 
-type Phase = 'intro' | 'method' | 'tags' | 'build' | 'assemble' | 'recall' | 'done'
+type Phase = 'intro' | 'method' | 'tags' | 'gather' | 'build' | 'assemble' | 'recall' | 'done'
 
 interface FrameworkStep {
   key: string
@@ -43,6 +43,14 @@ interface FrameworkStep {
   color: string
   emoji: string
   example?: string
+}
+
+interface GatherQuestion {
+  key: string
+  label: string
+  placeholder: string
+  hint: string
+  multiline?: boolean
 }
 
 interface WorkshopConfig {
@@ -55,6 +63,7 @@ interface WorkshopConfig {
   practiceCta: string
   tagPrompt: string
   tags: string[]
+  gatherQuestions?: GatherQuestion[]
 }
 
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; ring: string; soft: string; chip: string }> = {
@@ -81,6 +90,12 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     practiceCta: 'Say it out loud',
     tagPrompt: 'How did you show up in this story? Pick at least 4.',
     tags: ['hands-on', 'scrappy', 'methodical', 'decisive', 'calm-under-pressure', 'collaborative', 'persistent', 'analytical', 'creative', 'direct', 'patient', 'resourceful', 'curious', 'adaptable', 'detail-oriented', 'fast-moving', 'principled', 'pragmatic', 'humble', 'thorough'],
+    gatherQuestions: [
+      { key: 'story_company', label: 'Where did this happen?', placeholder: 'e.g. TouchPoint, Sub-Zero, a freelance project', hint: 'Name the company or context. Doesn\'t need to be your current job.' },
+      { key: 'story_problem', label: 'What specifically went wrong or was at stake?', placeholder: 'e.g. A client\'s website deliverables got mixed up between two projects and we were about to lose them', hint: 'Be specific — name the actual problem, not the general responsibility. What was the mess, the risk, or the thing that needed fixing?', multiline: true },
+      { key: 'story_action', label: 'What did you actually do about it?', placeholder: 'e.g. I ate the cost, redesigned the whole website myself, and kept the client updated daily', hint: 'Concrete actions — what you personally did, not what the team did generally.', multiline: true },
+      { key: 'story_result', label: 'How did it turn out?', placeholder: 'e.g. They were happy, their conversion rate went up 15%, and they referred two more clients', hint: 'What changed because of what you did? Numbers if you have them, real outcome if you don\'t.' },
+    ],
   },
   professional_story: {
     framework: 'Present · Past · Future',
@@ -173,6 +188,12 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     practiceCta: 'Walk through it out loud',
     tagPrompt: 'How do you work in this domain? Pick at least 4.',
     tags: ['analytical', 'hands-on', 'systematic', 'data-driven', 'pragmatic', 'iterative', 'risk-aware', 'creative', 'process-minded', 'cross-functional', 'detail-oriented', 'big-picture', 'deadline-driven', 'quality-focused', 'experimental', 'structured', 'resourceful', 'evidence-based', 'collaborative', 'independent'],
+    gatherQuestions: [
+      { key: 'story_company', label: 'Where did this happen?', placeholder: 'e.g. TouchPoint, Sub-Zero, a freelance project', hint: 'Name the company or context.' },
+      { key: 'story_problem', label: 'What was the real challenge or project?', placeholder: 'e.g. A client needed a full website redesign but the scope had gotten completely mixed up', hint: 'Name the specific project, challenge, or constraint — not your general job duties.', multiline: true },
+      { key: 'story_method', label: 'What approach did you take and why?', placeholder: 'e.g. I absorbed the cost and rebuilt the site from scratch because the client relationship was worth more than the margin', hint: 'What did you decide to do, and what was your reasoning?', multiline: true },
+      { key: 'story_result', label: 'What happened because of your approach?', placeholder: 'e.g. Their conversion rate went up 15% and they referred two more clients', hint: 'Specific outcome — numbers if you have them, real result if not.' },
+    ],
   },
   problem_solving: {
     framework: 'Clarify · Approach · Execute · Reflect',
@@ -189,6 +210,12 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
     practiceCta: 'Walk through your reasoning out loud',
     tagPrompt: 'How do you approach problems? Pick at least 4.',
     tags: ['first-principles', 'collaborative', 'data-driven', 'iterative', 'risk-aware', 'stakeholder-focused', 'systematic', 'scrappy', 'creative', 'pragmatic', 'hypothesis-driven', 'customer-first', 'deadline-aware', 'thorough', 'decisive', 'inclusive', 'prioritization-focused', 'simplicity-driven', 'trade-off-aware', 'outcome-oriented'],
+    gatherQuestions: [
+      { key: 'story_company', label: 'Where did this happen?', placeholder: 'e.g. TouchPoint, Sub-Zero, a freelance project', hint: 'Name the company or context.' },
+      { key: 'story_problem', label: 'What was the problem you had to solve?', placeholder: 'e.g. Two projects got their deliverables mixed up and the client was about to walk', hint: 'Name the actual problem — what was broken, unclear, or at risk?', multiline: true },
+      { key: 'story_action', label: 'What did you actually do?', placeholder: 'e.g. I ate the cost, redesigned the whole website myself, and set up daily check-ins with the client', hint: 'Concrete steps you personally took — not what the team did generally.', multiline: true },
+      { key: 'story_result', label: 'How did it turn out?', placeholder: 'e.g. They were happy, conversion went up 15%, and they referred two more clients', hint: 'What changed because of what you did?' },
+    ],
   },
 }
 
@@ -312,6 +339,10 @@ export default function GuidedBuilderWorkshop({
   const [flippedMethodSteps, setFlippedMethodSteps] = useState<Set<number>>(new Set())
   const [revealedSteps, setRevealedSteps] = useState<Set<string>>(new Set())
   const [stepApproachPicked, setStepApproachPicked] = useState<Record<string, string>>({})
+  const [gatherAnswers, setGatherAnswers] = useState<Record<string, string>>({})
+
+  const hasGather = !!config.gatherQuestions && config.gatherQuestions.length > 0
+  const gatherComplete = hasGather && config.gatherQuestions!.every((q) => (gatherAnswers[q.key] || '').trim().length > 0)
 
   // Recall phase state
   const [recallStage, setRecallStage] = useState<'reading' | 'memorizing' | 'recording' | 'submitting' | 'result'>('reading')
@@ -349,6 +380,7 @@ export default function GuidedBuilderWorkshop({
             stepKey: activeStep.key,
             previousChoices: choices,
             tags: selectedTags,
+            ...(hasGather && Object.keys(gatherAnswers).length > 0 ? { storyContext: gatherAnswers } : {}),
           }),
         })
         if (!response.ok) throw new Error('suggest_failed')
@@ -396,6 +428,7 @@ export default function GuidedBuilderWorkshop({
         original_answer: originalAnswer || '',
         chosen_tags: selectedTags,
         choices,
+        gather_answers: hasGather ? gatherAnswers : undefined,
         transcript,
         scores,
         session_id: sessionId || null,
@@ -735,13 +768,82 @@ export default function GuidedBuilderWorkshop({
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
             <button
               onClick={() => {
-                setPhase('build')
-                setStepIndex(0)
+                if (hasGather) {
+                  setPhase('gather')
+                } else {
+                  setPhase('build')
+                  setStepIndex(0)
+                }
               }}
               disabled={!enoughTags}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
             >
-              {enoughTags ? 'Start building' : `Pick ${MIN_TAGS - selectedTags.length} more`}
+              {enoughTags ? (hasGather ? 'Tell us your story' : 'Start building') : `Pick ${MIN_TAGS - selectedTags.length} more`}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* GATHER - qualifying story questions for behavioral workshops */}
+      {phase === 'gather' && config.gatherQuestions && (
+        <div className="flex h-full flex-col">
+          <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
+            <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
+              Your story
+            </span>
+            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
+              Give us the real version.
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              We need the specifics to build an answer that sounds like you — not a job description.
+              Short answers are fine. A sentence or two per question.
+            </p>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <div className="space-y-5">
+              {config.gatherQuestions.map((q, i) => (
+                <div key={q.key}>
+                  <label className="block text-sm font-bold text-slate-800">
+                    <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-[10px] font-black text-white">
+                      {i + 1}
+                    </span>
+                    {q.label}
+                  </label>
+                  <p className="mt-1 ml-7 text-[11px] leading-4 text-slate-500">{q.hint}</p>
+                  {q.multiline ? (
+                    <textarea
+                      value={gatherAnswers[q.key] || ''}
+                      onChange={(e) => setGatherAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
+                      placeholder={q.placeholder}
+                      rows={3}
+                      className="mt-2 ml-7 w-[calc(100%-1.75rem)] rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={gatherAnswers[q.key] || ''}
+                      onChange={(e) => setGatherAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
+                      placeholder={q.placeholder}
+                      className="mt-2 ml-7 w-[calc(100%-1.75rem)] rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+            <button
+              onClick={() => {
+                setPhase('build')
+                setStepIndex(0)
+              }}
+              disabled={!gatherComplete}
+              className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
+            >
+              {gatherComplete ? 'Build the answer' : 'Fill in every question to continue'}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

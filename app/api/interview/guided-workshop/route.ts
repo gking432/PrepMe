@@ -61,21 +61,21 @@ Pattern C: "That's what got me interested in this — I want [specific thing fro
 Each must name something SPECIFIC from the job description and connect it to the candidate's background. 1-2 sentences.`,
   },
   career_alignment: {
-    observation: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
+    observation: `Generate 3 suggestions that each follow one of these EXACT structural patterns. Use ONLY the job description — do NOT mention the candidate's background:
 Pattern A: "What stood out to me is how central this role is to [specific responsibility/scope from JD]."
 Pattern B: "One thing that really caught my attention is that this role [specific detail from JD]."
 Pattern C: "What interests me most is that this role sits close to [specific aspect of the work from JD]."
-Each MUST cite a real, specific responsibility or focus from the job description — not generic praise like "great culture" or "exciting mission". One sentence each.`,
+HARD RULE: This step is ONLY about the role/company. Do NOT mention the candidate at all — no "which aligns with my...", no "because I...", no background references. Just what they noticed about the JD. One sentence each.`,
     fit: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
 Pattern A: "That fits well with my background, because [concrete experience from resume that maps to the observation]."
 Pattern B: "That connects naturally to the work I've been doing — [specific experience or skill from resume]."
 Pattern C: "That's actually what I've been doing at [company] — [specific matching experience]."
-Each MUST pull a specific, concrete piece of the candidate's resume that directly maps to the chosen observation. Do NOT repeat the observation — add NEW information about the candidate. One sentence each.`,
+HARD RULE: This step is ONLY about the candidate's background. Do NOT repeat what was said in the observation — the reader already knows what the role involves. Add NEW information about the candidate's experience that connects to it. One sentence each.`,
     timing: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
 Pattern A: "The timing makes sense because [career arc reason — why NOW, not just why generally]."
 Pattern B: "At this point, I'm looking for a role where [specific desire that maps to this opportunity]."
 Pattern C: "That's a big part of why this feels like a logical next step — [forward-looking reason tied to their arc]."
-Each must explain why THIS role at THIS point in their career makes sense. Keep it personal and forward-looking. One sentence each.`,
+HARD RULE: This step is ONLY about timing and direction. Do NOT repeat the observation or fit content. Explain why NOW — what changed in their career, what they want next, why this moment is right. One sentence each.`,
   },
   handling_uncertainty: {
     recovery: `Generate 3 suggestions that each follow one of these EXACT structural patterns:
@@ -263,6 +263,7 @@ export async function POST(request: NextRequest) {
   const tags = Array.isArray(body.tags)
     ? body.tags.map((t: unknown) => String(t || '').trim()).filter(Boolean).slice(0, 8)
     : []
+  const storyContext = (body.storyContext && typeof body.storyContext === 'object') ? body.storyContext : null
 
   if (!workshopType || !STEP_GUIDANCE[workshopType] || !STEP_GUIDANCE[workshopType][stepKey]) {
     return NextResponse.json({ error: 'Invalid workshopType or stepKey' }, { status: 400 })
@@ -277,8 +278,9 @@ export async function POST(request: NextRequest) {
     : ''
 
   const isBehavioral = ['star_proof', 'role_depth', 'problem_solving', 'handling_uncertainty'].includes(workshopType)
+  const hasStory = !!storyContext && Object.keys(storyContext).length > 0
   const behavioralRule = isBehavioral
-    ? '\n- CRITICAL: This is a behavioral answer workshop. The candidate already gave an answer — your job is to RESTRUCTURE it with better structure, NOT to invent a new answer. The original answer and resume are the source of truth for WHAT HAPPENED. The job description tells you what the INTERVIEWER CARES ABOUT, but the content must come from the candidate\'s real experience. Never generate content about the target role as if the candidate already works there.'
+    ? `\n- CRITICAL: This is a behavioral answer workshop.${hasStory ? ' The candidate provided specific story details in the CANDIDATE\'S STORY section — that is your PRIMARY SOURCE. Use the company, problem, actions, and result they described. Do NOT substitute a different story.' : ' The candidate already gave an answer — your job is to RESTRUCTURE it with better structure, NOT to invent a new answer.'} The original answer and resume are supporting context. The job description tells you what the INTERVIEWER CARES ABOUT, but the content must come from the candidate\'s real experience. Never generate content about the target role as if the candidate already works there.`
     : ''
 
   const system = `You are a sharp, no-nonsense interview coach helping a candidate build one part of one answer.
@@ -302,10 +304,15 @@ Hard rules:${behavioralRule}
 - Do not start suggestions with the same word as another suggestion in the set.
 - Return ONLY valid JSON.`
 
+  const storyBlock = storyContext
+    ? `\n\nCANDIDATE'S STORY (from gather phase — THIS IS THE PRIMARY SOURCE, use it over the original answer):\n${Object.entries(storyContext).map(([k, v]) => `- ${k}: ${v}`).join('\n')}`
+    : ''
+
   const userMessage = JSON.stringify({
     task: 'Generate 3 strong, distinct suggestions for this build step, grounded in the candidate\'s actual resume and the job they\'re applying for.',
     original_question: originalQuestion || '(not provided)',
     original_flagged_answer: originalAnswer || '(not provided)',
+    candidate_story_context: storyContext || '(no gather data — use original answer and resume)',
     previous_choices: previousChoices,
     candidate_voice_tags: tags,
     candidate_resume: resumeText || '(resume not available — use generic patterns)',
@@ -315,7 +322,7 @@ Hard rules:${behavioralRule}
       suggestions: ['option 1 text', 'option 2 text', 'option 3 text'],
       hint: 'One sentence telling the candidate what to look for when picking, or what makes one choice stronger than another.',
     },
-  })
+  }) + storyBlock
 
   try {
     const message = await getAnthropic().messages.create({

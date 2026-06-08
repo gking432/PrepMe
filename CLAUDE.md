@@ -311,15 +311,16 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
 - **Architecture**: This is a test run. If the card-and-chip approach works well for STAR, the same pattern will be applied to other workshop types. If not, workshops may be scrapped entirely in favor of grading + recommendations only.
 
 ### 2026-06-08 (Session 8)
-- **Professional Story Builder (MVP)**: Built a purpose-built "Tell me about yourself" workshop using Present → Past → Future structure.
-  - **One API call by default**: Resume + JD + positioning + tone + length + avoidances → single Haiku call → full answer + PPF breakdown + 3 narrative angles + shorter/conversational versions + opening/closing lines + coaching notes
-  - **8 narrative angle types**: function_based, industry_based, skill_cluster, problem_solver, progression, transition, mission_fit, operator — AI generates custom labels for each
-  - **Optional second call**: Only fires if user clicks "Try this" on an alternate angle (with confirmation gate)
-  - **Rich output**: Tabbed answer view (full/shorter/casual), copy button, PPF color-coded breakdown, recommended + alternate angles, opening/closing line options, why-it-works, watch-outs, follow-up questions, collapsible resume/JD analysis
-  - **9 positioning options**: currently_in_role, job_searching, independent, building, transitioning, recently_left, student/grad, returning, other
-  - **6 tone options**: natural_confident, polished_professional, warm_conversational, direct_concise, executive, early_career
-  - **3 length options**: 30s (70-100 words), 60s (130-180 words), 90s (190-260 words)
-  - **15 avoidance options** with 3 auto-selected defaults, hidden under collapsible "Things to avoid" section
-- **3 new files**: `lib/professional-story-config.ts`, `components/exercises/ProfessionalStoryBuilder.tsx` (~980 lines), `app/api/interview/professional-story/route.ts`
-- **Wired into both entry points**: HrFeedbackDeck and PracticePath now route `professional_story` to ProfessionalStoryBuilder instead of GuidedBuilderWorkshop
-- **Resume/JD fetched server-side**: Same Supabase admin pattern as guided-workshop — fetches from interview_sessions → user_interview_data → user_resumes
+- **Professional Introduction Builder**: Complete rewrite of the "Tell me about yourself" workshop.
+  - **New structure**: Identity → Foundation → Recent Focus → Direction (replaces Present → Past → Future). Works better for career changers, builders, freelancers, early-career, and nonlinear backgrounds.
+  - **Professional Identity Style step**: User chooses how broad/specific their opening should be — broad_professional, function_specific, hybrid_generalist, industry_specific, transition_focused, early_career, or custom (write their own opening identity, max 220 chars).
+  - **Emphasis step** (optional): Multi-select up to 3 themes (customer focus, sales, marketing, product thinking, etc.). Hidden under Advanced settings.
+  - **No narrative angles**: Simpler output — one answer + casual + short versions. No AI-generated angle picker or alternate angle regeneration.
+  - **Rewrite support**: 9 rewrite instructions (make shorter, more conversational, more confident, less formal, more specific, tie closer to role, reduce buzzwords, less technical, less salesy) + regenerate. Each shows confirmation gate before firing second API call. Rewrite returns only `{ primaryAnswer }`.
+  - **Output shape**: `structureUsed` with identity/foundation/recentFocus/direction (not present/past/future). `whyThisWorks` and `possibleWeakSpots` are arrays. `casualAnswer` + `shortAnswer` (not `conversationalVersion`/`shorterVersion`).
+  - **9 current situation options**: currently_employed, job_searching, independent, building, transitioning, recently_left, student/grad, returning, other (with detail field)
+  - **6 tone options**, **3 lengths**: 45s (90-120 words), 60s (130-180 words), 90s (190-260 words)
+  - **12 avoidance options** with 5 auto-selected defaults, hidden under Advanced
+  - **API prompt**: Uses the full prompt from spec verbatim — Identity/Foundation/Recent Focus/Direction structure, banned phrases, specific rules for transitions/early-career/nonlinear backgrounds
+- **Files**: `lib/professional-story-config.ts`, `components/exercises/ProfessionalStoryBuilder.tsx`, `app/api/interview/professional-story/route.ts`
+- **Wired into HrFeedbackDeck and PracticePath** for `professional_story` workshop type

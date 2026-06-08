@@ -26,6 +26,7 @@ async function fetchUserContext(sessionId?: string, userId?: string) {
   let resumeText = ''
   let companyWebsite = ''
   let companyName = ''
+  let roleTitle = ''
 
   try {
     if (sessionId) {
@@ -38,13 +39,14 @@ async function fetchUserContext(sessionId?: string, userId?: string) {
       if (sessionData?.user_interview_data_id) {
         const { data: interviewData } = await supabaseAdmin
           .from('user_interview_data')
-          .select('job_description_text, resume_text, company_website, company_name')
+          .select('job_description_text, resume_text, company_website, company_name, role_title')
           .eq('id', sessionData.user_interview_data_id)
           .single()
         if (interviewData?.job_description_text) jobDescription = interviewData.job_description_text
         if (interviewData?.resume_text) resumeText = interviewData.resume_text
         if (interviewData?.company_website) companyWebsite = interviewData.company_website
         if ((interviewData as any)?.company_name) companyName = (interviewData as any).company_name
+        if ((interviewData as any)?.role_title) roleTitle = (interviewData as any).role_title
       }
 
       if (!resumeText && sessionData?.user_id) {
@@ -78,81 +80,110 @@ async function fetchUserContext(sessionId?: string, userId?: string) {
     resumeText: (resumeText || '').slice(0, 4000),
     companyWebsite,
     companyName,
+    roleTitle,
   }
 }
 
-const SYSTEM_PROMPT = `You are a sharp interview coach helping a candidate build a strong "tell me about yourself" answer using Present → Past → Future.
+const GENERATE_SYSTEM_PROMPT = `You are helping a job candidate answer the first interview question:
 
-This is NOT a resume walkthrough. It's a professional identity statement.
+"Tell me about yourself."
 
-Structure:
-- PRESENT: Who they are now. Current role, what they spend their time on. 1-2 sentences.
-- PAST: The relevant background that explains their strengths. Pick 1-2 things, NOT their whole career.
-- FUTURE: Why this role, why now. Connect their arc to the specific job.
+This should sound like a natural first answer in a live interview.
 
-You will do ALL of the following in a SINGLE response:
-1. Analyze the job description to understand what the interviewer cares about
-2. Analyze the resume to find the strongest relevant background
-3. Choose the best narrative angle from 8 types
-4. Generate the full PPF answer + shorter + conversational versions
-5. Generate alternate angles, opening/closing lines, coaching notes
+Use this structure:
 
-Narrative angle types (pick 3 distinct ones — 1 recommended, 2 alternates):
-- function_based: Leads with what they DO (role/function continuity)
-- industry_based: Leads with INDUSTRY knowledge and context
-- skill_cluster: Leads with a GROUP OF SKILLS that transfer
-- problem_solver: Leads with the TYPE OF PROBLEMS they solve
-- progression: Leads with their GROWTH ARC (each role built on the last)
-- transition: Leads with WHY THEY'RE CHANGING (for career changers)
-- mission_fit: Leads with ALIGNMENT to company mission/values
-- operator: Leads with HOW THEY WORK (process, systems, execution style)
+1. Professional Identity
+2. Career Foundation
+3. Recent Focus
+4. Direction / Why this role
+
+Do not use the old Present / Past / Future structure.
+
+The answer should not start with "Right now, I'm..." unless the candidate's current work is clearly the strongest and most natural professional identity.
+
+The answer should usually start with a professional identity, such as:
+- "I'd describe my background as..."
+- "Professionally, my background is mostly in..."
+- "I'm a [function/industry] professional with experience in..."
+- "My background sits across..."
+
+Important rules:
+
+- This is the first answer in the interview.
+- Start broad, then get specific.
+- Do not start with side projects, independent work, or current unemployment unless the user specifically chose that as their identity.
+- Do not write a chronological resume walkthrough.
+- Do not list every job.
+- Mention no more than 2–3 major resume experiences.
+- Do not invent metrics, users, revenue, company names, tools, certifications, job titles, or outcomes.
+- Do not exaggerate the candidate's experience.
+- Do not sound like a cover letter.
+- Do not sound like a LinkedIn summary.
+- Do not overstuff the answer with job description keywords.
+- Keep it natural and spoken.
+- If the candidate has independent work, frame it as recent focus or skill development, not as the entire identity unless appropriate.
+- If the candidate is transitioning, explain the transition simply without apologizing.
+- If the candidate is early-career, emphasize education, internships, projects, service work, work ethic, and relevant exposure honestly.
+- If the candidate has a nonlinear background, create a through-line instead of explaining every turn.
+- Make the candidate sound focused, credible, and self-aware.
+- Avoid vague phrases like:
+  - "at the intersection of"
+  - "wear many hats"
+  - "hit the ground running"
+  - "full-stack"
+  - "synergy"
+  - "uniquely qualified"
+  - "perfect fit"
+
+Return valid JSON only.
+
+Use this exact shape:
+
+{
+  "answerType": "professional_introduction",
+  "structureUsed": {
+    "identity": "...",
+    "foundation": "...",
+    "recentFocus": "...",
+    "direction": "..."
+  },
+  "primaryAnswer": "...",
+  "casualAnswer": "...",
+  "shortAnswer": "...",
+  "openingLineOptions": ["...", "...", "..."],
+  "closingLineOptions": ["...", "...", "..."],
+  "whyThisWorks": ["...", "...", "..."],
+  "possibleWeakSpots": ["...", "..."],
+  "likelyFollowUpQuestions": ["...", "...", "..."]
+}`
+
+const REWRITE_SYSTEM_PROMPT = `Rewrite this "Tell me about yourself" answer based on the requested change.
 
 Rules:
-1. First person. Contractions. Short sentences. This will be spoken out loud.
-2. NEVER invent companies, titles, metrics, dates, clients, or accomplishments.
-3. Pull all facts from the resume and job description.
-4. No buzzwords: "leveraged", "spearheaded", "passionate about", "team player", "navigate", "strategic alignment".
-5. The shorter version should be roughly half the full answer.
-6. The conversational version should sound like talking to a friend who asked what you do.
-7. Opening lines and closing lines are standalone swappable alternatives.
-8. "whyItWorks" explains the strategic reasoning behind the recommended angle.
-9. "watchOuts" are delivery pitfalls to avoid.
-10. Generate custom labels for each angle — not just the type name.
 
-Return ONLY valid JSON matching this exact shape:
+- Keep the Identity, Foundation, Recent Focus, Direction structure.
+- Keep the same basic facts.
+- Do not invent new metrics, tools, job titles, certifications, company facts, or outcomes.
+- Do not add new experiences unless they are clearly supported by the resume/profile.
+- Do not make it a chronological resume walkthrough.
+- Mention no more than 2–3 major resume experiences.
+- Keep it natural and spoken.
+- Do not overstuff it with keywords.
+- Do not sound like a cover letter.
+- Do not start with side projects unless specifically asked.
+- Avoid vague phrases like:
+  - "at the intersection of"
+  - "wear many hats"
+  - "hit the ground running"
+  - "full-stack"
+  - "synergy"
+  - "uniquely qualified"
+  - "perfect fit"
+
+Return valid JSON only:
+
 {
-  "roleUnderstanding": {
-    "roleTitle": "extracted or inferred role title",
-    "companyName": "company name if known",
-    "interviewerLikelyCaresAbout": ["thing 1", "thing 2", "thing 3"]
-  },
-  "resumeFitSummary": {
-    "strongestRelevantBackground": ["strength 1", "strength 2"],
-    "backgroundToMinimize": ["thing to downplay 1"],
-    "possibleConcern": "optional concern the interviewer might have"
-  },
-  "recommendedAngle": {
-    "type": "one of the 8 NarrativeAngleType values",
-    "label": "Custom human-readable label for this angle",
-    "description": "Why this angle works for this specific candidate and role"
-  },
-  "alternateAngles": [
-    { "type": "...", "label": "...", "description": "..." },
-    { "type": "...", "label": "...", "description": "..." }
-  ],
-  "ppfBreakdown": {
-    "present": "The present portion of the answer",
-    "past": "The past portion",
-    "future": "The future portion"
-  },
-  "fullAnswer": "The complete Present → Past → Future answer stitched together",
-  "shorterVersion": "A compressed version, roughly half the length",
-  "conversationalVersion": "An even more casual version",
-  "openingLines": ["Alt opening 1", "Alt opening 2", "Alt opening 3"],
-  "closingLines": ["Alt closing 1", "Alt closing 2", "Alt closing 3"],
-  "whyItWorks": "One sentence on why this angle is strategically smart for this candidate",
-  "watchOuts": ["Delivery pitfall 1", "Delivery pitfall 2"],
-  "followUpQuestions": ["Likely follow-up 1", "Likely follow-up 2", "Likely follow-up 3"]
+  "primaryAnswer": "..."
 }`
 
 export async function POST(request: NextRequest) {
@@ -163,62 +194,107 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
-
-  const currentPositioning = String(body.currentPositioning || '')
-  const currentPositioningOtherDetail = String(body.currentPositioningOtherDetail || '')
-  const tone = String(body.tone || 'natural_confident')
-  const length = String(body.length || 'sixty_seconds')
-  const avoidEmphasis: string[] = Array.isArray(body.avoidEmphasis)
-    ? body.avoidEmphasis.map((t: unknown) => String(t || '').trim()).filter(Boolean)
-    : []
-  const additionalNotes = String(body.additionalNotes || '').slice(0, 2000)
+  const isRewrite = body.rewriteInstruction && body.originalAnswer
   const sessionId = body.sessionId ? String(body.sessionId) : undefined
-  const alternateAngleType = body.alternateAngleType ? String(body.alternateAngleType) : undefined
 
-  const { jobDescription, resumeText, companyWebsite, companyName } = await fetchUserContext(sessionId, session.user.id)
+  const { jobDescription, resumeText, companyWebsite, companyName, roleTitle } =
+    await fetchUserContext(sessionId, session.user.id)
 
-  const avoidBlock = avoidEmphasis.length
-    ? `\nThings to AVOID in the answer:\n${avoidEmphasis.map((t) => `- ${t.replace(/_/g, ' ')}`).join('\n')}`
-    : ''
-
-  const alternateBlock = alternateAngleType
-    ? `\nIMPORTANT: The candidate wants to try a "${alternateAngleType.replace(/_/g, ' ')}" narrative angle. Make THIS the recommended angle. Generate two different alternates.`
-    : ''
-
-  const positioningDetail = currentPositioning === 'other' && currentPositioningOtherDetail
-    ? ` (${currentPositioningOtherDetail})`
-    : ''
-
-  const lengthGuidance: Record<string, string> = {
-    thirty_seconds: '70–100 words. Quick and tight.',
-    sixty_seconds: '130–180 words. Standard interview length.',
-    ninety_seconds: '190–260 words. Full version.',
+  if (isRewrite) {
+    return handleRewrite(body, resumeText, jobDescription, companyName, roleTitle)
   }
 
-  const userMessage = `Current positioning: ${currentPositioning.replace(/_/g, ' ')}${positioningDetail}
-Preferred tone: ${tone.replace(/_/g, ' ')}
-Target length: ${length.replace(/_/g, ' ')} (${lengthGuidance[length] || '130–180 words'})
-${avoidBlock}
-Additional notes: ${additionalNotes || '(none)'}
-${alternateBlock}
+  return handleGenerate(body, resumeText, jobDescription, companyName, roleTitle)
+}
 
-CANDIDATE RESUME:
-${resumeText || '(resume not available — use generic patterns with bracketed placeholders)'}
+async function handleGenerate(
+  body: any,
+  resumeText: string,
+  jobDescription: string,
+  companyName: string,
+  roleTitle: string,
+) {
+  const currentSituation = String(body.currentSituation || '')
+  const currentSituationDetail = String(body.currentSituationDetail || '')
+  const professionalIdentityStyle = String(body.professionalIdentityStyle || '')
+  const customProfessionalIdentity = String(body.customProfessionalIdentity || '')
+  const emphasis: string[] = Array.isArray(body.emphasis)
+    ? body.emphasis.map((e: unknown) => String(e || '').trim()).filter(Boolean)
+    : []
+  const tone = String(body.tone || 'natural_confident')
+  const length = String(body.length || 'sixty_seconds')
+  const avoidances: string[] = Array.isArray(body.avoidances)
+    ? body.avoidances.map((a: unknown) => String(a || '').trim()).filter(Boolean)
+    : []
 
-JOB DESCRIPTION:
-${jobDescription || '(JD not available — generate a general-purpose professional story)'}
+  const lengthRules: Record<string, string> = {
+    forty_five_seconds: '90–120 words',
+    sixty_seconds: '130–180 words',
+    ninety_seconds: '190–260 words',
+  }
 
-${companyName ? `Company: ${companyName}` : ''}
-${companyWebsite ? `Company website: ${companyWebsite}` : ''}
+  const userMessage = `Resume:
+${resumeText || '(resume not available)'}
 
-Generate the professional story answer as JSON.`
+Job description:
+${jobDescription || '(JD not available)'}
+
+Known role title:
+${roleTitle || '(not provided)'}
+
+Known company name:
+${companyName || '(not provided)'}
+
+Current situation:
+${currentSituation.replace(/_/g, ' ')}
+
+Current situation detail:
+${currentSituationDetail || '(none)'}
+
+Professional identity style:
+${professionalIdentityStyle.replace(/_/g, ' ')}
+
+Custom professional identity:
+${customProfessionalIdentity || '(none)'}
+
+Emphasis:
+${emphasis.length ? emphasis.map((e) => e.replace(/_/g, ' ')).join(', ') : '(none — infer from resume and JD)'}
+
+Tone:
+${tone.replace(/_/g, ' ')}
+
+Length:
+${length.replace(/_/g, ' ')} (${lengthRules[length] || '130–180 words'} for primaryAnswer)
+
+Avoid:
+${avoidances.length ? avoidances.map((a) => a.replace(/_/g, ' ')).join(', ') : '(none)'}
+
+Tasks:
+
+1. Create a natural professional identity for the candidate.
+2. Choose the strongest 1–2 career foundation points from the resume.
+3. Explain the candidate's recent focus without making it sound defensive or scattered.
+4. Connect the answer to the target role or next step.
+5. Generate a primary answer.
+6. Generate a more casual version.
+7. Generate a short version (60–90 words).
+8. Generate opening line options (3).
+9. Generate closing line options (3).
+10. Explain why the answer works (3 bullets).
+11. Identify possible weak spots (2–3 bullets).
+12. Generate likely follow-up questions (3–5).
+
+The casualAnswer should be similar in length to the primaryAnswer but more conversational.
+The shortAnswer should be 60–90 words.
+
+Generate the professional introduction answer as JSON.`
 
   try {
     const message = await getAnthropic().messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2500,
       temperature: 0.5,
-      system: SYSTEM_PROMPT,
+      system: GENERATE_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
     })
 
@@ -237,5 +313,65 @@ Generate the professional story answer as JSON.`
   } catch (error: any) {
     console.error('professional-story generation failed:', error?.message || error)
     return NextResponse.json({ error: 'generate_failed' }, { status: 200 })
+  }
+}
+
+async function handleRewrite(
+  body: any,
+  resumeText: string,
+  jobDescription: string,
+  companyName: string,
+  roleTitle: string,
+) {
+  const rewriteInstruction = String(body.rewriteInstruction || '')
+  const originalAnswer = String(body.originalAnswer || '')
+  const originalOutput = body.originalOutput || {}
+
+  const userMessage = `Requested change:
+${rewriteInstruction.replace(/_/g, ' ')}
+
+Original answer:
+${originalAnswer}
+
+Original structured output:
+${JSON.stringify(originalOutput, null, 2)}
+
+Resume:
+${resumeText || '(not available)'}
+
+Job description:
+${jobDescription || '(not available)'}
+
+Role title:
+${roleTitle || '(not provided)'}
+
+Company:
+${companyName || '(not provided)'}
+
+Rewrite the answer based on the requested change. Return valid JSON only.`
+
+  try {
+    const message = await getAnthropic().messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1200,
+      temperature: 0.4,
+      system: REWRITE_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
+    })
+
+    const content = message.content[0]
+    if (content.type !== 'text') {
+      return NextResponse.json({ error: 'rewrite_failed' }, { status: 200 })
+    }
+
+    const parsed = safeParseJson(content.text)
+    if (!parsed?.primaryAnswer) {
+      return NextResponse.json({ error: 'rewrite_failed' }, { status: 200 })
+    }
+
+    return NextResponse.json(parsed)
+  } catch (error: any) {
+    console.error('professional-story rewrite failed:', error?.message || error)
+    return NextResponse.json({ error: 'rewrite_failed' }, { status: 200 })
   }
 }

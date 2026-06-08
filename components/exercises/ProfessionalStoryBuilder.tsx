@@ -17,19 +17,24 @@ import {
   Target,
 } from 'lucide-react'
 import {
-  CURRENT_POSITIONING_OPTIONS,
+  CURRENT_SITUATION_OPTIONS,
+  PROFESSIONAL_IDENTITY_STYLE_OPTIONS,
+  EMPHASIS_OPTIONS,
   TONE_OPTIONS,
   LENGTH_OPTIONS,
-  AVOID_OPTIONS,
-  DEFAULT_AVOID_EMPHASIS,
+  AVOIDANCE_OPTIONS,
+  DEFAULT_AVOIDANCES,
+  REWRITE_OPTIONS,
   PROGRESS_STEPS,
   FRAMEWORK_STEPS,
-  type CurrentPositioning,
+  type CurrentSituation,
+  type ProfessionalIdentityStyle,
+  type Emphasis,
   type TonePreference,
   type LengthPreference,
-  type AvoidEmphasis,
-  type ProfessionalStoryOutput,
-  type NarrativeAngle,
+  type Avoidance,
+  type RewriteInstruction,
+  type ProfessionalIntroductionOutput,
 } from '@/lib/professional-story-config'
 
 interface ProfessionalStoryBuilderProps {
@@ -42,17 +47,17 @@ interface ProfessionalStoryBuilderProps {
 type Step =
   | 'intro'
   | 'method'
-  | 'positioning'
+  | 'situation'
+  | 'identity_style'
   | 'tone_length'
-  | 'avoidances'
   | 'notes'
   | 'generating'
   | 'output'
 
 const STEP_TO_PROGRESS: Record<string, number> = {
-  positioning: 0,
-  tone_length: 1,
-  avoidances: 2,
+  situation: 0,
+  identity_style: 1,
+  tone_length: 2,
   notes: 2,
   generating: 3,
   output: 3,
@@ -75,21 +80,23 @@ export default function ProfessionalStoryBuilder({
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set())
 
   // Input state
-  const [positioning, setPositioning] = useState<CurrentPositioning | null>(null)
-  const [positioningOtherDetail, setPositioningOtherDetail] = useState('')
+  const [currentSituation, setCurrentSituation] = useState<CurrentSituation | null>(null)
+  const [currentSituationDetail, setCurrentSituationDetail] = useState('')
+  const [identityStyle, setIdentityStyle] = useState<ProfessionalIdentityStyle | null>(null)
+  const [customIdentity, setCustomIdentity] = useState('')
+  const [emphasis, setEmphasis] = useState<Emphasis[]>([])
   const [tone, setTone] = useState<TonePreference>('natural_confident')
   const [length, setLength] = useState<LengthPreference>('sixty_seconds')
-  const [avoidEmphasis, setAvoidEmphasis] = useState<AvoidEmphasis[]>([...DEFAULT_AVOID_EMPHASIS])
-  const [showAvoidances, setShowAvoidances] = useState(false)
-  const [additionalNotes, setAdditionalNotes] = useState('')
+  const [avoidances, setAvoidances] = useState<Avoidance[]>([...DEFAULT_AVOIDANCES])
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   // Output state
-  const [output, setOutput] = useState<ProfessionalStoryOutput | null>(null)
+  const [output, setOutput] = useState<ProfessionalIntroductionOutput | null>(null)
   const [generateError, setGenerateError] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [activeOutputTab, setActiveOutputTab] = useState<'full' | 'shorter' | 'conversational'>('full')
-  const [generatingAlternate, setGeneratingAlternate] = useState(false)
-  const [showAlternateConfirm, setShowAlternateConfirm] = useState<NarrativeAngle | null>(null)
+  const [activeOutputTab, setActiveOutputTab] = useState<'primary' | 'casual' | 'short'>('primary')
+  const [rewriteConfirm, setRewriteConfirm] = useState<RewriteInstruction | null>(null)
+  const [rewriting, setRewriting] = useState(false)
 
   const allMethodFlipped = flippedCards.size >= FRAMEWORK_STEPS.length
   const progressIndex = STEP_TO_PROGRESS[step] ?? -1
@@ -102,23 +109,34 @@ export default function ProfessionalStoryBuilder({
     })
   }
 
-  function toggleAvoid(id: AvoidEmphasis) {
-    if (avoidEmphasis.includes(id)) {
-      setAvoidEmphasis(avoidEmphasis.filter((x) => x !== id))
-    } else if (avoidEmphasis.length < 3) {
-      setAvoidEmphasis([...avoidEmphasis, id])
+  function toggleEmphasis(id: Emphasis) {
+    if (emphasis.includes(id)) {
+      setEmphasis(emphasis.filter((x) => x !== id))
+    } else if (emphasis.length < 3) {
+      setEmphasis([...emphasis, id])
+    }
+  }
+
+  function toggleAvoidance(id: Avoidance) {
+    if (avoidances.includes(id)) {
+      setAvoidances(avoidances.filter((x) => x !== id))
+    } else if (avoidances.length < 3) {
+      setAvoidances([...avoidances, id])
     }
   }
 
   function canAdvance(): boolean {
     switch (step) {
-      case 'positioning':
-        if (!positioning) return false
-        if (positioning === 'other' && !positioningOtherDetail.trim()) return false
+      case 'situation':
+        if (!currentSituation) return false
+        if (currentSituation === 'other' && !currentSituationDetail.trim()) return false
+        return true
+      case 'identity_style':
+        if (!identityStyle) return false
+        if (identityStyle === 'custom' && !customIdentity.trim()) return false
         return true
       case 'tone_length':
         return !!tone && !!length
-      case 'avoidances':
       case 'notes':
         return true
       default:
@@ -128,7 +146,7 @@ export default function ProfessionalStoryBuilder({
 
   const nextStep = useCallback(() => {
     const flow: Step[] = [
-      'intro', 'method', 'positioning', 'tone_length', 'notes', 'generating',
+      'intro', 'method', 'situation', 'identity_style', 'tone_length', 'notes', 'generating',
     ]
     const idx = flow.indexOf(step)
     if (idx >= 0 && idx < flow.length - 1) {
@@ -138,7 +156,7 @@ export default function ProfessionalStoryBuilder({
 
   const prevStep = useCallback(() => {
     const flow: Step[] = [
-      'intro', 'method', 'positioning', 'tone_length', 'notes',
+      'intro', 'method', 'situation', 'identity_style', 'tone_length', 'notes',
     ]
     const idx = flow.indexOf(step)
     if (idx > 0) {
@@ -146,10 +164,9 @@ export default function ProfessionalStoryBuilder({
     }
   }, [step])
 
-  // Generate professional story
+  // Generate professional introduction
   useEffect(() => {
-    if (step !== 'generating') return
-    if (generatingAlternate) return
+    if (step !== 'generating' || rewriting) return
     let cancelled = false
 
     async function generate() {
@@ -158,20 +175,22 @@ export default function ProfessionalStoryBuilder({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            currentPositioning: positioning,
-            currentPositioningOtherDetail: positioning === 'other' ? positioningOtherDetail.trim() : undefined,
+            currentSituation,
+            currentSituationDetail: currentSituation === 'other' ? currentSituationDetail.trim() : undefined,
+            professionalIdentityStyle: identityStyle,
+            customProfessionalIdentity: identityStyle === 'custom' ? customIdentity.trim() : undefined,
+            emphasis: emphasis.length ? emphasis : undefined,
             tone,
             length,
-            avoidEmphasis,
-            additionalNotes: additionalNotes.trim() || undefined,
+            avoidances: avoidances.length ? avoidances : undefined,
             sessionId,
           }),
         })
         if (!res.ok) throw new Error('failed')
         const data = await res.json()
         if (cancelled) return
-        if (data.fullAnswer || data.ppfBreakdown) {
-          setOutput(data as ProfessionalStoryOutput)
+        if (data.primaryAnswer || data.structureUsed) {
+          setOutput(data as ProfessionalIntroductionOutput)
           setStep('output')
         } else {
           setGenerateError(true)
@@ -186,42 +205,42 @@ export default function ProfessionalStoryBuilder({
 
     generate()
     return () => { cancelled = true }
-  }, [step, generatingAlternate]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step, rewriting]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Generate with alternate angle
-  async function generateWithAlternateAngle(angle: NarrativeAngle) {
-    setShowAlternateConfirm(null)
-    setGeneratingAlternate(true)
-    setStep('generating')
+  // Rewrite
+  async function handleRewrite(instruction: RewriteInstruction) {
+    setRewriteConfirm(null)
+    if (!output) return
 
+    if (instruction === 'regenerate') {
+      setGenerateError(false)
+      setOutput(null)
+      setStep('generating')
+      return
+    }
+
+    setRewriting(true)
     try {
       const res = await fetch('/api/interview/professional-story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentPositioning: positioning,
-          currentPositioningOtherDetail: positioning === 'other' ? positioningOtherDetail.trim() : undefined,
-          tone,
-          length,
-          avoidEmphasis,
-          additionalNotes: additionalNotes.trim() || undefined,
+          rewriteInstruction: instruction,
+          originalAnswer: output.primaryAnswer,
+          originalOutput: output,
           sessionId,
-          alternateAngleType: angle.type,
         }),
       })
       if (!res.ok) throw new Error('failed')
       const data = await res.json()
-      if (data.fullAnswer || data.ppfBreakdown) {
-        setOutput(data as ProfessionalStoryOutput)
-        setActiveOutputTab('full')
-      } else {
-        setGenerateError(true)
+      if (data.primaryAnswer) {
+        setOutput({ ...output, primaryAnswer: data.primaryAnswer })
+        setActiveOutputTab('primary')
       }
     } catch {
-      setGenerateError(true)
+      // silently fail — user can try again
     } finally {
-      setGeneratingAlternate(false)
-      setStep('output')
+      setRewriting(false)
     }
   }
 
@@ -292,6 +311,40 @@ export default function ProfessionalStoryBuilder({
     )
   }
 
+  function renderChipSelect(
+    options: readonly { readonly id: string; readonly label: string }[],
+    selected: string[],
+    toggle: (id: string) => void,
+    max: number,
+  ) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => {
+          const isSelected = selected.includes(opt.id)
+          const atMax = selected.length >= max && !isSelected
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => toggle(opt.id)}
+              disabled={atMax}
+              className={`rounded-full border-2 px-3.5 py-1.5 text-xs font-bold transition active:scale-95 ${
+                isSelected
+                  ? 'border-violet-400 bg-violet-500 text-white shadow-sm'
+                  : atMax
+                  ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50'
+              }`}
+            >
+              {isSelected && <Check className="mr-1 -ml-1 inline h-3 w-3" />}
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
   function renderStepShell(
     title: string,
     subtitle: string,
@@ -311,7 +364,7 @@ export default function ProfessionalStoryBuilder({
         <div className="shrink-0 border-t border-slate-200 px-5 py-3">
           {footer || (
             <div className="flex items-center gap-2">
-              {step !== 'positioning' && (
+              {step !== 'situation' && (
                 <button
                   onClick={prevStep}
                   className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50"
@@ -336,11 +389,11 @@ export default function ProfessionalStoryBuilder({
   }
 
   const activeAnswer =
-    activeOutputTab === 'shorter'
-      ? output?.shorterVersion
-      : activeOutputTab === 'conversational'
-      ? output?.conversationalVersion
-      : output?.fullAnswer
+    activeOutputTab === 'casual'
+      ? output?.casualAnswer
+      : activeOutputTab === 'short'
+      ? output?.shortAnswer
+      : output?.primaryAnswer
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
@@ -353,7 +406,7 @@ export default function ProfessionalStoryBuilder({
                 Why this matters
               </span>
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">
-                PPF
+                IFRD
               </span>
             </div>
             <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">
@@ -370,7 +423,7 @@ export default function ProfessionalStoryBuilder({
                   </div>
                   <p className="text-sm leading-7 text-slate-800">
                     Most people walk through their resume. The interviewer tunes out after 10 seconds.
-                    A strong answer tells a story: who you are now, what shaped you, and why you&apos;re here.
+                    A strong answer tells a story: who you are, what shaped you, what you&apos;ve been focused on, and why you&apos;re here.
                   </p>
                 </div>
               </div>
@@ -404,7 +457,7 @@ export default function ProfessionalStoryBuilder({
                     &ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;
                   </p>
                   <p className="mt-3 text-xs font-bold text-rose-700">
-                    We&apos;re going to build a better version — using your real resume.
+                    We&apos;ll build a better version using your real resume.
                   </p>
                 </div>
               )}
@@ -431,7 +484,7 @@ export default function ProfessionalStoryBuilder({
               The Method
             </span>
             <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
-              Present · Past · Future
+              Identity · Foundation · Recent Focus · Direction
             </h2>
             <p className="mt-1 text-xs font-bold text-slate-500">
               Flip each card in order to unlock the next.
@@ -510,7 +563,7 @@ export default function ProfessionalStoryBuilder({
 
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
             <button
-              onClick={() => setStep('positioning')}
+              onClick={() => setStep('situation')}
               disabled={!allMethodFlipped}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50"
             >
@@ -521,24 +574,26 @@ export default function ProfessionalStoryBuilder({
         </div>
       )}
 
-      {/* STEP 1: Current Positioning */}
-      {step === 'positioning' &&
+      {/* STEP 1: Current Situation */}
+      {step === 'situation' &&
         renderStepShell(
-          "Where are you right now?",
-          "This helps shape the story. Pick what best describes your current situation.",
+          'How should we describe where you are now?',
+          "This helps us explain your current chapter without making it awkward.",
           <div className="space-y-5">
             {renderCardSelect(
-              CURRENT_POSITIONING_OPTIONS,
-              positioning,
-              (id) => setPositioning(id as CurrentPositioning),
+              CURRENT_SITUATION_OPTIONS,
+              currentSituation,
+              (id) => setCurrentSituation(id as CurrentSituation),
             )}
-            {positioning === 'other' && (
+            {currentSituation === 'other' && (
               <div>
-                <label className="block text-xs font-bold text-slate-600">Describe your situation briefly</label>
+                <label className="block text-xs font-bold text-slate-600">
+                  How should we describe your current situation?
+                </label>
                 <input
                   type="text"
-                  value={positioningOtherDetail}
-                  onChange={(e) => setPositioningOtherDetail(e.target.value.slice(0, 120))}
+                  value={currentSituationDetail}
+                  onChange={(e) => setCurrentSituationDetail(e.target.value.slice(0, 180))}
                   placeholder="Example: I'm wrapping up a contract and looking for a full-time role."
                   className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
                 />
@@ -556,11 +611,41 @@ export default function ProfessionalStoryBuilder({
         )
       }
 
-      {/* STEP 2: Tone + Length */}
+      {/* STEP 2: Professional Identity Style */}
+      {step === 'identity_style' &&
+        renderStepShell(
+          'How should your intro start?',
+          'Choose the professional identity that feels most accurate.',
+          <div className="space-y-5">
+            {renderCardSelect(
+              PROFESSIONAL_IDENTITY_STYLE_OPTIONS,
+              identityStyle,
+              (id) => setIdentityStyle(id as ProfessionalIdentityStyle),
+            )}
+            {identityStyle === 'custom' && (
+              <div>
+                <label className="block text-xs font-bold text-slate-600">
+                  Write your opening identity
+                </label>
+                <textarea
+                  value={customIdentity}
+                  onChange={(e) => setCustomIdentity(e.target.value.slice(0, 220))}
+                  placeholder="Example: I'm a marketing and sales professional with experience across brand positioning, client management, and growth strategy."
+                  rows={3}
+                  className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+                />
+                <p className="mt-1 text-right text-[11px] text-slate-400">{customIdentity.length}/220</p>
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      {/* STEP 3: Tone + Length */}
       {step === 'tone_length' &&
         renderStepShell(
-          'How should it sound?',
-          'Pick a tone and target length. These shape the style and pacing.',
+          'Choose the tone',
+          'How should this sound in the interview?',
           <div className="space-y-6">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-3">Tone</p>
@@ -571,7 +656,7 @@ export default function ProfessionalStoryBuilder({
               )}
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-3">Length</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-3">Answer length</p>
               {renderCardSelect(
                 LENGTH_OPTIONS,
                 length,
@@ -582,11 +667,11 @@ export default function ProfessionalStoryBuilder({
         )
       }
 
-      {/* STEP 3: Notes + optional avoidances */}
+      {/* STEP 4: Notes + Advanced (emphasis, avoidances) */}
       {step === 'notes' &&
         renderStepShell(
-          'Anything else?',
-          "Optional notes and things to avoid. Your resume and JD are already loaded — we'll pull from them automatically.",
+          'Build your introduction',
+          "Your resume and job description are already loaded. We'll pull from them automatically.",
           <div className="space-y-5">
             {generateError && (
               <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
@@ -596,66 +681,80 @@ export default function ProfessionalStoryBuilder({
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-bold text-slate-800">
-                Additional notes
-                <span className="ml-1 font-normal text-slate-400">(optional)</span>
-              </label>
-              <textarea
-                value={additionalNotes}
-                onChange={(e) => setAdditionalNotes(e.target.value.slice(0, 500))}
-                placeholder="Example: Emphasize my sales experience. Don't mention my time at Company X."
-                rows={3}
-                className="mt-2 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
-              />
-              <p className="mt-1 text-right text-[11px] text-slate-400">{additionalNotes.length}/500</p>
-            </div>
-
-            {/* Collapsible avoidances */}
+            {/* Collapsible advanced section */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50">
               <button
                 type="button"
-                onClick={() => setShowAvoidances(!showAvoidances)}
+                onClick={() => setShowAdvanced(!showAdvanced)}
                 className="flex w-full items-center justify-between px-4 py-3"
               >
                 <span className="text-xs font-bold text-slate-600">
-                  Things to avoid {avoidEmphasis.length > 0 && `(${avoidEmphasis.length})`}
+                  Advanced settings
+                  {(emphasis.length > 0 || avoidances.length > 0) && (
+                    <span className="ml-1 text-slate-400">
+                      ({emphasis.length > 0 ? `${emphasis.length} emphasis` : ''}{emphasis.length > 0 && avoidances.length > 0 ? ', ' : ''}{avoidances.length > 0 ? `${avoidances.length} avoid` : ''})
+                    </span>
+                  )}
                 </span>
-                {showAvoidances ? (
+                {showAdvanced ? (
                   <ChevronUp className="h-4 w-4 text-slate-400" />
                 ) : (
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 )}
               </button>
-              {showAvoidances && (
-                <div className="border-t border-slate-200 px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    {AVOID_OPTIONS.map((opt) => {
-                      const isSelected = avoidEmphasis.includes(opt.id)
-                      const atMax = avoidEmphasis.length >= 3 && !isSelected
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => toggleAvoid(opt.id)}
-                          disabled={atMax}
-                          className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition active:scale-95 ${
-                            isSelected
-                              ? 'border-rose-300 bg-rose-500 text-white shadow-sm'
-                              : atMax
-                              ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-rose-300 hover:bg-rose-50'
-                          }`}
-                        >
-                          {isSelected && <Check className="mr-1 -ml-1 inline h-3 w-3" />}
-                          {opt.label}
-                        </button>
-                      )
-                    })}
+              {showAdvanced && (
+                <div className="border-t border-slate-200 px-4 py-4 space-y-5">
+                  {/* Emphasis */}
+                  <div>
+                    <p className="text-xs font-bold text-slate-700 mb-1">
+                      What should come through most?
+                    </p>
+                    <p className="text-[11px] text-slate-500 mb-3">Pick up to 3 themes to emphasize. Optional.</p>
+                    {renderChipSelect(
+                      EMPHASIS_OPTIONS,
+                      emphasis,
+                      (id) => toggleEmphasis(id as Emphasis),
+                      3,
+                    )}
+                    {emphasis.length > 0 && (
+                      <p className="mt-2 text-[11px] font-bold text-slate-400">{emphasis.length}/3 selected</p>
+                    )}
                   </div>
-                  <p className="mt-2 text-[11px] font-bold text-slate-400">
-                    {avoidEmphasis.length}/3 selected
-                  </p>
+
+                  {/* Avoidances */}
+                  <div>
+                    <p className="text-xs font-bold text-slate-700 mb-1">
+                      Anything to avoid?
+                    </p>
+                    <p className="text-[11px] text-slate-500 mb-3">
+                      Choose anything you don&apos;t want the answer to overemphasize. Max 3.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {AVOIDANCE_OPTIONS.map((opt) => {
+                        const isSelected = avoidances.includes(opt.id)
+                        const atMax = avoidances.length >= 3 && !isSelected
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => toggleAvoidance(opt.id)}
+                            disabled={atMax}
+                            className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition active:scale-95 ${
+                              isSelected
+                                ? 'border-rose-300 bg-rose-500 text-white shadow-sm'
+                                : atMax
+                                ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-rose-300 hover:bg-rose-50'
+                            }`}
+                          >
+                            {isSelected && <Check className="mr-1 -ml-1 inline h-3 w-3" />}
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className="mt-2 text-[11px] font-bold text-slate-400">{avoidances.length}/3 selected</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -676,7 +775,7 @@ export default function ProfessionalStoryBuilder({
               className="btn-coach-primary flex flex-1 items-center justify-center gap-2 py-3 text-sm font-bold"
             >
               <Sparkles className="h-4 w-4" />
-              Generate my story
+              Generate answer
             </button>
           </div>
         )
@@ -687,7 +786,7 @@ export default function ProfessionalStoryBuilder({
         <div className="flex h-full flex-col items-center justify-center px-5 text-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-200 border-t-violet-500" />
           <p className="mt-5 text-sm font-bold text-slate-700">
-            {generatingAlternate ? 'Rebuilding with a new angle…' : 'Building your professional story…'}
+            Building your professional introduction…
           </p>
           <p className="mt-1 text-xs text-slate-500">Analyzing your resume and job description.</p>
         </div>
@@ -698,7 +797,7 @@ export default function ProfessionalStoryBuilder({
         <div className="flex h-full flex-col">
           <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-5 py-4">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
-              Your professional story
+              Your answer
             </span>
             <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">
               Here&apos;s what that sounds like.
@@ -708,10 +807,10 @@ export default function ProfessionalStoryBuilder({
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
             <div className="space-y-6">
 
-              {/* 1. Answer tabs + copy */}
+              {/* 1. Answer tabs + copy + rewrite */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  {(['full', 'shorter', 'conversational'] as const).map((tab) => (
+                  {(['primary', 'casual', 'short'] as const).map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveOutputTab(tab)}
@@ -721,14 +820,14 @@ export default function ProfessionalStoryBuilder({
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
-                      {tab === 'full' ? 'Full' : tab === 'shorter' ? 'Shorter' : 'Casual'}
+                      {tab === 'primary' ? 'Full' : tab === 'casual' ? 'Casual' : 'Short'}
                     </button>
                   ))}
                 </div>
                 <div className="rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-4">
                   <p className="text-sm leading-7 text-slate-900">{activeAnswer}</p>
                 </div>
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => copyToClipboard(activeAnswer || '')}
                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
@@ -736,116 +835,60 @@ export default function ProfessionalStoryBuilder({
                     {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                     {copied ? 'Copied' : 'Copy'}
                   </button>
+                  <button
+                    onClick={() => setRewriteConfirm('regenerate')}
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Regenerate
+                  </button>
                 </div>
               </div>
 
-              {/* 2. PPF Breakdown */}
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
-                  Present · Past · Future breakdown
-                </p>
-                <div className="space-y-2">
-                  {(['present', 'past', 'future'] as const).map((part) => {
-                    const fs = FRAMEWORK_STEPS.find((f) => f.key === part)
-                    const colors = fs ? COLOR_MAP[fs.color] : COLOR_MAP.violet
-                    return (
-                      <div key={part} className={`rounded-xl border-2 ${colors.border} ${colors.soft} px-3 py-2.5`}>
-                        <div className="flex items-start gap-2">
-                          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.bg} text-xs text-white`}>
-                            {fs?.emoji || '📝'}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>{part}</p>
-                            <p className="text-sm leading-6 text-slate-800">{output.ppfBreakdown[part]}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* 3. Recommended Angle */}
-              {output.recommendedAngle && (
+              {/* 2. IFRD Breakdown */}
+              {output.structureUsed && (
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
-                    Recommended angle
-                  </p>
-                  <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 px-4 py-3">
-                    <p className="text-sm font-bold text-emerald-800">{output.recommendedAngle.label}</p>
-                    <p className="mt-1 text-xs leading-5 text-emerald-700">{output.recommendedAngle.description}</p>
-                    <span className="mt-2 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-                      {output.recommendedAngle.type.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* 4. Alternate Angles */}
-              {output.alternateAngles?.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
-                    Other ways to tell your story
+                    How this answer is structured
                   </p>
                   <div className="space-y-2">
-                    {output.alternateAngles.map((angle, i) => (
-                      <div key={i} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-800">{angle.label}</p>
-                            <p className="mt-1 text-xs leading-5 text-slate-600">{angle.description}</p>
-                            <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                              {angle.type.replace(/_/g, ' ')}
+                    {(['identity', 'foundation', 'recentFocus', 'direction'] as const).map((part) => {
+                      const fs = FRAMEWORK_STEPS.find((f) => f.key === part)
+                      const colors = fs ? COLOR_MAP[fs.color] : COLOR_MAP.violet
+                      const labels: Record<string, string> = {
+                        identity: 'Identity',
+                        foundation: 'Foundation',
+                        recentFocus: 'Recent Focus',
+                        direction: 'Direction',
+                      }
+                      return (
+                        <div key={part} className={`rounded-xl border-2 ${colors.border} ${colors.soft} px-3 py-2.5`}>
+                          <div className="flex items-start gap-2">
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.bg} text-xs text-white`}>
+                              {fs?.emoji || '📝'}
                             </span>
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>
+                                {labels[part]}
+                              </p>
+                              <p className="text-sm leading-6 text-slate-800">{output.structureUsed[part]}</p>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => setShowAlternateConfirm(angle)}
-                            className="shrink-0 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100"
-                          >
-                            <RefreshCw className="mr-1 inline h-3 w-3" />
-                            Try this
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Alternate angle confirmation dialog */}
-              {showAlternateConfirm && (
-                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-4">
-                  <p className="text-sm font-bold text-amber-900">
-                    Generate with &ldquo;{showAlternateConfirm.label}&rdquo;?
-                  </p>
-                  <p className="mt-1 text-xs text-amber-700">
-                    This will rebuild your answer using a different narrative angle. Your settings stay the same.
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <button
-                      onClick={() => setShowAlternateConfirm(null)}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => generateWithAlternateAngle(showAlternateConfirm)}
-                      className="rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-600"
-                    >
-                      Generate
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 5. Opening Line Options */}
-              {output.openingLines?.length > 0 && (
+              {/* 3. Opening Line Options */}
+              {output.openingLineOptions?.length > 0 && (
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
                     Opening line options
                   </p>
                   <div className="space-y-1.5">
-                    {output.openingLines.map((line, i) => (
+                    {output.openingLineOptions.map((line, i) => (
                       <div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                         <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
                         <p className="text-xs leading-5 text-slate-700">{line}</p>
@@ -855,14 +898,14 @@ export default function ProfessionalStoryBuilder({
                 </div>
               )}
 
-              {/* 6. Closing Line Options */}
-              {output.closingLines?.length > 0 && (
+              {/* 4. Closing Line Options */}
+              {output.closingLineOptions?.length > 0 && (
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
                     Closing line options
                   </p>
                   <div className="space-y-1.5">
-                    {output.closingLines.map((line, i) => (
+                    {output.closingLineOptions.map((line, i) => (
                       <div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                         <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-400" />
                         <p className="text-xs leading-5 text-slate-700">{line}</p>
@@ -872,38 +915,42 @@ export default function ProfessionalStoryBuilder({
                 </div>
               )}
 
-              {/* 7. Why It Works */}
-              {output.whyItWorks && (
+              {/* 5. Why This Works */}
+              {output.whyThisWorks?.length > 0 && (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600 mb-1">
                     Why this works
                   </p>
-                  <p className="text-xs leading-5 text-emerald-800">{output.whyItWorks}</p>
+                  <ul className="space-y-1">
+                    {output.whyThisWorks.map((w, i) => (
+                      <li key={i} className="text-xs leading-5 text-emerald-800">• {w}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
-              {/* 8. Watch Outs */}
-              {output.watchOuts?.length > 0 && (
+              {/* 6. Watch Outs */}
+              {output.possibleWeakSpots?.length > 0 && (
                 <div className="rounded-2xl border border-amber-100 bg-amber-50/60 px-4 py-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-600 mb-1">
-                    Watch out for
+                    Be careful with this
                   </p>
                   <ul className="space-y-1">
-                    {output.watchOuts.map((w, i) => (
+                    {output.possibleWeakSpots.map((w, i) => (
                       <li key={i} className="text-xs leading-5 text-amber-800">• {w}</li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {/* 9. Follow-up Questions */}
-              {output.followUpQuestions?.length > 0 && (
+              {/* 7. Follow-up Questions */}
+              {output.likelyFollowUpQuestions?.length > 0 && (
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
                     They might ask next
                   </p>
                   <div className="space-y-1.5">
-                    {output.followUpQuestions.map((q, i) => (
+                    {output.likelyFollowUpQuestions.map((q, i) => (
                       <div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                         <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
                         <p className="text-xs leading-5 text-slate-700">{q}</p>
@@ -913,59 +960,59 @@ export default function ProfessionalStoryBuilder({
                 </div>
               )}
 
-              {/* 10. Role Understanding + Resume Fit (collapsible) */}
-              {(output.roleUnderstanding || output.resumeFitSummary) && (
-                <details className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2">
-                  <summary className="cursor-pointer text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">
-                    How we read your resume + job description
-                  </summary>
-                  <div className="mt-3 space-y-3 pb-2">
-                    {output.roleUnderstanding?.interviewerLikelyCaresAbout?.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                          Interviewer likely cares about
-                        </p>
-                        <ul className="mt-1 space-y-0.5">
-                          {output.roleUnderstanding.interviewerLikelyCaresAbout.map((item, i) => (
-                            <li key={i} className="text-xs leading-5 text-slate-700">• {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {output.resumeFitSummary?.strongestRelevantBackground?.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600">
-                          Strongest relevant background
-                        </p>
-                        <ul className="mt-1 space-y-0.5">
-                          {output.resumeFitSummary.strongestRelevantBackground.map((item, i) => (
-                            <li key={i} className="text-xs leading-5 text-slate-700">• {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {output.resumeFitSummary?.backgroundToMinimize?.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-600">
-                          Background to minimize
-                        </p>
-                        <ul className="mt-1 space-y-0.5">
-                          {output.resumeFitSummary.backgroundToMinimize.map((item, i) => (
-                            <li key={i} className="text-xs leading-5 text-slate-700">• {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {output.resumeFitSummary?.possibleConcern && (
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-rose-600">
-                          Possible concern
-                        </p>
-                        <p className="mt-0.5 text-xs leading-5 text-slate-700">{output.resumeFitSummary.possibleConcern}</p>
-                      </div>
-                    )}
+              {/* Rewrite options */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">
+                  Want a different version?
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {REWRITE_OPTIONS.filter((r) => r.id !== 'regenerate').map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setRewriteConfirm(opt.id)}
+                      disabled={rewriting}
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rewrite confirmation dialog */}
+              {rewriteConfirm && (
+                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-4">
+                  <p className="text-sm font-bold text-amber-900">
+                    Generate a new version?
+                  </p>
+                  <p className="mt-1 text-xs text-amber-700">
+                    {rewriteConfirm === 'regenerate'
+                      ? 'This will create a completely new answer with the same settings.'
+                      : `This will rewrite your answer to: ${rewriteConfirm.replace(/_/g, ' ')}.`}
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={() => setRewriteConfirm(null)}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleRewrite(rewriteConfirm)}
+                      className="rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-600"
+                    >
+                      Generate new answer
+                    </button>
                   </div>
-                </details>
+                </div>
+              )}
+
+              {/* Rewriting indicator */}
+              {rewriting && (
+                <div className="flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-500" />
+                  <p className="text-xs font-bold text-violet-700">Rewriting your answer…</p>
+                </div>
               )}
             </div>
           </div>

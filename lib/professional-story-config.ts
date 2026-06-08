@@ -1,21 +1,12 @@
 // ---------------------------------------------------------------------------
-// Professional Story Builder — Static Configuration
+// Professional Introduction Builder — Static Configuration
+// Identity → Foundation → Recent Focus → Direction
 // ---------------------------------------------------------------------------
 
 // ========================== TYPE DEFINITIONS ==========================
 
-export type NarrativeAngleType =
-  | 'function_based'
-  | 'industry_based'
-  | 'skill_cluster'
-  | 'problem_solver'
-  | 'progression'
-  | 'transition'
-  | 'mission_fit'
-  | 'operator'
-
-export type CurrentPositioning =
-  | 'currently_in_role'
+export type CurrentSituation =
+  | 'currently_employed'
   | 'currently_job_searching'
   | 'currently_independent'
   | 'currently_building'
@@ -25,6 +16,33 @@ export type CurrentPositioning =
   | 'returning_to_work'
   | 'other'
 
+export type ProfessionalIdentityStyle =
+  | 'broad_professional'
+  | 'function_specific'
+  | 'hybrid_generalist'
+  | 'industry_specific'
+  | 'transition_focused'
+  | 'early_career'
+  | 'custom'
+
+export type Emphasis =
+  | 'customer_focus'
+  | 'sales'
+  | 'marketing'
+  | 'product_thinking'
+  | 'technical_fluency'
+  | 'operations'
+  | 'leadership'
+  | 'execution'
+  | 'strategy'
+  | 'communication'
+  | 'problem_solving'
+  | 'adaptability'
+  | 'industry_experience'
+  | 'service_orientation'
+  | 'teamwork'
+  | 'ownership'
+
 export type TonePreference =
   | 'natural_confident'
   | 'polished_professional'
@@ -33,209 +51,278 @@ export type TonePreference =
   | 'executive'
   | 'early_career'
 
-export type LengthPreference = 'thirty_seconds' | 'sixty_seconds' | 'ninety_seconds'
+export type LengthPreference = 'forty_five_seconds' | 'sixty_seconds' | 'ninety_seconds'
 
-export type AvoidEmphasis =
+export type Avoidance =
+  | 'starting_with_current_gap'
+  | 'starting_with_side_projects'
   | 'sounding_like_resume_walkthrough'
   | 'listing_every_job'
   | 'using_too_many_buzzwords'
-  | 'explaining_why_leaving'
-  | 'drawing_attention_to_gaps'
-  | 'highlighting_short_tenure'
-  | 'sounding_overqualified'
-  | 'sounding_underqualified'
-  | 'over_explaining_career_change'
-  | 'sounding_too_junior'
-  | 'sounding_too_senior'
-  | 'being_too_vague'
-  | 'being_too_detailed'
-  | 'sounding_desperate'
-  | 'sounding_arrogant'
+  | 'sounding_too_technical'
+  | 'sounding_too_salesy'
+  | 'overexplaining_transition'
+  | 'overexplaining_independent_work'
+  | 'sounding_apologetic'
+  | 'sounding_too_generic'
+  | 'overclaiming_experience'
 
-export interface ProfessionalStoryInput {
-  currentPositioning: CurrentPositioning
-  currentPositioningOtherDetail?: string
+export type RewriteInstruction =
+  | 'make_shorter'
+  | 'make_more_conversational'
+  | 'make_more_confident'
+  | 'make_less_formal'
+  | 'make_more_specific'
+  | 'tie_closer_to_role'
+  | 'reduce_buzzwords'
+  | 'make_less_technical'
+  | 'make_less_salesy'
+  | 'regenerate'
+
+export interface ProfessionalIntroductionInput {
+  currentSituation: CurrentSituation
+  currentSituationDetail?: string
+  professionalIdentityStyle: ProfessionalIdentityStyle
+  customProfessionalIdentity?: string
+  emphasis?: Emphasis[]
   tone: TonePreference
   length: LengthPreference
-  avoidEmphasis: AvoidEmphasis[]
-  additionalNotes?: string
+  avoidances?: Avoidance[]
 }
 
-export interface NarrativeAngle {
-  type: NarrativeAngleType
-  label: string
-  description: string
-}
-
-export interface ProfessionalStoryOutput {
-  roleUnderstanding: {
-    roleTitle?: string
-    companyName?: string
-    interviewerLikelyCaresAbout: string[]
+export interface ProfessionalIntroductionOutput {
+  answerType: 'professional_introduction'
+  structureUsed: {
+    identity: string
+    foundation: string
+    recentFocus: string
+    direction: string
   }
-  resumeFitSummary: {
-    strongestRelevantBackground: string[]
-    backgroundToMinimize: string[]
-    possibleConcern?: string
-  }
-  recommendedAngle: NarrativeAngle
-  alternateAngles: NarrativeAngle[]
-  ppfBreakdown: {
-    present: string
-    past: string
-    future: string
-  }
-  fullAnswer: string
-  shorterVersion: string
-  conversationalVersion: string
-  openingLines: string[]
-  closingLines: string[]
-  whyItWorks: string
-  watchOuts: string[]
-  followUpQuestions: string[]
+  primaryAnswer: string
+  casualAnswer: string
+  shortAnswer: string
+  openingLineOptions: string[]
+  closingLineOptions: string[]
+  whyThisWorks: string[]
+  possibleWeakSpots: string[]
+  likelyFollowUpQuestions: string[]
 }
 
 // ========================== OPTION ARRAYS ==========================
 
-export const CURRENT_POSITIONING_OPTIONS = [
+export const CURRENT_SITUATION_OPTIONS = [
   {
-    id: 'currently_in_role' as const,
-    label: 'Currently in a role',
-    description: "You're employed and looking for a new opportunity.",
+    id: 'currently_employed' as const,
+    label: "I'm currently employed",
+    description: 'Best if you currently have a role.',
   },
   {
     id: 'currently_job_searching' as const,
-    label: 'Actively job searching',
-    description: "You're between roles and actively looking.",
+    label: "I'm currently looking for my next role",
+    description: 'Best if you are between jobs.',
   },
   {
     id: 'currently_independent' as const,
-    label: 'Freelance or consulting',
-    description: "You're working independently and want to go in-house or change direction.",
+    label: "I'm currently doing independent work",
+    description: 'Best for freelancing, consulting, agency work, or self-directed work.',
   },
   {
     id: 'currently_building' as const,
-    label: 'Building something',
-    description: "You're working on your own project, startup, or side business.",
+    label: "I'm currently building products or projects",
+    description: 'Best for apps, prototypes, startups, creative work, or product exploration.',
   },
   {
     id: 'currently_transitioning' as const,
-    label: 'Career transition',
-    description: "You're moving into a different function or field.",
+    label: "I'm making a career transition",
+    description: 'Best if you are moving from one function or industry into another.',
   },
   {
     id: 'recently_left_role' as const,
-    label: 'Recently left a role',
-    description: "You left your last job and are figuring out what's next.",
+    label: 'I recently left a role or business',
+    description: 'Best if your recent change needs a simple explanation.',
   },
   {
     id: 'student_or_recent_grad' as const,
-    label: 'Student or recent grad',
-    description: "You're finishing school or recently graduated.",
+    label: "I'm a student or recent graduate",
+    description: 'Best for early-career users.',
   },
   {
     id: 'returning_to_work' as const,
-    label: 'Returning to work',
-    description: "You've been away and are getting back into the workforce.",
+    label: "I'm returning to work",
+    description: 'Best if you are re-entering after time away.',
   },
   {
     id: 'other' as const,
     label: 'Other',
-    description: "Something else — you'll add a short note.",
+    description: 'Describe manually.',
   },
+] as const
+
+export const PROFESSIONAL_IDENTITY_STYLE_OPTIONS = [
+  {
+    id: 'broad_professional' as const,
+    label: 'Broad professional identity',
+    description: "Example: I'm a marketing and sales professional with experience across brand positioning, client management, and strategy.",
+  },
+  {
+    id: 'function_specific' as const,
+    label: 'Function-specific identity',
+    description: "Example: I'm a software engineer focused on backend systems and reliable product infrastructure.",
+  },
+  {
+    id: 'hybrid_generalist' as const,
+    label: 'Hybrid / generalist identity',
+    description: 'Example: My background sits across sales, marketing, product, and customer-facing work.',
+  },
+  {
+    id: 'industry_specific' as const,
+    label: 'Industry-specific identity',
+    description: "Example: I'm a healthcare operations professional with experience in patient care coordination and service delivery.",
+  },
+  {
+    id: 'transition_focused' as const,
+    label: 'Transition-focused identity',
+    description: "Example: My background started in education, and I'm now moving toward training and employee development.",
+  },
+  {
+    id: 'early_career' as const,
+    label: 'Early-career identity',
+    description: "Example: I'm early in my career, with experience through internships, projects, and hands-on learning.",
+  },
+  {
+    id: 'custom' as const,
+    label: 'I want to write my own opening identity',
+    description: 'Best if you already know exactly how you want to describe yourself.',
+  },
+] as const
+
+export const EMPHASIS_OPTIONS = [
+  { id: 'customer_focus' as const, label: 'Customer focus' },
+  { id: 'sales' as const, label: 'Sales' },
+  { id: 'marketing' as const, label: 'Marketing' },
+  { id: 'product_thinking' as const, label: 'Product thinking' },
+  { id: 'technical_fluency' as const, label: 'Technical fluency' },
+  { id: 'operations' as const, label: 'Operations' },
+  { id: 'leadership' as const, label: 'Leadership' },
+  { id: 'execution' as const, label: 'Execution' },
+  { id: 'strategy' as const, label: 'Strategy' },
+  { id: 'communication' as const, label: 'Communication' },
+  { id: 'problem_solving' as const, label: 'Problem solving' },
+  { id: 'adaptability' as const, label: 'Adaptability' },
+  { id: 'industry_experience' as const, label: 'Industry experience' },
+  { id: 'service_orientation' as const, label: 'Service orientation' },
+  { id: 'teamwork' as const, label: 'Teamwork' },
+  { id: 'ownership' as const, label: 'Ownership' },
 ] as const
 
 export const TONE_OPTIONS = [
   {
     id: 'natural_confident' as const,
-    label: 'Natural & confident',
-    description: 'Clear, to the point. Like someone who knows what they bring.',
+    label: 'Natural and confident',
+    description: 'Clear, human, and capable without sounding rehearsed.',
   },
   {
     id: 'polished_professional' as const,
-    label: 'Polished & professional',
-    description: 'Structured, articulate. Like someone who prepares well.',
+    label: 'Polished and professional',
+    description: 'More formal and structured.',
   },
   {
     id: 'warm_conversational' as const,
-    label: 'Warm & conversational',
-    description: 'Friendly, approachable. Like talking to a colleague.',
+    label: 'Warm and conversational',
+    description: 'Friendly, approachable, and less corporate.',
   },
   {
     id: 'direct_concise' as const,
-    label: 'Direct & concise',
-    description: 'No filler. Gets to the point fast.',
+    label: 'Direct and concise',
+    description: 'Short, efficient, and to the point.',
   },
   {
     id: 'executive' as const,
     label: 'Executive',
-    description: 'Strategic, high-level. Sounds like someone who leads.',
+    description: 'Higher-level, strategic, and commercially focused.',
   },
   {
     id: 'early_career' as const,
     label: 'Early career',
-    description: 'Eager, genuine. Sounds like someone ready to prove themselves.',
+    description: 'Useful for students, recent grads, or people with limited experience.',
   },
 ] as const
 
 export const LENGTH_OPTIONS = [
-  { id: 'thirty_seconds' as const, label: '30 seconds', description: '70–100 words. Quick and tight for early screens.' },
-  { id: 'sixty_seconds' as const, label: '60 seconds', description: '130–180 words. Standard length, covers the arc.' },
-  { id: 'ninety_seconds' as const, label: '90 seconds', description: '190–260 words. Full version when they give you room.' },
+  { id: 'forty_five_seconds' as const, label: '45 seconds', description: 'Best for quick phone screens.' },
+  { id: 'sixty_seconds' as const, label: '60 seconds', description: 'Best default for most interviews.' },
+  { id: 'ninety_seconds' as const, label: '90 seconds', description: 'Best when the interviewer asks an open-ended version.' },
 ] as const
 
-export const AVOID_OPTIONS = [
-  { id: 'sounding_like_resume_walkthrough' as const, label: "Sounding like a resume walkthrough" },
-  { id: 'listing_every_job' as const, label: "Listing every job" },
-  { id: 'using_too_many_buzzwords' as const, label: "Using too many buzzwords" },
-  { id: 'explaining_why_leaving' as const, label: "Explaining why I'm leaving" },
-  { id: 'drawing_attention_to_gaps' as const, label: "Drawing attention to gaps" },
-  { id: 'highlighting_short_tenure' as const, label: "Highlighting short stints" },
-  { id: 'sounding_overqualified' as const, label: "Sounding overqualified" },
-  { id: 'sounding_underqualified' as const, label: "Sounding underqualified" },
-  { id: 'over_explaining_career_change' as const, label: "Over-explaining the career change" },
-  { id: 'sounding_too_junior' as const, label: "Sounding too junior" },
-  { id: 'sounding_too_senior' as const, label: "Sounding too senior" },
-  { id: 'being_too_vague' as const, label: "Being too vague" },
-  { id: 'being_too_detailed' as const, label: "Being too detailed" },
-  { id: 'sounding_desperate' as const, label: "Sounding desperate" },
-  { id: 'sounding_arrogant' as const, label: "Sounding arrogant" },
+export const AVOIDANCE_OPTIONS = [
+  { id: 'starting_with_current_gap' as const, label: 'Starting with a current gap' },
+  { id: 'starting_with_side_projects' as const, label: 'Starting with side projects' },
+  { id: 'sounding_like_resume_walkthrough' as const, label: 'Sounding like a resume walkthrough' },
+  { id: 'listing_every_job' as const, label: 'Listing every job' },
+  { id: 'using_too_many_buzzwords' as const, label: 'Using too many buzzwords' },
+  { id: 'sounding_too_technical' as const, label: 'Sounding too technical' },
+  { id: 'sounding_too_salesy' as const, label: 'Sounding too salesy' },
+  { id: 'overexplaining_transition' as const, label: 'Overexplaining a transition' },
+  { id: 'overexplaining_independent_work' as const, label: 'Overexplaining independent work' },
+  { id: 'sounding_apologetic' as const, label: 'Sounding apologetic' },
+  { id: 'sounding_too_generic' as const, label: 'Sounding too generic' },
+  { id: 'overclaiming_experience' as const, label: 'Overclaiming experience' },
+] as const
+
+export const DEFAULT_AVOIDANCES: Avoidance[] = [
+  'sounding_like_resume_walkthrough',
+  'listing_every_job',
+  'using_too_many_buzzwords',
+  'starting_with_side_projects',
+  'sounding_apologetic',
+]
+
+export const REWRITE_OPTIONS = [
+  { id: 'make_shorter' as const, label: 'Make shorter' },
+  { id: 'make_more_conversational' as const, label: 'Make more conversational' },
+  { id: 'make_more_confident' as const, label: 'Make more confident' },
+  { id: 'make_less_formal' as const, label: 'Make less formal' },
+  { id: 'make_more_specific' as const, label: 'Make more specific' },
+  { id: 'tie_closer_to_role' as const, label: 'Tie closer to the role' },
+  { id: 'reduce_buzzwords' as const, label: 'Reduce buzzwords' },
+  { id: 'make_less_technical' as const, label: 'Make less technical' },
+  { id: 'make_less_salesy' as const, label: 'Make less salesy' },
+  { id: 'regenerate' as const, label: 'Regenerate' },
 ] as const
 
 export const PROGRESS_STEPS = [
-  'Positioning', 'Tone', 'Details', 'Generate',
+  'Situation', 'Identity', 'Tone', 'Generate',
 ] as const
 
 // ========================== FRAMEWORK STEPS (for flip cards) ==========================
 
 export const FRAMEWORK_STEPS = [
   {
-    key: 'present',
-    label: 'Present',
-    description: "Who you are now — your current role, what you spend your time on. Not a resume recitation.",
+    key: 'identity',
+    label: 'Identity',
+    description: 'Who you are professionally. Not your current job title — the broader picture of how to understand you.',
     color: 'sky',
-    emoji: '📍',
+    emoji: '🪪',
   },
   {
-    key: 'past',
-    label: 'Past',
-    description: "The relevant background that got you here. Pick one or two things — not your whole history.",
+    key: 'foundation',
+    label: 'Foundation',
+    description: 'Where that background came from. The 1-2 strongest experiences that explain your strengths.',
     color: 'amber',
-    emoji: '🔙',
+    emoji: '🏗️',
   },
   {
-    key: 'future',
-    label: 'Future',
-    description: "Why this role, why now. Connect your arc to the specific job — not just 'I want to grow.'",
+    key: 'recentFocus',
+    label: 'Recent Focus',
+    description: "What you've been developing or working on lately. Frames your current chapter without defensiveness.",
+    color: 'emerald',
+    emoji: '🔍',
+  },
+  {
+    key: 'direction',
+    label: 'Direction',
+    description: "Why this role makes sense now. Connects your arc to the specific opportunity — not just 'I want to grow.'",
     color: 'violet',
     emoji: '🎯',
   },
 ] as const
-
-// ========================== DEFAULT AVOID EMPHASIS ==========================
-
-export const DEFAULT_AVOID_EMPHASIS: AvoidEmphasis[] = [
-  'sounding_like_resume_walkthrough',
-  'listing_every_job',
-  'using_too_many_buzzwords',
-]

@@ -133,6 +133,8 @@ export default function ProcessSpinePage() {
   const [purchaseStage, setPurchaseStage] = useState<StageKey | null>(null)
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined)
   const [viewingModal, setViewingModal] = useState<'job' | 'resume' | null>(null)
+  const [feedbackSeen, setFeedbackSeen] = useState<Record<string, boolean>>({})
+  const [practiceCount, setPracticeCount] = useState<number>(0)
 
   useEffect(() => {
     let cancelled = false
@@ -222,6 +224,25 @@ export default function ProcessSpinePage() {
     return () => { cancelled = true }
   }, [decodedKey, router])
 
+  useEffect(() => {
+    if (!process) return
+    const seen: Record<string, boolean> = {}
+    for (const stage of STAGE_ORDER) {
+      const sid = process.stages[stage].sessionId
+      if (sid) {
+        seen[stage] = localStorage.getItem(`feedback_tutorial_seen_${sid}`) === 'true'
+      }
+    }
+    setFeedbackSeen(seen)
+    fetch('/api/profile/practice-memory', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const drafts = data?.drafts && typeof data.drafts === 'object' ? data.drafts : {}
+        setPracticeCount(Object.keys(drafts).length)
+      })
+      .catch(() => {})
+  }, [process])
+
   const computed = useMemo(() => {
     if (!process) return null
     const isLocked = (stage: StageKey) => isInterviewStageLocked(stageAccess?.[stage]?.hasAccess, stage)
@@ -237,6 +258,18 @@ export default function ProcessSpinePage() {
 
     return { isLocked, statusOf, completedCount, nextStage, mostRecentStage }
   }, [process, stageAccess])
+
+  function getSmartCta(stage: StageKey): { label: string; action: () => void; style: 'primary' | 'accent' } | null {
+    const st = process?.stages[stage]
+    if (!st?.done) return null
+    if (!feedbackSeen[stage]) {
+      return { label: 'View feedback', action: () => openFeedback(stage), style: 'primary' }
+    }
+    if (practiceCount === 0) {
+      return { label: 'Start practicing', action: () => openPractice(stage), style: 'accent' }
+    }
+    return { label: 'Retake interview', action: () => launchStage(stage), style: 'primary' }
+  }
 
   const launchStage = (stage: StageKey) => {
     if (process?.interviewDataId) {
@@ -451,30 +484,52 @@ export default function ProcessSpinePage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-3 px-6 py-4 sm:px-8">
-                <button
-                  type="button"
-                  onClick={() => openFeedback(mostRecentStage)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
-                >
-                  Go to feedback
-                  <ExternalLink className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openPractice(mostRecentStage)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-accent-700"
-                >
-                  Go to practice
-                </button>
-                <button
-                  type="button"
-                  onClick={() => launchStage(mostRecentStage)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Retake
-                </button>
+              <div className="px-6 py-4 sm:px-8">
+                {(() => {
+                  const smart = getSmartCta(mostRecentStage)
+                  return (
+                    <div className="space-y-3">
+                      {smart && (
+                        <button
+                          type="button"
+                          onClick={smart.action}
+                          className={`group flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-bold text-white transition ${
+                            smart.style === 'accent'
+                              ? 'bg-accent-600 hover:bg-accent-700'
+                              : 'bg-slate-900 hover:bg-slate-800'
+                          }`}
+                        >
+                          {smart.label}
+                          <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+                        </button>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openFeedback(mostRecentStage)}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          Feedback
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openPractice(mostRecentStage)}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          Practice
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => launchStage(mostRecentStage)}
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Retake
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           ) : (

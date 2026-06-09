@@ -691,7 +691,7 @@ export default function PracticeLessonFlow({
           </div>
           <div className="mb-4">
             <Preppi
-              message="This is where we practice recovering cleanly on a question that could make you ramble. We will keep the choices controlled so you can build a strong Answer, Reason, Example response step by step."
+              message="This is where we practice recovering cleanly on a question that could make you ramble. We will keep the choices controlled so you can pause, frame the question, answer directly, support it briefly, and stop."
               size="sm"
             />
           </div>

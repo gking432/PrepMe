@@ -10,7 +10,7 @@ import { gradeHrScreenPassFail } from '@/lib/hr-pass-fail-grader'
 import { gradeHrScreenQuestionLevel } from '@/lib/hr-question-level-grader'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
-import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE } from '@/lib/feedback-config'
+import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE, HR_SCREEN_PASS_FAIL_MODEL } from '@/lib/feedback-config'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 
 let _openai: OpenAI | null = null
@@ -43,8 +43,8 @@ type RewriteMethod = {
 const HR_REWRITE_METHODS: RewriteMethod[] = [
   {
     id: 'present_past_future',
-    label: 'Present, Past, Future',
-    instruction: 'Rewrite as Present -> Past -> Future: what they do now, the foundation that shaped them, and where they are headed next.',
+    label: 'Identity, Foundation, Recent Focus, Direction',
+    instruction: 'Rewrite as Identity -> Foundation -> Recent Focus -> Direction: who they are professionally, where that background came from, what they have been focused on lately, and why this role makes sense now. Do not make it a chronological resume walkthrough.',
   },
   {
     id: 'star',
@@ -59,22 +59,22 @@ const HR_REWRITE_METHODS: RewriteMethod[] = [
   {
     id: 'observation_fit_timing',
     label: 'Observation, Fit, Timing',
-    instruction: 'Rewrite as Observation -> Fit -> Timing: what stood out about the role/company, why that connects to their background, and why the move makes sense now.',
+    instruction: 'Rewrite as Observation -> Fit -> Timing: what stood out about the role/company, why that connects to their background, and why the move makes sense now. Do not make the answer selfish-first around growth, perks, title, or needing a new challenge.',
   },
   {
     id: 'uncertainty_recovery',
-    label: 'Recovery + Answer, Reason, Example',
-    instruction: 'Rewrite as a brief recovery answer: pause/steady opening, one clear Answer, a Reason, and a short Example. Do not ramble while searching.',
+    label: 'Pause, Frame, Answer, Support',
+    instruction: 'Rewrite as a recovery answer: a brief pause phrase, a frame that narrows the question, a direct answer, and short support. This is for rambling or losing the thread, not simply any stress/challenge question.',
   },
   {
     id: 'pace_delivery',
-    label: 'Delivery Workshop',
-    instruction: 'Rewrite the saved answer for better delivery: one simple transition, one clear main point first, smoother flow, and a settled ending. Do not change the substance.',
+    label: 'Natural Delivery Rehearsal',
+    instruction: 'Turn the saved answer into rehearsal notes: cue-card headline, spoken beats, natural pause points, conversational transitions, and a settled landing. The goal is to say the crafted answer naturally instead of sounding scripted.',
   },
   {
     id: 'research_questions',
-    label: 'Research + Question-Building',
-    instruction: 'Rewrite as a stronger preparation/curiosity response: basic company knowledge, one real point of interest, why it matters, and one thoughtful role/team/company question if relevant. If the candidate admitted they did not research something, keep that honesty and use placeholders for what they need to add.',
+    label: 'Company Prep + HR Questions',
+    instruction: 'Rewrite as a stronger preparation/curiosity response: one specific company or role detail, why it matters, and one HR-screen-appropriate question about team structure, hiring process, success profile, onboarding, or manager/team context. Avoid selfish-first questions about pay, PTO, vacation, perks, or logistics as the only question.',
   },
 ]
 
@@ -170,6 +170,247 @@ function getCandidateAnswerForQuestion(questionId: string | undefined, evidence:
 function parseJsonObject(text: string) {
   const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/(\{[\s\S]*\})/)
   return JSON.parse(jsonMatch ? jsonMatch[1] : text)
+}
+
+const HR_SCAFFOLD_CONFIGS: Record<string, { framework: string; steps: Array<{ key: string; label: string; prompt: string }> }> = {
+  professional_story: {
+    framework: 'Identity / Foundation / Recent Focus / Direction',
+    steps: [
+      { key: 'identity', label: 'Identity', prompt: 'Who is the candidate professionally?' },
+      { key: 'foundation', label: 'Foundation', prompt: 'What background built that identity?' },
+      { key: 'recent_focus', label: 'Recent Focus', prompt: 'What have they focused on lately?' },
+      { key: 'direction', label: 'Direction', prompt: 'Why does this role or next step make sense now?' },
+    ],
+  },
+  star_proof: {
+    framework: 'Situation / Task / Action / Result',
+    steps: [
+      { key: 'situation', label: 'Situation', prompt: 'What was the real scene or problem?' },
+      { key: 'task', label: 'Task', prompt: 'What was at stake and what did the candidate own?' },
+      { key: 'action', label: 'Action', prompt: 'What did the candidate personally do?' },
+      { key: 'result', label: 'Result', prompt: 'What changed because of the action?' },
+    ],
+  },
+  career_alignment: {
+    framework: 'Observation / Evidence of Fit / Timing',
+    steps: [
+      { key: 'observation', label: 'Observation', prompt: 'What specific role/company detail matters?' },
+      { key: 'fit', label: 'Evidence of Fit', prompt: 'What real background maps to that detail?' },
+      { key: 'timing', label: 'Timing', prompt: 'Why does this move make sense now?' },
+    ],
+  },
+  handling_uncertainty: {
+    framework: 'Pause / Frame / Answer / Support',
+    steps: [
+      { key: 'pause', label: 'Pause', prompt: 'What short phrase buys 2-3 seconds?' },
+      { key: 'frame', label: 'Frame', prompt: 'How should the candidate narrow the question?' },
+      { key: 'answer', label: 'Answer', prompt: 'What direct answer should they give?' },
+      { key: 'support', label: 'Support', prompt: 'What brief reason, example, tradeoff, or thinking process supports it?' },
+    ],
+  },
+  pace_delivery: {
+    framework: 'Cue Card / Pause Points / Natural Transitions / Landing',
+    steps: [
+      { key: 'cue_card', label: 'Cue Card', prompt: 'What is the short memory cue?' },
+      { key: 'pause_points', label: 'Pause Points', prompt: 'Where should they breathe or think?' },
+      { key: 'transitions', label: 'Natural Transitions', prompt: 'What spoken transitions keep it conversational?' },
+      { key: 'landing', label: 'Landing', prompt: 'How should the answer stop cleanly?' },
+    ],
+  },
+  preparation_curiosity: {
+    framework: 'Company Detail / Role Detail / Why It Matters / HR-Appropriate Question',
+    steps: [
+      { key: 'company_detail', label: 'Company Detail', prompt: 'What company detail should they know?' },
+      { key: 'role_detail', label: 'Role Detail', prompt: 'What role detail should they mention?' },
+      { key: 'why_it_matters', label: 'Why It Matters', prompt: 'Why does that detail connect to them?' },
+      { key: 'hr_question', label: 'HR-Appropriate Question', prompt: 'What question fits an HR generalist?' },
+    ],
+  },
+}
+
+function getWorkshopTypeFromRepair(signal: any) {
+  const bucket = String(signal?.practice_focus_id || signal?.rootCause || signal?.root_cause || signal?.mini_workshop?.practice_focus_id || signal?.mini_workshop?.area_id || '').trim()
+  if (bucket === 'specificity_proof') return 'star_proof'
+  if (bucket === 'pace_natural_delivery') return 'pace_delivery'
+  if (HR_SCAFFOLD_CONFIGS[bucket]) return bucket
+  const criterion = String(signal?.criterion || signal?.score_area || '').toLowerCase()
+  if (/professional story|tell me about yourself|background/.test(criterion)) return 'professional_story'
+  if (/specific|proof|evidence|example|star/.test(criterion)) return 'star_proof'
+  if (/alignment|career|why this|why role|why company/.test(criterion)) return 'career_alignment'
+  if (/uncertain|rambl|difficult/.test(criterion)) return 'handling_uncertainty'
+  if (/pace|delivery|flow|conversation/.test(criterion)) return 'pace_delivery'
+  if (/preparation|curiosity|questions|company/.test(criterion)) return 'preparation_curiosity'
+  return ''
+}
+
+function normalizeScaffoldItem(item: any, signal: any) {
+  const workshopType = getWorkshopTypeFromRepair(signal)
+  const config = HR_SCAFFOLD_CONFIGS[workshopType]
+  if (!config) return null
+  const rawSkeleton = Array.isArray(item?.skeleton) ? item.skeleton : []
+  const rawPieces = Array.isArray(item?.pieces) ? item.pieces : []
+  const skeleton = config.steps.map((step) => {
+    const found = rawSkeleton.find((part: any) => part?.key === step.key) || {}
+    const raw = String(found.raw || found.text || '').trim()
+    return {
+      key: step.key,
+      label: step.label,
+      prompt: step.prompt,
+      raw,
+      confidence: ['clear', 'inferred', 'missing'].includes(found.confidence) ? found.confidence : (raw ? 'inferred' : 'missing'),
+      missingPrompt: String(found.missingPrompt || found.missing_prompt || step.prompt).trim(),
+      sourceNote: String(found.sourceNote || found.source_note || '').trim(),
+    }
+  })
+  const pieces = config.steps.map((step) => {
+    const found = rawPieces.find((part: any) => part?.key === step.key) || {}
+    const skeletonPart = skeleton.find((part) => part.key === step.key)
+    return {
+      key: step.key,
+      label: step.label,
+      text: String(found.text || skeletonPart?.raw || '').trim(),
+      rationale: String(found.rationale || `${step.label} supports the ${config.framework} repair.`).trim(),
+      sourceNote: String(found.sourceNote || found.source_note || skeletonPart?.sourceNote || 'Prepared from the interview feedback.').trim(),
+    }
+  })
+
+  return {
+    scaffold_version: 'hr_batch_v1',
+    workshop_type: workshopType,
+    framework: config.framework,
+    summary: String(item?.summary || '').trim(),
+    skeleton,
+    alternatives: Array.isArray(item?.alternatives) ? item.alternatives.slice(0, 3) : [],
+    polished: {
+      pieces,
+      finalAnswer: String(item?.finalAnswer || item?.final_answer || pieces.map((piece) => piece.text).filter(Boolean).join(' ')).trim(),
+      coachNote: String(item?.coachNote || item?.coach_note || 'Practice this version until it sounds natural.').trim(),
+      sourceMap: Array.isArray(item?.sourceMap || item?.source_map) ? (item.sourceMap || item.source_map).slice(0, 8) : [],
+    },
+  }
+}
+
+function estimateNanoCostCents(inputText: string, outputText: string, usage?: any) {
+  const inputTokens = usage?.prompt_tokens || usage?.input_tokens || Math.ceil(inputText.length / 4)
+  const outputTokens = usage?.completion_tokens || usage?.output_tokens || Math.ceil(outputText.length / 4)
+  const cents = ((inputTokens * 0.05) + (outputTokens * 0.4)) / 1_000_000 * 100
+  return {
+    model: HR_SCREEN_PASS_FAIL_MODEL,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    estimated_cents: Number(cents.toFixed(4)),
+  }
+}
+
+async function attachHrRepairScaffolds(rubric: any, structuredTranscript: any) {
+  const weakSignals = Array.isArray(rubric?.hr_screen_six_areas?.what_needs_improve)
+    ? rubric.hr_screen_six_areas.what_needs_improve
+    : []
+  if (!weakSignals.length || !process.env.OPENAI_API_KEY) return rubric
+
+  const items = weakSignals
+    .map((signal: any, index: number) => {
+      const workshopType = getWorkshopTypeFromRepair(signal)
+      const config = HR_SCAFFOLD_CONFIGS[workshopType]
+      if (!config) return null
+      const evidence = Array.isArray(signal?.evidence) ? signal.evidence[0] : null
+      const questionId = evidence?.question_id
+      const question = getQuestionText(questionId, evidence, structuredTranscript)
+      const originalAnswer = getCandidateAnswerForQuestion(questionId, evidence, structuredTranscript)
+      return {
+        id: `issue_${index}`,
+        index,
+        criterion: signal.criterion,
+        feedback: signal.feedback,
+        workshop_type: workshopType,
+        framework: config.framework,
+        steps: config.steps,
+        question,
+        original_answer: originalAnswer,
+        evidence: Array.isArray(signal?.evidence) ? signal.evidence.slice(0, 2) : [],
+      }
+    })
+    .filter(Boolean)
+    .slice(0, 6) as any[]
+
+  if (!items.length) return rubric
+
+  const system = `You create low-cost HR interview workshop scaffolds in one batch.
+
+Return JSON only. Create one scaffold for each item.
+
+Rules:
+- Use only the candidate's transcript answer, feedback, resume/JD-level context already present in the item, and safe placeholders.
+- Do not invent metrics, company facts, tools, seniority, employers, customers, outcomes, or experiences.
+- If a necessary detail is missing, leave that step as "missing" with a tiny missingPrompt.
+- For STAR, do not invent the story. Use selected facts only and ask for missing specifics.
+- For Career Alignment, start with what the candidate noticed about the role/company; do not make it selfish-first around growth, title, pay, perks, or needing a challenge.
+- For Handling Uncertainty, scaffold Pause -> Frame -> Answer -> Support as a recovery move, not a generic stress-question answer.
+- For Pace, produce rehearsal notes: cue card, pause points, natural transitions, and landing. This is not a new content answer.
+- For Preparation/Curiosity, include concrete company/role prep only when supported; otherwise use placeholders. The question must fit an HR generalist audience and should not be pay/PTO/perks/logistics-first.
+- Every scaffold must include skeleton, pieces, finalAnswer, and coachNote.`
+
+  const userPayload = {
+    task: 'Create one ready-to-render workshop scaffold for each failed HR repair.',
+    output_shape: {
+      scaffolds: [
+        {
+          id: 'issue_0',
+          summary: 'One sentence summary.',
+          skeleton: [
+            { key: 'step_key', raw: 'short confirmed or inferred beat', confidence: 'clear | inferred | missing', missingPrompt: 'tiny question if missing', sourceNote: 'where it came from' },
+          ],
+          pieces: [
+            { key: 'step_key', text: 'polished piece or rehearsal note', rationale: 'why this helps', sourceNote: 'source' },
+          ],
+          finalAnswer: 'assembled spoken answer or rehearsal card',
+          coachNote: 'one concise note',
+        },
+      ],
+    },
+    items,
+  }
+  const inputText = JSON.stringify(userPayload)
+
+  try {
+    const completion = await getOpenAI().chat.completions.create({
+      model: HR_SCREEN_PASS_FAIL_MODEL,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: inputText },
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 5000,
+      reasoning_effort: 'minimal',
+    } as any)
+    const outputText = completion.choices[0]?.message?.content || ''
+    const parsed = parseJsonObject(outputText)
+    const scaffolds = Array.isArray(parsed?.scaffolds) ? parsed.scaffolds : []
+    const costEstimate = estimateNanoCostCents(inputText, outputText, completion.usage)
+
+    for (const item of items) {
+      const rawScaffold = scaffolds.find((scaffold: any) => scaffold?.id === item.id)
+      if (!rawScaffold) continue
+      const normalized = normalizeScaffoldItem(rawScaffold, weakSignals[item.index])
+      if (!normalized) continue
+      const scaffoldWithCost = { ...normalized, cost_estimate: costEstimate }
+      weakSignals[item.index] = {
+        ...weakSignals[item.index],
+        repair_scaffold: scaffoldWithCost,
+        mini_workshop: {
+          ...(weakSignals[item.index].mini_workshop || {}),
+          repair_scaffold: scaffoldWithCost,
+        },
+      }
+    }
+
+    rubric.hr_repair_scaffold_cost_estimate = costEstimate
+    rubric.hr_screen_six_areas.what_needs_improve = weakSignals
+    return rubric
+  } catch (error) {
+    console.error('HR repair scaffold generation failed; continuing without scaffolds:', error)
+    return rubric
+  }
 }
 
 async function enrichHrWeakSignalsWithHaikuRewrites(rubric: any, structuredTranscript: any) {
@@ -393,11 +634,13 @@ function buildHrCostEstimate({
   structuredTranscript,
   durationSeconds,
   graderCostEstimate,
+  scaffoldCostEstimate,
 }: {
   transcript: string
   structuredTranscript: any
   durationSeconds: number | null
   graderCostEstimate: any
+  scaffoldCostEstimate?: any
 }) {
   const { interviewerWordCount, candidateWordCount } = getTranscriptWordCounts(structuredTranscript, transcript)
   const wordsPerMinute = numberFromEnv('HR_COST_AUDIO_WORDS_PER_MINUTE', 150)
@@ -407,6 +650,7 @@ function buildHrCostEstimate({
   const interviewerMinutes = interviewerWordCount / wordsPerMinute
   const estimatedRealtimeCents = (candidateMinutes * inputAudioCentsPerMinute) + (interviewerMinutes * outputAudioCentsPerMinute)
   const estimatedGradingCents = Number(graderCostEstimate?.estimated_grading_cents || 0)
+  const estimatedScaffoldCents = Number(scaffoldCostEstimate?.estimated_cents || 0)
 
   return {
     pricing_version: 'openai-realtime-mini-audio-2026-05-27',
@@ -416,9 +660,11 @@ function buildHrCostEstimate({
     realtime_model: process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-mini',
     grader_model: graderCostEstimate?.grader_model,
     rewrite_count: 0,
+    scaffold_model: scaffoldCostEstimate?.model || null,
     estimated_realtime_cents: Number(estimatedRealtimeCents.toFixed(4)),
     estimated_grading_cents: Number(estimatedGradingCents.toFixed(4)),
-    estimated_total_cents: Number((estimatedRealtimeCents + estimatedGradingCents).toFixed(4)),
+    estimated_repair_scaffold_cents: Number(estimatedScaffoldCents.toFixed(4)),
+    estimated_total_cents: Number((estimatedRealtimeCents + estimatedGradingCents + estimatedScaffoldCents).toFixed(4)),
     assumptions: {
       words_per_minute: wordsPerMinute,
       realtime_input_audio_cents_per_minute: inputAudioCentsPerMinute,
@@ -710,19 +956,19 @@ EVALUATION CRITERIA:
    - Use this area for moments when the candidate is asked about the company or role (for example, "What do you know about our company?", "Why this company?", or "What stood out to you?"), as well as the candidate’s questions at the end of the interview.
    - "What Went Well" if: Shows they did basic homework on the company and role, gives answers about the company or role that sound specific, informed, and intentional, can explain what the company does, what the role seems focused on, or what stood out to them without relying on generic praise, asks 1-2 thoughtful, stage-appropriate questions about the role, team, company, or process, asks questions that show real curiosity and help them understand the opportunity better, and sounds like they are taking the opportunity seriously rather than just moving through another application
    - "Needs to Improve" if: Sounds broad, generic, or underprepared when asked about the company or role, relies mostly on praise, surface-level facts, or filler like "you seem like a great company", makes it unclear whether they understand what the company does or what the role is actually about, asks no questions, asks only questions about salary, benefits, hours, remote work, or logistics in a way that can make their interest seem shallow especially early in the process, asks questions that show they did not read the job description or were not paying attention, or asks only broad, generic, or low-value questions that do not help them understand the role
-   - Internal grading guidance: This area covers both sides of preparation and curiosity: whether the candidate sounds informed when discussing the company or role, and whether the candidate asks thoughtful, stage-appropriate questions during the question portion. Reward candidates who show basic preparation, real curiosity, and enough specificity to sound like they chose this interview on purpose. In an HR screen, strong answers and questions usually stay close to the company, the role, what stood out, what success looks like, team context, and the interview process. Questions about compensation, benefits, remote work, or logistics are not inherently bad, but if those are the only questions early in the process, that can make the candidate’s interest seem shallow. Score lower when the candidate sounds underprepared, asks nothing, or treats the interaction like just another application.
+   - Internal grading guidance: This area covers both sides of preparation and curiosity: whether the candidate sounds informed when discussing the company or role, and whether the candidate asks thoughtful, stage-appropriate questions during the question portion. Reward candidates who show basic preparation, real curiosity, and enough specificity to sound like they chose this interview on purpose. In an HR screen, strong answers and questions usually stay close to the company, the role, what stood out, team structure, hierarchy, success profile, onboarding, and the interview process. Questions about compensation, benefits, remote work, or logistics are not inherently bad, but if those are the only questions early in the process, that can make the candidate’s interest seem shallow. Score lower when the candidate sounds underprepared, asks nothing, or treats the interaction like just another application.
 
-4. Handling Uncertain/Difficult Questions
-   - Use this area for moments when the candidate is asked an unexpected, difficult, or unfamiliar question and does not have a ready-made answer.
-   - "What Went Well" if: Stays composed when asked an unexpected, difficult, or unfamiliar question, takes a brief moment to think instead of rushing into a weak answer, answers honestly when they do not have the exact experience or answer, avoids bluffing and instead gives a clear starting point, related example, or thoughtful approach, and finds a way to land the answer clearly instead of rambling or trailing off
-   - "Needs to Improve" if: Becomes defensive or visibly flustered, tries to bluff through obvious gaps in knowledge or experience, gives contradictory information, avoids the question instead of engaging with it, starts talking before finding a clear point and ends up rambling, or never arrives at a settled answer or says something like "I'm not sure if that answered your question"
-   - Internal grading guidance: When evaluating unexpected or difficult questions, reward candidates who stay calm, take a moment to think, and find a clear angle instead of panicking or filling space. Strong answers often begin with a brief pause or acknowledgment, then move into a clear starting point, reasoning, and a settled answer. A simple answer -> reason -> example flow often works well here once the candidate knows what they want to say, but the structure does not need to be explicit. Score lower when the candidate rambles, bluffs, contradicts themselves, avoids the question, or never lands on a clear point.
+4. Handling Uncertainty
+   - Use this area for moments when the candidate loses control of an answer because they do not have a ready lane, regardless of the question category.
+   - "What Went Well" if: Takes a brief moment to think, frames or narrows the question, answers honestly and directly, supports the point briefly, avoids bluffing, and lands the answer clearly instead of rambling or trailing off
+   - "Needs to Improve" if: Becomes defensive or visibly flustered, tries to bluff through obvious gaps, gives contradictory information, avoids the question, starts talking before finding a clear point, over-qualifies without choosing an answer, answers a different question, or never arrives at a settled point
+   - Internal grading guidance: Do not flag this area just because the question is about stress, challenge, weakness, or uncertainty. Flag it only when the candidate shows the behavior pattern: filling space, rambling, changing direction, dodging, bluffing, or failing to land. The coaching framework is Pause -> Frame -> Answer -> Support.
 
 5. Alignment of Career Goals with Position
    - Use this area for "Why this role?", "Why this position?", "Why now?", and similar questions about why this move makes sense for the candidate at this point in their career.
    - "What Went Well" if: Makes a clear connection between their background and this specific role, explains why this role stands out over other possible opportunities, makes the timing of the move feel intentional, makes the next step feel logical and coherent, and sounds like they are pursuing a role that fits their direction rather than just looking for change
    - "Needs to Improve" if: Gives generic reasons that could apply to almost any role, focuses mostly on wanting change, growth, or a new challenge without explaining fit, sounds opportunistic or broadly open rather than specifically aligned, does not make the transition from past experience to this role feel logical, or makes it unclear why this move makes sense now
-   - Internal grading guidance: When evaluating "Why this role?" and similar alignment questions, strong answers often follow a clear observation -> fit -> timing logic. Reward answers that naturally reflect that flow, even if the structure is not explicit. Strong responses usually point to something specific about the role, connect it to the candidate’s background, and explain why the timing makes sense now. Score lower when the answer stays generic, over-relies on growth or change language, or could apply just as easily to many other jobs.
+   - Internal grading guidance: When evaluating "Why this role?" and similar alignment questions, strong answers often follow a clear observation -> fit -> timing logic. Reward answers that naturally reflect that flow, even if the structure is not explicit. Strong responses usually point to something specific about the role, connect it to the candidate’s background, and explain why the timing makes sense now. Score lower when the answer stays generic, over-relies on growth or change language, centers selfish reasons like title, pay, perks, or resume-building, or could apply just as easily to many other jobs.
 
 6. Pace and Conversation Flow
    - Use this area for how the candidate sounds in the interview overall, including pacing, timing, transitions, and whether the conversation feels natural rather than stiff, rushed, awkward, or memorized.
@@ -1004,7 +1250,7 @@ Use the question IDs and timestamps from this structured transcript when providi
             websiteContent: websiteContent || '',
           }
 
-          const rubric = HR_SCREEN_GRADING_MODE === 'v2_question_level'
+          let rubric = HR_SCREEN_GRADING_MODE === 'v2_question_level'
             ? await gradeHrScreenQuestionLevel(gradingMaterials)
             : await gradeHrScreenPassFail(gradingMaterials)
 
@@ -1013,11 +1259,14 @@ Use the question IDs and timestamps from this structured transcript when providi
             throw new Error('Invalid lean HR rubric structure')
           }
 
+          rubric = await attachHrRepairScaffolds(rubric, structuredTranscript)
+
           const costEstimate = buildHrCostEstimate({
             transcript: Array.isArray(transcript) ? transcript.join('\n') : transcript,
             structuredTranscript,
             durationSeconds: sessionDurationSeconds,
             graderCostEstimate: rubric.cost_estimate,
+            scaffoldCostEstimate: (rubric as any).hr_repair_scaffold_cost_estimate,
           })
           rubric.cost_estimate = costEstimate
 

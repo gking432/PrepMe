@@ -38,6 +38,7 @@ interface GuidedBuilderWorkshopProps {
   originalAnswer?: string
   repairFeedback?: string
   repairCriterion?: string
+  repairScaffold?: RepairScaffold | null
   onComplete: () => void
 }
 
@@ -84,6 +85,13 @@ interface PolishedAnswer {
   cost_estimate?: any
 }
 
+interface RepairScaffold {
+  summary?: string
+  skeleton?: ExtractedStep[]
+  alternatives?: AlternativeStory[]
+  polished?: PolishedAnswer
+}
+
 interface VoiceResult {
   transcript: string
   scores: { coverage: number; structure: number; delivery: number }
@@ -101,12 +109,13 @@ interface VoiceResult {
 const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
   professional_story: {
     title: 'Professional Story',
-    framework: 'Present / Past / Future',
-    promise: 'Turn the opener into a clear arc instead of a resume recap.',
+    framework: 'Identity / Foundation / Recent Focus / Direction',
+    promise: 'Turn the opener into a natural professional introduction instead of a resume recap.',
     steps: [
-      { key: 'present', label: 'Present', help: 'What you do now and what you are known for.' },
-      { key: 'past', label: 'Past', help: 'The background thread that explains how you got here.' },
-      { key: 'future', label: 'Future', help: 'Why this role is the logical next move.' },
+      { key: 'identity', label: 'Identity', help: 'Who you are professionally.' },
+      { key: 'foundation', label: 'Foundation', help: 'Where that background came from.' },
+      { key: 'recent_focus', label: 'Recent Focus', help: 'What you have been building, doing, or developing lately.' },
+      { key: 'direction', label: 'Direction', help: 'Why this role or next step makes sense now.' },
     ],
   },
   star_proof: {
@@ -122,43 +131,45 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
   },
   career_alignment: {
     title: 'Career Alignment',
-    framework: 'Observation / Fit / Timing',
-    promise: 'Make the role feel chosen on purpose, not generically interesting.',
+    framework: 'Observation / Evidence Of Fit / Timing',
+    promise: 'Make the role feel chosen on purpose, not selfish or generically interesting.',
     steps: [
       { key: 'observation', label: 'Observation', help: 'A specific thing you noticed in the role.' },
-      { key: 'fit', label: 'Fit', help: 'The matching part of your background.' },
+      { key: 'fit', label: 'Evidence Of Fit', help: 'The matching proof from your background.' },
       { key: 'timing', label: 'Timing', help: 'Why this move makes sense now.' },
     ],
   },
   handling_uncertainty: {
     title: 'Handling Uncertainty',
-    framework: 'Recovery / Answer / Reason / Example',
-    promise: 'Sound steady when the question catches you off guard.',
+    framework: 'Pause / Frame / Answer / Support',
+    promise: 'Recover when you start talking before you have a clear lane.',
     steps: [
-      { key: 'recovery', label: 'Recovery', help: 'A calm opener that buys one second.' },
-      { key: 'answer', label: 'Answer', help: 'The direct point you are trying to make.' },
-      { key: 'reason', label: 'Reason', help: 'Why that answer holds up.' },
-      { key: 'example', label: 'Example', help: 'A real moment that backs it up.' },
+      { key: 'pause', label: 'Pause', help: 'A short phrase that buys you a second.' },
+      { key: 'frame', label: 'Frame', help: 'The lane you choose before answering.' },
+      { key: 'answer', label: 'Answer', help: 'The direct point you are making.' },
+      { key: 'support', label: 'Support', help: 'A brief reason, example, tradeoff, or thinking process.' },
     ],
   },
   pace_delivery: {
-    title: 'Pace And Delivery',
-    framework: 'Opener / Main Point / Landing',
-    promise: 'Keep the same substance, but make it easier to hear.',
+    title: 'Pace And Natural Delivery',
+    framework: 'Cue Card / Pause Points / Natural Transitions / Landing',
+    promise: 'Practice the answer like a conversation, not a memorized script.',
     steps: [
-      { key: 'opener', label: 'Opener', help: 'The clean headline.' },
-      { key: 'main_point', label: 'Main Point', help: 'Two or three supporting beats.' },
+      { key: 'cue_card', label: 'Cue Card', help: 'The short memory cue, not the full paragraph.' },
+      { key: 'pause_points', label: 'Pause Points', help: 'Where to breathe, think, or let the answer land.' },
+      { key: 'transitions', label: 'Natural Transitions', help: 'Small phrases that make the answer sound spoken.' },
       { key: 'landing', label: 'Landing', help: 'A clean ending that does not trail off.' },
     ],
   },
   preparation_curiosity: {
     title: 'Preparation And Curiosity',
-    framework: 'What You Know / What Stood Out / Your Question',
-    promise: 'Show preparation with a specific observation and a useful question.',
+    framework: 'Company Detail / Role Detail / Why It Matters / HR Question',
+    promise: 'Show you did the homework and ask questions that fit an HR screen.',
     steps: [
-      { key: 'what_you_know', label: 'What You Know', help: 'A real role or company detail.' },
-      { key: 'what_stood_out', label: 'What Stood Out', help: 'Why that detail matters to you.' },
-      { key: 'your_question', label: 'Your Question', help: 'The question that follows naturally.' },
+      { key: 'company_detail', label: 'Company Detail', help: 'One real thing about the company.' },
+      { key: 'role_detail', label: 'Role Detail', help: 'One real thing from the job description.' },
+      { key: 'why_it_matters', label: 'Why It Matters', help: 'Why that detail connects to your interest or background.' },
+      { key: 'hr_question', label: 'HR Question', help: 'A thoughtful question for the HR generalist, not a selfish-first question.' },
     ],
   },
   role_depth: {
@@ -185,8 +196,8 @@ const CONFIGS: Record<WorkshopType, WorkshopConfig> = {
   },
 }
 
-const PROVE_OPTIONS = ['ownership', 'judgment', 'specific proof', 'role fit', 'composure', 'preparation']
-const TONE_OPTIONS = ['direct', 'warm', 'steady', 'specific', 'concise', 'confident']
+const PROVE_OPTIONS = ['ownership', 'judgment', 'specific proof', 'role fit', 'composure', 'preparation', 'natural delivery']
+const TONE_OPTIONS = ['direct', 'warm', 'steady', 'specific', 'concise', 'confident', 'conversational']
 
 function clean(value: string) {
   return value.trim().replace(/\s+/g, ' ')
@@ -220,21 +231,38 @@ export default function GuidedBuilderWorkshop({
   originalAnswer,
   repairFeedback,
   repairCriterion,
+  repairScaffold,
   onComplete,
 }: GuidedBuilderWorkshopProps) {
   const config = CONFIGS[workshopType]
-  const [phase, setPhase] = useState<Phase>('setup')
+  const scaffoldSkeleton = useMemo(() => {
+    if (!Array.isArray(repairScaffold?.skeleton)) return []
+    return repairScaffold.skeleton.map((step) => ({
+      ...step,
+      help: step.help || step.prompt || '',
+      missingPrompt: step.missingPrompt || step.prompt || '',
+      sourceNote: step.sourceNote || 'Prepared from your interview feedback.',
+    }))
+  }, [repairScaffold])
+  const scaffoldConfirmed = useMemo(() => {
+    return Object.fromEntries(
+      scaffoldSkeleton
+        .filter((step) => clean(step.raw || '') && step.confidence !== 'missing')
+        .map((step) => [step.key, clean(step.raw)])
+    )
+  }, [scaffoldSkeleton])
+  const [phase, setPhase] = useState<Phase>(repairScaffold?.polished?.finalAnswer ? 'rehearse' : scaffoldSkeleton.length ? 'confirm' : 'setup')
   const [prove, setProve] = useState(PROVE_OPTIONS[0])
   const [tone, setTone] = useState(TONE_OPTIONS[0])
   const [storyHint, setStoryHint] = useState('')
   const [showAlternatives, setShowAlternatives] = useState(false)
-  const [skeleton, setSkeleton] = useState<ExtractedStep[]>([])
-  const [summary, setSummary] = useState('')
-  const [alternatives, setAlternatives] = useState<AlternativeStory[]>([])
-  const [confirmed, setConfirmed] = useState<Record<string, string>>({})
+  const [skeleton, setSkeleton] = useState<ExtractedStep[]>(scaffoldSkeleton)
+  const [summary, setSummary] = useState(repairScaffold?.summary || '')
+  const [alternatives, setAlternatives] = useState<AlternativeStory[]>(Array.isArray(repairScaffold?.alternatives) ? repairScaffold.alternatives : [])
+  const [confirmed, setConfirmed] = useState<Record<string, string>>(scaffoldConfirmed)
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
-  const [polished, setPolished] = useState<PolishedAnswer | null>(null)
+  const [polished, setPolished] = useState<PolishedAnswer | null>(repairScaffold?.polished || null)
   const [polishRegens, setPolishRegens] = useState(0)
   const [error, setError] = useState('')
   const [recording, setRecording] = useState(false)
@@ -250,6 +278,7 @@ export default function GuidedBuilderWorkshop({
   const confirmedCount = config.steps.filter((step) => clean(confirmed[step.key] || '')).length
   const readyToPolish = confirmedCount === config.steps.length
   const finalAnswer = polished?.finalAnswer || ''
+  const isFreeHrWorkshop = stageKey === 'hr_screen'
 
   const progress = useMemo(() => {
     const order: Phase[] = ['setup', 'extracting', 'confirm', 'polishing', 'rehearse', 'done']
@@ -466,7 +495,7 @@ export default function GuidedBuilderWorkshop({
             </div>
 
             <ChoiceGroup
-              title="What should this answer prove?"
+              title={workshopType === 'pace_delivery' ? 'What should this rehearsal strengthen?' : 'What should this answer prove?'}
               options={PROVE_OPTIONS}
               selected={prove}
               onSelect={setProve}
@@ -485,7 +514,7 @@ export default function GuidedBuilderWorkshop({
               onClick={() => requestExtract()}
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-black text-white transition hover:bg-violet-700"
             >
-              Build from my answer
+              {workshopType === 'pace_delivery' ? 'Build rehearsal card' : 'Build from my answer'}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </button>
           </div>
@@ -498,8 +527,12 @@ export default function GuidedBuilderWorkshop({
         {phase === 'confirm' && (
           <div className="space-y-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Confirm the story</p>
-              <h3 className="mt-1 text-xl font-black text-slate-950">Here is what I found. Is this right?</h3>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">
+                {workshopType === 'pace_delivery' ? 'Confirm the rehearsal beats' : 'Confirm the story'}
+              </p>
+              <h3 className="mt-1 text-xl font-black text-slate-950">
+                {workshopType === 'pace_delivery' ? 'Here is how to practice it out loud.' : 'Here is what I found. Is this right?'}
+              </h3>
               {summary && <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{summary}</p>}
             </div>
 
@@ -631,7 +664,7 @@ export default function GuidedBuilderWorkshop({
               disabled={!readyToPolish}
               className="group flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Polish the confirmed answer
+              {workshopType === 'pace_delivery' ? 'Create practice version' : 'Polish the confirmed answer'}
               <Wand2 className="h-4 w-4" />
             </button>
           </div>
@@ -644,8 +677,12 @@ export default function GuidedBuilderWorkshop({
         {phase === 'rehearse' && polished && (
           <div className="space-y-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">Polished answer</p>
-              <h3 className="mt-1 text-xl font-black text-slate-950">This is the version to practice.</h3>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">
+                {workshopType === 'pace_delivery' ? 'Rehearsal card' : 'Polished answer'}
+              </p>
+              <h3 className="mt-1 text-xl font-black text-slate-950">
+                {workshopType === 'pace_delivery' ? 'Practice this until it sounds unscripted.' : 'This is the version to practice.'}
+              </h3>
               {polished.coachNote && <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{polished.coachNote}</p>}
             </div>
 
@@ -673,7 +710,7 @@ export default function GuidedBuilderWorkshop({
               {!hideScript && <p className="mt-3 text-sm font-semibold leading-7 text-slate-700">{polished.finalAnswer}</p>}
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className={`grid gap-2 ${isFreeHrWorkshop ? 'sm:grid-cols-2' : 'sm:grid-cols-2'}`}>
               <button
                 type="button"
                 onClick={() => requestPolish(true)}
@@ -683,15 +720,26 @@ export default function GuidedBuilderWorkshop({
                 <RefreshCw className="h-4 w-4" />
                 Tighten once
               </button>
-              <button
-                type="button"
-                onClick={recording ? stopRecording : startRecording}
-                disabled={submittingVoice}
-                className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white ${recording ? 'bg-rose-600' : 'bg-slate-950'}`}
-              >
-                <Mic className="h-4 w-4" />
-                {submittingVoice ? 'Scoring...' : recording ? 'Stop recording' : 'Say it out loud'}
-              </button>
+              {isFreeHrWorkshop ? (
+                <button
+                  type="button"
+                  onClick={onComplete}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white"
+                >
+                  <Check className="h-4 w-4" />
+                  Finish workshop
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={recording ? stopRecording : startRecording}
+                  disabled={submittingVoice}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white ${recording ? 'bg-rose-600' : 'bg-slate-950'}`}
+                >
+                  <Mic className="h-4 w-4" />
+                  {submittingVoice ? 'Scoring...' : recording ? 'Stop recording' : 'Say it out loud'}
+                </button>
+              )}
             </div>
 
             {submittingVoice && <LoadingState label="Checking whether the repair holds up when spoken..." compact />}

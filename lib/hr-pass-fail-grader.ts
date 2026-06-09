@@ -56,11 +56,11 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
     passDescription: 'Opening/background answer has a clear current lane, relevant foundation, and future direction.',
     failDescription: 'Background answer is missing, scattered, too chronological, or lacks a clear professional through-line.',
     workshop: {
-      framework: 'Present, Past, Future',
+      framework: 'Identity, Foundation, Recent Focus, Direction',
       diagnosis: 'Your background needs to sound like a coherent professional story, not a resume read-through.',
       example:
-        'Right now, most of my work is focused on coordinating projects across teams. Earlier in my career, I built that foundation in customer-facing roles where follow-through mattered every day. Going forward, I want a role where that coordination work is central to the job.',
-      prompt: 'Script your own Present, Past, Future answer for "Tell me about yourself."',
+        'I would describe my background as customer-facing work across sales, marketing, and coordination. The foundation came from roles where follow-through and clear communication mattered every day. Recently, I have been focused on turning customer problems into practical execution. That is why this role feels like the right next step.',
+      prompt: 'Build your Identity, Foundation, Recent Focus, Direction answer for "Tell me about yourself."',
     },
   },
   {
@@ -92,14 +92,14 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
   {
     id: 'handling_uncertainty',
     label: 'Handling Uncertainty',
-    passDescription: 'Unexpected or difficult answers stay composed, honest, direct, and land on a clear point.',
+    passDescription: 'When the candidate does not have an immediate answer, they pause, choose a lane, answer directly, support it briefly, and stop.',
     failDescription: 'The candidate rambles, bluffs, dodges, contradicts themselves, or never lands the answer.',
     workshop: {
-      framework: 'Recovery process, then Answer, Reason, Example',
-      diagnosis: 'When you do not have a perfect answer, pause, recover, and choose one grounded point instead of filling space.',
+      framework: 'Pause, Frame, Answer, Support',
+      diagnosis: 'When you do not have a ready answer, pause, frame the question, give a direct answer, and support it briefly instead of filling space.',
       example:
-        'I would start by clarifying the highest-risk part of the situation. That matters because uncertainty gets easier when the first decision is clear. In a past project, I used that approach to reset priorities before the team lost more time.',
-      prompt: 'Script a calm recovery answer for a question that could make you ramble.',
+        'That is a good question. If I had to pick one area, I would say making decisions faster when the path is not fully clear. I like having the full picture, but I know that is not always realistic. So I try to name my assumptions, make the best call I can, and adjust as new information comes in.',
+      prompt: 'Practice the Pause, Frame, Answer, Support recovery move for a question that made you ramble.',
     },
   },
   {
@@ -108,11 +108,11 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
     passDescription: 'The interview sounds conversational, easy to follow, and not overly rehearsed or rushed.',
     failDescription: 'Delivery feels rushed, choppy, overly scripted, interruptive, or hard to track.',
     workshop: {
-      framework: 'Delivery workshop using a saved answer',
-      diagnosis: 'A strong answer should sound spoken, settled, and easy to follow out loud.',
+      framework: 'Cue Card, Pause Points, Natural Transitions, Landing',
+      diagnosis: 'A strong crafted answer still has to sound like a natural conversation, not a memorized script.',
       example:
-        'The main thing I would point to is ownership. In that project, I was responsible for keeping the handoff clear, so I focused on the tracker, the owners, and the blockers. That helped the team move without confusion.',
-      prompt: 'Pick one saved answer and rewrite it with a cleaner start, one simple transition, and a settled ending.',
+        'Cue: ownership. Pause after the headline. Beat one: what was happening. Beat two: what I did. Beat three: what changed. Land with the lesson, then stop.',
+      prompt: 'Turn one crafted answer into cue-card beats you can repeat naturally without sounding scripted.',
     },
   },
   {
@@ -121,11 +121,11 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
     passDescription: 'The candidate shows basic company/role preparation and asks thoughtful role, team, company, or process questions.',
     failDescription: 'Company knowledge or end questions are missing, generic, shallow, or mostly logistics-only.',
     workshop: {
-      framework: 'Research + question-building workshops',
+      framework: 'Company Detail, Role Detail, Why It Matters, HR-Appropriate Question',
       diagnosis: 'Preparation should show you understand the opportunity and have real questions about the work.',
       example:
-        'I saw that the role focuses on improving customer handoffs, which connects to work I have done before. I would be curious how the team defines success in the first few months.',
-      prompt: 'Script one prepared company/role answer and one thoughtful question you would ask at the end.',
+        'I saw that the role seems focused on customer handoffs and cross-functional follow-through. That stood out because those are the parts of my background I want to keep building on. For this HR screen, I would ask how the team is structured and what makes someone successful in the first few months.',
+      prompt: 'Build one prepared company/role answer and one HR-appropriate question that is not selfish-first.',
     },
   },
 ]
@@ -302,9 +302,9 @@ Area-specific gates:
 - professional_story: pass if the candidate gives a recognizable current lane plus relevant past/foundation and some direction, even if the answer is not perfectly structured.
 - specificity_proof: pass if at least one answer includes a specific project, situation, or accomplishment with personal ownership/action and concrete detail, result, or learning. A measurable metric is not required.
 - career_alignment: pass if the candidate connects role interest to relevant background, sales/client/team experience, role specifics, company specifics, or timing. A vague single phrase alone is not enough.
-- handling_uncertainty: pass only if the candidate answers uncertainty, stress, challenge, or missing-context questions with a composed process or grounded example. One-word answers, absolutes like "everything" or "I don't encounter them", bluffing, or dodging fail.
-- pace_natural_delivery: pass if answers are mostly understandable and conversational. Fail only if the transcript shows repeated unfinished answers, rambling, contradictions, or choppy flow that would make the conversation hard to follow.
-- preparation_curiosity: pass only if the candidate shows specific company/role preparation or asks a thoughtful non-logistical question. Generic readiness or no questions fails.
+- handling_uncertainty: do not fail merely because the question is about stress, challenge, or weakness. Fail when the candidate loses control of the answer: rambling, bluffing, dodging, changing direction, over-qualifying, answering a different question, or never landing a clear point.
+- pace_natural_delivery: pass if answers are mostly understandable, conversational, and spoken naturally. Fail if the candidate repeatedly interrupts, rushes, leaves disruptive dead air, sounds memorized or scripted, uses filler to mask uncertainty, or makes the conversation hard to follow.
+- preparation_curiosity: pass only if the candidate shows specific company/role preparation or asks a thoughtful HR-screen-appropriate question. Generic praise, no questions, or selfish-first questions about pay, PTO, vacation, perks, or logistics fail when they are the only curiosity signal.
 
 Rules:
 - Return valid JSON only.

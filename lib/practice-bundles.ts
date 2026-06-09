@@ -1321,9 +1321,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
         title: 'Stay Grounded When You Are Unsure',
         difficulty: 'easy',
         teach: {
-          title: 'Use Answer, Reason, Example when you are unsure',
+          title: 'Use Pause, Frame, Answer, Support when you are unsure',
           explanation:
-            'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, do not ramble while you search. Pause, choose one grounded answer, explain why, and then support it with a short real example.',
+            'Sometimes the question is fine, but you do not have a strong answer immediately. In that moment, do not ramble while you search. Pause, frame the question, choose one grounded answer, support it briefly, and stop.',
           example: {
             question: 'Tell me about an area where you are still developing professionally.',
             badAnswer:
@@ -1333,9 +1333,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             goodAnswer:
               'One area I am still developing is getting faster at making decisions when the path is not fully clear. I have gotten much better at it, but I still push myself to get to a clear call faster instead of over-processing. For example, in one role I had to reset a project plan with incomplete information, and I learned that clarifying the key decision first was more useful than waiting for perfect certainty.',
             breakdown: {
+              Pause: 'Buy yourself a second without filling space.',
+              Frame: 'Choose the lane for the answer before you start explaining.',
               Answer: 'Give one clear answer early so the interviewer knows where the response is going.',
-              Reason: 'Explain why that answer makes sense instead of circling the topic.',
-              Example: 'Ground it with a short real example so the answer sounds credible and lived-in.',
+              Support: 'Support the answer briefly, then stop instead of circling the topic.',
             },
             annotatedStrongAnswer: [
               {

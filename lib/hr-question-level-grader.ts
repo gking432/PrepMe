@@ -755,9 +755,11 @@ Rules:
 - hr_area is what the recruiter question/answer primarily affects.
 - coaching_bucket is the practice lesson that would fix the answer. Use "none" for logistics or when no coaching is needed.
 - Do NOT automatically route stress, challenge, or curveball answers to handling_uncertainty.
-- Handling Uncertainty is only for rambling, bluffing, dodging, or losing the thread when the candidate lacks a ready answer or faces ambiguity/missing context. It can appear on any question, but only when that behavior is present.
+- Handling Uncertainty is only for rambling, bluffing, dodging, changing direction, over-qualifying, or losing the thread when the candidate lacks a ready answer or faces ambiguity/missing context. It can appear on any question, but only when that behavior is present. It should teach Pause -> Frame -> Answer -> Support.
 - Bad answers like "I don't encounter stressful situations" should usually be evidence_credibility or communication_professionalism, with coaching_bucket specificity_proof or pace_natural_delivery, not handling_uncertainty.
-- Preparation & Curiosity should fail when the candidate shows no role/company preparation and/or asks no thoughtful question when invited.
+- Pace / Natural Delivery is about whether the candidate can deliver prepared material like a natural conversation. Use it for rushing, interrupting, disruptive silence, filler-heavy answers, choppy flow, trailing off, or sounding like a memorized script.
+- Preparation & Curiosity should fail when the candidate shows no role/company preparation and/or asks no thoughtful question when invited. Strong HR-screen questions are usually about team structure, hiring process, success in the role, manager/team context, onboarding, and what the screen is meant to assess. If the only questions are pay, PTO, vacation, perks, or logistics, treat that as a weak curiosity signal.
+- Career Alignment answers should not be selfish-first. Wanting growth, a challenge, or a resume boost is not enough unless the answer starts from what the candidate noticed about the role/company and connects it to background and timing.
 - Logistics / Constraints should be neutral if not assessed, pass if workable, fail if it creates a real constraint.
 - Basic Fit / Qualifications should be neutral if the interview does not reveal enough about minimum requirements. If the candidate gives a plausible background and there is no clear mismatch, it can pass even if the delivery needs coaching.
 - HR score area status follows the same rule: neutral means not assessed, not "weak." If an area was assessed and the evidence was insufficient, mark it fail.

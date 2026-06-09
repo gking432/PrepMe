@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { Anthropic } from '@anthropic-ai/sdk/client'
+import OpenAI from 'openai'
+import { HR_SCREEN_PASS_FAIL_MODEL } from '@/lib/feedback-config'
 
-let _anthropic: Anthropic | null = null
-function getAnthropic() {
-  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
-  return _anthropic
+let _openai: OpenAI | null = null
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  return _openai
 }
 
 type WorkshopType =
@@ -41,54 +42,57 @@ const CONFIGS: Record<WorkshopType, { framework: string; context: string; behavi
     ],
   },
   professional_story: {
-    framework: 'Present / Past / Future',
-    context: 'A tell-me-about-yourself answer that needs a clear professional arc.',
+    framework: 'Identity / Foundation / Recent Focus / Direction',
+    context: 'A tell-me-about-yourself answer that should sound like a natural professional introduction, not a resume walkthrough.',
     behavioral: false,
     steps: [
-      { key: 'present', label: 'Present', prompt: 'Where is the candidate now, and what are they known for?' },
-      { key: 'past', label: 'Past', prompt: 'What background thread explains how they got here?' },
-      { key: 'future', label: 'Future', prompt: 'Why is this role the logical next step?' },
+      { key: 'identity', label: 'Identity', prompt: 'How should the candidate describe who they are professionally?' },
+      { key: 'foundation', label: 'Foundation', prompt: 'Which 1-2 background points built that identity?' },
+      { key: 'recent_focus', label: 'Recent Focus', prompt: 'What have they been developing or focusing on lately?' },
+      { key: 'direction', label: 'Direction', prompt: 'Why does this role or next step make sense now?' },
     ],
   },
   career_alignment: {
-    framework: 'Observation / Fit / Timing',
-    context: 'A why-this-role answer that needs role specificity and personal fit.',
+    framework: 'Observation / Evidence of Fit / Timing',
+    context: 'A why-this-role/company answer that must start with what the candidate noticed, then prove fit, then explain why now. It should not be selfish-first.',
     behavioral: false,
     steps: [
       { key: 'observation', label: 'Observation', prompt: 'What specific role or company detail matters?' },
-      { key: 'fit', label: 'Fit', prompt: 'What real background maps to that detail?' },
+      { key: 'fit', label: 'Evidence of Fit', prompt: 'What real background maps to that detail?' },
       { key: 'timing', label: 'Timing', prompt: 'Why does this move make sense now?' },
     ],
   },
   handling_uncertainty: {
-    framework: 'Recovery / Answer / Reason / Example',
-    context: 'A tough-question answer that needs composure and a grounded point.',
+    framework: 'Pause / Frame / Answer / Support',
+    context: 'A recovery workshop for answers where the candidate rambled, dodged, over-qualified, or started talking before they had a clear lane.',
     behavioral: true,
     steps: [
-      { key: 'recovery', label: 'Recovery', prompt: 'How should the candidate calmly buy a second?' },
-      { key: 'answer', label: 'Answer', prompt: 'What direct answer were they trying to give?' },
-      { key: 'reason', label: 'Reason', prompt: 'What real reasoning supports that answer?' },
-      { key: 'example', label: 'Example', prompt: 'What real experience backs it up?' },
+      { key: 'pause', label: 'Pause', prompt: 'What short phrase buys the candidate 2-3 seconds?' },
+      { key: 'frame', label: 'Frame', prompt: 'How should the candidate narrow the question before answering?' },
+      { key: 'answer', label: 'Answer', prompt: 'What direct answer should they give?' },
+      { key: 'support', label: 'Support', prompt: 'What brief reason, example, tradeoff, or thinking process supports it?' },
     ],
   },
   pace_delivery: {
-    framework: 'Opener / Main Point / Landing',
-    context: 'A delivery repair that keeps the same content but makes it easier to follow.',
+    framework: 'Cue Card / Pause Points / Natural Transitions / Landing',
+    context: 'A rehearsal workshop that helps the candidate say a crafted answer naturally instead of sounding scripted or rushed.',
     behavioral: false,
     steps: [
-      { key: 'opener', label: 'Opener', prompt: 'What should the candidate lead with?' },
-      { key: 'main_point', label: 'Main Point', prompt: 'Which two or three beats carry the answer?' },
-      { key: 'landing', label: 'Landing', prompt: 'How should the answer close cleanly?' },
+      { key: 'cue_card', label: 'Cue Card', prompt: 'What is the short memory cue, not the full script?' },
+      { key: 'pause_points', label: 'Pause Points', prompt: 'Where should the candidate pause or look like they are thinking?' },
+      { key: 'transitions', label: 'Natural Transitions', prompt: 'What small spoken transitions keep it conversational?' },
+      { key: 'landing', label: 'Landing', prompt: 'How should the answer stop cleanly without trailing off?' },
     ],
   },
   preparation_curiosity: {
-    framework: 'What You Know / What Stood Out / Your Question',
-    context: 'A preparation answer that needs specific research and a thoughtful question.',
+    framework: 'Company Detail / Role Detail / Why It Matters / HR-Appropriate Question',
+    context: 'A preparation workshop for answering what the candidate knows about the company/role and asking smart HR-screen questions.',
     behavioral: false,
     steps: [
-      { key: 'what_you_know', label: 'What You Know', prompt: 'What specific role/company detail did they notice?' },
-      { key: 'what_stood_out', label: 'What Stood Out', prompt: 'Why does that detail connect to them?' },
-      { key: 'your_question', label: 'Your Question', prompt: 'What smart question follows from that?' },
+      { key: 'company_detail', label: 'Company Detail', prompt: 'What specific company detail should they know before the screen?' },
+      { key: 'role_detail', label: 'Role Detail', prompt: 'What specific role detail should they be ready to mention?' },
+      { key: 'why_it_matters', label: 'Why It Matters', prompt: 'Why does that detail connect to their interest or background?' },
+      { key: 'hr_question', label: 'HR-Appropriate Question', prompt: 'What thoughtful question fits an HR generalist audience?' },
     ],
   },
   role_depth: {
@@ -143,12 +147,16 @@ function safeParseJson(raw: string): any {
   }
 }
 
-function estimateCostCents(inputText: string, outputText: string, usage?: { input_tokens?: number; output_tokens?: number }) {
-  const inputTokens = usage?.input_tokens || Math.ceil(inputText.length / 4)
-  const outputTokens = usage?.output_tokens || Math.ceil(outputText.length / 4)
-  const usd = (inputTokens * 1 + outputTokens * 5) / 1_000_000
+function estimateCostCents(
+  inputText: string,
+  outputText: string,
+  usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number }
+) {
+  const inputTokens = usage?.input_tokens || usage?.prompt_tokens || Math.ceil(inputText.length / 4)
+  const outputTokens = usage?.output_tokens || usage?.completion_tokens || Math.ceil(outputText.length / 4)
+  const usd = (inputTokens * 0.05 + outputTokens * 0.4) / 1_000_000
   return {
-    model: 'claude-haiku-4-5-20251001',
+    model: HR_SCREEN_PASS_FAIL_MODEL,
     input_tokens: inputTokens,
     output_tokens: outputTokens,
     estimated_cents: Number((usd * 100).toFixed(4)),
@@ -216,14 +224,17 @@ function mockExtract(config: (typeof CONFIGS)[WorkshopType], originalAnswer: str
     .filter((sentence) => sentence && !/^of course[.!]?$/i.test(sentence))
 
   const mockRawForStep = (step: WorkshopStep, index: number) => {
-    if (config.framework === 'Present / Past / Future') {
-      if (step.key === 'present') {
-        return sentences.find((sentence) => /working|current|right now|known for/i.test(sentence)) || sentences[0] || ''
+    if (config.framework === 'Identity / Foundation / Recent Focus / Direction') {
+      if (step.key === 'identity') {
+        return sentences.find((sentence) => /background|professional|known for|describe/i.test(sentence)) || sentences[0] || ''
       }
-      if (step.key === 'past') {
+      if (step.key === 'foundation') {
         return sentences.find((sentence) => /started|earlier|background|foundation/i.test(sentence)) || sentences[1] || sentences[0] || ''
       }
-      if (step.key === 'future') {
+      if (step.key === 'recent_focus') {
+        return sentences.find((sentence) => /recent|lately|current|right now|focused/i.test(sentence)) || sentences[1] || sentences[0] || ''
+      }
+      if (step.key === 'direction') {
         const future = sentences.filter((sentence) => /role|drew|opportunity|going forward|next/i.test(sentence))
         return future.join(' ') || sentences[sentences.length - 1] || ''
       }
@@ -442,6 +453,10 @@ Rules:
 - "missing" means the app should ask the user one small question.
 - Behavioral workshops must not invent events, actions, metrics, companies, or outcomes. The job description only tells you what the interviewer cares about.
 - Non-behavioral workshops may use the JD/company context, but candidate claims must still come from the candidate data.
+- Career alignment must not be selfish-first. Growth, challenge, title, pay, perks, or needing change cannot be the center of the answer.
+- Preparation/curiosity should fit an HR screen audience. Prefer team structure, hiring process, success profile, onboarding, manager/team context, and what HR is screening for. Do not make pay, PTO, vacation, perks, or logistics the only curiosity signal.
+- Pace/delivery is rehearsal, not content invention. Turn the answer into cue-card beats, pause points, natural transitions, and a landing.
+- Handling uncertainty is behavior recovery, not a generic stress-question rewrite. Use it only to help the candidate pause, frame, answer directly, support briefly, and stop.
 - Keep each raw beat short, factual, and easy to confirm.
 - Return only valid JSON.`
 
@@ -477,15 +492,17 @@ Rules:
   const inputText = JSON.stringify(userPayload)
 
   try {
-    const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1300,
-      temperature: 0.2,
-      system,
-      messages: [{ role: 'user', content: inputText }],
-    })
-    const content = message.content[0]
-    const text = content.type === 'text' ? content.text : ''
+    const message = await getOpenAI().chat.completions.create({
+      model: HR_SCREEN_PASS_FAIL_MODEL,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: inputText },
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 1300,
+      reasoning_effort: 'minimal',
+    } as any)
+    const text = message.choices[0]?.message?.content || ''
     const parsed = safeParseJson(text) || {}
     const result = {
       summary: clean(parsed.summary || '', 300) || fallbackExtract(config, originalAnswer).summary,
@@ -536,7 +553,7 @@ async function runPolish({
   const config = CONFIGS[workshopType]
   const context = await fetchUserContext(sessionId, userId)
 
-  const system = `You polish confirmed interview answer beats into a spoken answer.
+  const system = `You polish confirmed interview answer beats into a spoken answer or rehearsal card.
 
 Workshop: ${config.context}
 Framework: ${config.framework}
@@ -548,6 +565,10 @@ Rules:
 - The final answer should sound spoken, not written.
 - Use contractions, short sentences, and natural transitions.
 - Avoid corporate cliches such as leveraged, spearheaded, passionate about, strategic alignment, and team player.
+- Career alignment must start from what the candidate noticed about the role/company, then connect fit and timing. Do not center selfish reasons like growth, title, pay, perks, or needing a new challenge.
+- Preparation/curiosity must include concrete company/role preparation and a question appropriate for an HR generalist. Avoid selfish-first questions about pay, PTO, vacation, perks, or logistics.
+- Pace/delivery should produce rehearsal notes the candidate can say naturally: cue-card headline, spoken beats, pause points, transitions, and a clean landing. Do not make it sound like a script to memorize.
+- Handling uncertainty should model Pause -> Frame -> Answer -> Support. Do not force a STAR answer unless the question clearly asks for a past example.
 - Aim for an answer the candidate can say in 45-90 seconds.
 - Explain briefly why each piece improves the failed HR signal.
 - Return only valid JSON.`
@@ -581,15 +602,17 @@ Rules:
   const inputText = JSON.stringify(userPayload)
 
   try {
-    const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
-      temperature: regenerate ? 0.45 : 0.25,
-      system,
-      messages: [{ role: 'user', content: inputText }],
-    })
-    const content = message.content[0]
-    const text = content.type === 'text' ? content.text : ''
+    const message = await getOpenAI().chat.completions.create({
+      model: HR_SCREEN_PASS_FAIL_MODEL,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: inputText },
+      ],
+      response_format: { type: 'json_object' },
+      max_completion_tokens: 1500,
+      reasoning_effort: 'minimal',
+    } as any)
+    const text = message.choices[0]?.message?.content || ''
     const parsed = safeParseJson(text) || {}
     const fallback = fallbackPolish(config, confirmed)
     const pieces = Array.isArray(parsed.pieces)

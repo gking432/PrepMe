@@ -62,17 +62,17 @@ function getWorkshopTypeForRepair(repair?: SignalArea | null): WorkshopType | nu
 function WORKSHOP_INTRO(type: WorkshopType): string {
   switch (type) {
     case 'professional_story':
-      return "Let's reshape your background into a clear professional story — present, past, future."
+      return "Let's reshape your background into a clear professional introduction: identity, foundation, recent focus, and direction."
     case 'star_proof':
       return "Let's turn your vague example into one that actually proves something. Build the situation, then put weight on Action and Result."
     case 'career_alignment':
-      return "Let's make 'why this role' feel specific and intentional — start with the work, then build fit and timing."
+      return "Let's make 'why this role' feel specific and intentional, not selfish-first: start with the work, then build fit and timing."
     case 'handling_uncertainty':
-      return "Let's practice recovering cleanly. Build a clean Answer, Reason, Example so you don't ramble."
+      return "Let's practice recovering cleanly. Pause, frame the question, answer directly, support it briefly, and stop."
     case 'pace_delivery':
-      return "Let's trim filler, tighten the structure, and make the answer easy to follow."
+      return "Let's rehearse the crafted answer like a real conversation so it sounds prepared, not scripted."
     case 'preparation_curiosity':
-      return "Let's turn generic interest into specific, informed questions that show you did the homework."
+      return "Let's build company/role prep and HR-appropriate questions that show you did the homework."
     case 'role_depth':
       return "Let's show you can think inside the role — name the methods, weigh the tradeoffs, and talk like someone who does the work."
     case 'problem_solving':
@@ -102,6 +102,7 @@ export type SignalArea = {
   rewritten_answer?: string
   rewrite_explanation?: string
   original_answer?: string
+  repair_scaffold?: any
   mini_workshop?: {
     area?: string
     area_id?: string
@@ -113,6 +114,7 @@ export type SignalArea = {
     diagnosis?: string
     example?: string
     prompt?: string
+    repair_scaffold?: any
   }
 }
 
@@ -763,6 +765,7 @@ function WorkshopSlide({
         originalAnswer={originalAnswerText || undefined}
         repairCriterion={criterion}
         repairFeedback={toDisplayText(repair.feedback)}
+        repairScaffold={(repair as any).repair_scaffold || (repair as any).mini_workshop?.repair_scaffold || null}
         onComplete={onWorkshopComplete}
       />
     )

@@ -403,7 +403,7 @@ export default function HandlingUncertaintyWorkshop({
           {PRACTICE_QUESTION}
         </p>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          This workshop uses one common HR screen question so you can practice the recovery move with control: pause, answer, reason, example.
+          This workshop uses one common HR screen question so you can practice the recovery move with control: pause, frame, answer, support.
         </p>
         {originalQuestion || flaggedSummary ? (
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-4">

@@ -22,6 +22,10 @@ export interface WeakSignal {
   practice_focus_id?: string
   evidence?: Evidence[]
   original_answer?: string
+  repair_scaffold?: any
+  mini_workshop?: {
+    repair_scaffold?: any
+  }
 }
 
 interface PracticePathProps {
@@ -400,6 +404,7 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
               originalAnswer={activeNode.originalAnswer || undefined}
               repairCriterion={activeNode.signal.criterion || activeNode.signal.score_area || undefined}
               repairFeedback={activeNode.signal.feedback || undefined}
+              repairScaffold={(activeNode.signal as any).repair_scaffold || (activeNode.signal as any).mini_workshop?.repair_scaffold || null}
               onComplete={handleWorkshopComplete}
             />
           </div>

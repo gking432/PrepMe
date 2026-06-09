@@ -406,49 +406,56 @@ export default function CareerAlignmentBuilder({
                   <div className="space-y-2">
                     <div className="rounded-xl border-2 border-sky-300 bg-sky-50 px-3 py-2.5">
                       <div className="flex items-start gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-xs text-white">🔍</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-xs text-white">👁️</span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">Role Observation</p>
-                          <p className="text-sm leading-6 text-slate-800">{output.roleObservation}</p>
+                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">Observation</p>
+                          <p className="text-sm leading-6 text-slate-800">{output.roleObservation.observation}</p>
+                          <p className="mt-1 text-[11px] leading-5 text-slate-500"><span className="font-bold">Evidence:</span> {output.roleObservation.evidenceFromJobDescription}</p>
                         </div>
                       </div>
                     </div>
                     {output.companyObservation && (
                       <div className="rounded-xl border-2 border-sky-300 bg-sky-50 px-3 py-2.5">
                         <div className="flex items-start gap-2">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-xs text-white">🏢</span>
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-400 text-xs text-white">🏢</span>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">Company Observation</p>
-                            <p className="text-sm leading-6 text-slate-800">{output.companyObservation}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">Company observation</p>
+                            <p className="text-sm leading-6 text-slate-800">{output.companyObservation.observation}</p>
+                            <p className="mt-1 text-[11px] leading-5 text-slate-500"><span className="font-bold">Evidence:</span> {output.companyObservation.evidenceFromCompanyOrJobDescription}</p>
                           </div>
                         </div>
                       </div>
                     )}
-                    <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-3 py-2.5">
-                      <div className="flex items-start gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-500 text-xs text-white">🎯</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Candidate Fit</p>
-                          <p className="text-sm leading-6 text-slate-800">{output.candidateFit}</p>
-                          {output.evidenceBullets && output.evidenceBullets.length > 0 && (
-                            <ul className="mt-1 space-y-0.5">
-                              {output.evidenceBullets.map((bullet, i) => (
-                                <li key={i} className="text-xs leading-5 text-amber-800">&#8226; {bullet}</li>
-                              ))}
-                            </ul>
-                          )}
+                    {output.candidateFit && (
+                      <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-3 py-2.5">
+                        <div className="flex items-start gap-2">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-500 text-xs text-white">🔗</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Fit</p>
+                            <p className="text-sm leading-6 text-slate-800">{output.candidateFit.fitSummary}</p>
+                            {output.candidateFit.evidenceFromResume?.length > 0 && (
+                              <div className="mt-1.5 space-y-0.5">
+                                {output.candidateFit.evidenceFromResume.map((ev, i) => (
+                                  <p key={i} className="text-[11px] leading-5 text-slate-500">&#8226; {ev}</p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="rounded-xl border-2 border-violet-300 bg-violet-50 px-3 py-2.5">
-                      <div className="flex items-start gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500 text-xs text-white">⏰</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">Timing</p>
-                          <p className="text-sm leading-6 text-slate-800">{output.whyNow}</p>
+                    )}
+                    {output.timing && (
+                      <div className="rounded-xl border-2 border-violet-300 bg-violet-50 px-3 py-2.5">
+                        <div className="flex items-start gap-2">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500 text-xs text-white">⏱️</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">Timing</p>
+                            <p className="text-sm leading-6 text-slate-800">{output.timing.timingSummary}</p>
+                            <p className="mt-1 text-[11px] leading-5 text-slate-500"><span className="font-bold">Why now:</span> {output.timing.whyNow}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}

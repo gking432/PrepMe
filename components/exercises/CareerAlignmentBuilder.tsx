@@ -15,23 +15,21 @@ import {
   Target,
 } from 'lucide-react'
 import {
-  CURRENT_SITUATION_OPTIONS,
-  PROFESSIONAL_IDENTITY_STYLE_OPTIONS,
+  QUESTION_TYPE_OPTIONS,
   TONE_OPTIONS,
   LENGTH_OPTIONS,
   DEFAULT_AVOIDANCES,
   REWRITE_OPTIONS,
   PROGRESS_STEPS,
   FRAMEWORK_STEPS,
-  type CurrentSituation,
-  type ProfessionalIdentityStyle,
-  type TonePreference,
-  type LengthPreference,
-  type RewriteInstruction,
-  type ProfessionalIntroductionOutput,
-} from '@/lib/professional-story-config'
+  type CareerAlignmentQuestionType,
+  type CareerAlignmentTone,
+  type CareerAlignmentLength,
+  type CareerAlignmentRewriteInstruction,
+  type CareerAlignmentOutput,
+} from '@/lib/career-alignment-config'
 
-interface ProfessionalStoryBuilderProps {
+interface CareerAlignmentBuilderProps {
   sessionId?: string
   originalQuestion?: string
   originalAnswer?: string
@@ -41,20 +39,18 @@ interface ProfessionalStoryBuilderProps {
 type Step =
   | 'intro'
   | 'method'
-  | 'situation'
-  | 'identity_style'
+  | 'question_type'
   | 'tone_length'
   | 'notes'
   | 'generating'
   | 'output'
 
 const STEP_TO_PROGRESS: Record<string, number> = {
-  situation: 0,
-  identity_style: 1,
-  tone_length: 2,
-  notes: 2,
-  generating: 3,
-  output: 3,
+  question_type: 0,
+  tone_length: 1,
+  notes: 1,
+  generating: 2,
+  output: 2,
 }
 
 const COLOR_MAP: Record<string, { bg: string; border: string; text: string; soft: string }> = {
@@ -64,27 +60,24 @@ const COLOR_MAP: Record<string, { bg: string; border: string; text: string; soft
   amber: { bg: 'bg-amber-500', border: 'border-amber-300', text: 'text-amber-700', soft: 'bg-amber-50' },
 }
 
-export default function ProfessionalStoryBuilder({
+export default function CareerAlignmentBuilder({
   sessionId,
   originalQuestion,
   originalAnswer,
   onComplete,
-}: ProfessionalStoryBuilderProps) {
+}: CareerAlignmentBuilderProps) {
   const [step, setStep] = useState<Step>('intro')
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set())
 
-  const [currentSituation, setCurrentSituation] = useState<CurrentSituation | null>(null)
-  const [currentSituationDetail, setCurrentSituationDetail] = useState('')
-  const [identityStyle, setIdentityStyle] = useState<ProfessionalIdentityStyle | null>(null)
-  const [customIdentity, setCustomIdentity] = useState('')
-  const [tone, setTone] = useState<TonePreference>('natural_confident')
-  const [length, setLength] = useState<LengthPreference>('sixty_seconds')
+  const [questionType, setQuestionType] = useState<CareerAlignmentQuestionType | null>(null)
+  const [tone, setTone] = useState<CareerAlignmentTone>('natural_confident')
+  const [length, setLength] = useState<CareerAlignmentLength>('sixty_seconds')
 
-  const [output, setOutput] = useState<ProfessionalIntroductionOutput | null>(null)
+  const [output, setOutput] = useState<CareerAlignmentOutput | null>(null)
   const [generateError, setGenerateError] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [activeOutputTab, setActiveOutputTab] = useState<'primary' | 'casual' | 'short'>('primary')
-  const [rewriteConfirm, setRewriteConfirm] = useState<RewriteInstruction | null>(null)
+  const [activeOutputTab, setActiveOutputTab] = useState<'primary' | 'shorter' | 'conversational'>('primary')
+  const [rewriteConfirm, setRewriteConfirm] = useState<CareerAlignmentRewriteInstruction | null>(null)
   const [rewriting, setRewriting] = useState(false)
 
   const allMethodFlipped = flippedCards.size >= FRAMEWORK_STEPS.length
@@ -96,14 +89,8 @@ export default function ProfessionalStoryBuilder({
 
   function canAdvance(): boolean {
     switch (step) {
-      case 'situation':
-        if (!currentSituation) return false
-        if (currentSituation === 'other' && !currentSituationDetail.trim()) return false
-        return true
-      case 'identity_style':
-        if (!identityStyle) return false
-        if (identityStyle === 'custom' && !customIdentity.trim()) return false
-        return true
+      case 'question_type':
+        return !!questionType
       case 'tone_length':
         return !!tone && !!length
       case 'notes':
@@ -114,13 +101,13 @@ export default function ProfessionalStoryBuilder({
   }
 
   const nextStep = useCallback(() => {
-    const flow: Step[] = ['intro', 'method', 'situation', 'identity_style', 'tone_length', 'notes', 'generating']
+    const flow: Step[] = ['intro', 'method', 'question_type', 'tone_length', 'notes', 'generating']
     const idx = flow.indexOf(step)
     if (idx >= 0 && idx < flow.length - 1) setStep(flow[idx + 1])
   }, [step])
 
   const prevStep = useCallback(() => {
-    const flow: Step[] = ['intro', 'method', 'situation', 'identity_style', 'tone_length', 'notes']
+    const flow: Step[] = ['intro', 'method', 'question_type', 'tone_length', 'notes']
     const idx = flow.indexOf(step)
     if (idx > 0) setStep(flow[idx - 1])
   }, [step])
@@ -130,21 +117,18 @@ export default function ProfessionalStoryBuilder({
     let cancelled = false
     async function generate() {
       try {
-        const res = await fetch('/api/interview/professional-story', {
+        const res = await fetch('/api/interview/career-alignment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            currentSituation,
-            currentSituationDetail: currentSituation === 'other' ? currentSituationDetail.trim() : undefined,
-            professionalIdentityStyle: identityStyle,
-            customProfessionalIdentity: identityStyle === 'custom' ? customIdentity.trim() : undefined,
+            questionType,
             tone, length, avoidances: DEFAULT_AVOIDANCES, sessionId,
           }),
         })
         if (!res.ok) throw new Error('failed')
         const data = await res.json()
         if (cancelled) return
-        if (data.primaryAnswer || data.structureUsed) { setOutput(data as ProfessionalIntroductionOutput); setStep('output') }
+        if (data.primaryAnswer || data.roleObservation) { setOutput(data as CareerAlignmentOutput); setStep('output') }
         else { setGenerateError(true); setStep('notes') }
       } catch { if (!cancelled) { setGenerateError(true); setStep('notes') } }
     }
@@ -152,15 +136,15 @@ export default function ProfessionalStoryBuilder({
     return () => { cancelled = true }
   }, [step, rewriting]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleRewrite(instruction: RewriteInstruction) {
+  async function handleRewrite(instruction: CareerAlignmentRewriteInstruction) {
     setRewriteConfirm(null)
     if (!output) return
     if (instruction === 'regenerate') { setGenerateError(false); setOutput(null); setStep('generating'); return }
     setRewriting(true)
     try {
-      const res = await fetch('/api/interview/professional-story', {
+      const res = await fetch('/api/interview/career-alignment', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rewriteInstruction: instruction, originalAnswer: output.primaryAnswer, originalOutput: output, sessionId }),
+        body: JSON.stringify({ rewriteInstruction: instruction, originalAnswer: output.primaryAnswer, originalOutput: output, questionType, sessionId }),
       })
       if (!res.ok) throw new Error('failed')
       const data = await res.json()
@@ -224,7 +208,7 @@ export default function ProfessionalStoryBuilder({
         <div className="shrink-0 border-t border-slate-200 px-5 py-3">
           {footer || (
             <div className="flex items-center gap-2">
-              {step !== 'situation' && (
+              {step !== 'question_type' && (
                 <button onClick={prevStep} className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50">
                   <ArrowLeft className="h-3.5 w-3.5" /> Back
                 </button>
@@ -239,7 +223,7 @@ export default function ProfessionalStoryBuilder({
     )
   }
 
-  const activeAnswer = activeOutputTab === 'casual' ? output?.casualAnswer : activeOutputTab === 'short' ? output?.shortAnswer : output?.primaryAnswer
+  const activeAnswer = activeOutputTab === 'shorter' ? output?.shorterAnswer : activeOutputTab === 'conversational' ? output?.moreConversationalAnswer : output?.primaryAnswer
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
@@ -248,16 +232,16 @@ export default function ProfessionalStoryBuilder({
           <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-5 py-4">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">Why this matters</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">IFRD</span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">OFT</span>
             </div>
-            <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">&ldquo;Tell me about yourself&rdquo; is your first impression.</h2>
+            <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">&ldquo;Why this role?&rdquo; is where most people go generic.</h2>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
             <div className="space-y-4">
               <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white"><Lightbulb className="h-4 w-4" /></div>
-                  <p className="text-sm leading-7 text-slate-800">Most people walk through their resume. The interviewer tunes out after 10 seconds. A strong answer tells a story: who you are, what shaped you, what you&apos;ve been focused on, and why you&apos;re here.</p>
+                  <p className="text-sm leading-7 text-slate-800">Career alignment questions test whether you&apos;ve done your homework and whether your motivation is real. Most candidates give vague answers about &ldquo;great culture&rdquo; or &ldquo;exciting opportunity.&rdquo; A strong answer connects a specific observation about the role or company to your real skills and timing.</p>
                 </div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
@@ -265,7 +249,7 @@ export default function ProfessionalStoryBuilder({
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white"><Target className="h-4 w-4" /></div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">When to use it</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-800">Use this for &ldquo;tell me about yourself&rdquo;, &ldquo;walk me through your background&rdquo;, or &ldquo;so, what brings you here?&rdquo;</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-800">Use this for &ldquo;why this role?&rdquo;, &ldquo;why our company?&rdquo;, &ldquo;what attracted you to this position?&rdquo;, or &ldquo;why are you looking to make a move?&rdquo;</p>
                   </div>
                 </div>
               </div>
@@ -273,7 +257,7 @@ export default function ProfessionalStoryBuilder({
                 <div className="rounded-2xl border border-rose-100 bg-rose-50/50 px-4 py-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">What you said in the interview</p>
                   {originalQuestion && <p className="mt-1 text-[11px] font-bold leading-5 text-rose-800">Q: {originalQuestion}</p>}
-                  <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;</p>
+                  <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '...' : originalAnswer}&rdquo;</p>
                   <p className="mt-3 text-xs font-bold text-rose-700">We&apos;ll build a better version using your real resume.</p>
                 </div>
               )}
@@ -289,7 +273,7 @@ export default function ProfessionalStoryBuilder({
         <div className="flex h-full flex-col">
           <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
             <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">The Method</span>
-            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">Identity · Foundation · Recent Focus · Direction</h2>
+            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">Observation &middot; Fit &middot; Timing</h2>
             <p className="mt-1 text-xs font-bold text-slate-500">Flip each card in order to unlock the next.</p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
@@ -330,53 +314,34 @@ export default function ProfessionalStoryBuilder({
             <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{flippedCards.size}/{FRAMEWORK_STEPS.length} flipped</p>
           </div>
           <div className="shrink-0 border-t border-slate-200 px-5 py-3">
-            <button onClick={() => setStep('situation')} disabled={!allMethodFlipped} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50">
+            <button onClick={() => setStep('question_type')} disabled={!allMethodFlipped} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50">
               {allMethodFlipped ? "Let's build yours" : 'Flip every card to continue'} <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
 
-      {step === 'situation' && renderStepShell('How should we describe where you are now?', "This helps us explain your current chapter without making it awkward.",
+      {step === 'question_type' && renderStepShell('Which question are you answering?', 'Pick the type that best matches the question you were asked.',
         <div className="space-y-5">
-          {renderCardSelect(CURRENT_SITUATION_OPTIONS, currentSituation, (id) => setCurrentSituation(id as CurrentSituation))}
-          {currentSituation === 'other' && (
-            <div>
-              <label className="block text-xs font-bold text-slate-600">How should we describe your current situation?</label>
-              <input type="text" value={currentSituationDetail} onChange={(e) => setCurrentSituationDetail(e.target.value.slice(0, 180))} placeholder="Example: I'm wrapping up a contract and looking for a full-time role." className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200" />
-            </div>
-          )}
+          {renderCardSelect(QUESTION_TYPE_OPTIONS, questionType, (id) => setQuestionType(id as CareerAlignmentQuestionType))}
         </div>,
         <button onClick={nextStep} disabled={!canAdvance()} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50">Continue <ArrowRight className="h-4 w-4" /></button>
-      )}
-
-      {step === 'identity_style' && renderStepShell('How should your intro start?', 'Choose the professional identity that feels most accurate.',
-        <div className="space-y-5">
-          {renderCardSelect(PROFESSIONAL_IDENTITY_STYLE_OPTIONS, identityStyle, (id) => setIdentityStyle(id as ProfessionalIdentityStyle))}
-          {identityStyle === 'custom' && (
-            <div>
-              <label className="block text-xs font-bold text-slate-600">Write your opening identity</label>
-              <textarea value={customIdentity} onChange={(e) => setCustomIdentity(e.target.value.slice(0, 220))} placeholder="Example: I'm a marketing and sales professional with experience across brand positioning, client management, and growth strategy." rows={3} className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200" />
-              <p className="mt-1 text-right text-[11px] text-slate-400">{customIdentity.length}/220</p>
-            </div>
-          )}
-        </div>
       )}
 
       {step === 'tone_length' && renderStepShell('Choose the tone', 'How should this sound in the interview?',
         <div className="space-y-6">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-3">Tone</p>
-            {renderCardSelect(TONE_OPTIONS, tone, (id) => setTone(id as TonePreference))}
+            {renderCardSelect(TONE_OPTIONS, tone, (id) => setTone(id as CareerAlignmentTone))}
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-3">Answer length</p>
-            {renderCardSelect(LENGTH_OPTIONS, length, (id) => setLength(id as LengthPreference))}
+            {renderCardSelect(LENGTH_OPTIONS, length, (id) => setLength(id as CareerAlignmentLength))}
           </div>
         </div>
       )}
 
-      {step === 'notes' && renderStepShell('Build your introduction', "Your resume and job description are already loaded. We'll pull from them automatically.",
+      {step === 'notes' && renderStepShell('Build your answer', "Your resume and job description are already loaded. We'll pull from them automatically.",
         <div className="space-y-5">
           {generateError && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
@@ -386,11 +351,11 @@ export default function ProfessionalStoryBuilder({
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <p className="text-xs font-bold text-slate-700 mb-2">We&apos;ll create:</p>
             <ul className="space-y-1">
-              <li className="text-xs leading-5 text-slate-600">• A primary answer</li>
-              <li className="text-xs leading-5 text-slate-600">• A casual version</li>
-              <li className="text-xs leading-5 text-slate-600">• A short version</li>
-              <li className="text-xs leading-5 text-slate-600">• Identity / Foundation / Recent Focus / Direction breakdown</li>
-              <li className="text-xs leading-5 text-slate-600">• Coaching notes</li>
+              <li className="text-xs leading-5 text-slate-600">&#8226; A primary answer</li>
+              <li className="text-xs leading-5 text-slate-600">&#8226; A shorter version</li>
+              <li className="text-xs leading-5 text-slate-600">&#8226; A more conversational version</li>
+              <li className="text-xs leading-5 text-slate-600">&#8226; Observation / Fit / Timing breakdown</li>
+              <li className="text-xs leading-5 text-slate-600">&#8226; Coaching notes</li>
             </ul>
           </div>
         </div>,
@@ -403,7 +368,7 @@ export default function ProfessionalStoryBuilder({
       {step === 'generating' && (
         <div className="flex h-full flex-col items-center justify-center px-5 text-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-200 border-t-violet-500" />
-          <p className="mt-5 text-sm font-bold text-slate-700">Building your professional introduction…</p>
+          <p className="mt-5 text-sm font-bold text-slate-700">Building your career alignment answer...</p>
           <p className="mt-1 text-xs text-slate-500">Analyzing your resume and job description.</p>
         </div>
       )}
@@ -418,9 +383,9 @@ export default function ProfessionalStoryBuilder({
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  {(['primary', 'casual', 'short'] as const).map((tab) => (
+                  {(['primary', 'shorter', 'conversational'] as const).map((tab) => (
                     <button key={tab} onClick={() => setActiveOutputTab(tab)} className={`rounded-full px-3 py-1 text-xs font-bold transition ${activeOutputTab === tab ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                      {tab === 'primary' ? 'Full' : tab === 'casual' ? 'Casual' : 'Short'}
+                      {tab === 'primary' ? 'Full' : tab === 'shorter' ? 'Shorter' : 'Conversational'}
                     </button>
                   ))}
                 </div>
@@ -435,25 +400,55 @@ export default function ProfessionalStoryBuilder({
                 </div>
               </div>
 
-              {output.structureUsed && (
+              {output.roleObservation && (
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">How this answer is structured</p>
                   <div className="space-y-2">
-                    {(['identity', 'foundation', 'recentFocus', 'direction'] as const).map((part) => {
-                      const fs = FRAMEWORK_STEPS.find((f) => f.key === part); const colors = fs ? COLOR_MAP[fs.color] : COLOR_MAP.violet
-                      const labels: Record<string, string> = { identity: 'Identity', foundation: 'Foundation', recentFocus: 'Recent Focus', direction: 'Direction' }
-                      return (
-                        <div key={part} className={`rounded-xl border-2 ${colors.border} ${colors.soft} px-3 py-2.5`}>
-                          <div className="flex items-start gap-2">
-                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.bg} text-xs text-white`}>{fs?.emoji || '📝'}</span>
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>{labels[part]}</p>
-                              <p className="text-sm leading-6 text-slate-800">{output.structureUsed[part]}</p>
-                            </div>
+                    <div className="rounded-xl border-2 border-sky-300 bg-sky-50 px-3 py-2.5">
+                      <div className="flex items-start gap-2">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-xs text-white">🔍</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">Role Observation</p>
+                          <p className="text-sm leading-6 text-slate-800">{output.roleObservation}</p>
+                        </div>
+                      </div>
+                    </div>
+                    {output.companyObservation && (
+                      <div className="rounded-xl border-2 border-sky-300 bg-sky-50 px-3 py-2.5">
+                        <div className="flex items-start gap-2">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-xs text-white">🏢</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">Company Observation</p>
+                            <p className="text-sm leading-6 text-slate-800">{output.companyObservation}</p>
                           </div>
                         </div>
-                      )
-                    })}
+                      </div>
+                    )}
+                    <div className="rounded-xl border-2 border-amber-300 bg-amber-50 px-3 py-2.5">
+                      <div className="flex items-start gap-2">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-500 text-xs text-white">🎯</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">Candidate Fit</p>
+                          <p className="text-sm leading-6 text-slate-800">{output.candidateFit}</p>
+                          {output.evidenceBullets && output.evidenceBullets.length > 0 && (
+                            <ul className="mt-1 space-y-0.5">
+                              {output.evidenceBullets.map((bullet, i) => (
+                                <li key={i} className="text-xs leading-5 text-amber-800">&#8226; {bullet}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border-2 border-violet-300 bg-violet-50 px-3 py-2.5">
+                      <div className="flex items-start gap-2">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500 text-xs text-white">⏰</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">Timing</p>
+                          <p className="text-sm leading-6 text-slate-800">{output.whyNow}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -475,21 +470,14 @@ export default function ProfessionalStoryBuilder({
               {output.whyThisWorks?.length > 0 && (
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600 mb-1">Why this works</p>
-                  <ul className="space-y-1">{output.whyThisWorks.map((w, i) => (<li key={i} className="text-xs leading-5 text-emerald-800">• {w}</li>))}</ul>
+                  <ul className="space-y-1">{output.whyThisWorks.map((w, i) => (<li key={i} className="text-xs leading-5 text-emerald-800">&#8226; {w}</li>))}</ul>
                 </div>
               )}
 
               {output.possibleWeakSpots?.length > 0 && (
                 <div className="rounded-2xl border border-amber-100 bg-amber-50/60 px-4 py-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-600 mb-1">Be careful with this</p>
-                  <ul className="space-y-1">{output.possibleWeakSpots.map((w, i) => (<li key={i} className="text-xs leading-5 text-amber-800">• {w}</li>))}</ul>
-                </div>
-              )}
-
-              {output.likelyFollowUpQuestions?.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">They might ask next</p>
-                  <div className="space-y-1.5">{output.likelyFollowUpQuestions.map((q, i) => (<div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"><ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" /><p className="text-xs leading-5 text-slate-700">{q}</p></div>))}</div>
+                  <ul className="space-y-1">{output.possibleWeakSpots.map((w, i) => (<li key={i} className="text-xs leading-5 text-amber-800">&#8226; {w}</li>))}</ul>
                 </div>
               )}
 
@@ -516,7 +504,7 @@ export default function ProfessionalStoryBuilder({
               {rewriting && (
                 <div className="flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-500" />
-                  <p className="text-xs font-bold text-violet-700">Rewriting your answer…</p>
+                  <p className="text-xs font-bold text-violet-700">Rewriting your answer...</p>
                 </div>
               )}
             </div>

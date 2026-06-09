@@ -7,6 +7,7 @@ import { getRootCauseForCriterion, getBundleForRootCause } from '@/lib/practice-
 import GuidedBuilderWorkshop, { type WorkshopType } from '@/components/exercises/GuidedBuilderWorkshop'
 import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
+import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 
 interface Evidence {
   question?: string
@@ -392,6 +393,13 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
               />
             ) : activeNode.workshopType === 'professional_story' ? (
               <ProfessionalStoryBuilder
+                sessionId={sessionId}
+                originalQuestion={activeNode.question || undefined}
+                originalAnswer={activeNode.originalAnswer || undefined}
+                onComplete={handleWorkshopComplete}
+              />
+            ) : activeNode.workshopType === 'career_alignment' ? (
+              <CareerAlignmentBuilder
                 sessionId={sessionId}
                 originalQuestion={activeNode.question || undefined}
                 originalAnswer={activeNode.originalAnswer || undefined}

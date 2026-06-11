@@ -8,6 +8,7 @@ import GuidedBuilderWorkshop, { type WorkshopType } from '@/components/exercises
 import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
+import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
 
 interface Evidence {
   question?: string
@@ -400,6 +401,13 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
               />
             ) : activeNode.workshopType === 'career_alignment' ? (
               <CareerAlignmentBuilder
+                sessionId={sessionId}
+                originalQuestion={activeNode.question || undefined}
+                originalAnswer={activeNode.originalAnswer || undefined}
+                onComplete={handleWorkshopComplete}
+              />
+            ) : activeNode.workshopType === 'handling_uncertainty' ? (
+              <HandlingUncertaintyLesson
                 sessionId={sessionId}
                 originalQuestion={activeNode.question || undefined}
                 originalAnswer={activeNode.originalAnswer || undefined}

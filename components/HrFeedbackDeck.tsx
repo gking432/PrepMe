@@ -24,6 +24,7 @@ import GuidedBuilderWorkshop from '@/components/exercises/GuidedBuilderWorkshop'
 import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
+import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
 
@@ -780,6 +781,17 @@ function WorkshopSlide({
     if (workshopType === 'career_alignment') {
       return (
         <CareerAlignmentBuilder
+          sessionId={sessionId}
+          originalQuestion={questionText || undefined}
+          originalAnswer={originalAnswerText || undefined}
+          onComplete={onWorkshopComplete}
+        />
+      )
+    }
+
+    if (workshopType === 'handling_uncertainty') {
+      return (
+        <HandlingUncertaintyLesson
           sessionId={sessionId}
           originalQuestion={questionText || undefined}
           originalAnswer={originalAnswerText || undefined}

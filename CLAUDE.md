@@ -324,3 +324,21 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
   - **API prompt**: Uses the full prompt from spec verbatim — Identity/Foundation/Recent Focus/Direction structure, banned phrases, specific rules for transitions/early-career/nonlinear backgrounds
 - **Files**: `lib/professional-story-config.ts`, `components/exercises/ProfessionalStoryBuilder.tsx`, `app/api/interview/professional-story/route.ts`
 - **Wired into HrFeedbackDeck and PracticePath** for `professional_story` workshop type
+
+### 2026-06-11 (Session 9)
+- **Career Alignment Builder rewrite** (committed earlier this session, `714a562`): replaced the wizard with a two-screen flow — flagged-answer review → one-click generate → results (primary/shorter/conversational, OFT breakdown, why-this-works, follow-up prep, rewrite options w/ confirmation gate). No user input for question type/tone/length (inferred/defaulted). Files: `lib/career-alignment-config.ts`, `app/api/interview/career-alignment/route.ts`, `components/exercises/CareerAlignmentBuilder.tsx`.
+- **AI architecture doc** (`8a52651`): `docs/ai-architecture-cached-profiles.md` — cached profile extraction + flagged-module generation strategy, with implementation-risk notes. (Note: a cheaper alternative — "HR batched repair workshop" — was later discussed as preferred for free HR; not yet written up or built.)
+- **Cost analysis**: full HR round is ~$0.08–0.24 (interview dominates at ~$0.06–0.14 via `gpt-realtime-mini`; grading ~$0.01 on gpt-5-nano; workshops near-zero). Real audio cost model lives in `buildHrCostEstimate()` in `app/api/interview/feedback/route.ts` (0.6¢/min input audio, 2.4¢/min output audio).
+- **Handling Uncertainty Lesson** (this commit): replaced the answer-building `HandlingUncertaintyWorkshop` with a Duolingo-style **lesson/drill** that teaches the in-the-moment recovery move **Rephrase → Pause → Pick a Lane → Start**. Zero AI calls — fully deterministic.
+  - Flow: Screen 1 "You started before you had an answer" (shows flagged Q/A) → Screen 2 teach the reset line → 5 randomized drills → result (pass 4/5) + reset phrase bank. **No "apply to your flagged question" step** (user explicitly removed it).
+  - Drill types: best reset line, match-the-rephrase, pick the answer lane, fix the weak start, complete-the-line (word tiles), choose the recovery move. 4 question-based drills (distinct kinds + questions) + 1 recovery-move drill per attempt, reshuffled each attempt.
+  - **Question bank** (`lib/handling-uncertainty-bank.ts`): 7 `DifficultQuestion`s seeded from the real HR-screen curveball pool (`lib/interview-prompts/hr_screen.ts:81-87`) + 1 added behavioral story Q, each with `simplifiedRephrase`, `correctLane`, `weakStarts`, `strongStarts`, `distractorRephrases`, `explanation`. Plus `AnswerLane` types/labels, 3 recovery-move drills, reset phrase bank, and `buildLessonDrills()` generator.
+  - **Files**: `lib/handling-uncertainty-bank.ts`, `components/exercises/HandlingUncertaintyLesson.tsx`. Old `HandlingUncertaintyWorkshop.tsx` left unused (safe to delete later).
+  - **Wired** into `PracticeLessonFlow` (direct render) + `PracticePath` and `HrFeedbackDeck` (branch before `GuidedBuilderWorkshop`), matching the Career Alignment pattern.
+
+### What Needs Work Next
+1. Write up + build the "HR batched repair workshop" cost approach (one batched gpt-5-nano repair-plan call after grading → render workshops from prepared JSON, zero per-step AI for free HR). User prefers this over cached profiles for free HR.
+2. Wire CF/FR stages into the workshop builders
+3. Build remaining purpose-built workshops (pace_delivery, preparation_curiosity, role_depth, problem_solving) to match the new dedicated-component pattern
+4. Consider deleting unused old workshop components (HandlingUncertaintyWorkshop, StarProofWorkshop, ProfessionalStoryWorkshop, CareerAlignmentWorkshop, etc.)
+5. Test all dedicated builders/lessons end-to-end on `?preview=mock`

@@ -13,7 +13,7 @@ import SentenceBuilderExercise from '@/components/exercises/SentenceBuilderExerc
 import ProfessionalStoryWorkshop from '@/components/exercises/ProfessionalStoryWorkshop'
 import StarProofWorkshop from '@/components/exercises/StarProofWorkshop'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
-import HandlingUncertaintyWorkshop from '@/components/exercises/HandlingUncertaintyWorkshop'
+import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
 import PaceDeliveryWorkshop from '@/components/exercises/PaceDeliveryWorkshop'
 import PreparationCuriosityWorkshop from '@/components/exercises/PreparationCuriosityWorkshop'
 import type { SubLesson, Exercise } from '@/lib/practice-bundles'
@@ -674,12 +674,12 @@ export default function PracticeLessonFlow({
           </div>
           <div className="mb-4">
             <Preppi
-              message="This is where we practice recovering cleanly on a question that could make you ramble. We will keep the choices controlled so you can build a strong Answer, Reason, Example response step by step."
+              message="This is where we practice recovering cleanly when a question catches you off guard. Quick drills to build the reset habit: rephrase, pause, pick a lane, start."
               size="sm"
             />
           </div>
           <div className="min-h-0 flex-1">
-            <HandlingUncertaintyWorkshop
+            <HandlingUncertaintyLesson
               originalQuestion={originalQuestion}
               originalAnswer={originalAnswer}
               onComplete={() => setFlowState('complete')}

@@ -1,12 +1,12 @@
 // ---------------------------------------------------------------------------
-// Handling Uncertainty Lesson — Question Bank + Drill Generation
+// Handling Uncertainty Lesson — Question Bank + Static Content
 //
-// Teaches the in-the-moment recovery move: Rephrase → Pause → Pick a Lane → Start
-// This is a lesson/drill, not an answer builder. Fully deterministic, no AI calls.
+// Teaches the in-the-moment recovery move: Rephrase → Pause → Cue Words →
+// Pick a Lane → Start Clean (plus the emergency mid-answer reset).
 //
-// The 7 difficult questions are seeded from the real HR-screen curveball pool
-// (lib/interview-prompts/hr_screen.ts), so the drills mirror what the AI
-// interviewer actually asks, plus one classic behavioral story question.
+// Fully deterministic — no AI calls. The 7 difficult questions are seeded
+// from the real HR-screen curveball pool (lib/interview-prompts/hr_screen.ts)
+// plus one classic behavioral story question for lane diversity.
 // ---------------------------------------------------------------------------
 
 export type AnswerLane =
@@ -18,20 +18,75 @@ export type AnswerLane =
   | 'honest_gap_lane'
   | 'clarifying_lane'
 
-export const LANE_OPTIONS: { id: AnswerLane; label: string; definition: string }[] = [
-  { id: 'story_lane', label: 'A specific story', definition: 'A real past example. Point your brain at one concrete situation.' },
-  { id: 'career_alignment_lane', label: 'Why this role/company', definition: 'What you noticed and why it fits you.' },
-  { id: 'professional_intro_lane', label: 'Who you are professionally', definition: 'A clear framing of your background and direction.' },
-  { id: 'process_lane', label: 'How you would handle it', definition: 'Your step-by-step approach, not a past story.' },
-  { id: 'direct_answer_lane', label: 'A clear pick or opinion', definition: 'Choose one thing and commit to it.' },
-  { id: 'honest_gap_lane', label: 'An honest "I’m working on it"', definition: 'Name a real gap and show you’re developing it.' },
-  { id: 'clarifying_lane', label: 'A clarifying question', definition: 'Make sure you’re answering what was actually asked.' },
+export interface LaneInfo {
+  id: AnswerLane
+  label: string
+  shortLabel: string
+  whenToUse: string
+  starter: string
+}
+
+export const LANE_OPTIONS: LaneInfo[] = [
+  {
+    id: 'story_lane',
+    label: 'Story',
+    shortLabel: 'Story',
+    whenToUse: 'When the question asks for a past example.',
+    starter: '“The example that comes to mind is…”',
+  },
+  {
+    id: 'career_alignment_lane',
+    label: 'Career alignment',
+    shortLabel: 'Career alignment',
+    whenToUse: 'When the question asks why this role, why this company, or why now.',
+    starter: '“What stood out to me is…”',
+  },
+  {
+    id: 'professional_intro_lane',
+    label: 'Professional intro',
+    shortLabel: 'Pro intro',
+    whenToUse: 'When the question asks about your background or who you are professionally.',
+    starter: '“The clearest way to describe my background is…”',
+  },
+  {
+    id: 'process_lane',
+    label: 'Process',
+    shortLabel: 'Process',
+    whenToUse: 'When the question asks what you would do or how you would handle something.',
+    starter: '“The way I’d approach that is…”',
+  },
+  {
+    id: 'direct_answer_lane',
+    label: 'Direct answer',
+    shortLabel: 'Direct',
+    whenToUse: 'When the question asks for a preference, strength, weakness, or opinion.',
+    starter: '“If I had to pick one, I’d say…”',
+  },
+  {
+    id: 'honest_gap_lane',
+    label: 'Honest gap',
+    shortLabel: 'Honest gap',
+    whenToUse: 'When you don’t have a perfect example or don’t fully know the answer.',
+    starter: '“I don’t have a perfect example, but the closest one is…”',
+  },
+  {
+    id: 'clarifying_lane',
+    label: 'Clarifying',
+    shortLabel: 'Clarify',
+    whenToUse: 'When the question is too broad or ambiguous to answer cleanly.',
+    starter: '“I want to make sure I’m answering that the right way. Are you asking more about…?”',
+  },
 ]
 
 export const LANE_LABEL: Record<AnswerLane, string> = LANE_OPTIONS.reduce(
   (acc, lane) => ({ ...acc, [lane.id]: lane.label }),
   {} as Record<AnswerLane, string>
 )
+
+export interface CueWordOptions {
+  options: string[]
+  correctIndex: number
+}
 
 export interface DifficultQuestion {
   id: string
@@ -41,6 +96,7 @@ export interface DifficultQuestion {
   weakStarts: string[]
   strongStarts: string[]
   distractorRephrases: string[]
+  cueWordOptions: CueWordOptions
   explanation: string
 }
 
@@ -49,22 +105,31 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
   {
     id: 'learn_quickly',
     question: 'What would you want to learn quickly if you started here?',
-    simplifiedRephrase: 'what I’d want to get up to speed on fast if I started here',
-    correctLane: 'direct_answer_lane',
+    simplifiedRephrase: 'what I’d want to get up to speed on first',
+    correctLane: 'process_lane',
     weakStarts: [
       'I’m a fast learner, so honestly I could pick up just about anything.',
       'There’s probably a lot — it really depends on the team.',
       'I deal with new things all the time, so I’m not too worried about it.',
     ],
     strongStarts: [
-      'Yeah, so if I had to pick one thing I’d want to get up to speed on fast… I’d say…',
+      'Yeah, so if I had to pick one thing to learn quickly, I’d want to understand how success is measured in the first 90 days.',
     ],
     distractorRephrases: [
       'why I’m a quick learner',
       'what I already know how to do',
       'why I want to work here',
     ],
-    explanation: 'This wants a clear pick, not a story. Name one concrete thing you’d prioritize learning.',
+    cueWordOptions: {
+      options: [
+        'fast learner / adaptable / excited',
+        'systems / customers / team expectations',
+        'company / role / opportunity',
+        'everything / anything / whatever helps',
+      ],
+      correctIndex: 1,
+    },
+    explanation: 'This is asking how you’d approach ramping up, not whether you’re generally a fast learner.',
   },
   {
     id: 'still_developing',
@@ -77,19 +142,28 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'Nothing major comes to mind, I’m pretty well-rounded.',
     ],
     strongStarts: [
-      'Yeah, so one skill I’m actively working on improving… let me think about that for a second.',
+      'Yeah, so one skill I’m actively working on improving… let me think about the clearest example.',
     ],
     distractorRephrases: [
       'why I’m great at my job',
       'a time someone else struggled',
       'what my biggest strength is',
     ],
+    cueWordOptions: {
+      options: [
+        'one skill / actively / how I’m improving',
+        'strengths / weaknesses / balance',
+        'perfectionist / detail-oriented / overthinking',
+        'hard worker / improvement / growth',
+      ],
+      correctIndex: 0,
+    },
     explanation: 'Name one real area honestly, then show you’re working on it. Don’t dodge with a fake weakness.',
   },
   {
     id: 'resume_explain',
     question: 'What’s something on your resume you’d want to explain more clearly?',
-    simplifiedRephrase: 'one thing on my resume I’d want to give more context on',
+    simplifiedRephrase: 'what part of my background might need more context',
     correctLane: 'direct_answer_lane',
     weakStarts: [
       'Everything on there is pretty self-explanatory, I think.',
@@ -97,14 +171,23 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'My whole resume tells a pretty clear story, honestly.',
     ],
     strongStarts: [
-      'Yeah, so one thing on my resume I’d want to give a bit more context on… is…',
+      'Yeah, so one line on my resume I’d want to give a bit more context on… is…',
     ],
     distractorRephrases: [
-      'why my resume is strong',
-      'what my favorite job was',
-      'a part of my resume I’d remove',
+      'which job on my resume was my favorite',
+      'why my resume is strong for this role',
+      'what experience I wish I had more of',
     ],
-    explanation: 'Pick one specific line and add context. Treating it as "nothing to explain" wastes the opening.',
+    cueWordOptions: {
+      options: [
+        'favorite job / proudest moment / best experience',
+        'one line / more context / why I included it',
+        'removing / regretting / changing',
+        'strongest / impressive / standout',
+      ],
+      correctIndex: 1,
+    },
+    explanation: 'They’re asking where your resume might create confusion or deserve more context — not what you’re proudest of.',
   },
   {
     id: 'missing_context',
@@ -124,6 +207,15 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'why I’m good under pressure',
       'why I want to join this team',
     ],
+    cueWordOptions: {
+      options: [
+        'resourceful / adaptive / quick',
+        'what I’d ask / who I’d talk to / how I’d catch up',
+        'confused / behind / overwhelmed',
+        'leadership / mentorship / training',
+      ],
+      correctIndex: 1,
+    },
     explanation: 'This is a "how would you" question — give your process, step by step, not a vague claim that you’d "adapt."',
   },
   {
@@ -144,6 +236,15 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'why I’m calm under pressure',
       'why stress is bad',
     ],
+    cueWordOptions: {
+      options: [
+        'calm / cool / collected',
+        'what I do / my approach / steps I take',
+        'deadlines / pressure / chaos',
+        'never stressed / love pressure / thrive on it',
+      ],
+      correctIndex: 1,
+    },
     explanation: 'Walk through what you actually do when stress hits. "I just stay calm" tells the interviewer nothing.',
   },
   {
@@ -164,12 +265,21 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'why organization matters',
       'what tools my company uses',
     ],
+    cueWordOptions: {
+      options: [
+        'naturally organized / detail-oriented / disciplined',
+        'my system / tools I use / how I prioritize',
+        'messy desk / chaotic / structured',
+        'focused / efficient / fast',
+      ],
+      correctIndex: 1,
+    },
     explanation: 'Describe your actual system. A real process beats "I’m just naturally organized."',
   },
   {
     id: 'disagree_coworker',
     question: 'Tell me about a time you disagreed with a coworker and how you handled it.',
-    simplifiedRephrase: 'a real example where I disagreed with a coworker and what I did',
+    simplifiedRephrase: 'a specific example where I disagreed with a coworker and what I did',
     correctLane: 'story_lane',
     weakStarts: [
       'I deal with disagreements all the time — communication is really important to me.',
@@ -184,11 +294,20 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'how I generally deal with people',
       'a time someone disagreed with my manager',
     ],
+    cueWordOptions: {
+      options: [
+        'coworker / disagreement / what I did',
+        'teamwork / communication / respect',
+        'conflict / people / workplace',
+        'manager / feedback / performance',
+      ],
+      correctIndex: 0,
+    },
     explanation: 'This asks for a specific past example. Point your brain at one real story instead of talking in general.',
   },
 ]
 
-export interface RecoveryMoveDrill {
+export interface RecoveryScenario {
   id: string
   scenario: string
   options: string[]
@@ -196,76 +315,64 @@ export interface RecoveryMoveDrill {
   feedback: string
 }
 
-export const RECOVERY_MOVE_DRILLS: RecoveryMoveDrill[] = [
-  {
-    id: 'mid_ramble',
-    scenario: 'You’re halfway through an answer and realize you’re rambling. What should you say?',
-    options: [
-      'Sorry, I’m bad at explaining this.',
-      'Let me reset that more clearly. The main point is…',
-      'Anyway, like I was saying, there are a lot of things to consider.',
-      'I hope that answers your question.',
-    ],
-    correctIndex: 1,
-    feedback: 'You can recover mid-answer. A clean reset beats continuing to ramble.',
-  },
-  {
-    id: 'blank_mind',
-    scenario: 'The interviewer asks a question and your mind goes blank. What’s the best move?',
-    options: [
-      'I’m not sure, sorry.',
-      'That’s a good question — let me take a second to think about it.',
-      'Can we come back to that one later?',
-      'Um… well… it depends, I guess.',
-    ],
-    correctIndex: 1,
-    feedback: 'A short, calm pause reads as thoughtful. You don’t need to apologize or stall.',
-  },
+export const RECOVERY_SCENARIOS: RecoveryScenario[] = [
   {
     id: 'wrong_question',
-    scenario: 'You realize you started answering a different question than the one you were asked. What do you do?',
+    scenario: 'You realize you started answering a different question than the one you were asked.',
     options: [
+      '“Anyway, that’s basically my answer.”',
+      '“Let me make sure I’m actually answering what you asked. You were asking about…”',
       'Keep going so it doesn’t seem like a mistake.',
-      'Let me make sure I’m actually answering what you asked — you wanted…',
-      'Sorry, ignore all of that.',
-      'Anyway, that’s basically my answer.',
+      '“Sorry, ignore all of that.”',
     ],
     correctIndex: 1,
-    feedback: 'Redirecting cleanly shows self-awareness. Steering back beats barreling on.',
+    feedback: 'You don’t need to pretend the ramble didn’t happen. A clean reset sounds more composed than forcing the wrong answer to continue.',
+  },
+  {
+    id: 'too_general',
+    scenario: 'You’re 30 seconds in and realize you’re giving general advice instead of the specific example they asked for.',
+    options: [
+      '“So yeah, communication is just really important.”',
+      '“Let me make that more specific. The example that comes to mind is…”',
+      '“That probably answers it.”',
+      '“I guess it depends on the situation.”',
+    ],
+    correctIndex: 1,
+    feedback: 'This moves from general talk back into the story lane.',
+  },
+  {
+    id: 'blank_mid',
+    scenario: 'Mid-sentence, you lose the thread completely. What’s the best move?',
+    options: [
+      '“Um… anyway…”',
+      '“Let me reset that more clearly. The main point is…”',
+      '“Can you repeat the question?”',
+      'Trail off and hope they ask a follow-up.',
+    ],
+    correctIndex: 1,
+    feedback: 'A short, calm reset reads as composed. Trailing off or bouncing the question back reads as flustered.',
   },
 ]
 
 export const RESET_PHRASE_BANK: string[] = [
-  '“Yeah, so you’re asking…”',
-  '“Let me think about the best example.”',
-  '“That’s a good question. I want to answer that clearly.”',
-  '“I don’t have a perfect example, but the closest one is…”',
-  '“The way I’d approach that is…”',
-  '“If I had to pick one, I’d say…”',
   '“Let me reset that more clearly.”',
-  '“The main point is…”',
+  '“The simpler answer is…”',
+  '“I’m giving too much context. The main point is…”',
+  '“Let me make sure I’m answering what you asked. You were asking about…”',
+  '“The example that comes to mind is…”',
+  '“If I had to pick one, I’d say…”',
+  '“Let me jot that down for a second.”',
+  '“Good question. I want to answer that clearly.”',
 ]
 
-// Generic weak starts used to round out distractors in "fix the weak start" drills.
-const GENERIC_WEAK_STARTS = [
-  'I think it really just depends on the situation.',
-  'That’s a hard one — there are so many ways to answer it.',
-  'I’m honestly not totally sure, but I’ll try.',
-  'I’m good at that kind of thing in general.',
-]
+// ========================== QUIZ GENERATION ==========================
 
-// ========================== DRILL GENERATION ==========================
-
-export type Drill =
-  | { kind: 'best_reset'; id: string; question: string; options: string[]; correctIndex: number; feedback: string }
-  | { kind: 'match_rephrase'; id: string; question: string; options: string[]; correctIndex: number; feedback: string }
-  | { kind: 'pick_lane'; id: string; question: string; options: { label: string; laneId: AnswerLane }[]; correctIndex: number; feedback: string }
-  | { kind: 'fix_weak_start'; id: string; question: string; weakStart: string; options: string[]; correctIndex: number; feedback: string }
-  | { kind: 'complete_line'; id: string; question: string; tiles: string[]; correctOrder: string[]; feedback: string }
-  | { kind: 'recovery_move'; id: string; scenario: string; options: string[]; correctIndex: number; feedback: string }
-
-const QUESTION_DRILL_KINDS = ['best_reset', 'match_rephrase', 'pick_lane', 'fix_weak_start', 'complete_line'] as const
-type QuestionDrillKind = (typeof QUESTION_DRILL_KINDS)[number]
+export type QuizDrill =
+  | { kind: 'rephrase'; questionId: string; question: string; options: string[]; correctIndex: number; feedback: string }
+  | { kind: 'cue_words'; questionId: string; question: string; options: string[]; correctIndex: number; feedback: string }
+  | { kind: 'lane'; questionId: string; question: string; options: { label: string; laneId: AnswerLane }[]; correctIndex: number; feedback: string }
+  | { kind: 'stronger_start'; questionId: string; question: string; options: string[]; correctIndex: number; feedback: string }
+  | { kind: 'mid_reset'; questionId: string; scenario: string; options: string[]; correctIndex: number; feedback: string }
 
 function shuffle<T>(items: T[]): T[] {
   const clone = [...items]
@@ -285,97 +392,87 @@ function buildOptionsWithCorrect(correct: string, distractors: string[]): { opti
   return { options, correctIndex: options.indexOf(correct) }
 }
 
-function buildQuestionDrill(kind: QuestionDrillKind, q: DifficultQuestion): Drill {
-  switch (kind) {
-    case 'best_reset': {
-      const { options, correctIndex } = buildOptionsWithCorrect(q.strongStarts[0], sample(q.weakStarts, 3))
-      return { kind, id: q.id, question: q.question, options, correctIndex, feedback: q.explanation }
+// Build the 5-question final quiz: one of each format (rephrase, cue words,
+// lane, stronger start, mid-answer reset). Each pulls a distinct random
+// question from the bank where possible, so the quiz rarely repeats verbatim.
+export function buildQuiz(): QuizDrill[] {
+  const bankSample = sample(DIFFICULT_QUESTIONS, 4)
+  const [qRephrase, qCueWords, qLane, qStart] = bankSample
+
+  const rephrase: QuizDrill = (() => {
+    const { options, correctIndex } = buildOptionsWithCorrect(
+      qRephrase.simplifiedRephrase,
+      sample(qRephrase.distractorRephrases, 3)
+    )
+    return {
+      kind: 'rephrase',
+      questionId: qRephrase.id,
+      question: qRephrase.question,
+      options,
+      correctIndex,
+      feedback: qRephrase.explanation,
     }
-    case 'match_rephrase': {
-      const { options, correctIndex } = buildOptionsWithCorrect(q.simplifiedRephrase, sample(q.distractorRephrases, 3))
-      return {
-        kind,
-        id: q.id,
-        question: q.question,
-        options,
-        correctIndex,
-        feedback: 'The rephrase should make the question easier to search in your memory.',
-      }
-    }
-    case 'pick_lane': {
-      const distractorLanes = sample(
-        LANE_OPTIONS.filter((lane) => lane.id !== q.correctLane),
-        3
-      )
-      const laneEntries = shuffle([
-        { label: LANE_LABEL[q.correctLane], laneId: q.correctLane },
-        ...distractorLanes.map((lane) => ({ label: lane.label, laneId: lane.id })),
-      ])
-      return {
-        kind,
-        id: q.id,
-        question: q.question,
-        options: laneEntries,
-        correctIndex: laneEntries.findIndex((entry) => entry.laneId === q.correctLane),
-        feedback: q.explanation,
-      }
-    }
-    case 'fix_weak_start': {
-      const weakStart = q.weakStarts[0]
-      const otherWeak = q.weakStarts.slice(1)
-      const distractors = [...otherWeak, ...sample(GENERIC_WEAK_STARTS, 3 - otherWeak.length)].slice(0, 3)
-      const { options, correctIndex } = buildOptionsWithCorrect(q.strongStarts[0], distractors)
-      return {
-        kind,
-        id: q.id,
-        question: q.question,
-        weakStart,
-        options,
-        correctIndex,
-        feedback: 'The weak start talks in general. The better start pushes you toward something specific.',
-      }
-    }
-    case 'complete_line': {
-      const correctOrder = ['Yeah, so', q.simplifiedRephrase, 'let me think about that for a second.']
-      const distractorTiles = sample(
-        ['because communication matters', 'and I’m a quick learner', 'a time I handled conflict', 'what makes this role interesting'],
-        2
-      )
-      const tiles = shuffle([...correctOrder, ...distractorTiles])
-      return {
-        kind,
-        id: q.id,
-        question: q.question,
-        tiles,
-        correctOrder,
-        feedback: 'Good. This turns the question into something simpler your brain can answer.',
-      }
-    }
+  })()
+
+  const cueWords: QuizDrill = {
+    kind: 'cue_words',
+    questionId: qCueWords.id,
+    question: qCueWords.question,
+    options: qCueWords.cueWordOptions.options,
+    correctIndex: qCueWords.cueWordOptions.correctIndex,
+    feedback: qCueWords.explanation,
   }
+
+  const lane: QuizDrill = (() => {
+    const distractorLanes = sample(
+      LANE_OPTIONS.filter((l) => l.id !== qLane.correctLane),
+      3
+    )
+    const correctOption = { label: LANE_LABEL[qLane.correctLane], laneId: qLane.correctLane }
+    const allOptions = shuffle([
+      correctOption,
+      ...distractorLanes.map((l) => ({ label: l.label, laneId: l.id })),
+    ])
+    return {
+      kind: 'lane',
+      questionId: qLane.id,
+      question: qLane.question,
+      options: allOptions,
+      correctIndex: allOptions.findIndex((o) => o.laneId === qLane.correctLane),
+      feedback: qLane.explanation,
+    }
+  })()
+
+  const strongerStart: QuizDrill = (() => {
+    const { options, correctIndex } = buildOptionsWithCorrect(
+      qStart.strongStarts[0],
+      sample(qStart.weakStarts, 3)
+    )
+    return {
+      kind: 'stronger_start',
+      questionId: qStart.id,
+      question: qStart.question,
+      options,
+      correctIndex,
+      feedback: 'The strong start narrows the answer toward something specific instead of talking in general.',
+    }
+  })()
+
+  const midReset: QuizDrill = (() => {
+    const base = sample(RECOVERY_SCENARIOS, 1)[0]
+    const correct = base.options[base.correctIndex]
+    const options = shuffle(base.options)
+    return {
+      kind: 'mid_reset',
+      questionId: base.id,
+      scenario: base.scenario,
+      options,
+      correctIndex: options.indexOf(correct),
+      feedback: base.feedback,
+    }
+  })()
+
+  return [rephrase, cueWords, lane, strongerStart, midReset]
 }
 
-function buildRecoveryDrill(): Drill {
-  const base = sample(RECOVERY_MOVE_DRILLS, 1)[0]
-  const correct = base.options[base.correctIndex]
-  const options = shuffle(base.options)
-  return {
-    kind: 'recovery_move',
-    id: base.id,
-    scenario: base.scenario,
-    options,
-    correctIndex: options.indexOf(correct),
-    feedback: base.feedback,
-  }
-}
-
-// Build one lesson attempt: 4 question-based drills (distinct kinds + distinct
-// questions) plus 1 recovery-move drill, in randomized order. Each attempt pulls
-// a fresh random slice so the sequence is rarely the same twice.
-export function buildLessonDrills(): Drill[] {
-  const kinds = sample([...QUESTION_DRILL_KINDS], 4)
-  const questions = sample(DIFFICULT_QUESTIONS, 4)
-  const questionDrills = kinds.map((kind, i) => buildQuestionDrill(kind, questions[i]))
-  return shuffle([...questionDrills, buildRecoveryDrill()])
-}
-
-export const LESSON_PASS_THRESHOLD = 4 // out of 5
+export const QUIZ_PASS_THRESHOLD = 4 // out of 5

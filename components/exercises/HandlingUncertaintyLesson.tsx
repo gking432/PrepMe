@@ -1,16 +1,17 @@
 'use client'
 
 import { type ReactNode, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Check, Eye, Lightbulb, RotateCcw, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, Lightbulb, RotateCcw, Sparkles } from 'lucide-react'
 import {
   type AnswerLane,
-  type LaneInfo,
   type QuizDrill,
   buildQuiz,
+  CUE_WORD_PRACTICE_PROMPTS,
   DIFFICULT_QUESTIONS,
   LANE_LABEL,
   LANE_OPTIONS,
   QUIZ_PASS_THRESHOLD,
+  RECOVERY_STRATEGIES,
   RESET_PHRASE_BANK,
 } from '@/lib/handling-uncertainty-bank'
 
@@ -23,44 +24,50 @@ interface HandlingUncertaintyLessonProps {
 
 type Phase =
   | 'intro'
-  | 'part1' | 'part1_check'
-  | 'part2'
-  | 'part3' | 'part3_check'
-  | 'part4' | 'part4_check_1' | 'part4_check_2'
-  | 'part5' | 'part5_check_1' | 'part5_check_2'
-  | 'part6' | 'part6_check'
-  | 'part7' | 'part7_check_1' | 'part7_check_2'
+  // Half 1: Before You Answer
+  | 'pause'
+  | 'reframe' | 'reframe_check'
+  | 'cue_words' | 'cue_words_practice'
+  | 'cue_words_check'
+  | 'lane' | 'lane_check'
+  | 'start_clean' | 'start_clean_check'
+  // Half 2: After Already Rambling
+  | 'recovery_intro'
+  | 'recovery_direct' | 'recovery_direct_check'
+  | 'recovery_honest' | 'recovery_honest_check'
+  | 'recovery_clarifying' | 'recovery_clarifying_check'
+  // Quiz
   | 'quiz_intro' | 'quiz_q1' | 'quiz_q2' | 'quiz_q3' | 'quiz_q4' | 'quiz_q5'
   | 'result'
 
 const PHASE_ORDER: Phase[] = [
   'intro',
-  'part1', 'part1_check',
-  'part2',
-  'part3', 'part3_check',
-  'part4', 'part4_check_1', 'part4_check_2',
-  'part5', 'part5_check_1', 'part5_check_2',
-  'part6', 'part6_check',
-  'part7', 'part7_check_1', 'part7_check_2',
+  'pause',
+  'reframe', 'reframe_check',
+  'cue_words', 'cue_words_practice', 'cue_words_check',
+  'lane', 'lane_check',
+  'start_clean', 'start_clean_check',
+  'recovery_intro',
+  'recovery_direct', 'recovery_direct_check',
+  'recovery_honest', 'recovery_honest_check',
+  'recovery_clarifying', 'recovery_clarifying_check',
   'quiz_intro', 'quiz_q1', 'quiz_q2', 'quiz_q3', 'quiz_q4', 'quiz_q5',
   'result',
 ]
 
-const PART_STAGE: Record<string, number> = {
-  intro: 0,
-  part1: 1, part1_check: 1,
-  part2: 2,
-  part3: 3, part3_check: 3,
-  part4: 4, part4_check_1: 4, part4_check_2: 4,
-  part5: 5, part5_check_1: 5, part5_check_2: 5,
-  part6: 6, part6_check: 6,
-  part7: 7, part7_check_1: 7, part7_check_2: 7,
-  quiz_intro: 8, quiz_q1: 8, quiz_q2: 8, quiz_q3: 8, quiz_q4: 8, quiz_q5: 8,
-  result: 9,
+const HALF_1_PHASES: Phase[] = ['pause', 'reframe', 'reframe_check', 'cue_words', 'cue_words_practice', 'cue_words_check', 'lane', 'lane_check', 'start_clean', 'start_clean_check']
+const HALF_2_PHASES: Phase[] = ['recovery_intro', 'recovery_direct', 'recovery_direct_check', 'recovery_honest', 'recovery_honest_check', 'recovery_clarifying', 'recovery_clarifying_check']
+
+function getProgressSegment(phase: Phase): number {
+  if (phase === 'intro') return 0
+  if (HALF_1_PHASES.includes(phase)) return 1 + HALF_1_PHASES.indexOf(phase)
+  if (HALF_2_PHASES.includes(phase)) return HALF_1_PHASES.length + 1 + HALF_2_PHASES.indexOf(phase)
+  if (phase.startsWith('quiz')) return HALF_1_PHASES.length + HALF_2_PHASES.length + 1
+  return HALF_1_PHASES.length + HALF_2_PHASES.length + 2
 }
 
-// Convenience accessor — find a question in the bank by id (used for the
-// teaching examples in parts 3–7 that reference specific bank questions).
+const TOTAL_SEGMENTS = HALF_1_PHASES.length + HALF_2_PHASES.length + 1
+
 function getQ(id: string) {
   const q = DIFFICULT_QUESTIONS.find((x) => x.id === id)
   if (!q) throw new Error(`Bank missing question: ${id}`)
@@ -78,11 +85,16 @@ export default function HandlingUncertaintyLesson({
   const [quizCorrect, setQuizCorrect] = useState(0)
   const [showPhraseBank, setShowPhraseBank] = useState(false)
 
-  const stage = PART_STAGE[phase] ?? 0
+  const progress = getProgressSegment(phase)
 
   function advance() {
     const idx = PHASE_ORDER.indexOf(phase)
     if (idx >= 0 && idx < PHASE_ORDER.length - 1) setPhase(PHASE_ORDER[idx + 1])
+  }
+
+  function goBack() {
+    const idx = PHASE_ORDER.indexOf(phase)
+    if (idx > 0) setPhase(PHASE_ORDER[idx - 1])
   }
 
   function answerQuiz(correct: boolean) {
@@ -96,9 +108,12 @@ export default function HandlingUncertaintyLesson({
     setPhase('quiz_intro')
   }
 
+  const showBack = phase !== 'intro' && phase !== 'result'
+  const showProgress = phase !== 'intro' && phase !== 'result'
+
   return (
     <div className="flex h-full flex-col overflow-y-auto">
-      {phase !== 'intro' && phase !== 'result' && <ProgressBar stage={stage} />}
+      {showProgress && <ProgressBar current={progress} total={TOTAL_SEGMENTS} onBack={showBack ? goBack : undefined} />}
       <div className="mx-auto w-full max-w-2xl px-4 py-6">{renderPhase()}</div>
     </div>
   )
@@ -111,267 +126,289 @@ export default function HandlingUncertaintyLesson({
           <div className="space-y-5">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">
-                The Reset Lesson
+                Handling Uncertainty
               </p>
               <h2 className="mt-1 text-lg font-black text-slate-900">
                 What to do when your brain blanks in an interview
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Most people don’t ramble because they have nothing to say. They ramble because they
-                start talking before they know what kind of answer the question needs. Your first job
-                isn’t to produce the perfect answer — it’s to slow the moment down.
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Most people don't ramble because they have nothing to say. They ramble because they
+                start talking before they know what kind of answer the question needs.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                This lesson teaches two things: how to buy yourself time <em>before</em> you start answering,
+                and how to recover <em>after</em> you've already started rambling. Both are learnable skills,
+                and interviewers respect both when they're done well.
               </p>
             </div>
 
             {(originalQuestion || originalAnswer) && (
-              <div className="space-y-3 rounded-2xl border-2 border-slate-200 bg-slate-50 p-4">
+              <Callout color="slate" label="The question that tripped you up">
                 {originalQuestion && (
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-                      The question that tripped you up
-                    </p>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">
-                      {originalQuestion}
-                    </p>
-                  </div>
+                  <p className="text-sm font-semibold leading-6 text-slate-800">{originalQuestion}</p>
                 )}
                 {originalAnswer && (
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-                      What you said
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{originalAnswer}</p>
-                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{originalAnswer}</p>
                 )}
-              </div>
+              </Callout>
             )}
 
-            <div className="rounded-2xl border-2 border-violet-200 bg-violet-50/50 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-600">
-                What you’ll learn
-              </p>
-              <p className="mt-2 text-base font-black leading-7 text-slate-900">
-                Rephrase → Pause → Cue Words → Pick a Lane → Start Clean
-              </p>
-              <p className="mt-2 text-xs leading-5 text-slate-500">
-                Plus the emergency move: how to reset mid-answer when you’re already rambling.
-              </p>
-            </div>
+            <Callout color="violet" label="What you'll learn">
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-slate-800">Part 1 — Before you answer</p>
+                <p className="text-sm leading-6 text-slate-600">
+                  Pause, reframe the question, pick cue words, choose a lane, start clean.
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-800">Part 2 — After you've already started rambling</p>
+                <p className="text-sm leading-6 text-slate-600">
+                  Three recovery strategies: the direct reset, the honest gap, and the clarifying reset.
+                </p>
+              </div>
+            </Callout>
 
             <PrimaryButton onClick={advance} icon={<Sparkles className="h-4 w-4" />}>
-              Let’s go
+              Let's go
             </PrimaryButton>
           </div>
         )
 
-      // ─── Part 1: Why rambling happens ─────────────────────────────────────
-      case 'part1':
+      // ═══════════════════════════════════════════════════════════════════════
+      // HALF 1: Before You Answer
+      // ═══════════════════════════════════════════════════════════════════════
+
+      // ─── Pause ─────────────────────────────────────────────────────────────
+      case 'pause':
         return (
-          <PartLayout
-            partNum={1}
-            title="Why answers go sideways"
-            body="Most people don’t ramble because they have nothing to say. They ramble because they start talking before they know what kind of answer the question needs. Tap each card to see what’s really happening."
+          <SectionLayout
+            half={1}
+            title="Pause before you speak"
+            subtitle="The most underused move in interviewing"
           >
-            <FlipCardRow
-              cards={[
-                {
-                  front: 'The freeze',
-                  back: 'You hear the question, but your brain doesn’t immediately find an example or answer.',
-                  color: 'sky',
-                },
-                {
-                  front: 'The panic response',
-                  back: 'You start talking to avoid silence. That usually creates a vague, roundabout answer.',
-                  color: 'amber',
-                },
-                {
-                  front: 'The better move',
-                  back: 'Pause, simplify the question, jot 2–3 cue words, then choose the kind of answer to give.',
-                  color: 'emerald',
-                },
-              ]}
-            />
-            <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
-        )
-
-      case 'part1_check':
-        return (
-          <PartLayout partNum={1} title="Quick check" body="What’s the real problem when someone starts rambling?">
-            <CheckQuestion
-              options={[
-                'They’re not qualified for the role.',
-                'They started talking before they had a lane.',
-                'They need to give a longer answer.',
-                'They should memorize more scripted answers.',
-              ]}
-              correctIndex={1}
-              feedback="Exactly. Rambling usually means the answer started before the structure was chosen."
-              onContinue={advance}
-            />
-          </PartLayout>
-        )
-
-      // ─── Part 2: The reset line ────────────────────────────────────────────
-      case 'part2':
-        return (
-          <PartLayout
-            partNum={2}
-            title="The first sentence matters"
-            body="When a question catches you off guard, don’t rush. A reset line buys you a few seconds and gives your brain a clearer search target."
-          >
-            <div className="rounded-2xl border-2 border-violet-300 bg-violet-50 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-600">
-                The main formula
-              </p>
-              <p className="mt-2 text-sm font-bold leading-7 text-violet-900">
-                “Yeah, so{' '}
-                <span className="underline decoration-violet-400 decoration-2 underline-offset-2">
-                  [simpler version of the question]
-                </span>
-                … let me think about that for a second.”
-              </p>
-            </div>
-
-            <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">
-                Phone screen version
-              </p>
-              <p className="mt-2 text-sm leading-6 text-amber-900">
-                “Yeah, so [simpler version]… let me jot that down for a second.” On a phone screen,
-                keep a pen and paper next to you — writing 2–3 cue words stops the answer from
-                drifting.
-              </p>
-            </div>
-
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-              Why each piece works — tap to flip
+            <p className="text-sm leading-6 text-slate-600">
+              When a question catches you off guard, the instinct is to start talking immediately.
+              That instinct is almost always wrong. Starting before you have a direction is how
+              answers turn into rambles.
             </p>
-            <FlipCardRow
-              cards={[
-                {
-                  front: 'Why say the question back?',
-                  back: 'It turns a big formal question into a smaller search term your brain can actually work with.',
-                  color: 'sky',
-                },
-                {
-                  front: 'Why pause?',
-                  back: 'A thoughtful 2-second pause sounds way better than 20 seconds of filler.',
-                  color: 'violet',
-                },
-                {
-                  front: 'Why jot notes?',
-                  back: 'Two or three cue words anchor the answer so it doesn’t wander off-topic.',
-                  color: 'emerald',
-                },
-              ]}
-            />
+            <p className="text-sm leading-6 text-slate-600">
+              Instead, take 5–10 seconds. Say something like:
+            </p>
+
+            <ExampleBox>
+              "That's a great question — let me think about that for a second."
+            </ExampleBox>
+
+            <p className="text-sm leading-6 text-slate-600">
+              Five seconds of silence feels long to you. To the interviewer, it reads as thoughtful.
+              Twenty seconds of rambling, on the other hand, reads as unprepared. The pause is always
+              the better trade.
+            </p>
+
+            <Callout color="amber" label="If it's a phone screen">
+              <p className="text-sm leading-6 text-slate-700">
+                Keep a pen and paper next to you. When a hard question lands, say "let me jot that
+                down for a second" and write 2–3 cue words. This anchors your answer before you
+                open your mouth. Nobody can see you writing — use that advantage.
+              </p>
+            </Callout>
+
+            <Insight>
+              The goal of the pause isn't to find the perfect answer. It's to stop yourself from
+              starting with filler. Even 5 seconds of silence is better than "So, that's a really
+              interesting question, and I think there are a lot of ways to think about it…"
+            </Insight>
+
             <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
-      // ─── Part 3: Rephrase ──────────────────────────────────────────────────
-      case 'part3':
+      // ─── Reframe ───────────────────────────────────────────────────────────
+      case 'reframe':
         return (
-          <PartLayout
-            partNum={3}
-            title="Make the question smaller"
-            body="Interview questions sound big because they’re worded formally. Translate them into plain language and answer the simple version. Tap to reveal the simpler version of each."
+          <SectionLayout
+            half={1}
+            title="Reframe the question in plain language"
+            subtitle="Turn a formal question into a smaller search term"
           >
-            <RevealList
-              items={[
-                {
-                  hidden: 'Formal',
-                  shown: 'Tell me about a time you had to influence someone without formal authority.',
-                  plain: 'A time I had to get someone bought in even though I wasn’t their manager.',
-                },
-                {
-                  hidden: 'Formal',
-                  shown: 'What would you want to learn quickly if you started here?',
-                  plain: 'What I’d want to get up to speed on first.',
-                },
-                {
-                  hidden: 'Formal',
-                  shown: 'What’s something on your resume you’d want to explain more clearly?',
-                  plain: 'What part of my background might need more context.',
-                },
-              ]}
+            <p className="text-sm leading-6 text-slate-600">
+              Interview questions sound intimidating because they're worded formally. But underneath
+              the polish, most questions are asking something simple. Your job is to find the simple
+              version and answer that.
+            </p>
+            <p className="text-sm leading-6 text-slate-600">
+              You can even say the reframe out loud — it buys time and shows you're thinking clearly:
+            </p>
+
+            <ExampleBox>
+              "Yeah, so [simpler version of the question]… let me think about that for a second."
+            </ExampleBox>
+
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Here are a few examples of what reframing looks like:
+            </p>
+
+            <ComparisonBox
+              label="Example 1"
+              left={{ tag: 'Formal', text: 'Tell me about a time you had to influence someone without formal authority.' }}
+              right={{ tag: 'Reframed', text: "A time I had to get someone bought in even though I wasn't their boss." }}
             />
+            <ComparisonBox
+              label="Example 2"
+              left={{ tag: 'Formal', text: 'What would you want to learn quickly if you started here?' }}
+              right={{ tag: 'Reframed', text: "What I'd want to get up to speed on first." }}
+            />
+            <ComparisonBox
+              label="Example 3"
+              left={{ tag: 'Formal', text: "What's something on your resume you'd want to explain more clearly?" }}
+              right={{ tag: 'Reframed', text: 'What part of my background might need more context.' }}
+            />
+
+            <Insight>
+              The reframe isn't about dumbing the question down. It's about translating it into
+              language your brain can actually search against. "Influence without formal authority"
+              is abstract. "Get someone bought in even though I wasn't their boss" — your brain
+              immediately starts scanning for a real memory.
+            </Insight>
+
             <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
-      case 'part3_check':
+      case 'reframe_check': {
+        const q = getQ('resume_explain')
         return (
-          <PartLayout
-            partNum={3}
-            title="Quick check"
-            body="This question is not asking what your favorite job was. It’s asking where your resume might create confusion or need context."
-          >
-            <QuestionContext question={getQ('resume_explain').question} />
-            <p className="text-sm font-extrabold text-slate-700">What is this really asking?</p>
+          <SectionLayout half={1} title="Quick check" subtitle="Which reframe captures what this question is really asking?">
+            <QuestionContext question={q.question} />
             <CheckQuestion
               options={[
                 'Which job on my resume was my favorite?',
                 'What part of my background might need more context?',
                 'What part of my resume would I remove?',
-                'Why is my resume better than other candidates’?',
+                "Why is my resume better than other candidates'?",
               ]}
               correctIndex={1}
-              feedback="Right. The interviewer is looking for where context would help — not what you’re proudest of."
+              feedback="The interviewer wants to know where your resume might create confusion — not what you're proudest of."
               onContinue={advance}
             />
-          </PartLayout>
+          </SectionLayout>
         )
+      }
 
-      // ─── Part 4: Cue words ────────────────────────────────────────────────
-      case 'part4':
+      // ─── Cue Words ────────────────────────────────────────────────────────
+      case 'cue_words':
         return (
-          <PartLayout
-            partNum={4}
-            title="Give your brain a place to search"
-            body="When you freeze, don’t try to find the full answer immediately. Jot 2–3 cue words — the right cue words point your brain at a specific story, not a vague topic."
+          <SectionLayout
+            half={1}
+            title="Write cue words, not full sentences"
+            subtitle="Give your brain a specific place to search"
           >
+            <p className="text-sm leading-6 text-slate-600">
+              After you reframe the question, jot 2–3 cue words (or hold them in your head if
+              you're on video). The right cue words point your brain at a specific story or
+              process — the wrong ones leave you drifting.
+            </p>
+
+            <p className="text-sm leading-6 text-slate-600">
+              Here's the difference:
+            </p>
+
             <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
               <p className="text-xs leading-5 text-slate-500">For the question:</p>
               <p className="mt-1 text-sm font-bold leading-6 text-slate-800">
-                “Tell me about a time you disagreed with a coworker and how you handled it.”
+                "Tell me about a time you disagreed with a coworker and how you handled it."
               </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <CueChipRow label="Good" tone="amber" chips={['disagreed', 'coworker', 'handled it']} />
-                <CueChipRow label="Better" tone="emerald" chips={['conflict', 'specific example', 'what I did']} />
+              <div className="mt-3 space-y-2">
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-700">
+                    Vague cue words
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {['disagreed', 'coworker', 'handled it'].map((c) => (
+                      <span key={c} className="rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">{c}</span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-amber-800">
+                    These are just the question's own words. They don't point your brain anywhere new.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                    Specific cue words
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {['design review', 'pushed back on timeline', 'brought data'].map((c) => (
+                      <span key={c} className="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">{c}</span>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-emerald-800">
+                    These point at a real incident. Now your brain is loading a specific memory, not searching the void.
+                  </p>
+                </div>
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-500">
-                Both work, but the second set explicitly points to a real story and an action you took.
-              </p>
             </div>
+
+            {/* Cue words → full answer example */}
+            {(() => {
+              const q = getQ('learn_quickly')
+              if (!q.cueToAnswer) return null
+              return (
+                <div className="rounded-2xl border-2 border-violet-200 bg-violet-50/30 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-600">
+                    How cue words become an answer
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Question: "{q.question}"
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {q.cueToAnswer.cueWords.map((w) => (
+                      <span key={w} className="rounded-lg bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-800">{w}</span>
+                    ))}
+                  </div>
+                  <div className="mt-2 border-t border-violet-200 pt-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-600">
+                      Becomes
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-700">
+                      "{q.cueToAnswer.fullAnswer}"
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
+
             <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
-      case 'part4_check_1': {
-        const q = getQ('disagree_coworker')
+      case 'cue_words_practice':
         return (
-          <PartLayout partNum={4} title="Pick the cue words" body="Which set would help most for this question?">
-            <QuestionContext question={q.question} />
-            <CheckQuestion
-              options={q.cueWordOptions.options}
-              correctIndex={q.cueWordOptions.correctIndex}
-              feedback={q.explanation}
-              onContinue={advance}
-            />
-          </PartLayout>
-        )
-      }
+          <SectionLayout
+            half={1}
+            title="Your turn"
+            subtitle="Practice writing cue words for real questions"
+          >
+            <p className="text-sm leading-6 text-slate-600">
+              For each question below, write 2–3 cue words that would point your brain at a
+              specific story or process. Don't overthink it — this is ungraded practice.
+            </p>
 
-      case 'part4_check_2': {
+            {CUE_WORD_PRACTICE_PROMPTS.map((prompt, i) => (
+              <CueWordPracticeField key={i} prompt={prompt} index={i} />
+            ))}
+
+            <Insight>
+              There's no single right answer here. The test is: do your cue words point at something
+              specific? If you wrote "communication" or "teamwork," try again with something that
+              reminds you of a real moment.
+            </Insight>
+
+            <PrimaryButton onClick={advance}>Continue</PrimaryButton>
+          </SectionLayout>
+        )
+
+      case 'cue_words_check': {
         const q = getQ('learn_quickly')
         return (
-          <PartLayout
-            partNum={4}
-            title="Harder one"
-            body="This question isn’t asking whether you’re a fast learner. It’s asking what you’d prioritize learning first."
-          >
+          <SectionLayout half={1} title="Quick check" subtitle="Which cue words would actually help you answer instead of ramble?">
             <QuestionContext question={q.question} />
             <CheckQuestion
               options={q.cueWordOptions.options}
@@ -379,182 +416,355 @@ export default function HandlingUncertaintyLesson({
               feedback={q.explanation}
               onContinue={advance}
             />
-          </PartLayout>
+          </SectionLayout>
         )
       }
 
-      // ─── Part 5: Pick the lane ────────────────────────────────────────────
-      case 'part5':
+      // ─── Lane ──────────────────────────────────────────────────────────────
+      case 'lane':
         return (
-          <PartLayout
-            partNum={5}
+          <SectionLayout
+            half={1}
             title="Choose the kind of answer"
-            body="Once you’ve simplified the question, choose the lane. The lane tells you what kind of answer to give. Tap any lane to see when to use it and how to start."
+            subtitle="Every interview answer falls into one of a few lanes"
           >
-            <div className="grid gap-2 sm:grid-cols-2">
-              {LANE_OPTIONS.map((lane) => (
-                <LaneCard key={lane.id} lane={lane} />
+            <p className="text-sm leading-6 text-slate-600">
+              Once you've reframed the question and picked cue words, decide what <em>kind</em> of
+              answer the question needs. This is the lane. Knowing the lane keeps you from wandering
+              between answer types mid-sentence.
+            </p>
+
+            <div className="space-y-1.5">
+              {LANE_OPTIONS.slice(0, 5).map((lane) => (
+                <div key={lane.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                  <p className="text-sm font-bold text-slate-900">{lane.label}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-slate-500">{lane.whenToUse}</p>
+                </div>
               ))}
             </div>
+
+            <Insight>
+              You don't need to memorize these. The point is to make a conscious choice — "this is a
+              story question" or "this is a process question" — before you start talking. That one
+              decision eliminates most rambling.
+            </Insight>
+
             <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
-      case 'part5_check_1': {
+      case 'lane_check': {
         const q = getQ('disagree_coworker')
         return (
-          <PartLayout partNum={5} title="Pick the lane" body='“Tell me about a time…” usually points to one specific kind of answer.'>
+          <SectionLayout half={1} title="Pick the lane" subtitle='"Tell me about a time…" usually points to one specific kind of answer.'>
             <QuestionContext question={q.question} />
             <LaneCheck correctLane={q.correctLane} feedback={q.explanation} onContinue={advance} />
-          </PartLayout>
+          </SectionLayout>
         )
       }
 
-      case 'part5_check_2': {
-        const q = getQ('learn_quickly')
+      // ─── Start Clean ──────────────────────────────────────────────────────
+      case 'start_clean':
         return (
-          <PartLayout
-            partNum={5}
-            title="Harder lane"
-            body="Same lane question — but this one’s easier to mis-route into a story."
+          <SectionLayout
+            half={1}
+            title="Start with direction, not filler"
+            subtitle="Your first sentence sets the trajectory for the whole answer"
           >
-            <QuestionContext question={q.question} />
-            <LaneCheck correctLane={q.correctLane} feedback={q.explanation} onContinue={advance} />
-          </PartLayout>
-        )
-      }
+            <p className="text-sm leading-6 text-slate-600">
+              A weak start is vague and general — it doesn't commit to anything. A strong start
+              points the answer in a specific direction from the first sentence. The rest of
+              the answer follows naturally.
+            </p>
 
-      // ─── Part 6: Start clean ──────────────────────────────────────────────
-      case 'part6':
-        return (
-          <PartLayout
-            partNum={6}
-            title="Don’t start with filler"
-            body="A weak start is vague and general. A strong start points the answer in a specific direction. Tap to reveal the strong version of each."
-          >
-            <WeakStrongPair
-              question={getQ('still_developing').question}
-              weak="Honestly I work on everything. I’m always trying to improve."
-              strong="Yeah, so one skill I’m actively working on improving… let me think about that for a second."
-              why="The weak version is too broad. The strong version narrows the answer to one skill."
+            <ComparisonBox
+              label={getQ('still_developing').question}
+              left={{
+                tag: 'Weak start',
+                text: "Honestly I work on everything. I'm always trying to improve.",
+                color: 'red',
+              }}
+              right={{
+                tag: 'Strong start',
+                text: "One skill I'm actively working on is presenting complex ideas more concisely.",
+                color: 'emerald',
+              }}
             />
-            <WeakStrongPair
-              question={getQ('learn_quickly').question}
-              weak="I’m a fast learner, so I could pick up just about anything."
-              strong="Yeah, so if I had to pick one thing I’d want to get up to speed on quickly… I’d probably start with how the team defines success in the first 90 days."
-              why="The weak version talks about the candidate. The strong version answers the actual question."
+
+            <ComparisonBox
+              label={getQ('learn_quickly').question}
+              left={{
+                tag: 'Weak start',
+                text: "I'm a fast learner, so I could pick up just about anything.",
+                color: 'red',
+              }}
+              right={{
+                tag: 'Strong start',
+                text: "If I had to pick one thing, I'd want to understand how the team defines success in the first 90 days.",
+                color: 'emerald',
+              }}
             />
+
+            <Insight>
+              Notice the pattern: the weak starts talk about the candidate ("I'm a fast learner,"
+              "I'm always trying to improve"). The strong starts answer the actual question. If your
+              first sentence is about yourself as a person rather than the specific thing they asked,
+              you're probably in filler territory.
+            </Insight>
+
             <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
-      case 'part6_check': {
-        const q = getQ('learn_quickly')
+      case 'start_clean_check': {
         return (
-          <PartLayout partNum={6} title="Choose the stronger start" body="Which start gives you the cleanest reset?">
-            <QuestionContext question={q.question} />
+          <SectionLayout half={1} title="Choose the stronger start" subtitle="Which first sentence gives you the cleanest direction?">
+            <QuestionContext question={getQ('learn_quickly').question} />
             <CheckQuestion
               options={[
-                '“I’m a fast learner, so honestly I could pick up just about anything.”',
-                '“There’s probably a lot. It really depends on the team.”',
-                '“Yeah, so if I had to pick one thing to learn quickly, I’d want to understand how success is measured in the first 90 days.”',
-                '“I deal with new things all the time, so I’m not too worried about it.”',
+                "\"I'm a fast learner, so honestly I could pick up just about anything.\"",
+                "\"There's probably a lot. It really depends on the team.\"",
+                "\"If I had to pick one thing to learn quickly, I'd want to understand how success is measured in the first 90 days.\"",
+                "\"I deal with new things all the time, so I'm not too worried about it.\"",
               ]}
               correctIndex={2}
-              feedback="It gives a direct priority instead of hiding behind “I’m a fast learner.”"
+              feedback="It gives a direct priority instead of hiding behind 'I'm a fast learner.' The interviewer now knows exactly where the answer is headed."
               onContinue={advance}
             />
-          </PartLayout>
+          </SectionLayout>
         )
       }
 
-      // ─── Part 7: Mid-answer reset ─────────────────────────────────────────
-      case 'part7':
+      // ═══════════════════════════════════════════════════════════════════════
+      // HALF 2: After Already Rambling
+      // ═══════════════════════════════════════════════════════════════════════
+
+      case 'recovery_intro':
         return (
-          <PartLayout
-            partNum={7}
-            title="You can recover after you start rambling"
-            body="Sometimes you’ll realize halfway through an answer that you’re not answering the question. Don’t keep digging. Use a reset phrase and return to the actual question."
+          <SectionLayout
+            half={2}
+            title="When you're already rambling"
+            subtitle="Three ways to recover mid-answer"
           >
-            <div className="rounded-2xl border-2 border-violet-200 bg-violet-50/40 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-600">
-                Reset phrases
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                {[
-                  '“Let me reset that more clearly.”',
-                  '“The simpler answer is…”',
-                  '“I’m giving too much context. The main point is…”',
-                  '“Let me make sure I’m answering what you asked. You were asking about…”',
-                ].map((phrase, i) => (
-                  <li key={i} className="text-sm leading-6 text-slate-800">
-                    {phrase}
-                  </li>
-                ))}
-              </ul>
+            <p className="text-sm leading-6 text-slate-600">
+              Everything above works when you catch yourself <em>before</em> you start talking. But
+              sometimes you'll be 20 seconds into an answer and realize it's going nowhere. That's
+              normal — and it's recoverable.
+            </p>
+            <p className="text-sm leading-6 text-slate-600">
+              The key insight: <strong>interviewers notice when you reset cleanly far more than they
+              notice the initial ramble.</strong> A candidate who catches themselves and course-corrects
+              shows self-awareness. A candidate who keeps going shows they can't read the room.
+            </p>
+            <p className="text-sm leading-6 text-slate-600">
+              There are three recovery strategies, and which one you use depends on <em>why</em> you're
+              rambling:
+            </p>
+
+            <div className="space-y-2">
+              {RECOVERY_STRATEGIES.map((s) => (
+                <div key={s.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <p className="text-sm font-bold text-slate-900">{s.name}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-slate-500">{s.whenToUse}</p>
+                </div>
+              ))}
             </div>
+
             <PrimaryButton onClick={advance}>Continue</PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
-      case 'part7_check_1':
+      // ─── Recovery: Direct Reset ────────────────────────────────────────────
+      case 'recovery_direct': {
+        const strategy = RECOVERY_STRATEGIES[0]
         return (
-          <PartLayout
-            partNum={7}
-            title="Pick the recovery"
-            body="You realize you started answering a different question than the one you were asked."
+          <SectionLayout
+            half={2}
+            title={strategy.name}
+            subtitle={strategy.whenToUse}
           >
+            <p className="text-sm leading-6 text-slate-600">
+              This is the most common recovery. You know the answer, you just started explaining it
+              badly — too much context, wrong entry point, or you got sidetracked into a tangent.
+              The fix is simple: stop, name what you're doing, and restart the point more clearly.
+            </p>
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                Phrases that work
+              </p>
+              {strategy.phrases.map((phrase, i) => (
+                <div key={i} className="rounded-xl border border-violet-200 bg-violet-50/50 px-3 py-2 text-sm leading-6 text-slate-800">
+                  {phrase}
+                </div>
+              ))}
+            </div>
+
+            <RecoveryExample example={strategy.example} />
+
+            <Insight>
+              The direct reset works because it turns a ramble into a revision. Instead of the
+              interviewer wondering "where is this going?", they hear you self-correct — which is
+              actually a signal of clear thinking.
+            </Insight>
+
+            <PrimaryButton onClick={advance}>Continue</PrimaryButton>
+          </SectionLayout>
+        )
+      }
+
+      case 'recovery_direct_check':
+        return (
+          <SectionLayout half={2} title="Quick check" subtitle="You realize you've been giving too much backstory. What do you say?">
             <CheckQuestion
               options={[
-                '“Anyway, that’s basically my answer.”',
-                '“Let me make sure I’m actually answering what you asked. You were asking about…”',
-                'Keep going so it doesn’t seem like a mistake.',
-                '“Sorry, ignore all of that.”',
+                "\"Anyway, that's basically my answer.\"",
+                '"I\'m giving too much context. The main point is…"',
+                "Keep going so it doesn't seem like a mistake.",
+                '"Sorry, ignore all of that."',
               ]}
               correctIndex={1}
-              feedback="You don’t need to pretend the ramble didn’t happen. A clean reset sounds more composed than forcing the wrong answer to continue."
+              feedback="Naming the problem ('too much context') and pivoting to the point is exactly the direct reset. It sounds composed, not flustered."
               onContinue={advance}
             />
-          </PartLayout>
+          </SectionLayout>
         )
 
-      case 'part7_check_2':
+      // ─── Recovery: Honest Gap ──────────────────────────────────────────────
+      case 'recovery_honest': {
+        const strategy = RECOVERY_STRATEGIES[1]
         return (
-          <PartLayout
-            partNum={7}
-            title="Harder recovery"
-            body="You’re 30 seconds in and realize you’re giving general advice instead of the specific example they asked for."
+          <SectionLayout
+            half={2}
+            title={strategy.name}
+            subtitle={strategy.whenToUse}
           >
+            <p className="text-sm leading-6 text-slate-600">
+              Sometimes you're rambling because you genuinely don't have a good answer and you're
+              stalling, hoping something comes to you. The honest gap reset is more impressive
+              than you'd think — interviewers can tell when someone is stalling, and they respect
+              a candidate who pivots to what they <em>can</em> speak to instead.
+            </p>
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                Phrases that work
+              </p>
+              {strategy.phrases.map((phrase, i) => (
+                <div key={i} className="rounded-xl border border-violet-200 bg-violet-50/50 px-3 py-2 text-sm leading-6 text-slate-800">
+                  {phrase}
+                </div>
+              ))}
+            </div>
+
+            <RecoveryExample example={strategy.example} />
+
+            <Insight>
+              The honest gap is not admitting defeat — it's redirecting. You're saying "I don't have
+              exactly what you asked for, but here's the closest real thing I've got." That's always
+              better than inventing something vague and hoping they don't notice.
+            </Insight>
+
+            <PrimaryButton onClick={advance}>Continue</PrimaryButton>
+          </SectionLayout>
+        )
+      }
+
+      case 'recovery_honest_check':
+        return (
+          <SectionLayout half={2} title="Quick check" subtitle="You're asked about managing a cross-functional team, but you've never formally done that. You're 15 seconds into a vague answer about 'collaboration.' What's the move?">
             <CheckQuestion
               options={[
-                '“So yeah, communication is just really important.”',
-                '“Let me make that more specific. The example that comes to mind is…”',
-                '“That probably answers it.”',
-                '“It really depends on the situation, but communication is the key.”',
+                '"I haven\'t done that exact thing, but the closest experience is…"',
+                '"I\'m a strong collaborator, so I think I could figure it out."',
+                '"That probably answers it."',
+                'Keep talking about collaboration in general.',
               ]}
-              correctIndex={1}
-              feedback="This moves you cleanly from general talk back into the story lane."
+              correctIndex={0}
+              feedback="Redirecting to the closest real experience is always stronger than stretching a vague claim. The interviewer gets a concrete example, and you look honest."
               onContinue={advance}
             />
-          </PartLayout>
+          </SectionLayout>
+        )
+
+      // ─── Recovery: Clarifying Reset ────────────────────────────────────────
+      case 'recovery_clarifying': {
+        const strategy = RECOVERY_STRATEGIES[2]
+        return (
+          <SectionLayout
+            half={2}
+            title={strategy.name}
+            subtitle={strategy.whenToUse}
+          >
+            <p className="text-sm leading-6 text-slate-600">
+              Sometimes you're rambling because the question was too broad and you're trying to
+              cover all the angles at once. "What's your leadership style?" could mean day-to-day
+              management, handling conflict, strategic decision-making, or half a dozen other
+              things. When you try to answer all of them, you end up answering none of them.
+            </p>
+            <p className="text-sm leading-6 text-slate-600">
+              The clarifying reset stops the sprawl by narrowing the question. It also shows the
+              interviewer you're thinking about what they actually want to know — which is itself
+              a signal of communication skill.
+            </p>
+
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                Phrases that work
+              </p>
+              {strategy.phrases.map((phrase, i) => (
+                <div key={i} className="rounded-xl border border-violet-200 bg-violet-50/50 px-3 py-2 text-sm leading-6 text-slate-800">
+                  {phrase}
+                </div>
+              ))}
+            </div>
+
+            <RecoveryExample example={strategy.example} />
+
+            <Insight>
+              You might worry that asking the interviewer to clarify makes you look confused.
+              It doesn't. It makes you look like someone who cares about giving a precise answer
+              instead of a vague one. Most interviewers will actually appreciate being asked.
+            </Insight>
+
+            <PrimaryButton onClick={advance}>Continue</PrimaryButton>
+          </SectionLayout>
+        )
+      }
+
+      case 'recovery_clarifying_check':
+        return (
+          <SectionLayout half={2} title="Quick check" subtitle={`You're asked "How do you handle feedback?" and you've started rambling about positive feedback, negative feedback, peer feedback, and manager feedback all at once. What do you say?`}>
+            <CheckQuestion
+              options={[
+                '"I handle all feedback well."',
+                '"I want to make sure I\'m answering what you\'re looking for — are you asking more about how I receive critical feedback, or how I give feedback to others?"',
+                '"Anyway, feedback is really important to me."',
+                '"Can you ask me something else?"',
+              ]}
+              correctIndex={1}
+              feedback="Narrowing the question shows clarity, not confusion. Now you can give one focused answer instead of five shallow ones."
+              onContinue={advance}
+            />
+          </SectionLayout>
         )
 
       // ─── Quiz ──────────────────────────────────────────────────────────────
       case 'quiz_intro':
         return (
-          <PartLayout
-            partNum={8}
+          <SectionLayout
+            half={0}
             title="Final quiz"
-            body="5 questions using real interview curveballs. You need 4 out of 5 to pass."
+            subtitle="5 questions using real interview curveballs. You need 4 out of 5 to pass."
           >
             <div className="rounded-2xl border-2 border-violet-200 bg-violet-50/50 p-4">
               <ul className="space-y-1.5">
                 {[
-                  'Pick the better rephrase',
+                  'Pick the better reframe',
                   'Pick the best cue words',
                   'Pick the correct lane',
                   'Choose the stronger start',
-                  'Choose the mid-answer reset',
+                  'Choose the mid-answer recovery',
                 ].map((label, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm font-bold text-slate-700">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-200 text-[10px] font-black text-violet-800">
@@ -568,7 +778,7 @@ export default function HandlingUncertaintyLesson({
             <PrimaryButton onClick={advance} icon={<Sparkles className="h-4 w-4" />}>
               Start the quiz
             </PrimaryButton>
-          </PartLayout>
+          </SectionLayout>
         )
 
       case 'quiz_q1':
@@ -578,9 +788,9 @@ export default function HandlingUncertaintyLesson({
       case 'quiz_q5': {
         const idx = Number(phase.replace('quiz_q', '')) - 1
         return (
-          <PartLayout partNum={8} title={`Quiz · ${idx + 1} of 5`} body={QUIZ_PROMPT[quiz[idx].kind]}>
+          <SectionLayout half={0} title={`Quiz · ${idx + 1} of 5`} subtitle={QUIZ_PROMPT[quiz[idx].kind]}>
             <QuizScreen drill={quiz[idx]} onAnswer={answerQuiz} isLast={idx === 4} />
-          </PartLayout>
+          </SectionLayout>
         )
       }
 
@@ -602,15 +812,15 @@ export default function HandlingUncertaintyLesson({
                 )}
               </div>
               <h2 className="mt-3 text-lg font-black text-slate-900">
-                {passed ? 'You’ve got the reset' : 'Almost there'}
+                {passed ? "You've got the reset" : 'Almost there'}
               </h2>
               <p className="mt-1 text-sm font-bold text-slate-500">
                 {quizCorrect} / {quiz.length} correct
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 {passed
-                  ? 'When a question catches you off guard, rephrase it, pause, pick a lane, and start. You don’t need the perfect answer — you need a clean start.'
-                  : 'Review the reset and try the quiz again. You’re building muscle memory, not chasing a perfect score.'}
+                  ? 'When a question catches you off guard: pause, reframe, pick cue words, choose a lane, start clean. And if you\'re already rambling — reset directly, admit the gap, or narrow the question.'
+                  : 'Review the lesson and try the quiz again. You\'re building the habit, not chasing a score.'}
               </p>
             </div>
 
@@ -624,7 +834,7 @@ export default function HandlingUncertaintyLesson({
                   <BookOpen className="h-4 w-4 text-violet-500" />
                   Reset phrase bank
                 </span>
-                <ArrowRight
+                <ChevronRight
                   className={`h-4 w-4 text-slate-400 transition-transform ${showPhraseBank ? 'rotate-90' : ''}`}
                 />
               </button>
@@ -668,58 +878,60 @@ export default function HandlingUncertaintyLesson({
   }
 }
 
-// ═══════════════════════════ Shared layout ══════════════════════════════════
+// ═══════════════════════════ Layout & UI Primitives ═════════════════════════
 
-function ProgressBar({ stage }: { stage: number }) {
-  // 8 segments for parts 1–7 + quiz; intro/result handled by caller.
+function ProgressBar({ current, total, onBack }: { current: number; total: number; onBack?: () => void }) {
   return (
     <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3">
-      <div className="mx-auto flex w-full max-w-2xl items-center gap-1.5">
-        {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-          <div
-            key={n}
-            className={`h-1.5 flex-1 rounded-full transition ${
-              n < stage ? 'bg-violet-500' : n === stage ? 'bg-violet-300' : 'bg-slate-200'
-            }`}
-          />
-        ))}
+      <div className="mx-auto flex w-full max-w-2xl items-center gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+        )}
+        <div className="flex flex-1 items-center gap-1">
+          {Array.from({ length: total }, (_, i) => i + 1).map((n) => (
+            <div
+              key={n}
+              className={`h-1.5 flex-1 rounded-full transition ${
+                n < current ? 'bg-violet-500' : n === current ? 'bg-violet-300' : 'bg-slate-200'
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-function PartLayout({
-  partNum,
+function SectionLayout({
+  half,
   title,
-  body,
+  subtitle,
   children,
 }: {
-  partNum: number
+  half: 0 | 1 | 2
   title: string
-  body?: string
+  subtitle?: string
   children: ReactNode
 }) {
+  const halfLabel = half === 1 ? 'Before You Answer' : half === 2 ? 'After Already Rambling' : null
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">
-          Part {partNum} of 8
-        </p>
-        <h2 className="mt-1 text-lg font-black text-slate-900">{title}</h2>
-        {body && <p className="mt-2 text-sm leading-6 text-slate-500">{body}</p>}
+        {halfLabel && (
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">
+            {halfLabel}
+          </p>
+        )}
+        <h2 className={`${halfLabel ? 'mt-1' : ''} text-lg font-black text-slate-900`}>{title}</h2>
+        {subtitle && <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>}
       </div>
       {children}
-    </div>
-  )
-}
-
-function QuestionContext({ question }: { question: string }) {
-  return (
-    <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-        Interviewer asks
-      </p>
-      <p className="mt-1 text-sm font-bold leading-6 text-slate-800">“{question}”</p>
     </div>
   )
 }
@@ -748,210 +960,134 @@ function PrimaryButton({
   )
 }
 
-// ═══════════════════════════ Interactions ═══════════════════════════════════
-
-// ── Flip cards ──
-const FLIP_COLORS: Record<string, { border: string; bg: string; text: string }> = {
-  sky: { border: 'border-sky-300', bg: 'bg-sky-50', text: 'text-sky-700' },
-  amber: { border: 'border-amber-300', bg: 'bg-amber-50', text: 'text-amber-700' },
-  emerald: { border: 'border-emerald-300', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  violet: { border: 'border-violet-300', bg: 'bg-violet-50', text: 'text-violet-700' },
-}
-
-interface FlipCardData {
-  front: string
-  back: string
-  color: keyof typeof FLIP_COLORS
-}
-
-function FlipCardRow({ cards }: { cards: FlipCardData[] }) {
+function Callout({ color, label, children }: { color: 'violet' | 'amber' | 'slate' | 'emerald'; label: string; children: ReactNode }) {
+  const styles: Record<string, { border: string; bg: string; label: string }> = {
+    violet: { border: 'border-violet-200', bg: 'bg-violet-50/50', label: 'text-violet-600' },
+    amber: { border: 'border-amber-200', bg: 'bg-amber-50/50', label: 'text-amber-700' },
+    slate: { border: 'border-slate-200', bg: 'bg-slate-50', label: 'text-slate-400' },
+    emerald: { border: 'border-emerald-200', bg: 'bg-emerald-50/50', label: 'text-emerald-700' },
+  }
+  const s = styles[color]
   return (
-    <div className="grid gap-2 sm:grid-cols-3">
-      {cards.map((card, i) => (
-        <FlipCard key={i} {...card} />
-      ))}
+    <div className={`rounded-2xl border-2 ${s.border} ${s.bg} p-4`}>
+      <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${s.label}`}>{label}</p>
+      <div className="mt-2">{children}</div>
     </div>
   )
 }
 
-function FlipCard({ front, back, color }: FlipCardData) {
-  const [flipped, setFlipped] = useState(false)
-  const c = FLIP_COLORS[color] || FLIP_COLORS.violet
+function ExampleBox({ children }: { children: ReactNode }) {
   return (
-    <button
-      type="button"
-      onClick={() => setFlipped((f) => !f)}
-      className={`group relative min-h-[7rem] rounded-2xl border-2 p-3 text-left transition active:scale-[0.98] ${
-        flipped ? 'border-slate-300 bg-white' : `${c.border} ${c.bg} hover:shadow-md`
-      }`}
-    >
-      {flipped ? (
-        <p className="text-sm leading-6 text-slate-800">{back}</p>
-      ) : (
-        <>
-          <p className={`text-base font-black ${c.text}`}>{front}</p>
-          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-            Tap to flip
-          </p>
-        </>
-      )}
-    </button>
-  )
-}
-
-// ── Reveal list (formal → plain) ──
-function RevealList({
-  items,
-}: {
-  items: { hidden: string; shown: string; plain: string }[]
-}) {
-  return (
-    <div className="space-y-2">
-      {items.map((item, i) => (
-        <Reveal key={i} {...item} />
-      ))}
+    <div className="rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-3">
+      <p className="text-sm font-bold leading-7 text-violet-900">{children}</p>
     </div>
   )
 }
 
-function Reveal({ shown, plain }: { hidden: string; shown: string; plain: string }) {
-  const [open, setOpen] = useState(false)
+function Insight({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-2xl border-2 border-slate-200 bg-white p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
-        Formal question
-      </p>
-      <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">“{shown}”</p>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`mt-3 flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-          open
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-        }`}
-      >
-        <Eye className="h-3 w-3" />
-        {open ? 'Plain version' : 'Show plain version'}
-      </button>
-      {open && (
-        <p className="mt-2 rounded-xl border-2 border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold leading-6 text-emerald-900">
-          “{plain}”
-        </p>
-      )}
+    <div className="flex items-start gap-2.5 rounded-xl bg-slate-50 px-3 py-2.5">
+      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
+      <p className="text-xs leading-5 text-slate-600">{children}</p>
     </div>
   )
 }
 
-// ── Cue chip row ──
-function CueChipRow({
+function ComparisonBox({
   label,
-  tone,
-  chips,
+  left,
+  right,
 }: {
   label: string
-  tone: 'amber' | 'emerald'
-  chips: string[]
+  left: { tag: string; text: string; color?: 'red' | 'amber' | 'slate' }
+  right: { tag: string; text: string; color?: 'emerald' | 'violet' }
 }) {
-  const palette =
-    tone === 'emerald'
-      ? { border: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-700', chip: 'bg-emerald-100 text-emerald-800' }
-      : { border: 'border-amber-200', bg: 'bg-amber-50', text: 'text-amber-700', chip: 'bg-amber-100 text-amber-800' }
-  return (
-    <div className={`rounded-xl border ${palette.border} ${palette.bg} px-3 py-2.5`}>
-      <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${palette.text}`}>{label}</p>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {chips.map((chip, i) => (
-          <span key={i} className={`rounded-lg ${palette.chip} px-2 py-0.5 text-xs font-bold`}>
-            {chip}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Lane card (tap to reveal "when to use" + starter line) ──
-function LaneCard({ lane }: { lane: LaneInfo }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={() => setOpen((v) => !v)}
-      className={`rounded-2xl border-2 p-3 text-left transition active:scale-[0.98] ${
-        open ? 'border-violet-400 bg-violet-50' : 'border-slate-200 bg-white hover:border-violet-300 hover:shadow-md'
-      }`}
-    >
-      <p className="text-sm font-black text-slate-900">{lane.label}</p>
-      {open ? (
-        <div className="mt-2 space-y-1.5">
-          <p className="text-xs leading-5 text-slate-600">{lane.whenToUse}</p>
-          <p className="text-xs leading-5 font-semibold text-violet-700">{lane.starter}</p>
-        </div>
-      ) : (
-        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-          Tap to learn
-        </p>
-      )}
-    </button>
-  )
-}
-
-// ── Weak vs strong pair (tap to reveal strong + reasoning) ──
-function WeakStrongPair({
-  question,
-  weak,
-  strong,
-  why,
-}: {
-  question: string
-  weak: string
-  strong: string
-  why: string
-}) {
-  const [open, setOpen] = useState(false)
+  const leftColor = left.color || 'slate'
+  const rightColor = right.color || 'emerald'
+  const leftStyles: Record<string, { border: string; bg: string; tag: string; text: string }> = {
+    red: { border: 'border-red-200', bg: 'bg-red-50', tag: 'text-red-600', text: 'text-red-900' },
+    amber: { border: 'border-amber-200', bg: 'bg-amber-50', tag: 'text-amber-700', text: 'text-amber-900' },
+    slate: { border: 'border-slate-200', bg: 'bg-slate-50', tag: 'text-slate-400', text: 'text-slate-800' },
+  }
+  const rightStyles: Record<string, { border: string; bg: string; tag: string; text: string }> = {
+    emerald: { border: 'border-emerald-200', bg: 'bg-emerald-50', tag: 'text-emerald-700', text: 'text-emerald-900' },
+    violet: { border: 'border-violet-200', bg: 'bg-violet-50', tag: 'text-violet-600', text: 'text-violet-900' },
+  }
+  const ls = leftStyles[leftColor]
+  const rs = rightStyles[rightColor]
   return (
     <div className="rounded-2xl border-2 border-slate-200 bg-white p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Question</p>
-      <p className="mt-1 text-sm font-bold leading-6 text-slate-800">“{question}”</p>
-
-      <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-red-600">Weak start</p>
-        <p className="mt-0.5 text-sm leading-6 text-red-900">“{weak}”</p>
+      <p className="text-xs font-bold leading-5 text-slate-700">"{label}"</p>
+      <div className="mt-2 space-y-2">
+        <div className={`rounded-xl border ${ls.border} ${ls.bg} px-3 py-2`}>
+          <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${ls.tag}`}>{left.tag}</p>
+          <p className={`mt-0.5 text-sm leading-6 ${ls.text}`}>"{left.text}"</p>
+        </div>
+        <div className={`rounded-xl border ${rs.border} ${rs.bg} px-3 py-2`}>
+          <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${rs.tag}`}>{right.tag}</p>
+          <p className={`mt-0.5 text-sm leading-6 ${rs.text}`}>"{right.text}"</p>
+        </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`mt-2 flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-          open
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-        }`}
-      >
-        <Eye className="h-3 w-3" />
-        {open ? 'Strong start' : 'Show strong start'}
-      </button>
-
-      {open && (
-        <>
-          <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">
-              Strong start
-            </p>
-            <p className="mt-0.5 text-sm leading-6 text-emerald-900">“{strong}”</p>
-          </div>
-          <div className="mt-2 flex items-start gap-2 rounded-xl bg-violet-50 px-3 py-2">
-            <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-500" />
-            <p className="text-xs leading-5 text-violet-900">{why}</p>
-          </div>
-        </>
-      )}
     </div>
   )
 }
 
-// ── Generic check question (string options) ──
+function RecoveryExample({ example }: { example: { setup: string; ramble: string; recovery: string; continuation: string } }) {
+  return (
+    <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Example</p>
+      <p className="mt-2 text-xs font-bold text-slate-500">Interviewer asks:</p>
+      <p className="text-sm font-semibold leading-6 text-slate-800">{example.setup}</p>
+
+      <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-red-600">The ramble</p>
+        <p className="mt-0.5 text-sm leading-6 text-red-900">{example.ramble}</p>
+      </div>
+
+      <div className="mt-2 rounded-xl border border-violet-300 bg-violet-50 px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">The recovery</p>
+        <p className="mt-0.5 text-sm font-bold leading-6 text-violet-900">{example.recovery}</p>
+      </div>
+
+      <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">Then continue</p>
+        <p className="mt-0.5 text-sm leading-6 text-emerald-900">{example.continuation}</p>
+      </div>
+    </div>
+  )
+}
+
+function QuestionContext({ question }: { question: string }) {
+  return (
+    <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-3">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+        Interviewer asks
+      </p>
+      <p className="mt-1 text-sm font-bold leading-6 text-slate-800">"{question}"</p>
+    </div>
+  )
+}
+
+// ═══════════════════════════ Interactive Elements ═══════════════════════════
+
+function CueWordPracticeField({ prompt, index }: { prompt: { question: string; hint: string }; index: number }) {
+  const [value, setValue] = useState('')
+  return (
+    <div className="rounded-2xl border-2 border-slate-200 bg-white p-4">
+      <p className="text-xs font-bold text-slate-500">Prompt {index + 1}</p>
+      <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">"{prompt.question}"</p>
+      <p className="mt-1 text-xs leading-5 text-slate-400">{prompt.hint}</p>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Your 2–3 cue words…"
+        className="mt-2 w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-300 focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-200"
+      />
+    </div>
+  )
+}
+
 function CheckQuestion({
   options,
   correctIndex,
@@ -1016,7 +1152,6 @@ function CheckQuestion({
   )
 }
 
-// ── Lane check (renders lane buttons, picks 3 distractor lanes) ──
 function LaneCheck({
   correctLane,
   feedback,
@@ -1026,7 +1161,6 @@ function LaneCheck({
   feedback: string
   onContinue: () => void
 }) {
-  // Stable per-mount randomized lane choices.
   const choices = useMemo(() => {
     const others = LANE_OPTIONS.filter((l) => l.id !== correctLane)
     const distractors = [...others].sort(() => Math.random() - 0.5).slice(0, 3)
@@ -1091,12 +1225,11 @@ function LaneCheck({
   )
 }
 
-// ── Feedback box ──
 function FeedbackBox({ isCorrect, feedback }: { isCorrect: boolean; feedback: string }) {
   return (
     <div
       className={`rounded-xl px-3 py-2.5 ${
-        isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200'
+        isCorrect ? 'border border-emerald-200 bg-emerald-50' : 'border border-amber-200 bg-amber-50'
       }`}
     >
       <p
@@ -1111,7 +1244,7 @@ function FeedbackBox({ isCorrect, feedback }: { isCorrect: boolean; feedback: st
   )
 }
 
-// ═══════════════════════════ Quiz screens ═══════════════════════════════════
+// ═══════════════════════════ Quiz Screens ═══════════════════════════════════
 
 const QUIZ_PROMPT: Record<QuizDrill['kind'], string> = {
   rephrase: 'Which simpler version keeps you closest to the real question?',
@@ -1147,9 +1280,7 @@ function QuizScreen({
         <QuestionContext question={drill.question} />
       )}
 
-      <div
-        className={drill.kind === 'lane' ? 'grid grid-cols-2 gap-2' : 'space-y-2'}
-      >
+      <div className={drill.kind === 'lane' ? 'grid grid-cols-2 gap-2' : 'space-y-2'}>
         {labels.map((label, i) => {
           const showCorrect = checked && i === drill.correctIndex
           const showWrong = checked && i === selected && i !== drill.correctIndex

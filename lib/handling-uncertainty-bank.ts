@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
 // Handling Uncertainty Lesson — Question Bank + Static Content
 //
-// Teaches the in-the-moment recovery move: Rephrase → Pause → Cue Words →
-// Pick a Lane → Start Clean (plus the emergency mid-answer reset).
+// Teaches the in-the-moment recovery move: Pause → Reframe → Cue Words →
+// Pick a Lane → Start Clean. Second half covers mid-answer recovery with
+// three named strategies: Direct Reset, Honest Gap, and Clarifying Reset.
 //
 // Fully deterministic — no AI calls. The 7 difficult questions are seeded
 // from the real HR-screen curveball pool (lib/interview-prompts/hr_screen.ts)
@@ -32,49 +33,49 @@ export const LANE_OPTIONS: LaneInfo[] = [
     label: 'Story',
     shortLabel: 'Story',
     whenToUse: 'When the question asks for a past example.',
-    starter: '“The example that comes to mind is…”',
+    starter: '"The example that comes to mind is…"',
   },
   {
     id: 'career_alignment_lane',
     label: 'Career alignment',
     shortLabel: 'Career alignment',
     whenToUse: 'When the question asks why this role, why this company, or why now.',
-    starter: '“What stood out to me is…”',
+    starter: '"What stood out to me is…"',
   },
   {
     id: 'professional_intro_lane',
     label: 'Professional intro',
     shortLabel: 'Pro intro',
     whenToUse: 'When the question asks about your background or who you are professionally.',
-    starter: '“The clearest way to describe my background is…”',
+    starter: '"The clearest way to describe my background is…"',
   },
   {
     id: 'process_lane',
     label: 'Process',
     shortLabel: 'Process',
     whenToUse: 'When the question asks what you would do or how you would handle something.',
-    starter: '“The way I’d approach that is…”',
+    starter: "\"The way I'd approach that is…\"",
   },
   {
     id: 'direct_answer_lane',
     label: 'Direct answer',
     shortLabel: 'Direct',
     whenToUse: 'When the question asks for a preference, strength, weakness, or opinion.',
-    starter: '“If I had to pick one, I’d say…”',
+    starter: "\"If I had to pick one, I'd say…\"",
   },
   {
     id: 'honest_gap_lane',
     label: 'Honest gap',
     shortLabel: 'Honest gap',
-    whenToUse: 'When you don’t have a perfect example or don’t fully know the answer.',
-    starter: '“I don’t have a perfect example, but the closest one is…”',
+    whenToUse: "When you don't have a perfect example or don't fully know the answer.",
+    starter: "\"I don't have a perfect example, but the closest one is…\"",
   },
   {
     id: 'clarifying_lane',
     label: 'Clarifying',
     shortLabel: 'Clarify',
     whenToUse: 'When the question is too broad or ambiguous to answer cleanly.',
-    starter: '“I want to make sure I’m answering that the right way. Are you asking more about…?”',
+    starter: "\"I want to make sure I'm answering that the right way. Are you asking more about…?\"",
   },
 ]
 
@@ -98,6 +99,10 @@ export interface DifficultQuestion {
   distractorRephrases: string[]
   cueWordOptions: CueWordOptions
   explanation: string
+  cueToAnswer?: {
+    cueWords: string[]
+    fullAnswer: string
+  }
 }
 
 // 7 questions: the 6 real HR curveball questions + 1 classic behavioral story Q.
@@ -105,18 +110,18 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
   {
     id: 'learn_quickly',
     question: 'What would you want to learn quickly if you started here?',
-    simplifiedRephrase: 'what I’d want to get up to speed on first',
+    simplifiedRephrase: "what I'd want to get up to speed on first",
     correctLane: 'process_lane',
     weakStarts: [
-      'I’m a fast learner, so honestly I could pick up just about anything.',
-      'There’s probably a lot — it really depends on the team.',
-      'I deal with new things all the time, so I’m not too worried about it.',
+      "I'm a fast learner, so honestly I could pick up just about anything.",
+      "There's probably a lot — it really depends on the team.",
+      "I deal with new things all the time, so I'm not too worried about it.",
     ],
     strongStarts: [
-      'Yeah, so if I had to pick one thing to learn quickly, I’d want to understand how success is measured in the first 90 days.',
+      "Yeah, so if I had to pick one thing to learn quickly, I'd want to understand how success is measured in the first 90 days.",
     ],
     distractorRephrases: [
-      'why I’m a quick learner',
+      "why I'm a quick learner",
       'what I already know how to do',
       'why I want to work here',
     ],
@@ -129,49 +134,57 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       ],
       correctIndex: 1,
     },
-    explanation: 'This is asking how you’d approach ramping up, not whether you’re generally a fast learner.',
+    explanation: "This is asking how you'd approach ramping up, not whether you're generally a fast learner.",
+    cueToAnswer: {
+      cueWords: ['systems', 'customers', 'team expectations'],
+      fullAnswer: "I'd want to understand how the team measures success, how customers interact with the product, and what the team expects from someone in this role in the first few months.",
+    },
   },
   {
     id: 'still_developing',
-    question: 'Tell me about an area where you’re still developing professionally.',
-    simplifiedRephrase: 'one skill I’m actively working on improving',
+    question: "Tell me about an area where you're still developing professionally.",
+    simplifiedRephrase: "one skill I'm actively working on improving",
     correctLane: 'honest_gap_lane',
     weakStarts: [
-      'Honestly I work on everything — I’m always trying to improve.',
-      'I’d say I’m a perfectionist, so that’s probably my weakness.',
-      'Nothing major comes to mind, I’m pretty well-rounded.',
+      "Honestly I work on everything — I'm always trying to improve.",
+      "I'd say I'm a perfectionist, so that's probably my weakness.",
+      "Nothing major comes to mind, I'm pretty well-rounded.",
     ],
     strongStarts: [
-      'Yeah, so one skill I’m actively working on improving… let me think about the clearest example.',
+      "Yeah, so one skill I'm actively working on improving… let me think about the clearest example.",
     ],
     distractorRephrases: [
-      'why I’m great at my job',
+      "why I'm great at my job",
       'a time someone else struggled',
       'what my biggest strength is',
     ],
     cueWordOptions: {
       options: [
-        'one skill / actively / how I’m improving',
+        "one skill / actively / how I'm improving",
         'strengths / weaknesses / balance',
         'perfectionist / detail-oriented / overthinking',
         'hard worker / improvement / growth',
       ],
       correctIndex: 0,
     },
-    explanation: 'Name one real area honestly, then show you’re working on it. Don’t dodge with a fake weakness.',
+    explanation: "Name one real area honestly, then show you're working on it. Don't dodge with a fake weakness.",
+    cueToAnswer: {
+      cueWords: ['one skill', 'actively', 'how I\'m improving'],
+      fullAnswer: 'One thing I\'m actively working on is presenting complex ideas more concisely. I\'ve been practicing by giving myself a two-minute limit when explaining project updates, and it\'s made a noticeable difference.',
+    },
   },
   {
     id: 'resume_explain',
-    question: 'What’s something on your resume you’d want to explain more clearly?',
+    question: "What's something on your resume you'd want to explain more clearly?",
     simplifiedRephrase: 'what part of my background might need more context',
     correctLane: 'direct_answer_lane',
     weakStarts: [
       'Everything on there is pretty self-explanatory, I think.',
-      'I’m not sure — it all makes sense to me.',
+      "I'm not sure — it all makes sense to me.",
       'My whole resume tells a pretty clear story, honestly.',
     ],
     strongStarts: [
-      'Yeah, so one line on my resume I’d want to give a bit more context on… is…',
+      "Yeah, so one line on my resume I'd want to give a bit more context on… is…",
     ],
     distractorRephrases: [
       'which job on my resume was my favorite',
@@ -187,36 +200,40 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       ],
       correctIndex: 1,
     },
-    explanation: 'They’re asking where your resume might create confusion or deserve more context — not what you’re proudest of.',
+    explanation: "They're asking where your resume might create confusion or deserve more context — not what you're proudest of.",
   },
   {
     id: 'missing_context',
     question: 'If you joined a team and realized you were missing context, how would you handle that?',
-    simplifiedRephrase: 'how I’d handle realizing I was missing context on a new team',
+    simplifiedRephrase: "how I'd handle realizing I was missing context on a new team",
     correctLane: 'process_lane',
     weakStarts: [
-      'I’d just figure it out — I’m pretty resourceful.',
+      "I'd just figure it out — I'm pretty resourceful.",
       'That happens all the time, you just adapt.',
-      'I’m good with ambiguity, so it wouldn’t really be an issue.',
+      "I'm good with ambiguity, so it wouldn't really be an issue.",
     ],
     strongStarts: [
-      'Yeah, so how I’d approach realizing I was missing context… the way I’d handle that is…',
+      "Yeah, so how I'd approach realizing I was missing context… the way I'd handle that is…",
     ],
     distractorRephrases: [
       'a time I joined a new team',
-      'why I’m good under pressure',
+      "why I'm good under pressure",
       'why I want to join this team',
     ],
     cueWordOptions: {
       options: [
         'resourceful / adaptive / quick',
-        'what I’d ask / who I’d talk to / how I’d catch up',
+        "what I'd ask / who I'd talk to / how I'd catch up",
         'confused / behind / overwhelmed',
         'leadership / mentorship / training',
       ],
       correctIndex: 1,
     },
-    explanation: 'This is a "how would you" question — give your process, step by step, not a vague claim that you’d "adapt."',
+    explanation: "This is a \"how would you\" question — give your process, step by step, not a vague claim that you'd \"adapt.\"",
+    cueToAnswer: {
+      cueWords: ['what I\'d ask', 'who I\'d talk to', 'how I\'d catch up'],
+      fullAnswer: 'First, I\'d figure out what I\'m actually missing — is it product knowledge, team norms, or something about the customer? Then I\'d find the right person to fill the gap, whether that\'s my manager, a teammate, or the docs. I wouldn\'t just wait for it to come to me.',
+    },
   },
   {
     id: 'handle_stress',
@@ -224,16 +241,16 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
     simplifiedRephrase: 'how I deal with stress',
     correctLane: 'process_lane',
     weakStarts: [
-      'Honestly I don’t really get stressed, I stay pretty calm.',
+      "Honestly I don't really get stressed, I stay pretty calm.",
       'Stress is just part of the job — you deal with it.',
-      'I work well under pressure, so it’s not really a problem.',
+      "I work well under pressure, so it's not really a problem.",
     ],
     strongStarts: [
       'Yeah, so the way I handle stress… my approach is…',
     ],
     distractorRephrases: [
       'a time I was stressed',
-      'why I’m calm under pressure',
+      "why I'm calm under pressure",
       'why stress is bad',
     ],
     cueWordOptions: {
@@ -253,9 +270,9 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
     simplifiedRephrase: 'how I keep myself organized',
     correctLane: 'process_lane',
     weakStarts: [
-      'I’m just a naturally organized person.',
+      "I'm just a naturally organized person.",
       'I use a to-do list and stuff like that.',
-      'I don’t really have a system, I just remember things.',
+      "I don't really have a system, I just remember things.",
     ],
     strongStarts: [
       'Yeah, so the way I keep myself organized… what I do is…',
@@ -274,7 +291,7 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       ],
       correctIndex: 1,
     },
-    explanation: 'Describe your actual system. A real process beats "I’m just naturally organized."',
+    explanation: "Describe your actual system. A real process beats \"I'm just naturally organized.\"",
   },
   {
     id: 'disagree_coworker',
@@ -290,7 +307,7 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
       'Yeah, so a specific time I disagreed with a coworker… let me think of the best example.',
     ],
     distractorRephrases: [
-      'why I’m good at communication',
+      "why I'm good at communication",
       'how I generally deal with people',
       'a time someone disagreed with my manager',
     ],
@@ -307,6 +324,72 @@ export const DIFFICULT_QUESTIONS: DifficultQuestion[] = [
   },
 ]
 
+// ========================== RECOVERY STRATEGIES ==========================
+
+export interface RecoveryStrategy {
+  id: 'direct_reset' | 'honest_gap' | 'clarifying_reset'
+  name: string
+  whenToUse: string
+  phrases: string[]
+  example: {
+    setup: string
+    ramble: string
+    recovery: string
+    continuation: string
+  }
+}
+
+export const RECOVERY_STRATEGIES: RecoveryStrategy[] = [
+  {
+    id: 'direct_reset',
+    name: 'The Direct Reset',
+    whenToUse: 'You know the answer but started explaining it badly. You need to back up and say it more clearly.',
+    phrases: [
+      '"Let me reset that more clearly."',
+      '"The simpler answer is…"',
+      '"I\'m giving too much context. The main point is…"',
+    ],
+    example: {
+      setup: '"How do you handle stressful situations?"',
+      ramble: "\"So stress is kind of… I mean, everyone deals with stress differently, and I think the important thing is to stay calm and, you know, just kind of take things one at a time, and I've always been someone who…\"",
+      recovery: '"Actually, let me make that more specific."',
+      continuation: '"When I\'m under pressure, the first thing I do is figure out what\'s actually urgent versus what just feels urgent. Last quarter, three deadlines overlapped and I mapped them out by real due date — two of them had more runway than I thought."',
+    },
+  },
+  {
+    id: 'honest_gap',
+    name: 'The Honest Gap',
+    whenToUse: 'You genuinely don\'t have a good answer. You\'re stalling because you\'re hoping something comes to you, but it isn\'t coming.',
+    phrases: [
+      '"I don\'t have a perfect example for that, but the closest thing is…"',
+      '"I haven\'t dealt with that exact situation, but here\'s how I\'d approach it…"',
+      '"Honestly, that\'s not something I\'ve had to do much of yet. But here\'s what I\'d do…"',
+    ],
+    example: {
+      setup: '"Tell me about a time you managed a cross-functional team."',
+      ramble: '"So, I\'ve worked with lots of different teams and I think cross-functional work is really important. Communication is key, and I always try to make sure everyone is aligned on goals and…"',
+      recovery: '"I want to be honest — I haven\'t formally managed a cross-functional team."',
+      continuation: '"But the closest thing is when I coordinated a product launch across engineering, design, and marketing. I didn\'t have authority over any of them, but I ran the weekly syncs and owned the timeline. The launch shipped on time."',
+    },
+  },
+  {
+    id: 'clarifying_reset',
+    name: 'The Clarifying Reset',
+    whenToUse: 'You\'re rambling because the question was too broad or ambiguous. You\'re not sure which direction they want, so you\'re covering everything.',
+    phrases: [
+      '"Let me make sure I\'m answering what you\'re looking for. Are you asking more about…?"',
+      '"That\'s a broad question. Would it help if I focused on…?"',
+      '"I want to make sure I\'m going in the right direction. Is this more about X or Y?"',
+    ],
+    example: {
+      setup: '"What\'s your leadership style?"',
+      ramble: '"So my leadership style is kind of a mix of things. I believe in being collaborative but also decisive, and I think it\'s important to give people autonomy while also being available, and I try to lead by example…"',
+      recovery: '"Actually — let me ask, are you more interested in how I manage day-to-day, or how I handle tough calls?"',
+      continuation: '"If it\'s the tough calls: I gather input from the people closest to the work, then I make the call and own it. I\'d rather decide and be wrong than let the team sit in limbo."',
+    },
+  },
+]
+
 export interface RecoveryScenario {
   id: string
   scenario: string
@@ -320,33 +403,33 @@ export const RECOVERY_SCENARIOS: RecoveryScenario[] = [
     id: 'wrong_question',
     scenario: 'You realize you started answering a different question than the one you were asked.',
     options: [
-      '“Anyway, that’s basically my answer.”',
-      '“Let me make sure I’m actually answering what you asked. You were asking about…”',
-      'Keep going so it doesn’t seem like a mistake.',
-      '“Sorry, ignore all of that.”',
+      "\"Anyway, that's basically my answer.\"",
+      "\"Let me make sure I'm actually answering what you asked. You were asking about…\"",
+      "Keep going so it doesn't seem like a mistake.",
+      '"Sorry, ignore all of that."',
     ],
     correctIndex: 1,
-    feedback: 'You don’t need to pretend the ramble didn’t happen. A clean reset sounds more composed than forcing the wrong answer to continue.',
+    feedback: "You don't need to pretend the ramble didn't happen. A clean reset sounds more composed than forcing the wrong answer to continue.",
   },
   {
     id: 'too_general',
-    scenario: 'You’re 30 seconds in and realize you’re giving general advice instead of the specific example they asked for.',
+    scenario: "You're 30 seconds in and realize you're giving general advice instead of the specific example they asked for.",
     options: [
-      '“So yeah, communication is just really important.”',
-      '“Let me make that more specific. The example that comes to mind is…”',
-      '“That probably answers it.”',
-      '“I guess it depends on the situation.”',
+      '"So yeah, communication is just really important."',
+      '"Let me make that more specific. The example that comes to mind is…"',
+      '"That probably answers it."',
+      '"I guess it depends on the situation."',
     ],
     correctIndex: 1,
     feedback: 'This moves from general talk back into the story lane.',
   },
   {
     id: 'blank_mid',
-    scenario: 'Mid-sentence, you lose the thread completely. What’s the best move?',
+    scenario: 'Mid-sentence, you lose the thread completely. What\'s the best move?',
     options: [
-      '“Um… anyway…”',
-      '“Let me reset that more clearly. The main point is…”',
-      '“Can you repeat the question?”',
+      '"Um… anyway…"',
+      '"Let me reset that more clearly. The main point is…"',
+      '"Can you repeat the question?"',
       'Trail off and hope they ask a follow-up.',
     ],
     correctIndex: 1,
@@ -355,14 +438,36 @@ export const RECOVERY_SCENARIOS: RecoveryScenario[] = [
 ]
 
 export const RESET_PHRASE_BANK: string[] = [
-  '“Let me reset that more clearly.”',
-  '“The simpler answer is…”',
-  '“I’m giving too much context. The main point is…”',
-  '“Let me make sure I’m answering what you asked. You were asking about…”',
-  '“The example that comes to mind is…”',
-  '“If I had to pick one, I’d say…”',
-  '“Let me jot that down for a second.”',
-  '“Good question. I want to answer that clearly.”',
+  '"Let me reset that more clearly."',
+  '"The simpler answer is…"',
+  "\"I'm giving too much context. The main point is…\"",
+  "\"Let me make sure I'm answering what you asked. You were asking about…\"",
+  '"The example that comes to mind is…"',
+  "\"If I had to pick one, I'd say…\"",
+  '"Let me jot that down for a second."',
+  '"Good question. I want to answer that clearly."',
+]
+
+// ========================== CUE WORD PRACTICE PROMPTS ==========================
+
+export interface CueWordPracticePrompt {
+  question: string
+  hint: string
+}
+
+export const CUE_WORD_PRACTICE_PROMPTS: CueWordPracticePrompt[] = [
+  {
+    question: 'What would you want to learn quickly if you started here?',
+    hint: 'Think: what specifically would you need to understand? (Not "everything" or "I\'m a fast learner.")',
+  },
+  {
+    question: 'Tell me about a time you had to influence someone without formal authority.',
+    hint: 'Point your brain at a specific person, a specific disagreement, and what you actually did.',
+  },
+  {
+    question: 'How do you handle stressful situations?',
+    hint: 'Name the first thing you do — not a personality trait like "I stay calm."',
+  },
 ]
 
 // ========================== QUIZ GENERATION ==========================
@@ -392,9 +497,6 @@ function buildOptionsWithCorrect(correct: string, distractors: string[]): { opti
   return { options, correctIndex: options.indexOf(correct) }
 }
 
-// Build the 5-question final quiz: one of each format (rephrase, cue words,
-// lane, stronger start, mid-answer reset). Each pulls a distinct random
-// question from the bank where possible, so the quiz rarely repeats verbatim.
 export function buildQuiz(): QuizDrill[] {
   const bankSample = sample(DIFFICULT_QUESTIONS, 4)
   const [qRephrase, qCueWords, qLane, qStart] = bankSample

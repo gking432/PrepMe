@@ -337,6 +337,21 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
   - **Files**: `lib/handling-uncertainty-bank.ts`, `components/exercises/HandlingUncertaintyLesson.tsx`. Old `HandlingUncertaintyWorkshop.tsx` left unused (safe to delete later).
   - **Wired** into `PracticeLessonFlow` (direct render) + `PracticePath` and `HrFeedbackDeck` (branch before `GuidedBuilderWorkshop`), matching the Career Alignment pattern.
 
+### 2026-06-11 (Session 10)
+- **Handling Uncertainty Lesson — third revision**: Major structural rewrite from flip-card interactive to coaching-guide style.
+  - **Two-half structure**: "Before You Answer" (Pause → Reframe → Cue Words → Lane → Start Clean) + "After Already Rambling" (Direct Reset → Honest Gap → Clarifying Reset)
+  - **Back button navigation**: Progress bar now includes a back arrow for navigating to previous sections
+  - **Removed flip cards entirely**: Replaced with prose-heavy teaching sections using ExampleBox, ComparisonBox, Insight, Callout, and RecoveryExample components
+  - **Three named recovery strategies**: Each has `whenToUse`, `phrases[]`, and a full `example` with setup/ramble/recovery/continuation flow
+  - **Cue word practice**: 3 ungraded free-text input prompts where users write their own cue words for real questions
+  - **Cue-to-answer examples**: Shows how 2–3 cue words become a full answer (visual highlighting of the connection)
+  - **Reduced lane section**: Compact list of 5 core lanes instead of 7 tap-to-reveal cards
+  - **Pause says 5–10 seconds** (was 2)
+  - **Phone screen tip integrated naturally** into Pause section (removed separate labeled version)
+  - **Quiz unchanged** per spec
+  - **Bank file additions**: `RecoveryStrategy` type + 3 strategies with example data, `CueWordPracticePrompt` type + 3 prompts, `cueToAnswer` field on select questions
+  - **Files**: `lib/handling-uncertainty-bank.ts`, `components/exercises/HandlingUncertaintyLesson.tsx`
+
 ### What Needs Work Next
 1. Write up + build the "HR batched repair workshop" cost approach (one batched gpt-5-nano repair-plan call after grading → render workshops from prepared JSON, zero per-step AI for free HR). User prefers this over cached profiles for free HR.
 2. Wire CF/FR stages into the workshop builders

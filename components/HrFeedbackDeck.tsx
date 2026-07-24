@@ -167,6 +167,7 @@ interface HrFeedbackDeckProps {
   onPractice?: (repair: SignalArea) => void
   layout?: 'standalone' | 'embedded'
   stageKey?: StageKey
+  demoMode?: boolean
 }
 
 type DeckStep =
@@ -1091,13 +1092,15 @@ export default function HrFeedbackDeck({
   onPractice,
   layout = 'standalone',
   stageKey = 'hr_screen',
+  demoMode = false,
 }: HrFeedbackDeckProps) {
   const [step, setStep] = useState(0)
   const [showCoachFile, setShowCoachFile] = useState(false)
   const [completedWorkshops, setCompletedWorkshops] = useState<Set<number>>(new Set())
-  const nextStageKey = NEXT_STAGE[stageKey]
+  const nextStageKey = demoMode ? null : NEXT_STAGE[stageKey]
   const stageName = STAGE_NAME[stageKey]
   const nextStageName = nextStageKey ? STAGE_NAME[nextStageKey] : null
+  const showReportButton = !demoMode || !!artifactContent
 
   const {
     score,
@@ -1392,16 +1395,18 @@ export default function HrFeedbackDeck({
                 <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
               </a>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={handleReportClick}
-                disabled={reportLoading}
-                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-              >
-                {reportLocked ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-                {reportLoading ? 'Preparing...' : reportButtonLabel}
-              </button>
+            <div className={`grid gap-3 ${showReportButton ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {showReportButton && (
+                <button
+                  type="button"
+                  onClick={handleReportClick}
+                  disabled={reportLoading}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                >
+                  {reportLocked ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                  {reportLoading ? 'Preparing...' : reportButtonLabel}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onRetakeInterview}
@@ -1441,7 +1446,7 @@ export default function HrFeedbackDeck({
           })}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {reportHelpText && (
+          {showReportButton && reportHelpText && (
             <div className="group relative">
               <button
                 type="button"
@@ -1458,32 +1463,36 @@ export default function HrFeedbackDeck({
               </div>
             </div>
           )}
-          <button
-            type="button"
-            onClick={handleReportClick}
-            disabled={reportLoading}
-            className={`hidden h-9 items-center gap-2 rounded-full border px-3 text-xs font-bold transition sm:flex ${
-              reportLocked
-                ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-            } disabled:cursor-wait disabled:opacity-70`}
-          >
-            {reportLocked ? <Lock className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
-            {reportLoading ? 'Preparing...' : reportButtonLabel}
-          </button>
-          <button
-            type="button"
-            onClick={handleReportClick}
-            disabled={reportLoading}
-            aria-label={reportButtonLabel}
-            className={`flex h-9 w-9 items-center justify-center rounded-full border transition sm:hidden ${
-              reportLocked
-                ? 'border-amber-200 bg-amber-50 text-amber-800'
-                : 'border-slate-200 bg-white text-slate-700'
-            } disabled:cursor-wait disabled:opacity-70`}
-          >
-            {reportLocked ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-          </button>
+          {showReportButton && (
+            <>
+              <button
+                type="button"
+                onClick={handleReportClick}
+                disabled={reportLoading}
+                className={`hidden h-9 items-center gap-2 rounded-full border px-3 text-xs font-bold transition sm:flex ${
+                  reportLocked
+                    ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                } disabled:cursor-wait disabled:opacity-70`}
+              >
+                {reportLocked ? <Lock className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+                {reportLoading ? 'Preparing...' : reportButtonLabel}
+              </button>
+              <button
+                type="button"
+                onClick={handleReportClick}
+                disabled={reportLoading}
+                aria-label={reportButtonLabel}
+                className={`flex h-9 w-9 items-center justify-center rounded-full border transition sm:hidden ${
+                  reportLocked
+                    ? 'border-amber-200 bg-amber-50 text-amber-800'
+                    : 'border-slate-200 bg-white text-slate-700'
+                } disabled:cursor-wait disabled:opacity-70`}
+              >
+                {reportLocked ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+              </button>
+            </>
+          )}
         </div>
       </div>
 

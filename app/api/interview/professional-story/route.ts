@@ -189,16 +189,20 @@ Return valid JSON only:
 export async function POST(request: NextRequest) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
 
   const body = await request.json().catch(() => ({}))
   const isRewrite = body.rewriteInstruction && body.originalAnswer
   const sessionId = body.sessionId ? String(body.sessionId) : undefined
+  if (!sessionId && !session?.user?.id) {
+    return NextResponse.json({ error: 'Interview session required' }, { status: 400 })
+  }
 
   const { jobDescription, resumeText, companyWebsite, companyName, roleTitle } =
-    await fetchUserContext(sessionId, session.user.id)
+    await fetchUserContext(sessionId, session?.user?.id)
+
+  if (!resumeText && !jobDescription) {
+    return NextResponse.json({ error: 'Interview context not found' }, { status: 404 })
+  }
 
   if (isRewrite) {
     return handleRewrite(body, resumeText, jobDescription, companyName, roleTitle)

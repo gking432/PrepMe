@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 
 let _anthropic: Anthropic | null = null
@@ -57,12 +55,6 @@ function getCandidateAnswer(questionId: string | undefined, evidence: any, trans
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
   const { sessionId } = await request.json()
   if (!sessionId) {
     return NextResponse.json({ error: 'sessionId required' }, { status: 400 })

@@ -249,14 +249,14 @@ function safeParseJson(raw: string): any {
 export async function POST(request: NextRequest) {
   const supabase = createRouteHandlerClient({ cookies })
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
 
   const body = await request.json().catch(() => ({}))
   const workshopType = body.workshopType as WorkshopType
   const stepKey = String(body.stepKey || '')
   const sessionId = body.sessionId ? String(body.sessionId) : undefined
+  if (!sessionId && !session?.user?.id) {
+    return NextResponse.json({ error: 'Interview session required' }, { status: 400 })
+  }
   const originalQuestion = String(body.originalQuestion || '').slice(0, 2000)
   const originalAnswer = String(body.originalAnswer || '').slice(0, 4000)
   const previousChoices = (body.previousChoices && typeof body.previousChoices === 'object') ? body.previousChoices : {}
@@ -269,7 +269,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid workshopType or stepKey' }, { status: 400 })
   }
 
-  const { jobDescription, resumeText, companyWebsite } = await fetchUserContext(sessionId, session.user.id)
+  const { jobDescription, resumeText, companyWebsite } = await fetchUserContext(sessionId, session?.user?.id)
+  if (!resumeText && !jobDescription) {
+    return NextResponse.json({ error: 'Interview context not found' }, { status: 404 })
+  }
 
   const stepGuidance = STEP_GUIDANCE[workshopType][stepKey]
   const workshopContext = WORKSHOP_CONTEXT[workshopType]

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { supabaseAdmin } from '@/lib/supabase'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 
 let _anthropic: Anthropic | null = null
@@ -71,13 +70,20 @@ Return ONLY valid JSON matching this exact shape:
 }`
 
 export async function POST(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  const body = await request.json().catch(() => ({}))
+  const sessionId = body.sessionId ? String(body.sessionId) : ''
+  if (!sessionId) {
+    return NextResponse.json({ error: 'Interview session required' }, { status: 400 })
   }
 
-  const body = await request.json().catch(() => ({}))
+  const { data: interviewSession } = await supabaseAdmin
+    .from('interview_sessions')
+    .select('id')
+    .eq('id', sessionId)
+    .maybeSingle()
+  if (!interviewSession) {
+    return NextResponse.json({ error: 'Interview session not found' }, { status: 404 })
+  }
 
   const storyType = String(body.storyType || '')
   const setting = String(body.setting || '')

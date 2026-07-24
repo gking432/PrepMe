@@ -3,19 +3,19 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Briefcase, Check, Crown, Lock, Phone, Users } from 'lucide-react'
+import { ArrowLeft, Check, Lock, Phone } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 import { isInterviewStageLocked } from '@/lib/interview-stage-access'
 
 type StageKey = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
-const ORDER: StageKey[] = ['hr_screen', 'hiring_manager', 'culture_fit', 'final']
+const ORDER: StageKey[] = ['hr_screen']
 
 const META: Record<StageKey, { name: string; icon: any; price?: string; optional?: boolean }> = {
   hr_screen: { name: 'HR Screen', icon: Phone },
-  hiring_manager: { name: 'Hiring Manager', icon: Briefcase, price: '$4.99' },
-  culture_fit: { name: 'Culture Fit', icon: Users, price: '$3.99', optional: true },
-  final: { name: 'Final Round', icon: Crown, price: '$5.99' },
+  hiring_manager: { name: 'Hiring Manager', icon: Phone },
+  culture_fit: { name: 'Culture Fit', icon: Phone },
+  final: { name: 'Final Round', icon: Phone },
 }
 
 interface StageState {
@@ -146,9 +146,9 @@ export default function ProcessSidebar({ currentStageKey, currentSessionData, on
         <p className="text-xs font-semibold uppercase tracking-wider text-accent-600">Interview Prep</p>
         <h2 className="mt-1 line-clamp-2 text-base font-bold tracking-tight text-slate-900">{headline}</h2>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
-          <div className="h-full rounded-full bg-accent-600 transition-all" style={{ width: `${(completedCount / 4) * 100}%` }} />
+          <div className="h-full rounded-full bg-accent-600 transition-all" style={{ width: `${(completedCount / ORDER.length) * 100}%` }} />
         </div>
-        <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{completedCount} of 4 complete</p>
+        <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{completedCount} of 1 complete</p>
       </div>
 
       <div className="mt-4 -mx-1.5 space-y-1">

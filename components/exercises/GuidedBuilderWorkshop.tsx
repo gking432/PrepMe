@@ -513,6 +513,7 @@ export default function GuidedBuilderWorkshop({
         fd.append('audio', blob, 'recall.webm')
         fd.append('built_answer', finalAnswer)
         fd.append('workshop_type', workshopType)
+        fd.append('session_id', sessionId || '')
         const res = await fetch('/api/interview/guided-workshop/voice-eval', { method: 'POST', body: fd })
         const data = (await res.json()) as RecallResult
         setRecallResult(data)

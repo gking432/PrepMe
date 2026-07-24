@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import OpenAI from 'openai'
 import { Anthropic } from '@anthropic-ai/sdk/client'
+import { supabaseAdmin } from '@/lib/supabase'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -28,20 +27,24 @@ function safeParseJson(raw: string): any {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
   try {
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File | null
     const builtAnswer = String(formData.get('built_answer') || '').slice(0, 4000)
     const workshopType = String(formData.get('workshop_type') || '')
+    const sessionId = String(formData.get('session_id') || '')
 
-    if (!audioFile || !builtAnswer) {
-      return NextResponse.json({ error: 'Missing audio or built_answer' }, { status: 400 })
+    if (!audioFile || !builtAnswer || !sessionId) {
+      return NextResponse.json({ error: 'Missing audio, built_answer, or session_id' }, { status: 400 })
+    }
+
+    const { data: interviewSession } = await supabaseAdmin
+      .from('interview_sessions')
+      .select('id')
+      .eq('id', sessionId)
+      .maybeSingle()
+    if (!interviewSession) {
+      return NextResponse.json({ error: 'Interview session not found' }, { status: 404 })
     }
 
     // 1) Transcribe with Whisper (~$0.006/min, typically $0.001-0.002 per answer)

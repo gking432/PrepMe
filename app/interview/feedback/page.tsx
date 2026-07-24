@@ -40,7 +40,7 @@ function parseSessionRoleContext(jobDescriptionText?: string | null) {
 
 export default function InterviewDashboard() {
   const [activeTab, setActiveTab] = useState('results')
-  const [isPremium, setIsPremium] = useState(TEST_ALL_INTERVIEW_STAGES_UNLOCKED)
+  const [isPremium, setIsPremium] = useState(true)
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
   const [purchaseHighlightStage, setPurchaseHighlightStage] = useState<string | undefined>(undefined)
@@ -170,24 +170,6 @@ export default function InterviewDashboard() {
     setPollingAttempts(0)
     loadFeedback()
 
-    // Check if user just signed up and needs to migrate data
-    const checkMigration = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (session) {
-        const tempData = localStorage.getItem('temp_interview_data')
-        if (tempData) {
-          // User just signed up, migrate their data
-          await migrateLocalStorageToAccount()
-        }
-      }
-    }
-
-    // Check for migration after a short delay (to ensure session is established)
-    const migrationTimer = setTimeout(checkMigration, 1000)
-    return () => clearTimeout(migrationTimer)
   }, [sessionIdFromUrl, stageFromUrl, previewFromUrl])
 
   // Poll for feedback while generation is in flight.
@@ -262,39 +244,6 @@ export default function InterviewDashboard() {
       cancelled = true
     }
   }, [currentSessionData?.id, currentSessionData?.stage, detailedReportLoading, feedback, searchParams, sessionIdFromUrl, stageFromUrl])
-
-  // Check if user is anonymous and prompt to create account before leaving
-  useEffect(() => {
-    const checkAnonymous = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      
-      if (!session) {
-        const tempData = localStorage.getItem('temp_interview_data')
-        const lastSessionId = localStorage.getItem('last_interview_session_id')
-        
-        if (tempData || lastSessionId) {
-          setIsAnonymous(true)
-          setShowAccountPrompt(true)
-          
-          // Show prompt when user tries to leave
-          const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            e.preventDefault()
-            e.returnValue = 'You have interview data that will be lost. Create an account to save it?'
-            return e.returnValue
-          }
-
-          window.addEventListener('beforeunload', handleBeforeUnload)
-
-          return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload)
-          }
-        }
-      }
-    }
-    checkAnonymous()
-  }, [])
 
   // Auto-hide tooltip after 5 seconds
   useEffect(() => {
@@ -913,14 +862,7 @@ export default function InterviewDashboard() {
     } finally {
       setLoading(false)
 
-      // Show account creation prompt for anonymous HR screen users
       const { data: { session: authSession } } = await supabase.auth.getSession()
-      const stageFromUrl = searchParams?.get('stage')
-      const resolvedStage = stageFromUrl || currentSessionData?.stage
-      if (!authSession && (resolvedStage === 'hr_screen' || !resolvedStage)) {
-        // Delay prompt slightly so they can see their results first
-        setTimeout(() => setShowAccountPrompt(true), 3000)
-      }
 
       // Fetch payment/credit status for authenticated users
       if (authSession) {
@@ -1198,27 +1140,6 @@ export default function InterviewDashboard() {
       alert('Error saving your data. Please try again.')
     }
   }
-
-  // Check if user is anonymous
-  const [isAnonymous, setIsAnonymous] = useState(false)
-  
-  useEffect(() => {
-    const checkAnonymous = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      
-      if (!session) {
-        const tempData = localStorage.getItem('temp_interview_data')
-        const lastSessionId = localStorage.getItem('last_interview_session_id')
-        if (tempData || lastSessionId) {
-          setIsAnonymous(true)
-          setShowAccountPrompt(true)
-        }
-      }
-    }
-    checkAnonymous()
-  }, [])
 
   if (loading || feedbackGenerating) {
     return (
@@ -2439,6 +2360,7 @@ export default function InterviewDashboard() {
       reportLoading: detailedReportLoading,
       reportHelpText: 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.',
       reportHelpSecondaryText: 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.',
+      demoMode: true,
     }
     return (
       <>
@@ -2519,6 +2441,7 @@ export default function InterviewDashboard() {
       reportHelpText: reportLocked ? 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.' : undefined,
       reportHelpSecondaryText: reportLocked ? 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.' : undefined,
       stageKey: currentStageKey,
+      demoMode: true,
     }
     return (
       <>
@@ -2657,126 +2580,6 @@ export default function InterviewDashboard() {
                 <span>{regeneratingFeedback ? 'Regenerating...' : 'Regenerate Feedback'}</span>
               </button>
             )}
-            {!isPremium && (
-              <button
-                onClick={() => setShowPurchaseFlow(true)}
-                className="btn-coach-primary inline-flex items-center gap-1.5 px-4 py-2 text-sm"
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span>Unlock All Interviews</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Account Creation Prompt for Anonymous Users */}
-      {showAccountPrompt && isAnonymous && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-8 shadow-2xl">
-            <button
-              onClick={() => {
-                setShowAccountPrompt(false)
-                setAccountPromptDismissed(true)
-              }}
-              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">Save Your Progress</p>
-            <h3 className="mb-2 text-2xl font-black text-slate-900">Create Your Free Account</h3>
-            <p className="mb-6 text-slate-500">
-              Save your results, track progress, and unlock more interview stages
-            </p>
-            <div className="space-y-3">
-              {(() => {
-                const tempDataStr = localStorage.getItem('temp_interview_data')
-                const tempData = tempDataStr ? JSON.parse(tempDataStr) : null
-                const extractedName = tempData?.extractedUserInfo?.name || ''
-                const extractedEmail = tempData?.extractedUserInfo?.email || ''
-                return (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                      <input
-                        type="text"
-                        defaultValue={extractedName}
-                        readOnly
-                        className="field-shell w-full bg-slate-50 text-gray-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input
-                        type="email"
-                        defaultValue={extractedEmail}
-                        readOnly
-                        className="field-shell w-full bg-slate-50 text-gray-700"
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        const params = new URLSearchParams()
-                        if (extractedEmail) params.set('email', extractedEmail)
-                        if (extractedName) params.set('name', extractedName)
-                        const query = params.toString()
-                        router.push(`/auth/signup${query ? `?${query}` : ''}`)
-                      }}
-                      className="btn-coach-primary w-full py-3"
-                    >
-                      Create Account
-                    </button>
-                  </>
-                )
-              })()}
-              <button
-                onClick={() => {
-                  window.location.href = '/auth/signup?provider=google'
-                }}
-                className="flex w-full items-center justify-center space-x-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 font-semibold text-gray-700 transition-all hover:bg-slate-50"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-                <span>Continue with Google</span>
-              </button>
-              <button
-                onClick={() => {
-                  setShowAccountPrompt(false)
-                  setAccountPromptDismissed(true)
-                }}
-                className="btn-coach-secondary w-full py-3 text-gray-700"
-              >
-                Maybe Later
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 mt-4 text-center">
-              Already have an account?{' '}
-              <a href="/auth/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                Sign in
-              </a>
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Persistent signup banner for anonymous users who dismissed the modal */}
-      {isAnonymous && !showAccountPrompt && accountPromptDismissed && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className="flex items-center justify-between rounded-[1.4rem] border border-primary-200/80 bg-primary-50/90 px-4 py-3 shadow-[0_12px_30px_rgba(37,99,235,0.08)]">
-            <p className="text-sm font-medium text-primary-800">
-              Create an account to save your results and continue to the Hiring Manager round →
-            </p>
-            <button
-              onClick={() => router.push('/auth/signup')}
-              className="btn-coach-primary ml-4 whitespace-nowrap px-4 py-2 text-sm"
-            >
-              Sign Up
-            </button>
           </div>
         </div>
       )}

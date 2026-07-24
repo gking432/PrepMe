@@ -222,6 +222,7 @@ export default function StarStoryBuilder({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            sessionId,
             storyType,
             setting,
             contextName: contextName.trim() || undefined,

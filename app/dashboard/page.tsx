@@ -90,7 +90,6 @@ export default function DashboardPage() {
   const [purchaseHighlightStage, setPurchaseHighlightStage] = useState<string | undefined>(undefined)
   const [fetchingJobDescription, setFetchingJobDescription] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [createAccountChecked, setCreateAccountChecked] = useState(true)
   const [extractedUserInfo, setExtractedUserInfo] = useState<{
     email: string | null; name: string | null; phone: string | null
   }>({ email: null, name: null, phone: null })
@@ -310,29 +309,6 @@ export default function DashboardPage() {
     setExtractedUserInfo({ email, name, phone })
   }
 
-  const createAccountFromResume = async () => {
-    if (!createAccountChecked || !extractedUserInfo.email) return
-    try {
-      const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12) + 'A1!'
-      const { data, error } = await supabase.auth.signUp({
-        email: extractedUserInfo.email,
-        password: tempPassword,
-        options: { data: { full_name: extractedUserInfo.name || '', phone: extractedUserInfo.phone || '' }, emailRedirectTo: `${window.location.origin}/auth/callback` },
-      })
-      if (error) {
-        if (error.message.includes('already registered')) {
-          await supabase.auth.signInWithOtp({ email: extractedUserInfo.email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })
-        }
-        return
-      }
-      if (data.user) {
-        await supabase.from('user_profiles').upsert({ id: data.user.id, email: extractedUserInfo.email, full_name: extractedUserInfo.name || '' })
-        await supabase.auth.resetPasswordForEmail(extractedUserInfo.email, { redirectTo: `${window.location.origin}/auth/reset-password` })
-        router.refresh()
-      }
-    } catch (error) { console.error('Error creating account from resume:', error) }
-  }
-
   const getDomainName = (url: string): string => {
     try {
       const hostname = new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace('www.', '')
@@ -540,13 +516,6 @@ export default function DashboardPage() {
 
     const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session && createAccountChecked && extractedUserInfo.email) {
-      await createAccountFromResume()
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      const { data: { session: newSession } } = await supabase.auth.getSession()
-      if (!newSession) { alert('Account creation in progress. Please check your email.'); return }
-    }
-
     try {
       let formattedJobDescriptionText = interviewData.jobDescriptionText
       if ((interviewData.companyName || interviewData.positionTitle) &&
@@ -559,7 +528,7 @@ export default function DashboardPage() {
           resumeText: interviewData.resumeText, jobDescriptionText: formattedJobDescriptionText,
           companyName: interviewData.companyName, positionTitle: interviewData.positionTitle,
           companyWebsite: interviewData.companyWebsite, notes: interviewData.notes,
-          createAccountChecked, extractedUserInfo,
+          extractedUserInfo,
         }))
       } else {
         setSaving(true)
@@ -1029,11 +998,6 @@ export default function DashboardPage() {
               >
                 Get started
               </button>
-              {!user && (
-                <Link href="/auth/login" className="block py-2 text-center text-xs text-slate-400 hover:text-slate-700">
-                  Already have an account? <span className="font-semibold text-accent-600">Sign in</span>
-                </Link>
-              )}
             </div>
           </div>
         )}
@@ -1203,14 +1167,6 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {!user && hasResume && (
-                <label className="flex items-center gap-2.5 cursor-pointer py-1">
-                  <input type="checkbox" checked={createAccountChecked} onChange={(e) => setCreateAccountChecked(e.target.checked)} className="w-4 h-4 text-accent-500 border-gray-300 rounded" />
-                  <span className="text-xs text-gray-500">
-                    {extractedUserInfo.email ? `Save progress to ${extractedUserInfo.email}` : 'Create free account to save progress'}
-                  </span>
-                </label>
-              )}
             </div>
           </div>
         )}
@@ -1219,7 +1175,7 @@ export default function DashboardPage() {
         {onboardStep === 'stage' && (
           <div className="flex flex-col gap-5 animate-slide-up">
             <Preppi message={getPreppiMessage()} size="md" animate className="justify-center" />
-            <p className="hidden md:block text-center text-base font-semibold text-gray-700">Which stage are you preparing for?</p>
+            <p className="hidden md:block text-center text-base font-semibold text-gray-700">Run the HR screen demo</p>
 
             {/* Company / role summary */}
             {(interviewData.companyName || interviewData.positionTitle) && (
@@ -1238,7 +1194,7 @@ export default function DashboardPage() {
 
             {/* Stage cards — Duolingo-style */}
             <div className="space-y-3">
-              {(['hr_screen', 'hiring_manager', 'culture_fit', 'final'] as const).map((stage) => {
+              {(['hr_screen'] as const).map((stage) => {
                 const config = STAGE_CONFIG[stage]
                 const isSelected = selectedStage === stage
                 const isLocked = user ? isStageLockedFn(stage) : false

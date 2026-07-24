@@ -1,9 +1,6 @@
-'use client'
-
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import { ReactNode } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase-client'
-import { Briefcase, Target, LogOut, ChevronDown } from 'lucide-react'
+import { Briefcase, Target, Sparkles } from 'lucide-react'
 
 type Tab = 'preps' | 'practice' | 'account'
 
@@ -20,29 +17,6 @@ interface AppChromeProps {
 }
 
 export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hideMobileTabs }: AppChromeProps) {
-  const [email, setEmail] = useState<string | undefined>(undefined)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getSession().then(({ data }) => setEmail(data.session?.user?.email || undefined))
-  }, [])
-
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
-  }, [])
-
-  const signOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    window.location.href = '/'
-  }
-
   return (
     <div className="min-h-[100dvh] bg-[#fafaf9]">
       {/* Top bar */}
@@ -73,34 +47,9 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hi
             </nav>
           </div>
 
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white">
-                {(email?.[0] || 'U').toUpperCase()}
-              </span>
-              <span className="hidden max-w-[160px] truncate sm:inline">{email || 'Account'}</span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <p className="text-xs font-medium text-slate-400">Signed in as</p>
-                  <p className="truncate text-sm font-semibold text-slate-800">{email || 'Account'}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  <LogOut className="h-4 w-4 text-slate-400" />
-                  Log out
-                </button>
-              </div>
-            )}
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
+            <Sparkles className="h-4 w-4" />
+            <span>Demo mode</span>
           </div>
         </div>
       </header>

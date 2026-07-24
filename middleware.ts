@@ -5,8 +5,6 @@ import type { NextRequest } from 'next/server'
 // Routes that are completely public (no auth check at all)
 const PUBLIC_ROUTES = [
   '/',
-  '/auth/login',
-  '/auth/signup',
   '/auth/callback',
 ]
 
@@ -30,6 +28,10 @@ const ANONYMOUS_ALLOWED_API = [
   '/api/interview/feedback',
   '/api/interview/practice',
   '/api/interview/text',
+  '/api/interview/professional-story',
+  '/api/interview/career-alignment',
+  '/api/interview/star-story',
+  '/api/interview/guided-workshop',
 ]
 
 // Routes that strictly require authentication
@@ -51,6 +53,11 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
+  // Authentication is intentionally disabled for the public portfolio demo.
+  if (pathname === '/auth/login' || pathname === '/auth/signup') {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
+  }
+
   // Public routes — no auth check needed
   if (PUBLIC_ROUTES.some(route => pathname === route)) {
     return res
@@ -70,9 +77,7 @@ export async function middleware(req: NextRequest) {
   // Protected routes — must be authenticated
   if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
     if (!session) {
-      const redirectUrl = new URL('/auth/login', req.url)
-      redirectUrl.searchParams.set('redirectTo', pathname)
-      return NextResponse.redirect(redirectUrl)
+      return NextResponse.redirect(new URL('/dashboard', req.url))
     }
     return res
   }
@@ -109,9 +114,7 @@ export async function middleware(req: NextRequest) {
 
   // Default: require auth for any unmatched route
   if (!session) {
-    const redirectUrl = new URL('/auth/login', req.url)
-    redirectUrl.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(redirectUrl)
+    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   return res

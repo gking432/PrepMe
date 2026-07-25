@@ -8,6 +8,7 @@ import {
   FRAMEWORK_STEPS,
   REWRITE_OPTIONS,
 } from '@/lib/career-alignment-config'
+import { PORTFOLIO_DEMO_MODE, getDemoContextPayload } from '@/lib/portfolio-demo'
 
 interface CareerAlignmentBuilderProps {
   sessionId?: string
@@ -54,6 +55,7 @@ export default function CareerAlignmentBuilder({
           flaggedQuestion: originalQuestion || '',
           userOriginalAnswer: originalAnswer || '',
           sessionId,
+          ...(PORTFOLIO_DEMO_MODE ? getDemoContextPayload() : {}),
         }),
       })
       const data = await res.json()
@@ -85,6 +87,7 @@ export default function CareerAlignmentBuilder({
           flaggedQuestion: originalQuestion || '',
           userOriginalAnswer: originalAnswer || '',
           sessionId,
+          ...(PORTFOLIO_DEMO_MODE ? getDemoContextPayload() : {}),
         }),
       })
       const data = await res.json()

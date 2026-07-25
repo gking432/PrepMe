@@ -472,9 +472,69 @@ function applyBlankInterviewGuardrailToHrRubric(rubric: any) {
   return rubric
 }
 
+async function gradePortfolioDemoHrScreen(params: {
+  transcript: string
+  demoContext: any
+}) {
+  const { transcript, demoContext } = params
+  const structuredTranscript = demoContext?.structuredTranscript || null
+  const gradingMaterials = {
+    transcript,
+    transcriptStructured: structuredTranscript,
+    resume: String(demoContext?.resumeText || '').slice(0, 12000),
+    jobDescription: String(demoContext?.jobDescriptionText || '').slice(0, 12000),
+    websiteContent: '',
+  }
+
+  let rubric = HR_SCREEN_GRADING_MODE === 'pass_fail'
+    ? await gradeHrScreenPassFail(gradingMaterials)
+    : await gradeHrScreenQuestionLevel(gradingMaterials)
+
+  if (isBlankInterviewTranscript(structuredTranscript, transcript)) {
+    applyBlankInterviewGuardrailToHrRubric(rubric)
+  }
+
+  rubric = await enrichHrWeakSignalsWithHaikuRewrites(rubric, structuredTranscript)
+  if (!validateHrScreenRubric(rubric)) {
+    throw new Error('Invalid lean HR rubric structure')
+  }
+
+  rubric.cost_estimate = buildHrCostEstimate({
+    transcript,
+    structuredTranscript,
+    durationSeconds: typeof demoContext?.durationSeconds === 'number'
+      ? demoContext.durationSeconds
+      : null,
+    graderCostEstimate: rubric.cost_estimate,
+  })
+
+  return {
+    id: crypto.randomUUID(),
+    interview_session_id: null as string | null,
+    created_at: new Date().toISOString(),
+    overall_score: Math.round(rubric.overall_assessment.overall_score),
+    area_scores: Object.fromEntries((rubric.areas || []).map((area: any) => [area.id, area.points_awarded])),
+    area_feedback: Object.fromEntries((rubric.areas || []).map((area: any) => [area.id, area.feedback])),
+    strengths: rubric.overall_assessment.key_strengths || [],
+    weaknesses: rubric.overall_assessment.key_weaknesses || [],
+    suggestions: rubric.next_steps_preparation?.improvement_suggestions || [],
+    detailed_feedback: rubric.overall_assessment.summary || '',
+    hr_screen_six_areas: rubric.hr_screen_six_areas || {
+      what_went_well: [],
+      what_needs_improve: [],
+    },
+    full_rubric: rubric,
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, transcript: providedTranscript } = await request.json()
+    const {
+      sessionId,
+      transcript: providedTranscript,
+      demoMode,
+      demoContext,
+    } = await request.json()
 
     if (!sessionId) {
       console.error('Missing sessionId')
@@ -482,6 +542,28 @@ export async function POST(request: NextRequest) {
         { error: 'Missing sessionId' },
         { status: 400 }
       )
+    }
+
+    if (demoMode) {
+      const transcript = String(providedTranscript || demoContext?.transcript || '').trim()
+      if (!transcript) {
+        return NextResponse.json(
+          { error: 'No transcript found. Please complete the interview first.' },
+          { status: 404 },
+        )
+      }
+
+      try {
+        const feedback = await gradePortfolioDemoHrScreen({ transcript, demoContext })
+        feedback.interview_session_id = sessionId
+        return NextResponse.json({ success: true, feedback, demoMode: true })
+      } catch (demoError: any) {
+        console.error('Portfolio demo grading failed:', demoError)
+        return NextResponse.json(
+          { error: 'Failed to generate HR screen feedback', details: demoError?.message || 'Unknown error' },
+          { status: 500 },
+        )
+      }
     }
 
     // Fetch transcript from database if not provided

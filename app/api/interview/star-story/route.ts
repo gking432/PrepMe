@@ -76,13 +76,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Interview session required' }, { status: 400 })
   }
 
-  const { data: interviewSession } = await supabaseAdmin
-    .from('interview_sessions')
-    .select('id')
-    .eq('id', sessionId)
-    .maybeSingle()
-  if (!interviewSession) {
-    return NextResponse.json({ error: 'Interview session not found' }, { status: 404 })
+  if (!body.demoMode) {
+    const { data: interviewSession } = await supabaseAdmin
+      .from('interview_sessions')
+      .select('id')
+      .eq('id', sessionId)
+      .maybeSingle()
+    if (!interviewSession) {
+      return NextResponse.json({ error: 'Interview session not found' }, { status: 404 })
+    }
   }
 
   const storyType = String(body.storyType || '')

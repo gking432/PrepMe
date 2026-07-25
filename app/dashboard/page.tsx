@@ -16,6 +16,7 @@ import AppChrome from '@/components/AppChrome'
 import WorkspaceSidebar from '@/components/WorkspaceSidebar'
 import { isAdminPreview, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { isInterviewStageLocked, TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
+import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type OnboardStep = 'welcome' | 'job' | 'resume' | 'stage'
@@ -136,6 +137,7 @@ export default function DashboardPage() {
   }, [user?.id])
 
   useEffect(() => {
+    if (PORTFOLIO_DEMO_MODE) return
     const loadResumes = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
@@ -148,6 +150,10 @@ export default function DashboardPage() {
   }, [user?.id])
 
   const checkUser = async () => {
+    if (PORTFOLIO_DEMO_MODE) {
+      setLoading(false)
+      return
+    }
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       setUser(session.user)
@@ -239,6 +245,30 @@ export default function DashboardPage() {
       setExtractedUserInfo({ email: null, name: null, phone: null })
       setSelectedStage('hr_screen')
       setOnboardStep('job')
+      return
+    }
+
+    if (PORTFOLIO_DEMO_MODE) {
+      try {
+        const raw = localStorage.getItem('temp_interview_data')
+        if (!raw) return
+        const data = JSON.parse(raw)
+        const parsed = parseJobDescriptionText(data.jobDescriptionText || '')
+        setInterviewData({
+          resumeFile: data.resumeText ? { name: 'Resume', text: data.resumeText } : null,
+          resumeText: data.resumeText || '',
+          jobDescriptionText: parsed.jobDescriptionText,
+          jobDescriptionUrl: '',
+          companyName: data.companyName || parsed.companyName,
+          positionTitle: data.positionTitle || parsed.positionTitle,
+          companyWebsite: data.companyWebsite || '',
+          notes: data.notes || '',
+        })
+        setExtractedUserInfo(data.extractedUserInfo || { email: null, name: null, phone: null })
+        if (data.resumeText && data.jobDescriptionText) setOnboardStep('stage')
+      } catch {
+        localStorage.removeItem('temp_interview_data')
+      }
       return
     }
 
@@ -514,7 +544,9 @@ export default function DashboardPage() {
     if (!canStartInterview()) return
     if (isStageLockedFn(stage)) { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true); return }
 
-    const { data: { session } } = await supabase.auth.getSession()
+    const session = PORTFOLIO_DEMO_MODE
+      ? null
+      : (await supabase.auth.getSession()).data.session
 
     try {
       let formattedJobDescriptionText = interviewData.jobDescriptionText

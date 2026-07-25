@@ -14,6 +14,7 @@ import {
   Target,
   Zap,
 } from 'lucide-react'
+import { PORTFOLIO_DEMO_MODE, getDemoContextPayload } from '@/lib/portfolio-demo'
 
 export type WorkshopType =
   | 'professional_story'
@@ -381,6 +382,7 @@ export default function GuidedBuilderWorkshop({
             previousChoices: choices,
             tags: selectedTags,
             ...(hasGather && Object.keys(gatherAnswers).length > 0 ? { storyContext: gatherAnswers } : {}),
+            ...(PORTFOLIO_DEMO_MODE ? getDemoContextPayload() : {}),
           }),
         })
         if (!response.ok) throw new Error('suggest_failed')
@@ -419,6 +421,7 @@ export default function GuidedBuilderWorkshop({
   // Save to practice memory after recall completes (fire-and-forget)
   const saveToProfile = useCallback(
     (transcript: string, scores: RecallResult['scores'] | null) => {
+      if (PORTFOLIO_DEMO_MODE) return
       const questionHash = hashQuestion(questionLabel)
       const key = `${workshopType}:${questionHash}`
       const value = finalAnswer
@@ -514,6 +517,7 @@ export default function GuidedBuilderWorkshop({
         fd.append('built_answer', finalAnswer)
         fd.append('workshop_type', workshopType)
         fd.append('session_id', sessionId || '')
+        if (PORTFOLIO_DEMO_MODE) fd.append('demo_mode', 'true')
         const res = await fetch('/api/interview/guided-workshop/voice-eval', { method: 'POST', body: fd })
         const data = (await res.json()) as RecallResult
         setRecallResult(data)

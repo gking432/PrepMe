@@ -7,7 +7,11 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { stage, tempInterviewData, reuseInterviewDataId, parentSessionId } = await request.json()
+    const { stage, tempInterviewData, reuseInterviewDataId, parentSessionId, demoMode } = await request.json()
+
+    if (demoMode && stage === 'hr_screen' && tempInterviewData) {
+      return NextResponse.json({ sessionId: crypto.randomUUID(), demoMode: true })
+    }
 
     // Get authenticated user if present
     const supabase = createRouteHandlerClient({ cookies })

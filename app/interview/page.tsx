@@ -8,6 +8,15 @@ import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
 import { Mic, MicOff, X, MessageSquare, Eye, EyeOff, Phone, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
+import {
+  PORTFOLIO_DEMO_MODE,
+  buildStructuredTranscript,
+  getDemoContextPayload,
+  getDemoSetup,
+  saveDemoFeedback,
+  saveDemoSession,
+  updateDemoSession,
+} from '@/lib/portfolio-demo'
 
 type Stage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 
@@ -219,6 +228,7 @@ export default function InterviewPage() {
       return
     }
 
+    if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') return
     if (stage !== 'hr_screen' || !currentSessionId || !questionText || !audioBlob.size) return
 
     const uploadKey = `${currentSessionId}:${questionText}:${audioBlob.size}`
@@ -241,6 +251,7 @@ export default function InterviewPage() {
   }
 
   const startAssistantAudioCapture = () => {
+    if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') return
     if (stage !== 'hr_screen' || isCachedRetakeRef.current) return
     if (assistantAudioRecorderRef.current?.state === 'recording') return
 
@@ -455,6 +466,15 @@ export default function InterviewPage() {
         router.push('/dashboard?new=1')
       }
 
+      if (PORTFOLIO_DEMO_MODE && stageToUse === 'hr_screen') {
+        const setup = getDemoSetup()
+        if (!setup?.resumeText?.trim() || !setup?.jobDescriptionText?.trim()) {
+          console.log('Missing demo interview setup data - redirecting to dashboard setup')
+          redirectToSetup()
+        }
+        return
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -589,10 +609,11 @@ export default function InterviewPage() {
 
   const connectRealtime = async () => {
     try {
+      const isDemoInterview = PORTFOLIO_DEMO_MODE && stage === 'hr_screen'
       // Create interview session NOW (when user clicks Begin Interview)
-      const {
-        data: { session: authSession },
-      } = await supabase.auth.getSession()
+      const authSession = isDemoInterview
+        ? null
+        : (await supabase.auth.getSession()).data.session
       
       // For HR screen, allow proceeding without account (anonymous mode)
       // Check for temp data in localStorage
@@ -618,7 +639,12 @@ export default function InterviewPage() {
       const sessionRes = await fetch('/api/interview/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage, tempInterviewData, reuseInterviewDataId }),
+        body: JSON.stringify({
+          stage,
+          tempInterviewData,
+          reuseInterviewDataId,
+          demoMode: isDemoInterview,
+        }),
       })
       if (!sessionRes.ok) {
         const err = await sessionRes.json()
@@ -629,6 +655,18 @@ export default function InterviewPage() {
       setSessionId(newSessionId)
       sessionIdRef.current = newSessionId
       console.log('Created new interview session:', newSessionId)
+      if (isDemoInterview && tempInterviewData) {
+        saveDemoSession({
+          id: newSessionId,
+          stage: 'hr_screen',
+          status: 'in_progress',
+          created_at: new Date().toISOString(),
+          company_name: tempInterviewData.companyName || '',
+          job_title: tempInterviewData.positionTitle || '',
+          demo_mode: true,
+          setup: tempInterviewData,
+        })
+      }
       localStorage.removeItem('prepme_retake_interview_data_id')
       localStorage.removeItem('prepme_selected_interview_data_id')
       
@@ -640,7 +678,11 @@ export default function InterviewPage() {
       const response = await fetch('/api/interview/realtime', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage, sessionId: newSessionId }),
+        body: JSON.stringify({
+          stage,
+          sessionId: newSessionId,
+          ...(isDemoInterview ? getDemoContextPayload() : {}),
+        }),
       })
 
       if (!response.ok) {
@@ -745,7 +787,11 @@ export default function InterviewPage() {
         // isInterviewActiveRef is set to false BEFORE disconnectRealtime() is called
         // during normal cleanup, so this only fires on unexpected disconnects.
         if (isInterviewActiveRef.current) {
-          startInterviewTraditional()
+          if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') {
+            setError('The live connection ended unexpectedly. Please restart the demo interview.')
+          } else {
+            startInterviewTraditional()
+          }
         }
       }
 
@@ -793,6 +839,15 @@ export default function InterviewPage() {
     if (!currentSessionId || currentTranscript.length === 0) {
       return
     }
+
+    if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') {
+      const transcriptText = currentTranscript.join('\n')
+      updateDemoSession({
+        transcript: transcriptText,
+        transcript_structured: buildStructuredTranscript(transcriptText),
+      })
+      return
+    }
     
     try {
       const transcriptText = currentTranscript.join('\n')
@@ -817,6 +872,7 @@ export default function InterviewPage() {
 
     const text = line.replace(/^(Interviewer|You):\s*/i, '').trim()
     if (!text) return
+    if (PORTFOLIO_DEMO_MODE) return
 
     try {
       await fetch('/api/interview/realtime-turn', {
@@ -1160,7 +1216,7 @@ export default function InterviewPage() {
     closingDetectedRef.current = false
 
     const retakeSourceSessionId =
-      stage === 'hr_screen' && typeof window !== 'undefined'
+      !PORTFOLIO_DEMO_MODE && stage === 'hr_screen' && typeof window !== 'undefined'
         ? localStorage.getItem('prepme_retake_source_session_id')
         : null
 
@@ -1183,7 +1239,12 @@ export default function InterviewPage() {
     try {
       await connectRealtime()
     } catch (error) {
-      console.error('Realtime API failed, using fallback:', error)
+      console.error('Realtime API failed:', error)
+      if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') {
+        setError('The live interview could not start. Please try again.')
+        setIsLoading(false)
+        return
+      }
       // Fallback to traditional approach
       await startInterviewTraditional()
     }
@@ -1816,7 +1877,7 @@ export default function InterviewPage() {
     
     // Cancel the interview session if it exists and is in progress
     const cleanupSessionId = sessionIdRef.current || sessionId
-    if (cleanupSessionId) {
+    if (cleanupSessionId && !(PORTFOLIO_DEMO_MODE && stage === 'hr_screen')) {
       try {
         await supabase
           .from('interview_sessions')
@@ -1884,6 +1945,56 @@ export default function InterviewPage() {
     
     // Use ref first (always up-to-date), then state, then look it up
     let currentSessionId = sessionIdRef.current || sessionId
+
+    if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') {
+      if (!currentSessionId) {
+        console.error('No local demo session ID found')
+        setError('The demo session could not be completed. Please restart the interview.')
+        return
+      }
+
+      const finalTranscript = transcriptRef.current.join('\n')
+      const durationSeconds = interviewStartTimeRef.current
+        ? Math.max(1, Math.floor((Date.now() - interviewStartTimeRef.current) / 1000))
+        : null
+      const structuredTranscript = buildStructuredTranscript(finalTranscript)
+
+      updateDemoSession({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        duration_seconds: durationSeconds || undefined,
+        transcript: finalTranscript,
+        transcript_structured: structuredTranscript,
+      })
+
+      await cleanupAllResources()
+
+      try {
+        const feedbackResponse = await fetch('/api/interview/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            transcript: finalTranscript,
+            ...getDemoContextPayload(),
+          }),
+        })
+        const result = await feedbackResponse.json()
+        if (!feedbackResponse.ok || !result?.feedback) {
+          throw new Error(result?.details || result?.error || 'Feedback generation failed')
+        }
+        saveDemoFeedback(currentSessionId, result.feedback)
+      } catch (feedbackError) {
+        console.error('Error generating local demo feedback:', feedbackError)
+        setError('The interview finished, but feedback could not be generated. Please try again.')
+        return
+      }
+
+      localStorage.setItem('last_interview_session_id', currentSessionId)
+      localStorage.setItem('prepme_hr_completed', 'true')
+      router.push(`/interview/feedback?sessionId=${encodeURIComponent(currentSessionId)}&stage=hr_screen`)
+      return
+    }
     
     if (!currentSessionId) {
       const {

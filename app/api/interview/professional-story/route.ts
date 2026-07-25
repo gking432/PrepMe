@@ -187,12 +187,26 @@ Return valid JSON only:
 }`
 
 export async function POST(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-
   const body = await request.json().catch(() => ({}))
   const isRewrite = body.rewriteInstruction && body.originalAnswer
   const sessionId = body.sessionId ? String(body.sessionId) : undefined
+
+  if (body.demoMode) {
+    const resumeText = String(body.demoContext?.resumeText || '').slice(0, 4000)
+    const jobDescription = String(body.demoContext?.jobDescriptionText || '').slice(0, 4000)
+    const companyName = String(body.demoContext?.companyName || '')
+    const roleTitle = String(body.demoContext?.roleTitle || '')
+    if (!resumeText && !jobDescription) {
+      return NextResponse.json({ error: 'Interview context not found' }, { status: 404 })
+    }
+    return isRewrite
+      ? handleRewrite(body, resumeText, jobDescription, companyName, roleTitle)
+      : handleGenerate(body, resumeText, jobDescription, companyName, roleTitle)
+  }
+
+  const supabase = createRouteHandlerClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
+
   if (!sessionId && !session?.user?.id) {
     return NextResponse.json({ error: 'Interview session required' }, { status: 400 })
   }

@@ -31,6 +31,7 @@ import {
   type StoryType,
   type StarStoryOutput,
 } from '@/lib/star-story-config'
+import { PORTFOLIO_DEMO_MODE, getDemoContextPayload } from '@/lib/portfolio-demo'
 
 interface StarStoryBuilderProps {
   sessionId?: string
@@ -244,6 +245,7 @@ export default function StarStoryBuilder({
             proofDetail: hasMetric !== 'yes' ? proofDetail.trim() : undefined,
             competencies,
             additionalNotes: additionalNotes.trim() || undefined,
+            ...(PORTFOLIO_DEMO_MODE ? getDemoContextPayload() : {}),
           }),
         })
         if (!res.ok) throw new Error('failed')

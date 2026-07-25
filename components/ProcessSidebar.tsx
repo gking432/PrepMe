@@ -54,6 +54,16 @@ export default function ProcessSidebar({ currentStageKey, currentSessionData, on
   useEffect(() => {
     let cancelled = false
     const load = async () => {
+      if (currentSessionData?.demo_mode) {
+        setMeta(readJobMeta(currentSessionData))
+        setStages({
+          hr_screen: { done: true, score: null, sessionId: currentSessionData.id || null },
+          hiring_manager: { done: false, score: null, sessionId: null },
+          culture_fit: { done: false, score: null, sessionId: null },
+          final: { done: false, score: null, sessionId: null },
+        })
+        return
+      }
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return

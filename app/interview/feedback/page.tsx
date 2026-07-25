@@ -27,6 +27,13 @@ import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 import { TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
 import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getImprovementTipForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
+import {
+  DEMO_FEEDBACK_KEY,
+  DEMO_SESSION_KEY,
+  PORTFOLIO_DEMO_MODE,
+  getDemoFeedback,
+  getDemoSession,
+} from '@/lib/portfolio-demo'
 
 function parseSessionRoleContext(jobDescriptionText?: string | null) {
   if (!jobDescriptionText) return { role: '', company: '' }
@@ -119,6 +126,11 @@ export default function InterviewDashboard() {
       setIsMockPreview(isMockParam)
       if (isMockParam) {
         setLoading(false)
+        return
+      }
+
+      if (PORTFOLIO_DEMO_MODE && getDemoSession()) {
+        setUserEmail(null)
         return
       }
 
@@ -262,6 +274,10 @@ export default function InterviewDashboard() {
   }, [currentSessionData?.id, feedback])
 
   useEffect(() => {
+    if (PORTFOLIO_DEMO_MODE) {
+      setPracticeCompletionCount(0)
+      return
+    }
     fetch('/api/profile/practice-memory', { cache: 'no-store' })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
@@ -273,6 +289,7 @@ export default function InterviewDashboard() {
 
   useEffect(() => {
     if (!currentSessionData?.id || !feedback) return
+    if (currentSessionData?.demo_mode) return
     const sixAreas = feedback?.hr_screen_six_areas || feedback?.full_rubric?.hr_screen_six_areas
     const weakSignals = Array.isArray(sixAreas?.what_needs_improve) ? sixAreas.what_needs_improve : []
     if (!weakSignals.length) return
@@ -379,6 +396,43 @@ export default function InterviewDashboard() {
         setCurrentSessionData(MOCK_SESSION_DATA)
         setHasTranscript(true)
         setFeedbackGenerating(false)
+        return
+      }
+
+      if (PORTFOLIO_DEMO_MODE) {
+        const sessionData = getDemoSession()
+        const feedbackRecord = getDemoFeedback(sessionIdFromUrl || sessionData?.id)
+
+        if (sessionData && feedbackRecord?.feedback) {
+          const feedbackData = { ...feedbackRecord.feedback }
+          if (feedbackData.full_rubric?.hr_screen_six_areas) {
+            feedbackData.hr_screen_six_areas = feedbackData.full_rubric.hr_screen_six_areas
+          }
+          if (feedbackData.full_rubric?.next_steps_preparation) {
+            feedbackData.next_steps_preparation = feedbackData.full_rubric.next_steps_preparation
+          }
+
+          setCurrentSessionData(sessionData)
+          setStructuredTranscript(sessionData.transcript_structured || null)
+          setHasTranscript(!!sessionData.transcript)
+          setFeedback(feedbackData)
+          setFeedbackGenerating(false)
+          setActiveTab('results')
+          setDefaultTabSet(true)
+
+          const areaScoresData = feedbackData.area_scores || {}
+          const areaFeedbackData = feedbackData.area_feedback || {}
+          const scores = Object.keys(areaScoresData).map((area) => ({
+            area,
+            score: areaScoresData[area],
+            feedback: areaFeedbackData[area] || '',
+            displayName: area.replace(/_/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase()),
+          }))
+          scores.sort((a, b) => a.score - b.score)
+          setAreaScores(scores)
+        } else {
+          console.warn('No completed local demo feedback found')
+        }
         return
       }
 
@@ -861,6 +915,8 @@ export default function InterviewDashboard() {
       console.error('Error loading feedback:', error)
     } finally {
       setLoading(false)
+
+      if (PORTFOLIO_DEMO_MODE) return
 
       const { data: { session: authSession } } = await supabase.auth.getSession()
 
@@ -2203,6 +2259,15 @@ export default function InterviewDashboard() {
     try {
       if (!currentSessionData?.id) {
         router.push('/dashboard')
+        return
+      }
+
+      if (PORTFOLIO_DEMO_MODE && currentSessionData.demo_mode) {
+        localStorage.removeItem(DEMO_SESSION_KEY)
+        localStorage.removeItem(DEMO_FEEDBACK_KEY)
+        localStorage.removeItem('last_interview_session_id')
+        localStorage.removeItem('prepme_retake_source_session_id')
+        router.push('/interview?stage=hr_screen')
         return
       }
 

@@ -33,18 +33,21 @@ export async function POST(request: NextRequest) {
     const builtAnswer = String(formData.get('built_answer') || '').slice(0, 4000)
     const workshopType = String(formData.get('workshop_type') || '')
     const sessionId = String(formData.get('session_id') || '')
+    const demoMode = String(formData.get('demo_mode') || '') === 'true'
 
     if (!audioFile || !builtAnswer || !sessionId) {
       return NextResponse.json({ error: 'Missing audio, built_answer, or session_id' }, { status: 400 })
     }
 
-    const { data: interviewSession } = await supabaseAdmin
-      .from('interview_sessions')
-      .select('id')
-      .eq('id', sessionId)
-      .maybeSingle()
-    if (!interviewSession) {
-      return NextResponse.json({ error: 'Interview session not found' }, { status: 404 })
+    if (!demoMode) {
+      const { data: interviewSession } = await supabaseAdmin
+        .from('interview_sessions')
+        .select('id')
+        .eq('id', sessionId)
+        .maybeSingle()
+      if (!interviewSession) {
+        return NextResponse.json({ error: 'Interview session not found' }, { status: 404 })
+      }
     }
 
     // 1) Transcribe with Whisper (~$0.006/min, typically $0.001-0.002 per answer)

@@ -247,10 +247,10 @@ function safeParseJson(raw: string): any {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
-
   const body = await request.json().catch(() => ({}))
+  const session = body.demoMode
+    ? null
+    : (await createRouteHandlerClient({ cookies }).auth.getSession()).data.session
   const workshopType = body.workshopType as WorkshopType
   const stepKey = String(body.stepKey || '')
   const sessionId = body.sessionId ? String(body.sessionId) : undefined
@@ -269,7 +269,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid workshopType or stepKey' }, { status: 400 })
   }
 
-  const { jobDescription, resumeText, companyWebsite } = await fetchUserContext(sessionId, session?.user?.id)
+  const context = body.demoMode
+    ? {
+        jobDescription: String(body.demoContext?.jobDescriptionText || '').slice(0, 4000),
+        resumeText: String(body.demoContext?.resumeText || '').slice(0, 4000),
+        companyWebsite: String(body.demoContext?.companyWebsite || ''),
+      }
+    : await fetchUserContext(sessionId, session?.user?.id)
+  const { jobDescription, resumeText, companyWebsite } = context
   if (!resumeText && !jobDescription) {
     return NextResponse.json({ error: 'Interview context not found' }, { status: 404 })
   }

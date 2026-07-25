@@ -17,21 +17,34 @@ const REALTIME_THINKING_SILENCE_MS = 3200
 
 export async function POST(request: NextRequest) {
   try {
-    const { stage, sessionId } = await request.json()
+    const { stage, sessionId, demoMode, demoContext } = await request.json()
 
     // Get interview prompt
-    const { data: promptData } = await supabaseAdmin
-      .from('interview_prompts')
-      .select('*')
-      .eq('stage', stage)
-      .single()
+    let promptData = null
+    if (!demoMode) {
+      const result = await supabaseAdmin
+        .from('interview_prompts')
+        .select('*')
+        .eq('stage', stage)
+        .single()
+      promptData = result.data
+    }
 
     // Get user interview data for context
     // First try to get from session, but also get the latest interview data as fallback
     // Use supabaseAdmin to bypass RLS since we're filtering by user_id
-    let interviewData = null
+    let interviewData = demoMode
+      ? {
+          id: null,
+          resume_text: String(demoContext?.resumeText || '').slice(0, 12000),
+          job_description_text: String(demoContext?.jobDescriptionText || '').slice(0, 12000),
+          company_website: String(demoContext?.companyWebsite || ''),
+          company_name: String(demoContext?.companyName || ''),
+          role_title: String(demoContext?.roleTitle || ''),
+        }
+      : null
     let sessionUserId: string | null = null
-    if (sessionId) {
+    if (sessionId && !demoMode) {
       const { data: sessionData } = await supabaseAdmin
         .from('interview_sessions')
         .select('user_interview_data_id, user_id')
@@ -116,8 +129,8 @@ export async function POST(request: NextRequest) {
     const hasResume = !!interviewData?.resume_text && interviewData.resume_text.trim().length > 0
     const hasJobDescription = !!interviewData?.job_description_text && interviewData.job_description_text.trim().length > 0
 
-    let companyName = 'the company'
-    if (interviewData?.company_website) {
+    let companyName = interviewData?.company_name || 'the company'
+    if (!interviewData?.company_name && interviewData?.company_website) {
       try {
         const url = interviewData.company_website.startsWith('http')
           ? new URL(interviewData.company_website)

@@ -30,6 +30,7 @@ import {
   type RewriteInstruction,
   type ProfessionalIntroductionOutput,
 } from '@/lib/professional-story-config'
+import { PORTFOLIO_DEMO_MODE, getDemoContextPayload } from '@/lib/portfolio-demo'
 
 interface ProfessionalStoryBuilderProps {
   sessionId?: string
@@ -139,6 +140,7 @@ export default function ProfessionalStoryBuilder({
             professionalIdentityStyle: identityStyle,
             customProfessionalIdentity: identityStyle === 'custom' ? customIdentity.trim() : undefined,
             tone, length, avoidances: DEFAULT_AVOIDANCES, sessionId,
+            ...(PORTFOLIO_DEMO_MODE ? getDemoContextPayload() : {}),
           }),
         })
         if (!res.ok) throw new Error('failed')
@@ -160,7 +162,13 @@ export default function ProfessionalStoryBuilder({
     try {
       const res = await fetch('/api/interview/professional-story', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rewriteInstruction: instruction, originalAnswer: output.primaryAnswer, originalOutput: output, sessionId }),
+        body: JSON.stringify({
+          rewriteInstruction: instruction,
+          originalAnswer: output.primaryAnswer,
+          originalOutput: output,
+          sessionId,
+          ...(PORTFOLIO_DEMO_MODE ? getDemoContextPayload() : {}),
+        }),
       })
       if (!res.ok) throw new Error('failed')
       const data = await res.json()

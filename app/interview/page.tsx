@@ -27,8 +27,12 @@ const STAGE_NAMES: Record<Stage, string> = {
   final: 'Final Round Interview',
 }
 
-const REALTIME_THINKING_SILENCE_MS = 3200
-const FALLBACK_THINKING_SILENCE_MS = 4500
+const REALTIME_THINKING_SILENCE_MS = 7000
+const FALLBACK_THINKING_SILENCE_MS = 6500
+const REALTIME_HR_MAX_OUTPUT_TOKENS = 520
+const REALTIME_DEFAULT_MAX_OUTPUT_TOKENS = 700
+const REALTIME_VAD_THRESHOLD = 0.7
+const REALTIME_VAD_PREFIX_PADDING_MS = 500
 
 export default function InterviewPage() {
   const router = useRouter()
@@ -175,8 +179,8 @@ export default function InterviewPage() {
             turn_detection: enabled
               ? {
                   type: 'server_vad',
-                  threshold: 0.8,
-                  prefix_padding_ms: 300,
+                  threshold: REALTIME_VAD_THRESHOLD,
+                  prefix_padding_ms: REALTIME_VAD_PREFIX_PADDING_MS,
                   silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
                   create_response: true,
                   interrupt_response: false,
@@ -750,8 +754,8 @@ export default function InterviewPage() {
                 transcription: { model: 'gpt-4o-mini-transcribe' },
                 turn_detection: {
                   type: 'server_vad',
-                  threshold: 0.8,
-                  prefix_padding_ms: 300,
+                  threshold: REALTIME_VAD_THRESHOLD,
+                  prefix_padding_ms: REALTIME_VAD_PREFIX_PADDING_MS,
                   silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
                   create_response: true,
                   interrupt_response: false,
@@ -761,7 +765,7 @@ export default function InterviewPage() {
                 voice: realtimeVoice,
               },
             },
-            max_output_tokens: stage === 'hr_screen' ? 180 : 400,
+            max_output_tokens: stage === 'hr_screen' ? REALTIME_HR_MAX_OUTPUT_TOKENS : REALTIME_DEFAULT_MAX_OUTPUT_TOKENS,
           },
         }))
         setIsConnected(true)

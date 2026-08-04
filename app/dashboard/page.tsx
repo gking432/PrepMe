@@ -239,7 +239,10 @@ export default function DashboardPage() {
   }
 
   const loadInterviewData = async () => {
-    if (forceNewProcess) {
+    if (PORTFOLIO_DEMO_MODE) {
+      // A public demo should always begin with a blank setup. The completed
+      // session retains its own setup for feedback and practice context.
+      localStorage.removeItem('temp_interview_data')
       setInterviewData(emptyInterviewData)
       setSelectedResumeId(null)
       setExtractedUserInfo({ email: null, name: null, phone: null })
@@ -248,27 +251,12 @@ export default function DashboardPage() {
       return
     }
 
-    if (PORTFOLIO_DEMO_MODE) {
-      try {
-        const raw = localStorage.getItem('temp_interview_data')
-        if (!raw) return
-        const data = JSON.parse(raw)
-        const parsed = parseJobDescriptionText(data.jobDescriptionText || '')
-        setInterviewData({
-          resumeFile: data.resumeText ? { name: 'Resume', text: data.resumeText } : null,
-          resumeText: data.resumeText || '',
-          jobDescriptionText: parsed.jobDescriptionText,
-          jobDescriptionUrl: '',
-          companyName: data.companyName || parsed.companyName,
-          positionTitle: data.positionTitle || parsed.positionTitle,
-          companyWebsite: data.companyWebsite || '',
-          notes: data.notes || '',
-        })
-        setExtractedUserInfo(data.extractedUserInfo || { email: null, name: null, phone: null })
-        if (data.resumeText && data.jobDescriptionText) setOnboardStep('stage')
-      } catch {
-        localStorage.removeItem('temp_interview_data')
-      }
+    if (forceNewProcess) {
+      setInterviewData(emptyInterviewData)
+      setSelectedResumeId(null)
+      setExtractedUserInfo({ email: null, name: null, phone: null })
+      setSelectedStage('hr_screen')
+      setOnboardStep('job')
       return
     }
 

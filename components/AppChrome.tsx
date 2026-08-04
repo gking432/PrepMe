@@ -22,30 +22,9 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hi
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-7">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <img src="/logo.svg" alt="PrepMe" className="h-6 w-auto" />
-              <span className="text-[17px] font-bold tracking-tight text-slate-900">PrepMe</span>
-            </Link>
-            <nav className="hidden items-center gap-1 md:flex">
-              {NAV.map((n) => {
-                const Icon = n.icon
-                const on = active === n.key
-                return (
-                  <Link
-                    key={n.key}
-                    href={n.href}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      on ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {n.label}
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
+          <Link href="/dashboard" className="flex items-center" aria-label="PrepMe dashboard">
+            <img src="/logo.svg" alt="PrepMe" className="h-7 w-auto" />
+          </Link>
 
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
             <Sparkles className="h-4 w-4" />

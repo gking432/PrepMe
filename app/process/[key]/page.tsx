@@ -563,14 +563,16 @@ export default function ProcessSpinePage() {
 
                   {/* Single CTA */}
                   {smart && (
-                    <button
-                      type="button"
-                      onClick={smart.action}
-                      className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-accent-600 px-5 py-3.5 text-base font-bold text-white transition hover:bg-accent-700"
-                    >
-                      {smart.label}
-                      <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-                    </button>
+                    <div className="mt-5 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={smart.action}
+                        className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-accent-700 sm:w-auto"
+                      >
+                        {smart.label}
+                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                      </button>
+                    </div>
                   )}
                 </div>
 

@@ -12,6 +12,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'PrepMe',
   description: 'AI interview practice that feels like a real hiring process, with premium coaching after every round.',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

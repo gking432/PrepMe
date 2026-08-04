@@ -1024,7 +1024,7 @@ export default function DashboardPage() {
 
         {/* ── SETUP STEPS WRAPPER (sidebar + main) ─────────────────────── */}
         {onboardStep !== 'welcome' && (
-          <div className="mx-auto md:grid md:max-w-5xl md:grid-cols-[220px_minmax(0,640px)] md:items-start md:justify-center md:gap-10">
+          <div className="md:grid md:grid-cols-[220px_minmax(0,1fr)] md:items-start md:gap-10">
             {/* Setup checklist sidebar — desktop only */}
             <aside className="sticky top-20 hidden self-start rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:block">
               <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
@@ -1066,7 +1066,7 @@ export default function DashboardPage() {
             </aside>
 
             {/* Main step content */}
-            <div className="min-w-0 md:w-full">
+            <div className="min-w-0 md:w-full md:max-w-2xl md:justify-self-center">
 
         {/* ── JOB STEP ─────────────────────────────────────────────────── */}
         {onboardStep === 'job' && (

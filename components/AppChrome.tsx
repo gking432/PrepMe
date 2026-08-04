@@ -13,15 +13,16 @@ interface AppChromeProps {
   active?: Tab
   children: ReactNode
   maxWidth?: string
+  headerMaxWidth?: string
   hideMobileTabs?: boolean
 }
 
-export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', hideMobileTabs }: AppChromeProps) {
+export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', headerMaxWidth, hideMobileTabs }: AppChromeProps) {
   return (
     <div className="min-h-[100dvh] bg-[#fafaf9]">
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className={`mx-auto flex h-14 w-full ${maxWidth} items-center justify-between px-4 sm:px-6`}>
+        <div className={`mx-auto flex h-14 w-full ${headerMaxWidth || maxWidth} items-center justify-between px-4 sm:px-6`}>
           <Link href="/dashboard" className="flex items-center" aria-label="PrepMe dashboard">
             <img src="/logo.svg" alt="PrepMe" className="h-7 w-auto" />
           </Link>

@@ -1036,9 +1036,9 @@ export default function DashboardPage() {
 
         {/* ── SETUP STEPS WRAPPER (sidebar + main) ─────────────────────── */}
         {onboardStep !== 'welcome' && (
-          <div className="md:grid md:grid-cols-[280px_minmax(0,1fr)] md:items-start md:gap-6">
+          <div className="mx-auto md:grid md:max-w-5xl md:grid-cols-[220px_minmax(0,640px)] md:items-start md:justify-center md:gap-10">
             {/* Setup checklist sidebar — desktop only */}
-            <aside className="sticky top-20 hidden self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:block">
+            <aside className="sticky top-20 hidden self-start rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:block">
               <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
                 <ChevronDown className="h-4 w-4 rotate-90" /> Cancel
               </Link>
@@ -1078,7 +1078,7 @@ export default function DashboardPage() {
             </aside>
 
             {/* Main step content */}
-            <div className="min-w-0">
+            <div className="min-w-0 md:w-full">
 
         {/* ── JOB STEP ─────────────────────────────────────────────────── */}
         {onboardStep === 'job' && (
@@ -1111,6 +1111,14 @@ export default function DashboardPage() {
             </div>
 
             <JobPostingPanel />
+            <div className="hidden justify-end border-t border-slate-200 pt-5 md:flex">
+              <button
+                onClick={() => setOnboardStep('resume')}
+                className="btn-coach-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm"
+              >
+                Continue to resume <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -1200,19 +1208,35 @@ export default function DashboardPage() {
               )}
 
             </div>
+            <div className="hidden justify-end border-t border-slate-200 pt-5 md:flex">
+              <button
+                onClick={() => setOnboardStep('stage')}
+                disabled={!hasResume}
+                className="btn-coach-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Continue to interview <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
 
         {/* ── STAGE SELECTION ───────────────────────────────────────────── */}
         {onboardStep === 'stage' && (
-          <div className="flex flex-col gap-5 animate-slide-up">
-            <Preppi message={getPreppiMessage()} size="md" animate className="justify-center" />
-            <p className="hidden md:block text-center text-base font-semibold text-gray-700">Run the HR screen demo</p>
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 animate-slide-up">
+            <div className="md:hidden">
+              <Preppi message={getPreppiMessage()} size="md" animate className="justify-center" />
+            </div>
+
+            <div className="hidden border-b border-slate-200 pb-5 md:block">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent-600">Interview ready</p>
+              <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Your HR screen is ready to run.</h1>
+              <p className="mt-2 text-sm leading-6 text-slate-500">A realistic recruiter conversation followed by a detailed review of your answers.</p>
+            </div>
 
             {/* Company / role summary */}
             {(interviewData.companyName || interviewData.positionTitle) && (
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-gray-400 font-medium">
+              <div className="flex items-center justify-center gap-2 md:justify-start">
+                <span className="text-sm font-medium text-gray-500">
                   {[interviewData.positionTitle, interviewData.companyName].filter(Boolean).join(' at ')}
                 </span>
                 <button onClick={() => setOnboardStep('job')} className="text-xs text-accent-500 font-semibold hover:text-accent-700">
@@ -1238,12 +1262,12 @@ export default function DashboardPage() {
                       if (isLocked) { setPurchaseHighlightStage(stage); setShowPurchaseFlow(true) }
                       else setSelectedStage(stage)
                     }}
-                    className={`flex w-full items-center gap-4 rounded-[1.45rem] px-5 py-4 text-left transition-all active:scale-[0.985] ${
+                    className={`flex w-full items-center gap-4 rounded-xl px-5 py-5 text-left transition-all active:scale-[0.985] ${
                       isLocked
                         ? 'border border-slate-200 bg-slate-100/80 shadow-none'
                         : isSelected
-                        ? `${config.bg} ${config.activeBorder} border-b-4 shadow-[0_18px_34px_rgba(15,23,42,0.14)]`
-                        : 'border border-slate-200/80 bg-white/95 shadow-[0_14px_30px_rgba(15,23,42,0.06)] hover:border-slate-300'
+                        ? `${config.bg} ${config.activeBorder} border shadow-[0_12px_28px_rgba(15,23,42,0.12)]`
+                        : 'border border-slate-200 bg-white shadow-sm hover:border-slate-300'
                     }`}
                   >
                     <span className="text-3xl shrink-0">{config.emoji}</span>
@@ -1274,6 +1298,26 @@ export default function DashboardPage() {
               })}
             </div>
 
+            <div className="hidden items-center justify-between border-t border-slate-200 pt-5 md:flex">
+              <p className="text-sm text-slate-500">Takes about 10 minutes.</p>
+              {user && isStageLockedFn(selectedStage) ? (
+                <button
+                  onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
+                  className="btn-coach-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm"
+                >
+                  <Lock className="h-4 w-4" /> Unlock {STAGE_CONFIG[selectedStage].name}
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleStartInterview(selectedStage)}
+                  disabled={!canStartInterview() || saving}
+                  className="btn-coach-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {saving ? 'Starting...' : 'Start HR screen'} <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
             {/* Bundle unlock */}
             {user && !TEST_ALL_INTERVIEW_STAGES_UNLOCKED && PAID_STAGES.some(s => isStageLockedFn(s)) && (
               <button
@@ -1295,7 +1339,7 @@ export default function DashboardPage() {
 
       {/* ── STICKY BOTTOM CTA ──────────────────────── */}
       {!showWorkspaceHub && onboardStep !== 'welcome' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#f4f7fb] via-[#f4f7fb]/96 to-transparent px-5 pb-7 pt-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#f4f7fb] via-[#f4f7fb]/96 to-transparent px-5 pb-7 pt-4 md:hidden">
           {onboardStep === 'job' && (
             <button
               onClick={() => setOnboardStep('resume')}

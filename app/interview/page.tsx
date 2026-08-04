@@ -31,7 +31,7 @@ const REALTIME_THINKING_SILENCE_MS = 7000
 const FALLBACK_THINKING_SILENCE_MS = 6500
 const REALTIME_HR_MAX_OUTPUT_TOKENS = 520
 const REALTIME_DEFAULT_MAX_OUTPUT_TOKENS = 700
-const REALTIME_VAD_THRESHOLD = 0.7
+const REALTIME_VAD_THRESHOLD = 0.5
 const REALTIME_VAD_PREFIX_PADDING_MS = 500
 
 export default function InterviewPage() {
@@ -147,20 +147,6 @@ export default function InterviewPage() {
     stream.getAudioTracks().forEach((track) => {
       track.enabled = enabled
     })
-  }
-
-  const setRealtimeAudioInputEnabled = async (enabled: boolean) => {
-    const sender = localAudioSenderRef.current
-    const track = localAudioTrackRef.current
-
-    if (!sender) return
-
-    try {
-      await sender.replaceTrack(enabled ? track : null)
-      console.log('[realtime] audio sender', enabled ? 'attached' : 'detached')
-    } catch (error) {
-      console.error('[realtime] failed to toggle audio sender', error)
-    }
   }
 
   const updateRealtimeTurnDetection = (enabled: boolean) => {
@@ -320,8 +306,7 @@ export default function InterviewPage() {
     if (!assistantSpeakingRef.current) {
       assistantSpeakingRef.current = true
       setIsPlayingAudio(true)
-      setRealtimeMicEnabled(false)
-      void setRealtimeAudioInputEnabled(false)
+      setIsRecording(false)
       updateRealtimeTurnDetection(false)
       console.log('[realtime] assistant speech started')
     }
@@ -343,8 +328,9 @@ export default function InterviewPage() {
     stopAssistantAudioCapture()
 
     if (!closingDetectedRef.current) {
-      setRealtimeMicEnabled(true)
-      void setRealtimeAudioInputEnabled(true)
+      // Keep the WebRTC mic track attached throughout the call. Safari can fail
+      // to resume a track after it has been disabled or replaced with null.
+      setIsRecording(true)
       updateRealtimeTurnDetection(true)
     }
 
@@ -717,10 +703,14 @@ export default function InterviewPage() {
       // Remote audio plays through a hidden <audio> element
       const audioEl = document.createElement('audio')
       audioEl.autoplay = true
+      audioEl.setAttribute('playsinline', '')
+      audioEl.style.display = 'none'
+      document.body.appendChild(audioEl)
       remoteAudioRef.current = audioEl
       pc.ontrack = (e) => {
         remoteAssistantStreamRef.current = e.streams[0]
         audioEl.srcObject = e.streams[0]
+        void audioEl.play().catch((error) => console.warn('Unable to start interviewer audio playback:', error))
         setIsPlayingAudio(true)
         e.streams[0].getTracks().forEach((t) => {
           t.onended = () => setIsPlayingAudio(false)
@@ -770,6 +760,8 @@ export default function InterviewPage() {
         }))
         setIsConnected(true)
         setIsListening(true)
+        setIsRecording(true)
+        setIsLoading(false)
       }
 
       dc.onmessage = (e) => {
@@ -787,6 +779,7 @@ export default function InterviewPage() {
         console.log('Data channel closed')
         setIsConnected(false)
         setIsListening(false)
+        setIsRecording(false)
         // Only fall back if the interview is still supposed to be active.
         // isInterviewActiveRef is set to false BEFORE disconnectRealtime() is called
         // during normal cleanup, so this only fires on unexpected disconnects.
@@ -804,6 +797,7 @@ export default function InterviewPage() {
         if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
           setIsConnected(false)
           setIsListening(false)
+          setIsRecording(false)
         }
       }
 
@@ -833,6 +827,7 @@ export default function InterviewPage() {
       console.log('WebRTC connection established')
     } catch (error) {
       console.error('Error connecting to Realtime API:', error)
+      setIsLoading(false)
       alert('Failed to start interview. Please try again.')
     }
   }
@@ -1108,6 +1103,7 @@ export default function InterviewPage() {
     }
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null
+      remoteAudioRef.current.remove()
       remoteAudioRef.current = null
     }
     if (wsRef.current) {
@@ -1127,6 +1123,7 @@ export default function InterviewPage() {
     }
     setIsConnected(false)
     setIsListening(false)
+    setIsRecording(false)
   }
 
   const startCachedHrRetake = async (sourceSessionId: string) => {
@@ -1218,6 +1215,23 @@ export default function InterviewPage() {
     // Record start time for HR screen time tracking
     interviewStartTimeRef.current = Date.now()
     closingDetectedRef.current = false
+    setError(null)
+    setIsLoading(true)
+
+    // Ask for microphone access directly from the button tap. iOS Safari can
+    // reject or lose this request if it happens after session/network work.
+    try {
+      const stream = await getOrCreateInterviewMediaStream()
+      if (!stream.getAudioTracks().some((track) => track.readyState === 'live')) {
+        throw new Error('No active microphone track was returned.')
+      }
+      setHasUserPermission(true)
+    } catch (error) {
+      console.error('Unable to start microphone:', error)
+      setError('PrepMe needs microphone access to run the live interview. Allow microphone access in your browser settings, then try again.')
+      setIsLoading(false)
+      return
+    }
 
     const retakeSourceSessionId =
       !PORTFOLIO_DEMO_MODE && stage === 'hr_screen' && typeof window !== 'undefined'

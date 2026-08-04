@@ -35,18 +35,15 @@ export default function Preppi({ message, size = 'md', animate = true, className
     <div
       className={`${showOnDesktop ? '' : 'md:hidden '}flex items-end ${s.wrapper} transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} ${className}`}
     >
-      {/* Parrot SVG */}
-      <div className="shrink-0" style={{ width: s.bird, height: s.bird }}>
+      {/* The mascot is desktop-only; mobile keeps the coaching message without visual clutter. */}
+      <div className="hidden shrink-0 md:block" style={{ width: s.bird, height: s.bird }}>
         <PreppiSVG />
       </div>
 
       {/* Speech bubble */}
       {message && (
-        <div className="relative max-w-xs rounded-[1.4rem] rounded-bl-sm border border-violet-200/80 bg-white/96 px-4 py-3.5 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
+        <div className="relative max-w-xs rounded-[1.4rem] border border-violet-200/80 bg-white/96 px-4 py-3.5 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
           <p className="text-sm font-bold leading-snug text-slate-800">{message}</p>
-          {/* Tail */}
-          <div className="absolute -left-2 bottom-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-white border-b-[6px] border-b-transparent" />
-          <div className="absolute -left-[11px] bottom-[10px] h-0 w-0 border-b-[7px] border-r-[10px] border-t-[7px] border-b-transparent border-r-violet-200 border-t-transparent" />
         </div>
       )}
     </div>

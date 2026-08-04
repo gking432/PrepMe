@@ -24,7 +24,8 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', he
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className={`mx-auto flex h-14 w-full ${headerMaxWidth || maxWidth} items-center justify-between px-4 sm:px-6`}>
           <Link href="/dashboard" className="flex items-center" aria-label="PrepMe dashboard">
-            <img src="/logo.svg" alt="PrepMe" className="h-7 w-auto" />
+            <span className="text-[19px] font-semibold leading-none text-slate-900 sm:hidden">Prep<span className="text-accent-600">Me</span></span>
+            <img src="/logo.svg" alt="PrepMe" className="hidden h-7 w-auto sm:block" />
           </Link>
 
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">

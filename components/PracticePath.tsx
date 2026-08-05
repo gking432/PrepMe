@@ -9,6 +9,11 @@ import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
+import {
+  PORTFOLIO_DEMO_MODE,
+  getDemoPracticeProgress,
+  markDemoPracticeComplete,
+} from '@/lib/portfolio-demo'
 
 interface Evidence {
   question?: string
@@ -146,6 +151,7 @@ interface Node {
 export default function PracticePath({ sessionId, weakSignals, transcript, stageName = 'HR Screen', onClose }: PracticePathProps) {
   const router = useRouter()
   const [drafts, setDrafts] = useState<Record<string, Draft>>({})
+  const [demoCompletedKeys, setDemoCompletedKeys] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
@@ -180,6 +186,12 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
   )
 
   const loadDrafts = useCallback(async () => {
+    if (PORTFOLIO_DEMO_MODE) {
+      setDemoCompletedKeys(getDemoPracticeProgress(sessionId))
+      setLoading(false)
+      return
+    }
+
     try {
       const res = await fetch('/api/profile/practice-memory', { cache: 'no-store' })
       if (!res.ok) {
@@ -194,13 +206,14 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [sessionId])
 
   useEffect(() => {
     loadDrafts()
   }, [loadDrafts])
 
-  const completedCount = nodesWithDrafts.filter((n) => n.draft).length
+  const completedKeySet = useMemo(() => new Set(demoCompletedKeys), [demoCompletedKeys])
+  const completedCount = nodesWithDrafts.filter((n) => n.draft || completedKeySet.has(n.key)).length
   const totalCount = nodes.length
 
   function handleClose() {
@@ -213,9 +226,16 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
   }
 
   function handleWorkshopComplete() {
+    const completedNode = activeIndex !== null ? nodesWithDrafts[activeIndex] : null
+    if (PORTFOLIO_DEMO_MODE && completedNode) {
+      markDemoPracticeComplete(sessionId, completedNode.key)
+      setDemoCompletedKeys((current) => current.includes(completedNode.key) ? current : [...current, completedNode.key])
+    }
     setActiveIndex(null)
-    // Refetch drafts to show the new completion
-    setTimeout(() => loadDrafts(), 250)
+    if (!PORTFOLIO_DEMO_MODE) {
+      // Refetch persisted drafts to show the new completion.
+      setTimeout(() => loadDrafts(), 250)
+    }
   }
 
   const activeNode = activeIndex !== null ? nodesWithDrafts[activeIndex] : null
@@ -269,7 +289,7 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
           ) : (
             <ol className="relative space-y-3">
               {nodesWithDrafts.map((node, i) => {
-                const completed = !!node.draft
+                const completed = !!node.draft || completedKeySet.has(node.key)
                 const avg = scoreLabel(node.draft?.meta?.scores)
                 const isLast = i === nodesWithDrafts.length - 1
 
@@ -360,8 +380,8 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
                 <p className="text-xs font-bold text-slate-700">Take your time</p>
               </div>
               <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                Close anytime — your progress and answers are saved to your profile. Come back here to pick up
-                where you left off.
+                Close anytime — your progress is saved {PORTFOLIO_DEMO_MODE ? 'in this browser' : 'to your profile'}.
+                Come back here to pick up where you left off.
               </p>
             </div>
           )}

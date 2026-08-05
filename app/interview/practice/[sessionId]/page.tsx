@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import PracticePath, { type WeakSignal } from '@/components/PracticePath'
+import { PORTFOLIO_DEMO_MODE, getDemoFeedback, getDemoSession } from '@/lib/portfolio-demo'
 
 const STAGE_LABEL: Record<string, string> = {
   hr_screen: 'HR Screen',
@@ -30,11 +31,35 @@ export default function PracticeForSessionPage() {
       return
     }
 
-    const supabase = createClient()
     let cancelled = false
 
     async function load() {
       try {
+        if (PORTFOLIO_DEMO_MODE) {
+          const sessionRow = getDemoSession()
+          const feedbackRecord = getDemoFeedback(sessionId)
+
+          if (!sessionRow || sessionRow.id !== sessionId || !feedbackRecord?.feedback) {
+            throw new Error('This demo practice path is no longer available. Run the HR screen again to create a new one.')
+          }
+
+          const feedback = feedbackRecord.feedback
+          const sixAreas =
+            feedback?.hr_screen_six_areas ||
+            feedback?.full_rubric?.hr_screen_six_areas ||
+            feedback?.full_rubric?.hiring_manager_six_areas ||
+            feedback?.hiring_manager_six_areas
+          const list = Array.isArray(sixAreas?.what_needs_improve) ? sixAreas.what_needs_improve : []
+
+          if (!cancelled) {
+            setStage(sessionRow.stage)
+            setTranscript(sessionRow.transcript_structured || null)
+            setWeakSignals(list as WeakSignal[])
+          }
+          return
+        }
+
+        const supabase = createClient()
         const { data: sessionRow, error: sessionErr } = await supabase
           .from('interview_sessions')
           .select('*')

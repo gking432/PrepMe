@@ -2,6 +2,7 @@ export const PORTFOLIO_DEMO_MODE = true
 
 export const DEMO_SESSION_KEY = 'prepme_demo_session'
 export const DEMO_FEEDBACK_KEY = 'prepme_demo_feedback'
+export const DEMO_PRACTICE_PROGRESS_KEY = 'prepme_demo_practice_progress'
 
 export type DemoInterviewSetup = {
   resumeText?: string
@@ -82,6 +83,23 @@ export function getDemoFeedback(sessionId?: string): DemoFeedbackRecord | null {
   const record = readJson<DemoFeedbackRecord>(DEMO_FEEDBACK_KEY)
   if (!record || (sessionId && record.sessionId !== sessionId)) return null
   return record
+}
+
+export function getDemoPracticeProgress(sessionId: string): string[] {
+  const progress = readJson<Record<string, string[]>>(DEMO_PRACTICE_PROGRESS_KEY)
+  const completed = progress?.[sessionId]
+  return Array.isArray(completed) ? completed.filter((key) => typeof key === 'string') : []
+}
+
+export function markDemoPracticeComplete(sessionId: string, practiceKey: string): void {
+  if (typeof window === 'undefined') return
+  const progress = readJson<Record<string, string[]>>(DEMO_PRACTICE_PROGRESS_KEY) || {}
+  const completed = new Set(progress[sessionId] || [])
+  completed.add(practiceKey)
+  window.localStorage.setItem(
+    DEMO_PRACTICE_PROGRESS_KEY,
+    JSON.stringify({ ...progress, [sessionId]: Array.from(completed) }),
+  )
 }
 
 export function buildStructuredTranscript(transcript: string) {

@@ -2,13 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import FileUpload from '@/components/FileUpload'
 import Link from 'next/link'
 import Header from '@/components/Header'
-import { CheckCircle2, Lock, Crown, ChevronDown, ChevronRight, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare, Archive, RotateCcw, Play, Eye, ExternalLink, TrendingUp, X } from 'lucide-react'
+import { CheckCircle2, Lock, Crown, ChevronDown, ChevronRight, Briefcase, ArrowRight, FileText, FolderOpen, Clock, PlusSquare, Archive, RotateCcw, Play, Eye, ExternalLink, TrendingUp, X, Sparkles } from 'lucide-react'
 import PurchaseFlow from '@/components/PurchaseFlow'
 import Preppi from '@/components/Preppi'
 import MobileNav from '@/components/MobileNav'
@@ -16,7 +16,7 @@ import AppChrome from '@/components/AppChrome'
 import WorkspaceSidebar from '@/components/WorkspaceSidebar'
 import { isAdminPreview, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
 import { isInterviewStageLocked, TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
-import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
+import { PORTFOLIO_DEMO_MODE, PORTFOLIO_SAMPLE_SETUP } from '@/lib/portfolio-demo'
 
 type InterviewStage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type OnboardStep = 'welcome' | 'job' | 'resume' | 'stage'
@@ -69,7 +69,7 @@ const STAGE_GRADIENT: Record<InterviewStage, string> = {
 
 const REPORT_FREE_STAGES: InterviewStage[] = ['hiring_manager', 'final']
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [interviewGroups, setInterviewGroups] = useState<InterviewGroup[]>([])
@@ -566,13 +566,27 @@ export default function DashboardPage() {
     } finally { setSaving(false) }
   }
 
+  const loadSampleInterview = () => {
+    setInterviewData({
+      ...emptyInterviewData,
+      resumeFile: { name: 'Mira-Solis-Fictional-Sample-Resume.txt', text: PORTFOLIO_SAMPLE_SETUP.resumeText },
+      resumeText: PORTFOLIO_SAMPLE_SETUP.resumeText,
+      jobDescriptionText: PORTFOLIO_SAMPLE_SETUP.jobDescriptionText,
+      companyName: PORTFOLIO_SAMPLE_SETUP.companyName,
+      positionTitle: PORTFOLIO_SAMPLE_SETUP.positionTitle,
+    })
+    setExtractedUserInfo({ email: null, name: 'Mira Solis', phone: null })
+    setSelectedStage('hr_screen')
+    setOnboardStep('stage')
+  }
+
   // ─── Job posting panel (reused in both job step and stage step) ──────────────
   const JobPostingPanel = ({ accent = false }: { accent?: boolean }) => (
     <div className={`overflow-hidden rounded-[1.6rem] border ${accent ? 'border-amber-200/80 bg-amber-50/90 shadow-[0_12px_28px_rgba(245,158,11,0.08)]' : 'border-slate-200/80 bg-white/90 shadow-[0_16px_36px_rgba(15,23,42,0.06)]'}`}>
       <details className="group">
         <summary className={`flex cursor-pointer list-none items-center justify-between px-4 py-4 ${accent ? 'text-amber-800' : 'text-primary-700'}`}>
           <span className="text-sm font-semibold">
-            {hasJobDesc ? '✓ Job posting added' : 'Add job posting (recommended)'}
+            {hasJobDesc ? '✓ Job posting added' : 'Add job posting (required)'}
           </span>
           <ChevronDown className={`w-4 h-4 group-open:rotate-180 transition-transform ${accent ? 'text-amber-500' : 'text-primary-400'}`} />
         </summary>
@@ -1085,6 +1099,20 @@ export default function DashboardPage() {
             <Preppi message="What job are you interviewing for?" size="md" animate className="justify-center" />
             <p className="hidden md:block text-center text-base font-semibold text-gray-700">What job are you interviewing for?</p>
 
+            {PORTFOLIO_DEMO_MODE && (
+              <button
+                type="button"
+                onClick={loadSampleInterview}
+                className="flex w-full items-center justify-between rounded-2xl border border-accent-200 bg-accent-50/70 px-4 py-3 text-left transition hover:border-accent-300 hover:bg-accent-50"
+              >
+                <span>
+                  <span className="block text-sm font-bold text-accent-800">Try the instant sample</span>
+                  <span className="mt-0.5 block text-xs text-accent-700/75">Fictional candidate, résumé, role, and company—none of it represents you.</span>
+                </span>
+                <Sparkles className="h-5 w-5 shrink-0 text-accent-600" />
+              </button>
+            )}
+
             <div className="space-y-3">
               <input
                 autoFocus
@@ -1178,6 +1206,12 @@ export default function DashboardPage() {
                 currentFile={interviewData.resumeFile || undefined}
               />
 
+              {PORTFOLIO_DEMO_MODE && (
+                <p className="px-1 text-xs leading-5 text-slate-500">
+                  Demo privacy: uploaded files are processed temporarily and are not stored. Extracted text remains in this browser until the demo is restarted or cleared.
+                </p>
+              )}
+
               {!interviewData.resumeFile && !selectedResumeId && (
                 <div className="overflow-hidden rounded-[1.6rem] border border-slate-200/80 bg-white/92 shadow-[0_16px_36px_rgba(15,23,42,0.06)]">
                   <details className="group">
@@ -1228,10 +1262,15 @@ export default function DashboardPage() {
 
             {/* Company / role summary */}
             {(interviewData.companyName || interviewData.positionTitle) && (
-              <div className="flex items-center justify-center gap-2 md:justify-start">
+              <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
                 <span className="text-sm font-medium text-gray-500">
                   {[interviewData.positionTitle, interviewData.companyName].filter(Boolean).join(' at ')}
                 </span>
+                {interviewData.jobDescriptionText.startsWith('FICTIONAL DEMO JOB POSTING') && (
+                  <span className="rounded-full bg-accent-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-accent-700">
+                    Fictional sample data
+                  </span>
+                )}
                 <button onClick={() => setOnboardStep('job')} className="text-xs text-accent-500 font-semibold hover:text-accent-700">
                   Edit
                 </button>
@@ -1292,7 +1331,10 @@ export default function DashboardPage() {
             </div>
 
             <div className="hidden items-center justify-between border-t border-slate-200 pt-5 md:flex">
-              <p className="text-sm text-slate-500">Takes about 10 minutes.</p>
+              <div>
+                <p className="text-sm text-slate-500">Takes about 10 minutes.</p>
+                {!hasJobDesc && <p className="mt-1 text-xs font-semibold text-amber-700">Add the required job posting above to continue.</p>}
+              </div>
               {user && isStageLockedFn(selectedStage) ? (
                 <button
                   onClick={() => { setPurchaseHighlightStage(selectedStage); setShowPurchaseFlow(true) }}
@@ -1385,4 +1427,8 @@ export default function DashboardPage() {
 
     </AppChrome>
   )
+}
+
+export default function DashboardPage() {
+  return <Suspense fallback={null}><DashboardPageContent /></Suspense>
 }

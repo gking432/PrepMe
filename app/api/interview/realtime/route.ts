@@ -6,6 +6,7 @@ import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-p
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { getRealtimeVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -21,6 +22,11 @@ const REALTIME_VAD_PREFIX_PADDING_MS = 500
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'realtime-interview', { limit: 5, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 32 * 1024)
+    if (oversized) return oversized
+
     const { stage, sessionId, demoMode, demoContext } = await request.json()
 
     // Get interview prompt

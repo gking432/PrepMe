@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import OpenAI from 'openai'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -11,6 +12,11 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'practice-evaluation', { limit: 20, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 8 * 1024 * 1024)
+    if (oversized) return oversized
+
     // Check if this is a FormData request (voice) or JSON request (text)
     const contentType = request.headers.get('content-type') || ''
     let sessionId: string
@@ -329,4 +335,3 @@ Scoring guide:
     )
   }
 }
-

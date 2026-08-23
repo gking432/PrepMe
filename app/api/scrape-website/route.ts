@@ -1,5 +1,6 @@
 // API route to extract job posting/company content from URLs.
 import { NextRequest, NextResponse } from 'next/server'
+import { assertSafePublicUrl, enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -70,17 +71,29 @@ function buildSections(sections: Array<[string, any]>) {
 }
 
 async function fetchWithHeaders(url: string, init?: RequestInit) {
-  return fetch(url, {
-    ...init,
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,text/plain;q=0.7,*/*;q=0.5',
-      'Accept-Language': 'en-US,en;q=0.9',
-      Referer: 'https://www.google.com/',
-      ...init?.headers,
-    },
-    signal: init?.signal || AbortSignal.timeout(15000),
-  })
+  let currentUrl = (await assertSafePublicUrl(url)).toString()
+
+  for (let redirectCount = 0; redirectCount <= 4; redirectCount += 1) {
+    const response = await fetch(currentUrl, {
+      ...init,
+      redirect: 'manual',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,text/plain;q=0.7,*/*;q=0.5',
+        'Accept-Language': 'en-US,en;q=0.9',
+        Referer: 'https://www.google.com/',
+        ...init?.headers,
+      },
+      signal: init?.signal || AbortSignal.timeout(15000),
+    })
+
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response
+    const location = response.headers.get('location')
+    if (!location) return response
+    currentUrl = (await assertSafePublicUrl(new URL(location, currentUrl).toString())).toString()
+  }
+
+  throw new Error('Too many redirects')
 }
 
 function findJobPosting(value: any): any | null {
@@ -352,13 +365,18 @@ export async function POST(request: NextRequest) {
   let normalizedUrl = ''
 
   try {
+    const rateLimited = enforceRateLimit(request, 'scrape-job', { limit: 12, windowMs: 10 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 16 * 1024)
+    if (oversized) return oversized
+
     const { url } = await request.json()
 
     if (!url) {
       return NextResponse.json({ error: 'No URL provided' }, { status: 400 })
     }
 
-    normalizedUrl = normalizeUrl(url)
+    normalizedUrl = (await assertSafePublicUrl(normalizeUrl(url))).toString()
 
     const atsResult = await extractAtsJob(normalizedUrl)
     if (atsResult) {

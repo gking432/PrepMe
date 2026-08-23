@@ -1,34 +1,43 @@
 # PrepMe - AI Interview Simulation App
 
-A web-based application for practicing job interviews using AI-powered voice interactions. Upload your resume and job description, then conduct realistic interview simulations with AI interviewers.
+A portfolio demo of an AI-powered interview coach. A visitor can preload a fictional resume and role, run a realistic voice or typed recruiter screen, review evidence-linked feedback, and see how that feedback becomes targeted practice.
+
+## Portfolio Demo
+
+The checked-in configuration defaults to public demo mode. It is deliberately optimized for a convincing one-time visit: no account is required, uploaded files are not saved by PrepMe, and completed demo state stays in the visitor's browser.
+
+- Choose **Try the instant sample** for the fastest walkthrough. Its candidate, résumé, role, employers, and job posting are explicitly fictional and do not represent the portfolio owner's work history.
+- Choose **View a completed sample** to inspect the result without making an AI call.
+- Read the [implementation case study](docs/portfolio-case-study.md) for the AI workflow, architecture, reliability choices, and extension points.
 
 ## Features
 
-- **User Authentication**: Email/password and Google OAuth login
+- **Frictionless Demo**: The public HR screen does not require an account
 - **File Uploads**: Drag-and-drop resume and job description (PDF or text)
-- **3-Stage Interview Simulation**:
+- **Multi-Stage Interview Architecture**:
   - HR Phone Screen
   - Hiring Manager Interview
   - Team Interview
-- **Voice Interaction**: Real-time voice conversations using OpenAI's Whisper and GPT-4
+- **Voice Interaction**: Real-time WebRTC conversations using the OpenAI Realtime API
 - **Text Input Alternative**: Type responses if preferred
 - **Audio Visualizer**: Visual feedback during interviewer speech
 - **Post-Interview Feedback**: AI-generated scoring and detailed feedback
 - **Admin Dashboard**: Edit interviewer prompts and settings
-- **Interview History**: Review past interviews and feedback
+- **Demo Persistence**: Browser-local session, feedback, and practice state
+- **Public-Safe Controls**: Payload limits, request throttles, and SSRF-safe website import
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
 - **Database & Auth**: Supabase (PostgreSQL + Auth)
 - **Storage**: Supabase Storage
-- **AI**: OpenAI (GPT-4, Whisper)
+- **AI**: OpenAI Realtime, transcription, structured evaluation, and coaching workflows
 - **Deployment**: Vercel (recommended)
 
 ## Prerequisites
 
-- Node.js 18+ and npm/yarn
+- Node.js 20.9+ and npm
 - Supabase account (free tier works)
 - OpenAI API key
 - Google OAuth credentials (optional, for Google login)
@@ -82,6 +91,9 @@ ADMIN_EMAIL=your_admin_email@example.com
 
 # App URL (for OAuth redirects)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Defaults to true when omitted; set false to restore the account-backed product flow
+NEXT_PUBLIC_PORTFOLIO_DEMO_MODE=true
 ```
 
 ### 4. Run the Development Server
@@ -92,7 +104,17 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. First-Time Setup
+### 5. Verify the Demo
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+### 6. First-Time Product Setup
+
+This section applies when `NEXT_PUBLIC_PORTFOLIO_DEMO_MODE=false`.
 
 1. **Create an account**: Sign up with email/password or Google OAuth
 2. **Upload your data**: 
@@ -101,7 +123,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - Optionally add company website and notes
 3. **Start interviewing**: Click "Start Interview" to begin
 
-### 6. Admin Access
+### 7. Admin Access
 
 To access the admin dashboard:
 1. Make sure your email is set in `ADMIN_EMAIL` in `.env.local`
@@ -175,17 +197,12 @@ The app uses Tailwind CSS. Modify `app/globals.css` or component classes to chan
 
 ## Troubleshooting
 
-### PDF Text Extraction Not Working
-
-The prototype includes a placeholder for PDF extraction. To fully implement:
-1. Install `pdf-parse`: `npm install pdf-parse`
-2. Update `app/api/extract-text/route.ts` to use the library
-
 ### Microphone Not Working
 
 - Ensure browser permissions are granted
 - Use HTTPS in production (required for microphone access)
 - Check browser console for errors
+- Use the typed-reply mode when microphone access is unavailable
 
 ### Supabase Connection Issues
 
@@ -206,6 +223,7 @@ The prototype includes a placeholder for PDF extraction. To fully implement:
 - Use environment variables for all secrets
 - Enable HTTPS in production
 - Review and adjust RLS policies as needed
+- Add a shared edge/provider rate limit for multi-instance production hosting; the built-in limiter is deliberately lightweight and per instance
 
 ## Future Enhancements
 
@@ -226,4 +244,3 @@ For issues or questions, check the code comments or refer to:
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Supabase Documentation](https://supabase.com/docs)
 - [OpenAI API Documentation](https://platform.openai.com/docs)
-

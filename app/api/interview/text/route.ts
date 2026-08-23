@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -12,6 +13,11 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'interview-text', { limit: 40, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 64 * 1024)
+    if (oversized) return oversized
+
     const { stage, sessionId, userMessage, transcript } = await request.json()
 
     if (!userMessage) {

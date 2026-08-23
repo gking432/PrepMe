@@ -1,4 +1,40 @@
-export const PORTFOLIO_DEMO_MODE = true
+export const PORTFOLIO_DEMO_MODE = process.env.NEXT_PUBLIC_PORTFOLIO_DEMO_MODE !== 'false'
+
+export const PORTFOLIO_SAMPLE_SETUP: Required<
+  Pick<DemoInterviewSetup, 'resumeText' | 'jobDescriptionText' | 'companyName' | 'positionTitle'>
+> = {
+  companyName: 'Cedar & Signal Labs',
+  positionTitle: 'Customer Research Program Manager',
+  resumeText: `Mira Solis — FICTIONAL SAMPLE CANDIDATE
+Customer Insights Lead, Lantern Field Cooperative — FICTIONAL ORGANIZATION
+
+Five years of customer research and program management experience across interview studies, service design, and cross-functional planning.
+
+• Built a customer interview program that helped three product teams prioritize quarterly improvements.
+• Synthesized more than 80 interviews into clear opportunity briefs for product and support leaders.
+• Redesigned research intake and participant scheduling, reducing study setup time by 30%.
+• Facilitated workshops that turned customer evidence into owners, decisions, and measurable next steps.
+
+Earlier experience:
+Research Operations Specialist, Pebble & Pine Studio — FICTIONAL ORGANIZATION`,
+  jobDescriptionText: `FICTIONAL DEMO JOB POSTING — not affiliated with a real employer
+
+Company: Cedar & Signal Labs
+Position: Customer Research Program Manager
+
+Cedar & Signal Labs is a fictional software studio hiring a Customer Research Program Manager to build a repeatable customer-learning practice for its equally fictional collaboration platform.
+
+Responsibilities:
+• Plan interview studies with product, design, and customer teams.
+• Turn qualitative evidence into concise recommendations and decision-ready briefs.
+• Improve research operations, participant recruiting, and insight sharing.
+• Facilitate cross-functional workshops and track resulting actions.
+
+Qualifications:
+• Four or more years of customer research or program management experience.
+• Strong facilitation, synthesis, and stakeholder communication skills.
+• Experience building repeatable workflows from ambiguous problems.`,
+}
 
 export const DEMO_SESSION_KEY = 'prepme_demo_session'
 export const DEMO_FEEDBACK_KEY = 'prepme_demo_feedback'

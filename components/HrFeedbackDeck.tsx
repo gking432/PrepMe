@@ -164,6 +164,9 @@ interface HrFeedbackDeckProps {
   onRetakeInterview?: () => void
   onUnlockNextStage?: () => void
   onExitToProfile?: () => void
+  onComplete?: () => void
+  completionLabel?: string
+  practiceHref?: string | null
   onPractice?: (repair: SignalArea) => void
   layout?: 'standalone' | 'embedded'
   stageKey?: StageKey
@@ -1089,6 +1092,9 @@ export default function HrFeedbackDeck({
   onRetakeInterview,
   onUnlockNextStage,
   onExitToProfile,
+  onComplete,
+  completionLabel,
+  practiceHref,
   onPractice,
   layout = 'standalone',
   stageKey = 'hr_screen',
@@ -1101,6 +1107,9 @@ export default function HrFeedbackDeck({
   const stageName = STAGE_NAME[stageKey]
   const nextStageName = nextStageKey ? STAGE_NAME[nextStageKey] : null
   const showReportButton = !demoMode || !!artifactContent
+  const resolvedPracticeHref = practiceHref === undefined && currentSessionData?.id
+    ? `/interview/practice/${currentSessionData.id}`
+    : practiceHref
 
   const {
     score,
@@ -1180,7 +1189,7 @@ export default function HrFeedbackDeck({
       if (nextStageKey) {
         onUnlockNextStage?.()
       } else {
-        onExitToProfile?.()
+        onComplete?.()
       }
       return
     }
@@ -1254,9 +1263,9 @@ export default function HrFeedbackDeck({
           preppiMessage="Tap below to start — or close and come back anytime."
         >
           <WeaknessesOverview repairs={repairs} />
-          {currentSessionData?.id && (
+          {resolvedPracticeHref && (
             <a
-              href={`/interview/practice/${currentSessionData.id}`}
+              href={resolvedPracticeHref}
               className="mt-4 group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 px-6 py-4 text-base font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
             >
               Start Practicing
@@ -1386,9 +1395,9 @@ export default function HrFeedbackDeck({
           </div>
 
           <div className="grid gap-3 lg:hidden 2xl:grid">
-            {currentSessionData?.id && (
+            {resolvedPracticeHref && (
               <a
-                href={`/interview/practice/${currentSessionData.id}`}
+                href={resolvedPracticeHref}
                 className="group flex w-full items-center justify-center gap-3 rounded-xl bg-accent-600 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-accent-700"
               >
                 Start Practicing
@@ -1543,7 +1552,7 @@ export default function HrFeedbackDeck({
               activeStep.type === 'workshop' ? 'h-9 text-sm' : 'h-12 text-base'
             }`}
           >
-            {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : 'See your results') : (activeStep.type === 'workshop' ? 'Next Workshop' : 'Continue')}
+            {isLastStep ? (nextStageName ? `Unlock ${nextStageName}` : completionLabel || (demoMode ? 'Start Practicing' : 'See your results')) : (activeStep.type === 'workshop' ? 'Next Workshop' : 'Continue')}
             {isLastStep ? <Crown className={activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'} /> : <ChevronRight className={`transition group-hover:translate-x-1 ${activeStep.type === 'workshop' ? 'h-4 w-4' : 'h-5 w-5'}`} />}
           </button>
         )}

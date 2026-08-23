@@ -7,6 +7,7 @@ import OpenAI from 'openai'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -16,6 +17,11 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'interview-start', { limit: 10, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 32 * 1024)
+    if (oversized) return oversized
+
     const { stage, sessionId } = await request.json()
 
     // Stage gating: non-HR stages require authentication

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Anthropic } from '@anthropic-ai/sdk/client'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -247,6 +248,11 @@ function safeParseJson(raw: string): any {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceRateLimit(request, 'guided-workshop', { limit: 30, windowMs: 60 * 60 * 1000 })
+  if (rateLimited) return rateLimited
+  const oversized = rejectOversizedRequest(request, 96 * 1024)
+  if (oversized) return oversized
+
   const body = await request.json().catch(() => ({}))
   const session = body.demoMode
     ? null

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Header from '@/components/Header'
@@ -11,6 +11,7 @@ import Confetti from '@/components/Confetti'
 import { useGameFeedback } from '@/hooks/useGameFeedback'
 import { Mic, MicOff, Send, ChevronRight, RotateCcw, Trophy, Zap, CheckCircle, X } from 'lucide-react'
 import AppChrome from '@/components/AppChrome'
+import { PORTFOLIO_DEMO_MODE, getDemoFeedback, getDemoSession } from '@/lib/portfolio-demo'
 
 interface DrillQuestion {
   id: string
@@ -95,7 +96,7 @@ function XPBar({ xp, maxXp, gained, xpKey }: { xp: number; maxXp: number; gained
   )
 }
 
-export default function PracticeDrillPage() {
+function PracticeDrillPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClient()
@@ -142,6 +143,15 @@ export default function PracticeDrillPage() {
   ]
 
   useEffect(() => {
+    if (PORTFOLIO_DEMO_MODE) {
+      const demoSession = getDemoSession()
+      if (demoSession && getDemoFeedback(demoSession.id)?.feedback) {
+        router.replace(`/interview/practice/${demoSession.id}`)
+        return
+      }
+      setLoading(false)
+      return
+    }
     if (sessionId) loadDrillQuestions()
     else setLoading(false)
   }, [sessionId])
@@ -651,4 +661,8 @@ export default function PracticeDrillPage() {
       </div>
     </AppChrome>
   )
+}
+
+export default function PracticeDrillPage() {
+  return <Suspense fallback={null}><PracticeDrillPageContent /></Suspense>
 }

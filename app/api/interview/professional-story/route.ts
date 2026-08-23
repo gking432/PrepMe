@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Anthropic } from '@anthropic-ai/sdk/client'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -187,6 +188,11 @@ Return valid JSON only:
 }`
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceRateLimit(request, 'professional-story', { limit: 20, windowMs: 60 * 60 * 1000 })
+  if (rateLimited) return rateLimited
+  const oversized = rejectOversizedRequest(request, 96 * 1024)
+  if (oversized) return oversized
+
   const body = await request.json().catch(() => ({}))
   const isRewrite = body.rewriteInstruction && body.originalAnswer
   const sessionId = body.sessionId ? String(body.sessionId) : undefined

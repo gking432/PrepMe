@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'create-demo-session', { limit: 10, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 32 * 1024)
+    if (oversized) return oversized
+
     const { stage, tempInterviewData, reuseInterviewDataId, parentSessionId, demoMode } = await request.json()
 
     if (demoMode && stage === 'hr_screen' && tempInterviewData) {

@@ -9,7 +9,7 @@ interface AudioVisualizerProps {
 
 export default function AudioVisualizer({ isActive, color }: AudioVisualizerProps) {
   const [bars, setBars] = useState<number[]>([])
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     // Initialize bars
@@ -65,4 +65,3 @@ export default function AudioVisualizer({ isActive, color }: AudioVisualizerProp
     </div>
   )
 }
-

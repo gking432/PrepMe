@@ -380,8 +380,9 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
                 <p className="text-xs font-bold text-slate-700">Take your time</p>
               </div>
               <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                Close anytime — your progress is saved {PORTFOLIO_DEMO_MODE ? 'in this browser' : 'to your profile'}.
-                Come back here to pick up where you left off.
+                {PORTFOLIO_DEMO_MODE
+                  ? 'Completed workshops are saved in this browser for this demo session.'
+                  : 'Close anytime — your progress and answers are saved to your profile.'}
               </p>
             </div>
           )}

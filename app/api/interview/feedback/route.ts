@@ -12,6 +12,7 @@ import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFit
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
 import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE } from '@/lib/feedback-config'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -529,6 +530,11 @@ async function gradePortfolioDemoHrScreen(params: {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'interview-feedback', { limit: 6, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 256 * 1024)
+    if (oversized) return oversized
+
     const {
       sessionId,
       transcript: providedTranscript,

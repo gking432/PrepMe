@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { normalizePracticeCriterion } from '@/lib/practice-bundles'
 import { ArrowRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import Preppi from '@/components/Preppi'
@@ -400,7 +400,7 @@ export default function TeachCard({
   }, [criterion, originalAnswerMissing, placeholderMatchesQuestion, placeholderQuestion, safeOriginalAnswer])
 
   const withIntro = useCallback(
-    (lessonCards: Array<{ eyebrow: string; title: string; preppi: string; content: JSX.Element }>) => [
+    (lessonCards: Array<{ eyebrow: string; title: string; preppi: string; content: ReactNode }>) => [
       {
         eyebrow: 'Lesson Intro',
         title: "What you're about to learn",

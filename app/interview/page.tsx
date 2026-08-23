@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState, useRef } from 'react'
+import { Suspense, useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
@@ -19,6 +19,7 @@ import {
 } from '@/lib/portfolio-demo'
 
 type Stage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
+type InterviewInputMode = 'voice' | 'text'
 
 const STAGE_NAMES: Record<Stage, string> = {
   hr_screen: 'HR Phone Screen',
@@ -34,7 +35,7 @@ const REALTIME_DEFAULT_MAX_OUTPUT_TOKENS = 700
 const REALTIME_VAD_THRESHOLD = 0.5
 const REALTIME_VAD_PREFIX_PADDING_MS = 500
 
-export default function InterviewPage() {
+function InterviewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [stage, setStage] = useState<Stage>('hr_screen')
@@ -56,6 +57,7 @@ export default function InterviewPage() {
   const [showQuestionWarning, setShowQuestionWarning] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isCachedRetake, setIsCachedRetake] = useState(false)
+  const [interviewInputMode, setInterviewInputMode] = useState<InterviewInputMode>('voice')
   
   // HR Screen conversation state tracking (only for hr_screen stage)
   // Initialize to 'opening' for hr_screen, null for other stages
@@ -112,6 +114,7 @@ export default function InterviewPage() {
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const initialRealtimePromptSentRef = useRef(false)
   const isCachedRetakeRef = useRef(false)
+  const interviewInputModeRef = useRef<InterviewInputMode>('voice')
   const supabase = createClient()
 
   const getOrCreateInterviewMediaStream = async () => {
@@ -330,8 +333,9 @@ export default function InterviewPage() {
     if (!closingDetectedRef.current) {
       // Keep the WebRTC mic track attached throughout the call. Safari can fail
       // to resume a track after it has been disabled or replaced with null.
-      setIsRecording(true)
-      updateRealtimeTurnDetection(true)
+      const voiceMode = interviewInputModeRef.current === 'voice'
+      setIsRecording(voiceMode)
+      updateRealtimeTurnDetection(voiceMode)
     }
 
     console.log('[realtime] assistant speech ended', { reason })
@@ -597,7 +601,7 @@ export default function InterviewPage() {
     }
   }
 
-  const connectRealtime = async () => {
+  const connectRealtime = async (inputMode: InterviewInputMode = interviewInputModeRef.current) => {
     try {
       const isDemoInterview = PORTFOLIO_DEMO_MODE && stage === 'hr_screen'
       // Create interview session NOW (when user clicks Begin Interview)
@@ -717,15 +721,20 @@ export default function InterviewPage() {
         })
       }
 
-      // Add local mic track — WebRTC handles encoding natively
-      const stream = await getOrCreateInterviewMediaStream()
-      stream.getTracks().forEach((track) => {
-        const sender = pc.addTrack(track, stream)
-        if (track.kind === 'audio') {
-          localAudioTrackRef.current = track
-          localAudioSenderRef.current = sender
-        }
-      })
+      if (inputMode === 'voice') {
+        // Add local mic track — WebRTC handles encoding natively.
+        const stream = await getOrCreateInterviewMediaStream()
+        stream.getTracks().forEach((track) => {
+          const sender = pc.addTrack(track, stream)
+          if (track.kind === 'audio') {
+            localAudioTrackRef.current = track
+            localAudioSenderRef.current = sender
+          }
+        })
+      } else {
+        // Typed mode still receives the interviewer's audio, but never requests a microphone.
+        pc.addTransceiver('audio', { direction: 'recvonly' })
+      }
 
       // Data channel for control events
       const dc = pc.createDataChannel('oai-events')
@@ -733,6 +742,20 @@ export default function InterviewPage() {
 
       dc.onopen = () => {
         console.log('WebRTC data channel open - configuring session')
+        const audioInput = inputMode === 'voice'
+          ? {
+              transcription: { model: 'gpt-4o-mini-transcribe' },
+              turn_detection: {
+                type: 'server_vad',
+                threshold: REALTIME_VAD_THRESHOLD,
+                prefix_padding_ms: REALTIME_VAD_PREFIX_PADDING_MS,
+                silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
+                create_response: true,
+                interrupt_response: false,
+              },
+            }
+          : undefined
+
         dc.send(JSON.stringify({
           type: 'session.update',
           session: {
@@ -740,17 +763,7 @@ export default function InterviewPage() {
             instructions: instructions || '',
             output_modalities: ['audio'],
             audio: {
-              input: {
-                transcription: { model: 'gpt-4o-mini-transcribe' },
-                turn_detection: {
-                  type: 'server_vad',
-                  threshold: REALTIME_VAD_THRESHOLD,
-                  prefix_padding_ms: REALTIME_VAD_PREFIX_PADDING_MS,
-                  silence_duration_ms: REALTIME_THINKING_SILENCE_MS,
-                  create_response: true,
-                  interrupt_response: false,
-                },
-              },
+              ...(audioInput ? { input: audioInput } : {}),
               output: {
                 voice: realtimeVoice,
               },
@@ -760,7 +773,7 @@ export default function InterviewPage() {
         }))
         setIsConnected(true)
         setIsListening(true)
-        setIsRecording(true)
+        setIsRecording(inputMode === 'voice')
         setIsLoading(false)
       }
 
@@ -828,7 +841,7 @@ export default function InterviewPage() {
     } catch (error) {
       console.error('Error connecting to Realtime API:', error)
       setIsLoading(false)
-      alert('Failed to start interview. Please try again.')
+      throw error
     }
   }
 
@@ -1211,26 +1224,30 @@ export default function InterviewPage() {
     }
   }
 
-  const startInterview = async () => {
+  const startInterview = async (inputMode: InterviewInputMode = interviewInputMode) => {
     // Record start time for HR screen time tracking
     interviewStartTimeRef.current = Date.now()
     closingDetectedRef.current = false
     setError(null)
     setIsLoading(true)
+    setInterviewInputMode(inputMode)
+    interviewInputModeRef.current = inputMode
 
-    // Ask for microphone access directly from the button tap. iOS Safari can
-    // reject or lose this request if it happens after session/network work.
-    try {
-      const stream = await getOrCreateInterviewMediaStream()
-      if (!stream.getAudioTracks().some((track) => track.readyState === 'live')) {
-        throw new Error('No active microphone track was returned.')
+    if (inputMode === 'voice') {
+      // Ask for microphone access directly from the button tap. iOS Safari can
+      // reject or lose this request if it happens after session/network work.
+      try {
+        const stream = await getOrCreateInterviewMediaStream()
+        if (!stream.getAudioTracks().some((track) => track.readyState === 'live')) {
+          throw new Error('No active microphone track was returned.')
+        }
+        setHasUserPermission(true)
+      } catch (error) {
+        console.error('Unable to start microphone:', error)
+        setError('Microphone access was unavailable. You can retry, switch to typed mode, or view a completed sample.')
+        setIsLoading(false)
+        return
       }
-      setHasUserPermission(true)
-    } catch (error) {
-      console.error('Unable to start microphone:', error)
-      setError('PrepMe needs microphone access to run the live interview. Allow microphone access in your browser settings, then try again.')
-      setIsLoading(false)
-      return
     }
 
     const retakeSourceSessionId =
@@ -1255,11 +1272,11 @@ export default function InterviewPage() {
 
     // Try Realtime API first, fallback to optimized traditional approach
     try {
-      await connectRealtime()
+      await connectRealtime(inputMode)
     } catch (error) {
       console.error('Realtime API failed:', error)
       if (PORTFOLIO_DEMO_MODE && stage === 'hr_screen') {
-        setError('The live interview could not start. Please try again.')
+        setError('The live AI connection could not start. Retry, switch input mode, or view a completed sample.')
         setIsLoading(false)
         return
       }
@@ -2167,7 +2184,7 @@ export default function InterviewPage() {
   const handleTextResponse = async (text: string) => {
     if (!text.trim() || !dcRef.current) return
 
-    setTranscript((prev) => [...prev, `You: ${text}`])
+    updateRealtimeTranscript(`You: ${text.trim()}`, 'user')
 
     // Send text input to Realtime API via data channel
     dcRef.current.send(JSON.stringify({
@@ -2261,14 +2278,22 @@ export default function InterviewPage() {
 
       {/* Error display */}
       {error && (
-        <div className="mx-auto mt-4 w-[calc(100%-2rem)] max-w-5xl rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3">
-          <p className="text-sm text-red-300">{error}</p>
-          <button
-            onClick={() => { setError(null); router.push('/dashboard') }}
-            className="mt-2 text-xs text-red-400 hover:text-red-300 underline"
-          >
-            Back to dashboard
-          </button>
+        <div className="mx-auto mt-4 w-[calc(100%-2rem)] max-w-2xl rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-4">
+          <p className="text-sm font-semibold text-red-200">{error}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button onClick={() => startInterview('voice')} className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-slate-900">
+              Retry voice
+            </button>
+            <button onClick={() => startInterview('text')} className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-white">
+              Use typed replies
+            </button>
+            <button onClick={() => router.push('/interview/feedback?preview=mock')} className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-white">
+              View sample result
+            </button>
+            <button onClick={() => { setError(null); router.push('/dashboard') }} className="px-2 py-2 text-xs font-semibold text-slate-400 hover:text-white">
+              Back to setup
+            </button>
+          </div>
         </div>
       )}
 
@@ -2289,12 +2314,30 @@ export default function InterviewPage() {
             <p className="mx-auto mb-8 max-w-md text-sm leading-7 text-slate-300">
               Your interviewer is ready. This round is designed to feel as close to the real thing as possible. Start when you are settled.
             </p>
+            <div className="mx-auto grid max-w-md gap-3 sm:grid-cols-2">
+              <button
+                onClick={() => startInterview('voice')}
+                disabled={isLoading}
+                className="btn-interview-primary flex items-center justify-center gap-2 px-5 py-3.5 text-base disabled:opacity-50"
+              >
+                <Mic className="h-4 w-4" />
+                {isLoading && interviewInputMode === 'voice' ? 'Connecting...' : 'Start with voice'}
+              </button>
+              <button
+                onClick={() => startInterview('text')}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3.5 text-base font-bold text-white transition hover:bg-white/10 disabled:opacity-50"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {isLoading && interviewInputMode === 'text' ? 'Connecting...' : 'Use typed replies'}
+              </button>
+            </div>
             <button
-              onClick={startInterview}
-              disabled={isLoading}
-              className="btn-interview-primary px-8 py-3.5 text-lg disabled:opacity-50"
+              type="button"
+              onClick={() => router.push('/interview/feedback?preview=mock')}
+              className="mt-4 text-xs font-semibold text-slate-400 underline decoration-white/20 underline-offset-4 transition hover:text-white"
             >
-              {isLoading ? 'Connecting...' : 'Begin Interview'}
+              Short on time? View a completed sample
             </button>
           </div>
         )}
@@ -2313,6 +2356,11 @@ export default function InterviewPage() {
                 <div className="flex items-center justify-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-sky-300 animate-pulse" />
                   <span className="text-sm text-slate-300">Interviewer is speaking...</span>
+                </div>
+              ) : interviewInputMode === 'text' ? (
+                <div className="flex items-center justify-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-sky-300" />
+                  <span className="text-sm text-slate-300">Type your response below</span>
                 </div>
               ) : isRecording ? (
                 <div className="flex items-center justify-center gap-2">
@@ -2384,4 +2432,8 @@ export default function InterviewPage() {
       )}
     </div>
   )
+}
+
+export default function InterviewPage() {
+  return <Suspense fallback={null}><InterviewPageContent /></Suspense>
 }

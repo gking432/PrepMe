@@ -2,11 +2,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
+import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
+import { enforceRateLimit } from '@/lib/demo-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 const IMAGE_MIME_FALLBACKS: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -61,22 +64,26 @@ async function uploadPdfArtifacts(buffer: Buffer, parser?: any) {
       if (thumbResult?.pages?.[0]?.data) {
         const thumbPath = `thumbnails/${randomUUID()}.png`
         const thumbBytes = Buffer.from(thumbResult.pages[0].data)
-        const { error } = await supabaseAdmin.storage
-          .from('resumes')
-          .upload(thumbPath, thumbBytes, { contentType: 'image/png', upsert: false })
-        if (!error) {
-          thumbnailUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(thumbPath).data.publicUrl
+        if (!PORTFOLIO_DEMO_MODE) {
+          const { error } = await supabaseAdmin.storage
+            .from('resumes')
+            .upload(thumbPath, thumbBytes, { contentType: 'image/png', upsert: false })
+          if (!error) {
+            thumbnailUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(thumbPath).data.publicUrl
+          }
         }
       }
 
       if (fullResult?.pages?.[0]?.data) {
         const fullPath = `previews/${randomUUID()}.png`
         fullPagePreviewBytes = Buffer.from(fullResult.pages[0].data)
-        const { error } = await supabaseAdmin.storage
-          .from('resumes')
-          .upload(fullPath, fullPagePreviewBytes, { contentType: 'image/png', upsert: false })
-        if (!error) {
-          fullPagePreviewUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(fullPath).data.publicUrl
+        if (!PORTFOLIO_DEMO_MODE) {
+          const { error } = await supabaseAdmin.storage
+            .from('resumes')
+            .upload(fullPath, fullPagePreviewBytes, { contentType: 'image/png', upsert: false })
+          if (!error) {
+            fullPagePreviewUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(fullPath).data.publicUrl
+          }
         }
       }
     } catch (thumbErr) {
@@ -85,6 +92,9 @@ async function uploadPdfArtifacts(buffer: Buffer, parser?: any) {
   }
 
   try {
+    if (PORTFOLIO_DEMO_MODE) {
+      return { fullPagePreviewBytes }
+    }
     const pdfPath = `pdfs/${randomUUID()}.pdf`
     const { error } = await supabaseAdmin.storage
       .from('resumes')
@@ -131,11 +141,18 @@ async function ocrImageBuffer(buffer: Buffer, mediaType: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'extract-resume', { limit: 8, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+
     const formData = await request.formData()
     const file = formData.get('file') as File
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'File is too large. The public demo accepts files up to 8 MB.' }, { status: 413 })
     }
 
     const kind = detectFileKind(file)

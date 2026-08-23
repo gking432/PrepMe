@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Anthropic } from '@anthropic-ai/sdk/client'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -70,6 +71,11 @@ Return ONLY valid JSON matching this exact shape:
 }`
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceRateLimit(request, 'star-story', { limit: 20, windowMs: 60 * 60 * 1000 })
+  if (rateLimited) return rateLimited
+  const oversized = rejectOversizedRequest(request, 96 * 1024)
+  if (oversized) return oversized
+
   const body = await request.json().catch(() => ({}))
   const sessionId = body.sessionId ? String(body.sessionId) : ''
   if (!sessionId) {

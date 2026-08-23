@@ -12,6 +12,7 @@ import { buildSystemPrompt as buildHrScreenPrompt } from '@/lib/interview-prompt
 import { buildSystemPrompt as buildHiringManagerPrompt } from '@/lib/interview-prompts/hiring_manager'
 import { buildSystemPrompt as buildCultureFitPrompt } from '@/lib/interview-prompts/culture_fit'
 import { buildSystemPrompt as buildFinalPrompt } from '@/lib/interview-prompts/final'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { recordTurn } from '@/lib/observer-agent'
 import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
@@ -26,6 +27,11 @@ function getOpenAI() {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceRateLimit(request, 'interview-voice', { limit: 40, windowMs: 60 * 60 * 1000 })
+  if (rateLimited) return rateLimited
+  const oversized = rejectOversizedRequest(request, 8 * 1024 * 1024)
+  if (oversized) return oversized
+
   try {
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File

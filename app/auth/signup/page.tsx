@@ -2,12 +2,12 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
 
-export default function SignupPage() {
+function SignupPageContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -259,3 +259,6 @@ export default function SignupPage() {
   )
 }
 
+export default function SignupPage() {
+  return <Suspense fallback={null}><SignupPageContent /></Suspense>
+}

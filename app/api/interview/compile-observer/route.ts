@@ -1,9 +1,15 @@
 // API route to compile observer notes (server-side only)
 import { NextRequest, NextResponse } from 'next/server'
 import { compileNotes } from '@/lib/observer-agent'
+import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'compile-observer', { limit: 10, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
+    const oversized = rejectOversizedRequest(request, 16 * 1024)
+    if (oversized) return oversized
+
     const { sessionId } = await request.json()
 
     if (!sessionId) {
@@ -27,4 +33,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

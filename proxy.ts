@@ -14,6 +14,7 @@ const ANONYMOUS_ALLOWED_ROUTES = [
   '/dashboard',
   '/interview',
   '/interview/feedback',
+  '/practice',
 ]
 
 // API routes that allow anonymous access
@@ -40,7 +41,7 @@ const PROTECTED_ROUTES = [
   '/admin',
 ]
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const res = NextResponse.next()
   const pathname = req.nextUrl.pathname
 

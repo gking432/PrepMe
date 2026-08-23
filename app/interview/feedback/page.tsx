@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import Link from 'next/link'
@@ -45,7 +45,7 @@ function parseSessionRoleContext(jobDescriptionText?: string | null) {
   }
 }
 
-export default function InterviewDashboard() {
+function InterviewDashboardContent() {
   const [activeTab, setActiveTab] = useState('results')
   const [isPremium, setIsPremium] = useState(true)
   const [stageAccess, setStageAccess] = useState<Record<string, any>>({})
@@ -2400,6 +2400,20 @@ export default function InterviewDashboard() {
 
   const handleExitToProfile = () => {
     dismissFeedbackTutorial()
+    router.push('/dashboard')
+  }
+
+  const handleFeedbackComplete = () => {
+    dismissFeedbackTutorial()
+    if (isMockPreview) {
+      router.push('/dashboard')
+      return
+    }
+    if (currentSessionData?.id) {
+      router.push(`/interview/practice/${currentSessionData.id}`)
+      return
+    }
+    router.push('/dashboard')
   }
 
   if (hasFeedback && !showLessonRoadmap && currentStageKey === 'hr_screen') {
@@ -2411,6 +2425,9 @@ export default function InterviewDashboard() {
       onRetakeInterview: handleRetakeInterview,
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
+      onComplete: handleFeedbackComplete,
+      completionLabel: isMockPreview ? 'Try the live demo' : 'Start Practicing',
+      practiceHref: isMockPreview || !currentSessionData?.id ? null : `/interview/practice/${currentSessionData.id}`,
       onPractice: (repair: any) => {
         const criterion = repair.criterion || ''
         const rootCause = repair.practice_focus_id || repair.rootCause || ''
@@ -2491,6 +2508,9 @@ export default function InterviewDashboard() {
       onRetakeInterview: handleRetakeInterview,
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
+      onComplete: handleFeedbackComplete,
+      completionLabel: isMockPreview ? 'Try the live demo' : 'Start Practicing',
+      practiceHref: isMockPreview || !currentSessionData?.id ? null : `/interview/practice/${currentSessionData.id}`,
       onPractice: (repair: any) => {
         const criterion = repair.criterion || ''
         const rootCause = repair.practice_focus_id || repair.rootCause || ''
@@ -5639,4 +5659,8 @@ export default function InterviewDashboard() {
       </div>
     </div>
   )
+}
+
+export default function InterviewDashboard() {
+  return <Suspense fallback={null}><InterviewDashboardContent /></Suspense>
 }

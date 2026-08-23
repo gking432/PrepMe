@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { supabaseAdmin } from '@/lib/supabase'
+import { enforceRateLimit } from '@/lib/demo-guard'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -28,8 +29,13 @@ function safeParseJson(raw: string): any {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = enforceRateLimit(request, 'workshop-voice', { limit: 12, windowMs: 60 * 60 * 1000 })
+    if (rateLimited) return rateLimited
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File | null
+    if (audioFile && audioFile.size > 8 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Audio is too large. Keep recordings under 8 MB.' }, { status: 413 })
+    }
     const builtAnswer = String(formData.get('built_answer') || '').slice(0, 4000)
     const workshopType = String(formData.get('workshop_type') || '')
     const sessionId = String(formData.get('session_id') || '')

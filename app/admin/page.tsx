@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { Save, ArrowLeft, Plus, Trash2 } from 'lucide-react'
@@ -36,7 +36,7 @@ interface EvaluationSettings {
   require_specific_examples: boolean
 }
 
-export default function AdminPage() {
+function AdminPageContent() {
   const [user, setUser] = useState<any>(null)
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [criteria, setCriteria] = useState<EvaluationCriteria[]>([])
@@ -681,3 +681,6 @@ export default function AdminPage() {
   )
 }
 
+export default function AdminPage() {
+  return <Suspense fallback={null}><AdminPageContent /></Suspense>
+}

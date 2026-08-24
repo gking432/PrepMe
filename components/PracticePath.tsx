@@ -391,58 +391,65 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
 
       {/* Active workshop overlay */}
       {activeNode && activeNode.workshopType && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-white">
-          <div className="shrink-0 flex items-center justify-between border-b border-slate-200 px-3 py-2">
-            <p className="text-xs font-bold text-slate-600">
-              Workshop {activeNode.index + 1} of {totalCount}
-            </p>
-            <button
-              type="button"
-              onClick={() => setActiveIndex(null)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-              aria-label="Close workshop"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="min-h-0 flex-1 overflow-hidden p-2 sm:p-4">
-            {activeNode.workshopType === 'star_proof' ? (
-              <StarStoryBuilder
-                sessionId={sessionId}
-                originalQuestion={activeNode.question || undefined}
-                originalAnswer={activeNode.originalAnswer || undefined}
-                onComplete={handleWorkshopComplete}
-              />
-            ) : activeNode.workshopType === 'professional_story' ? (
-              <ProfessionalStoryBuilder
-                sessionId={sessionId}
-                originalQuestion={activeNode.question || undefined}
-                originalAnswer={activeNode.originalAnswer || undefined}
-                onComplete={handleWorkshopComplete}
-              />
-            ) : activeNode.workshopType === 'career_alignment' ? (
-              <CareerAlignmentBuilder
-                sessionId={sessionId}
-                originalQuestion={activeNode.question || undefined}
-                originalAnswer={activeNode.originalAnswer || undefined}
-                onComplete={handleWorkshopComplete}
-              />
-            ) : activeNode.workshopType === 'handling_uncertainty' ? (
-              <HandlingUncertaintyLesson
-                sessionId={sessionId}
-                originalQuestion={activeNode.question || undefined}
-                originalAnswer={activeNode.originalAnswer || undefined}
-                onComplete={handleWorkshopComplete}
-              />
-            ) : (
-              <GuidedBuilderWorkshop
-                workshopType={activeNode.workshopType}
-                sessionId={sessionId}
-                originalQuestion={activeNode.question || undefined}
-                originalAnswer={activeNode.originalAnswer || undefined}
-                onComplete={handleWorkshopComplete}
-              />
-            )}
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-hidden bg-white md:items-center md:bg-slate-950/45 md:p-6 md:backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${activeNode.signal.criterion || 'Practice'} workshop`}
+            className="flex h-full w-full flex-col bg-white md:h-[calc(100dvh-3rem)] md:max-h-[820px] md:max-w-3xl md:overflow-hidden md:rounded-[28px] md:border md:border-slate-200 md:shadow-2xl"
+          >
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-3 py-2 sm:px-4">
+              <p className="text-xs font-bold text-slate-600">
+                Workshop {activeNode.index + 1} of {totalCount}
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveIndex(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                aria-label="Close workshop"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden p-2 sm:p-4">
+              {activeNode.workshopType === 'star_proof' ? (
+                <StarStoryBuilder
+                  sessionId={sessionId}
+                  originalQuestion={activeNode.question || undefined}
+                  originalAnswer={activeNode.originalAnswer || undefined}
+                  onComplete={handleWorkshopComplete}
+                />
+              ) : activeNode.workshopType === 'professional_story' ? (
+                <ProfessionalStoryBuilder
+                  sessionId={sessionId}
+                  originalQuestion={activeNode.question || undefined}
+                  originalAnswer={activeNode.originalAnswer || undefined}
+                  onComplete={handleWorkshopComplete}
+                />
+              ) : activeNode.workshopType === 'career_alignment' ? (
+                <CareerAlignmentBuilder
+                  sessionId={sessionId}
+                  originalQuestion={activeNode.question || undefined}
+                  originalAnswer={activeNode.originalAnswer || undefined}
+                  onComplete={handleWorkshopComplete}
+                />
+              ) : activeNode.workshopType === 'handling_uncertainty' ? (
+                <HandlingUncertaintyLesson
+                  sessionId={sessionId}
+                  originalQuestion={activeNode.question || undefined}
+                  originalAnswer={activeNode.originalAnswer || undefined}
+                  onComplete={handleWorkshopComplete}
+                />
+              ) : (
+                <GuidedBuilderWorkshop
+                  workshopType={activeNode.workshopType}
+                  sessionId={sessionId}
+                  originalQuestion={activeNode.question || undefined}
+                  originalAnswer={activeNode.originalAnswer || undefined}
+                  onComplete={handleWorkshopComplete}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}

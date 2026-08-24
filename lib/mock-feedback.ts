@@ -49,7 +49,7 @@ export const MOCK_FEEDBACK = {
             question_id: 'q7',
             timestamp: '12:30',
             excerpt:
-              'Asked about the team\'s current tech stack migration and how the role would contribute to it.',
+              'Asked how the new customer-insight repository would change the way product teams make decisions.',
           },
         ],
       },
@@ -165,7 +165,7 @@ export const MOCK_FEEDBACK = {
         rewrite_method: 'Observation, Fit, Timing',
         original_answer: 'It seems like a great company with a lot of opportunities to grow.',
         rewritten_answer:
-          'I noticed you recently expanded into the healthcare vertical and hired a dedicated compliance team. That caught my attention because my last two roles were in regulated environments where I had to balance speed with audit requirements. Joining now, while the team is still forming its playbook, is exactly the stage where I do my best work.',
+          'I noticed Cedar & Signal Labs is building a shared customer-insight repository for product teams. That caught my attention because I have built research workflows that turn interviews into decisions people can actually find and reuse. Joining while that practice is still taking shape is exactly where I can contribute quickly.',
         rewrite_explanation:
           'This names something specific about the company, connects it to direct experience, and explains why the timing matters — instead of generic praise.',
         evidence: [
@@ -287,7 +287,7 @@ export const MOCK_TRANSCRIPT = {
     },
     {
       speaker: 'candidate',
-      text: 'Of course! I\'ve been working in project management for about five years now. I started at a small startup where I wore a lot of hats — managing sprints, talking to customers, even doing some light development. What drew me to this role specifically is the opportunity to lead a larger team and work on products that have real enterprise scale. I\'ve been following your company\'s work in the developer tools space and I think my background in building internal tooling at my current company translates really well.',
+      text: 'Of course! I\'ve been working in customer research and program management for about five years now. I started at a small studio where I wore a lot of hats — interviewing customers, coordinating studies, and helping product teams act on what we learned. What drew me to this role is the opportunity to build a repeatable research practice for a growing collaboration product.',
       timestamp: '0:15',
       question_id: 'q1',
     },
@@ -347,7 +347,7 @@ export const MOCK_TRANSCRIPT = {
     },
     {
       speaker: 'candidate',
-      text: 'I\'d love to know more about the team\'s current tech stack migration I read about in the blog post. How would this role contribute to that? And what does the typical career path look like for someone in this position over the next two to three years?',
+      text: 'I\'d love to know more about the customer-insight repository mentioned in the role brief. How would this role help product teams contribute to and use it? And what would a strong first six months look like?',
       timestamp: '12:30',
       question_id: 'q7',
     },

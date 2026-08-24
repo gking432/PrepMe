@@ -1259,7 +1259,7 @@ export default function HrFeedbackDeck({
         <StepShell
           eyebrow="What We'll Workshop"
           title={`${repairs.length} ${repairs.length === 1 ? 'area' : 'areas'} to work on.`}
-          body="Each one has an interactive workshop that builds a better answer from your real resume."
+          body="Each one has an interactive workshop that builds a better answer from the interview context."
           preppiMessage="Tap below to start — or close and come back anytime."
         >
           <WeaknessesOverview repairs={repairs} />

@@ -2337,7 +2337,7 @@ function InterviewPageContent() {
               onClick={() => router.push('/interview/feedback?preview=mock')}
               className="mt-4 text-xs font-semibold text-slate-400 underline decoration-white/20 underline-offset-4 transition hover:text-white"
             >
-              Short on time? View a completed sample
+              Short on time? View sample feedback + workshops
             </button>
           </div>
         )}

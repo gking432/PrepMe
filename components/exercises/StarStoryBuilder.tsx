@@ -480,7 +480,7 @@ export default function StarStoryBuilder({
                     &ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;
                   </p>
                   <p className="mt-3 text-xs font-bold text-rose-700">
-                    We&apos;re going to build a better version — using your real experience.
+                    We&apos;re going to build a better version using the experience in the interview context.
                   </p>
                 </div>
               )}

@@ -11,7 +11,9 @@ import {
   markDemoPracticeComplete,
   saveDemoFeedback,
   saveDemoSession,
+  seedPortfolioSampleResult,
 } from '../lib/portfolio-demo'
+import { MOCK_FEEDBACK, MOCK_TRANSCRIPT } from '../lib/mock-feedback'
 import { assertSafePublicUrl, enforceRateLimit, rejectOversizedRequest } from '../lib/demo-guard'
 
 function installBrowserStorage() {
@@ -80,6 +82,16 @@ test('one-session demo feedback and practice completion survive browser navigati
   assert.equal(getDemoSession()?.id, sessionId)
   assert.equal(getDemoFeedback(sessionId)?.feedback.overall_score, 7)
   assert.deepEqual(getDemoPracticeProgress(sessionId), ['professional_story:q1'])
+})
+
+test('completed sample seeds feedback and a workshop-ready practice session', () => {
+  installBrowserStorage()
+  const session = seedPortfolioSampleResult(MOCK_FEEDBACK, MOCK_TRANSCRIPT)
+
+  assert.equal(session.status, 'completed')
+  assert.equal(session.company_name, PORTFOLIO_SAMPLE_SETUP.companyName)
+  assert.equal(session.transcript_structured?.questions_asked.length, MOCK_TRANSCRIPT.questions_asked.length)
+  assert.ok((getDemoFeedback(session.id)?.feedback.hr_screen_six_areas.what_needs_improve || []).length > 0)
 })
 
 test('public request guard rejects oversized bodies', () => {

@@ -282,7 +282,7 @@ export default function ProfessionalStoryBuilder({
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">What you said in the interview</p>
                   {originalQuestion && <p className="mt-1 text-[11px] font-bold leading-5 text-rose-800">Q: {originalQuestion}</p>}
                   <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;</p>
-                  <p className="mt-3 text-xs font-bold text-rose-700">We&apos;ll build a better version using your real resume.</p>
+                  <p className="mt-3 text-xs font-bold text-rose-700">We&apos;ll build a better version using the supplied resume.</p>
                 </div>
               )}
             </div>

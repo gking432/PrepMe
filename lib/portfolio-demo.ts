@@ -39,6 +39,7 @@ Qualifications:
 export const DEMO_SESSION_KEY = 'prepme_demo_session'
 export const DEMO_FEEDBACK_KEY = 'prepme_demo_feedback'
 export const DEMO_PRACTICE_PROGRESS_KEY = 'prepme_demo_practice_progress'
+export const PORTFOLIO_SAMPLE_SESSION_ID = 'portfolio-completed-sample'
 
 export type DemoInterviewSetup = {
   resumeText?: string
@@ -61,6 +62,8 @@ export type DemoInterviewSession = {
   transcript_structured?: ReturnType<typeof buildStructuredTranscript>
   company_name?: string
   job_title?: string
+  job_description_text?: string
+  candidate_name?: string
   demo_mode: true
   setup: DemoInterviewSetup
 }
@@ -119,6 +122,39 @@ export function getDemoFeedback(sessionId?: string): DemoFeedbackRecord | null {
   const record = readJson<DemoFeedbackRecord>(DEMO_FEEDBACK_KEY)
   if (!record || (sessionId && record.sessionId !== sessionId)) return null
   return record
+}
+
+export function seedPortfolioSampleResult(
+  feedback: Record<string, any>,
+  transcriptStructured: {
+    messages?: Array<{ speaker?: string; text?: string }>
+    questions_asked?: unknown[]
+    [key: string]: unknown
+  },
+): DemoInterviewSession {
+  const completedAt = new Date()
+  const session: DemoInterviewSession = {
+    id: PORTFOLIO_SAMPLE_SESSION_ID,
+    stage: 'hr_screen',
+    status: 'completed',
+    created_at: new Date(completedAt.getTime() - 14 * 60 * 1000).toISOString(),
+    completed_at: completedAt.toISOString(),
+    duration_seconds: 840,
+    transcript: (transcriptStructured.messages || [])
+      .map((message) => `${message.speaker === 'candidate' ? 'You' : 'Interviewer'}: ${message.text || ''}`)
+      .join('\n'),
+    transcript_structured: transcriptStructured as ReturnType<typeof buildStructuredTranscript>,
+    company_name: PORTFOLIO_SAMPLE_SETUP.companyName,
+    job_title: PORTFOLIO_SAMPLE_SETUP.positionTitle,
+    job_description_text: PORTFOLIO_SAMPLE_SETUP.jobDescriptionText,
+    candidate_name: 'Mira Solis',
+    demo_mode: true,
+    setup: PORTFOLIO_SAMPLE_SETUP,
+  }
+
+  saveDemoSession(session)
+  saveDemoFeedback(session.id, feedback)
+  return session
 }
 
 export function getDemoPracticeProgress(sessionId: string): string[] {

@@ -25,7 +25,7 @@ import ProcessSidebar from '@/components/ProcessSidebar'
 import ImprovementTip from '@/components/ImprovementTip'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
 import { TEST_ALL_INTERVIEW_STAGES_UNLOCKED } from '@/lib/interview-stage-access'
-import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT, MOCK_SESSION_DATA } from '@/lib/mock-feedback'
+import { isAdminPreview, MOCK_FEEDBACK, MOCK_TRANSCRIPT } from '@/lib/mock-feedback'
 import { getBundleForRootCause, getImprovementTipForCriterion, getRootCauseForCriterion, normalizePracticeCriterion } from '@/lib/practice-bundles'
 import {
   DEMO_FEEDBACK_KEY,
@@ -33,6 +33,7 @@ import {
   PORTFOLIO_DEMO_MODE,
   getDemoFeedback,
   getDemoSession,
+  seedPortfolioSampleResult,
 } from '@/lib/portfolio-demo'
 
 function parseSessionRoleContext(jobDescriptionText?: string | null) {
@@ -148,9 +149,10 @@ function InterviewDashboardContent() {
   useEffect(() => {
     if (isMockPreview && !feedback && !loading && !feedbackGenerating) {
       console.log('[Admin Preview] Injecting mock feedback data')
+      const sampleSession = seedPortfolioSampleResult(MOCK_FEEDBACK as any, MOCK_TRANSCRIPT)
       setFeedback(MOCK_FEEDBACK as any)
       setStructuredTranscript(MOCK_TRANSCRIPT)
-      setCurrentSessionData(MOCK_SESSION_DATA)
+      setCurrentSessionData(sampleSession)
       setHasTranscript(true)
     }
   }, [isMockPreview, feedback, loading, feedbackGenerating])
@@ -161,9 +163,10 @@ function InterviewDashboardContent() {
     const timer = setTimeout(() => {
       if (!feedback) {
         console.log('[Admin Preview] Fallback mock injection')
+        const sampleSession = seedPortfolioSampleResult(MOCK_FEEDBACK as any, MOCK_TRANSCRIPT)
         setFeedback(MOCK_FEEDBACK as any)
         setStructuredTranscript(MOCK_TRANSCRIPT)
-        setCurrentSessionData(MOCK_SESSION_DATA)
+        setCurrentSessionData(sampleSession)
         setHasTranscript(true)
         setLoading(false)
       }
@@ -391,9 +394,10 @@ function InterviewDashboardContent() {
   const loadFeedback = async (skipAutoGenerate = false) => {
     try {
       if (previewFromUrl === 'mock') {
+        const sampleSession = seedPortfolioSampleResult(MOCK_FEEDBACK as any, MOCK_TRANSCRIPT)
         setFeedback(MOCK_FEEDBACK as any)
         setStructuredTranscript(MOCK_TRANSCRIPT)
-        setCurrentSessionData(MOCK_SESSION_DATA)
+        setCurrentSessionData(sampleSession)
         setHasTranscript(true)
         setFeedbackGenerating(false)
         return
@@ -2405,10 +2409,6 @@ function InterviewDashboardContent() {
 
   const handleFeedbackComplete = () => {
     dismissFeedbackTutorial()
-    if (isMockPreview) {
-      router.push('/dashboard')
-      return
-    }
     if (currentSessionData?.id) {
       router.push(`/interview/practice/${currentSessionData.id}`)
       return
@@ -2426,8 +2426,8 @@ function InterviewDashboardContent() {
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
       onComplete: handleFeedbackComplete,
-      completionLabel: isMockPreview ? 'Try the live demo' : 'Start Practicing',
-      practiceHref: isMockPreview || !currentSessionData?.id ? null : `/interview/practice/${currentSessionData.id}`,
+      completionLabel: 'Start Workshops',
+      practiceHref: currentSessionData?.id ? `/interview/practice/${currentSessionData.id}` : null,
       onPractice: (repair: any) => {
         const criterion = repair.criterion || ''
         const rootCause = repair.practice_focus_id || repair.rootCause || ''
@@ -2509,8 +2509,8 @@ function InterviewDashboardContent() {
       onUnlockNextStage: handleUnlockNextStage,
       onExitToProfile: handleExitToProfile,
       onComplete: handleFeedbackComplete,
-      completionLabel: isMockPreview ? 'Try the live demo' : 'Start Practicing',
-      practiceHref: isMockPreview || !currentSessionData?.id ? null : `/interview/practice/${currentSessionData.id}`,
+      completionLabel: 'Start Workshops',
+      practiceHref: currentSessionData?.id ? `/interview/practice/${currentSessionData.id}` : null,
       onPractice: (repair: any) => {
         const criterion = repair.criterion || ''
         const rootCause = repair.practice_focus_id || repair.rootCause || ''

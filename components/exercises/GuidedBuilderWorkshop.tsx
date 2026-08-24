@@ -596,7 +596,7 @@ export default function GuidedBuilderWorkshop({
                   )}
                   <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{answerSummary}&rdquo;</p>
                   <p className="mt-3 text-xs font-bold text-rose-700">
-                    We&apos;re going to rebuild this together — in your words, using your real experience.
+                    We&apos;re going to rebuild this together using the experience in the interview context.
                   </p>
                 </div>
               )}

@@ -206,7 +206,7 @@ export default function CareerAlignmentBuilder({
             Building a stronger answer&hellip;
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            Using your resume, the job description, and the Observation → Evidence of Fit → Timing framework
+            Using the supplied resume, job description, and the Observation → Evidence of Fit → Timing framework
           </p>
         </div>
       </div>

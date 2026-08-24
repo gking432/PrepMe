@@ -91,31 +91,23 @@ const GENERATE_SYSTEM_PROMPT = `You are helping a job candidate answer the first
 
 This should sound like a natural first answer in a live interview.
 
-Use this structure:
+Use the Present / Past / Future structure:
 
-1. Professional Identity
-2. Career Foundation
-3. Recent Focus
-4. Direction / Why this role
+1. Present: the candidate's professional lane now and the relevant work or strength they focus on.
+2. Past: one or two selected experiences that explain how they built that lane.
+3. Future: why this specific role and company are a logical next step now.
 
-Do not use the old Present / Past / Future structure.
-
-The answer should not start with "Right now, I'm..." unless the candidate's current work is clearly the strongest and most natural professional identity.
-
-The answer should usually start with a professional identity, such as:
-- "I'd describe my background as..."
-- "Professionally, my background is mostly in..."
-- "I'm a [function/industry] professional with experience in..."
-- "My background sits across..."
+The candidate does not need to say the words "present," "past," or "future." The structure should feel like a natural spoken answer, not a formula.
 
 Important rules:
 
 - This is the first answer in the interview.
-- Start broad, then get specific.
+- Establish a clear professional through-line in the opening sentence.
 - Do not start with side projects, independent work, or current unemployment unless the user specifically chose that as their identity.
 - Do not write a chronological resume walkthrough.
 - Do not list every job.
-- Mention no more than 2–3 major resume experiences.
+- Mention no more than 1–2 past experiences.
+- Make the final connection specific to the target role rather than a generic desire to grow.
 - Do not invent metrics, users, revenue, company names, tools, certifications, job titles, or outcomes.
 - Do not exaggerate the candidate's experience.
 - Do not sound like a cover letter.
@@ -143,10 +135,9 @@ Use this exact shape:
 {
   "answerType": "professional_introduction",
   "structureUsed": {
-    "identity": "...",
-    "foundation": "...",
-    "recentFocus": "...",
-    "direction": "..."
+    "present": "...",
+    "past": "...",
+    "future": "..."
   },
   "primaryAnswer": "...",
   "casualAnswer": "...",
@@ -162,12 +153,12 @@ const REWRITE_SYSTEM_PROMPT = `Rewrite this "Tell me about yourself" answer base
 
 Rules:
 
-- Keep the Identity, Foundation, Recent Focus, Direction structure.
+- Keep the Present, Past, Future structure.
 - Keep the same basic facts.
 - Do not invent new metrics, tools, job titles, certifications, company facts, or outcomes.
 - Do not add new experiences unless they are clearly supported by the resume/profile.
 - Do not make it a chronological resume walkthrough.
-- Mention no more than 2–3 major resume experiences.
+- Mention no more than 1–2 past experiences.
 - Keep it natural and spoken.
 - Do not overstuff it with keywords.
 - Do not sound like a cover letter.
@@ -295,18 +286,17 @@ ${avoidances.length ? avoidances.map((a) => a.replace(/_/g, ' ')).join(', ') : '
 
 Tasks:
 
-1. Create a natural professional identity for the candidate.
-2. Choose the strongest 1–2 career foundation points from the resume.
-3. Explain the candidate's recent focus without making it sound defensive or scattered.
-4. Connect the answer to the target role or next step.
-5. Generate a primary answer.
-6. Generate a more casual version.
-7. Generate a short version (60–90 words).
-8. Generate opening line options (3).
-9. Generate closing line options (3).
-10. Explain why the answer works (3 bullets).
-11. Identify possible weak spots (2–3 bullets).
-12. Generate likely follow-up questions (3–5).
+1. Define a truthful present professional lane using the candidate's strongest relevant work or skill.
+2. Choose 1–2 past experiences that best explain how the candidate built that lane; do not summarize the whole resume.
+3. Connect that through-line to the specific target role and company, explaining why the move makes sense now.
+4. Generate a primary answer.
+5. Generate a more casual version.
+6. Generate a short version (60–90 words).
+7. Generate opening line options (3).
+8. Generate closing line options (3).
+9. Explain why the answer works (3 bullets).
+10. Identify possible weak spots (2–3 bullets).
+11. Generate likely follow-up questions (3–5).
 
 The casualAnswer should be similar in length to the primaryAnswer but more conversational.
 The shortAnswer should be 60–90 words.

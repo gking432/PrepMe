@@ -15,6 +15,7 @@ import {
 } from '../lib/portfolio-demo'
 import { MOCK_FEEDBACK, MOCK_TRANSCRIPT } from '../lib/mock-feedback'
 import { assertSafePublicUrl, enforceRateLimit, rejectOversizedRequest } from '../lib/demo-guard'
+import { FRAMEWORK_STEPS } from '../lib/professional-story-config'
 
 function installBrowserStorage() {
   const values = new Map<string, string>()
@@ -47,6 +48,10 @@ test('sample setup contains a complete fictional interview context', () => {
   assert.ok(PORTFOLIO_SAMPLE_SETUP.resumeText.includes('FICTIONAL SAMPLE CANDIDATE'))
   assert.ok(PORTFOLIO_SAMPLE_SETUP.jobDescriptionText.includes('FICTIONAL DEMO JOB POSTING'))
   assert.ok(PORTFOLIO_SAMPLE_SETUP.jobDescriptionText.includes('Responsibilities:'))
+})
+
+test('professional story workshop teaches present, past, future', () => {
+  assert.deepEqual(FRAMEWORK_STEPS.map((step) => step.key), ['present', 'past', 'future'])
 })
 
 test('structured transcripts preserve interviewer questions and candidate answers', () => {

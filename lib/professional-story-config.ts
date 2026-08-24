@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------
 // Professional Introduction Builder — Static Configuration
-// Identity → Foundation → Recent Focus → Direction
+// Present → Past → Future
 // ---------------------------------------------------------------------------
 
 // ========================== TYPE DEFINITIONS ==========================
@@ -93,10 +93,9 @@ export interface ProfessionalIntroductionInput {
 export interface ProfessionalIntroductionOutput {
   answerType: 'professional_introduction'
   structureUsed: {
-    identity: string
-    foundation: string
-    recentFocus: string
-    direction: string
+    present: string
+    past: string
+    future: string
   }
   primaryAnswer: string
   casualAnswer: string
@@ -291,37 +290,30 @@ export const REWRITE_OPTIONS = [
 ] as const
 
 export const PROGRESS_STEPS = [
-  'Situation', 'Identity', 'Tone', 'Generate',
+  'Context', 'Present', 'Delivery', 'Generate',
 ] as const
 
 // ========================== FRAMEWORK STEPS (for flip cards) ==========================
 
 export const FRAMEWORK_STEPS = [
   {
-    key: 'identity',
-    label: 'Identity',
-    description: 'Who you are professionally. Not your current job title — the broader picture of how to understand you.',
-    color: 'sky',
-    emoji: '🪪',
-  },
-  {
-    key: 'foundation',
-    label: 'Foundation',
-    description: 'Where that background came from. The 1-2 strongest experiences that explain your strengths.',
-    color: 'amber',
-    emoji: '🏗️',
-  },
-  {
-    key: 'recentFocus',
-    label: 'Recent Focus',
-    description: "What you've been developing or working on lately. Frames your current chapter without defensiveness.",
+    key: 'present',
+    label: 'Present',
+    description: 'Open with your professional lane now and the work you are best positioned to do. Lead with value, not employment status.',
     color: 'emerald',
-    emoji: '🔍',
+    emoji: '📍',
   },
   {
-    key: 'direction',
-    label: 'Direction',
-    description: "Why this role makes sense now. Connects your arc to the specific opportunity — not just 'I want to grow.'",
+    key: 'past',
+    label: 'Past',
+    description: 'Select one or two relevant experiences that explain how you built that lane. Give the through-line, not every job.',
+    color: 'sky',
+    emoji: '🧭',
+  },
+  {
+    key: 'future',
+    label: 'Future',
+    description: 'Connect that through-line to this specific role and explain why the move makes sense now.',
     color: 'violet',
     emoji: '🎯',
   },

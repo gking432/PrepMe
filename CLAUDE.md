@@ -312,16 +312,16 @@ The prompt fix above was NOT sufficient. 4 of 8 workshops (`star_proof`, `role_d
 
 ### 2026-06-08 (Session 8)
 - **Professional Introduction Builder**: Complete rewrite of the "Tell me about yourself" workshop.
-  - **New structure**: Identity → Foundation → Recent Focus → Direction (replaces Present → Past → Future). Works better for career changers, builders, freelancers, early-career, and nonlinear backgrounds.
+  - **Current structure**: Present → Past → Future. Present establishes the candidate's professional lane, Past selects the 1–2 experiences that explain it, and Future connects that through-line to the specific role.
   - **Professional Identity Style step**: User chooses how broad/specific their opening should be — broad_professional, function_specific, hybrid_generalist, industry_specific, transition_focused, early_career, or custom (write their own opening identity, max 220 chars).
   - **Emphasis step** (optional): Multi-select up to 3 themes (customer focus, sales, marketing, product thinking, etc.). Hidden under Advanced settings.
   - **No narrative angles**: Simpler output — one answer + casual + short versions. No AI-generated angle picker or alternate angle regeneration.
   - **Rewrite support**: 9 rewrite instructions (make shorter, more conversational, more confident, less formal, more specific, tie closer to role, reduce buzzwords, less technical, less salesy) + regenerate. Each shows confirmation gate before firing second API call. Rewrite returns only `{ primaryAnswer }`.
-  - **Output shape**: `structureUsed` with identity/foundation/recentFocus/direction (not present/past/future). `whyThisWorks` and `possibleWeakSpots` are arrays. `casualAnswer` + `shortAnswer` (not `conversationalVersion`/`shorterVersion`).
+  - **Output shape**: `structureUsed` with present/past/future. `whyThisWorks` and `possibleWeakSpots` are arrays. `casualAnswer` + `shortAnswer` (not `conversationalVersion`/`shorterVersion`).
   - **9 current situation options**: currently_employed, job_searching, independent, building, transitioning, recently_left, student/grad, returning, other (with detail field)
   - **6 tone options**, **3 lengths**: 45s (90-120 words), 60s (130-180 words), 90s (190-260 words)
   - **12 avoidance options** with 5 auto-selected defaults, hidden under Advanced
-  - **API prompt**: Uses the full prompt from spec verbatim — Identity/Foundation/Recent Focus/Direction structure, banned phrases, specific rules for transitions/early-career/nonlinear backgrounds
+  - **API prompt**: Uses Present/Past/Future, prevents chronological resume walkthroughs, and includes specific rules for transitions, early-career candidates, and nonlinear backgrounds.
 - **Files**: `lib/professional-story-config.ts`, `components/exercises/ProfessionalStoryBuilder.tsx`, `app/api/interview/professional-story/route.ts`
 - **Wired into HrFeedbackDeck and PracticePath** for `professional_story` workshop type
 

@@ -654,8 +654,10 @@ CandidateInterviewProfile
 Structure:
 
 ```
-Identity → Foundation → Recent Focus → Direction
+Present → Past → Future
 ```
+
+Present defines the candidate's current professional lane, Past selects the one or two experiences that best explain it, and Future connects that through-line to the target role and company.
 
 This should be one API call only when this module is flagged or requested.
 

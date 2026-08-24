@@ -1099,33 +1099,6 @@ function DashboardPageContent() {
             <Preppi message="What job are you interviewing for?" size="md" animate className="justify-center" />
             <p className="hidden md:block text-center text-base font-semibold text-gray-700">What job are you interviewing for?</p>
 
-            {PORTFOLIO_DEMO_MODE && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={loadSampleInterview}
-                  className="flex w-full items-center justify-between rounded-2xl border border-accent-200 bg-accent-50/70 px-4 py-3 text-left transition hover:border-accent-300 hover:bg-accent-50"
-                >
-                  <span>
-                    <span className="block text-sm font-bold text-accent-800">Try the live sample</span>
-                    <span className="mt-0.5 block text-xs text-accent-700/75">Preload a completely fictional résumé and role.</span>
-                  </span>
-                  <Sparkles className="h-5 w-5 shrink-0 text-accent-600" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push('/interview/feedback?preview=mock')}
-                  className="flex w-full items-center justify-between rounded-2xl border border-violet-200 bg-violet-50/70 px-4 py-3 text-left transition hover:border-violet-300 hover:bg-violet-50"
-                >
-                  <span>
-                    <span className="block text-sm font-bold text-violet-800">Explore feedback + workshops</span>
-                    <span className="mt-0.5 block text-xs text-violet-700/75">Skip ahead to the coaching experience.</span>
-                  </span>
-                  <ArrowRight className="h-5 w-5 shrink-0 text-violet-600" />
-                </button>
-              </div>
-            )}
-
             <div className="space-y-3">
               <input
                 autoFocus
@@ -1145,6 +1118,35 @@ function DashboardPageContent() {
             </div>
 
             <JobPostingPanel />
+            {PORTFOLIO_DEMO_MODE && (
+              <div className="space-y-3 border-t border-slate-200 pt-5">
+                <p className="text-center text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Or explore the demo</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={loadSampleInterview}
+                    className="flex w-full items-center justify-between rounded-2xl border border-accent-200 bg-accent-50/70 px-4 py-3 text-left transition hover:border-accent-300 hover:bg-accent-50"
+                  >
+                    <span>
+                      <span className="block text-sm font-bold text-accent-800">Try the live sample</span>
+                      <span className="mt-0.5 block text-xs text-accent-700/75">Preload a completely fictional résumé and role.</span>
+                    </span>
+                    <Sparkles className="h-5 w-5 shrink-0 text-accent-600" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/interview/feedback?preview=mock')}
+                    className="flex w-full items-center justify-between rounded-2xl border border-violet-200 bg-violet-50/70 px-4 py-3 text-left transition hover:border-violet-300 hover:bg-violet-50"
+                  >
+                    <span>
+                      <span className="block text-sm font-bold text-violet-800">Explore feedback + workshops</span>
+                      <span className="mt-0.5 block text-xs text-violet-700/75">Skip ahead to the coaching experience.</span>
+                    </span>
+                    <ArrowRight className="h-5 w-5 shrink-0 text-violet-600" />
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="hidden justify-end border-t border-slate-200 pt-5 md:flex">
               <button
                 onClick={() => setOnboardStep('resume')}

@@ -256,94 +256,44 @@ type InterviewModuleType =
 
 ```json
 {
-  "professionalIdentity": "Marketing, sales, and product-oriented professional with experience across brand positioning, client management, sales operations, and AI-assisted product building.",
-  "careerArc": "Started in sales and product marketing, moved into client-facing marketing strategy, and recently developed hands-on product-building experience through software prototypes.",
-  "currentSituation": "Recently focused on building software prototypes with AI-assisted development tools while evaluating customer problems, pricing, positioning, and go-to-market potential.",
+  "professionalIdentity": "[Concise professional identity derived at runtime]",
+  "careerArc": "[Relevant career through-line derived at runtime]",
+  "currentSituation": "[Current situation supplied by the candidate]",
   "strongestExperienceAreas": [
-    "Brand positioning",
-    "Client management",
-    "Marketing strategy",
-    "Sales operations",
-    "Product launch support",
-    "AI-assisted product building"
+    "[Relevant experience area]"
   ],
   "coreSkills": [
-    "Customer discovery",
-    "Positioning",
-    "Client communication",
-    "Go-to-market thinking",
-    "Execution",
-    "Product thinking"
+    "[Relevant skill]"
   ],
   "relevantCompaniesOrProjects": [
-    "Sub-Zero",
-    "TouchPoint Marketing",
-    "Interview simulation prototype",
-    "Productivity tool prototype"
+    "[Source label; never hardcode a real user's employer in examples]"
   ],
   "strongestProofPoints": [
     {
-      "source": "Sub-Zero rotational program",
-      "claim": "Has exposure to how sales, product marketing, launches, and dealer channels work together.",
-      "evidence": "Worked across sales operations, product marketing, launch execution, and dealer-facing work.",
+      "source": "[Candidate-provided source]",
+      "claim": "[Supported claim]",
+      "evidence": "[Evidence from supplied materials]",
       "usefulForModules": [
         "professional_introduction",
         "career_alignment",
         "specific_evidence_star"
-      ]
-    },
-    {
-      "source": "TouchPoint Marketing",
-      "claim": "Has client-facing strategy and execution experience.",
-      "evidence": "Managed discovery, strategy, campaign execution, reporting, and client communication.",
-      "usefulForModules": [
-        "professional_introduction",
-        "career_alignment",
-        "specific_evidence_star"
-      ]
-    },
-    {
-      "source": "Independent product development",
-      "claim": "Has recent hands-on product-building and AI-assisted development experience.",
-      "evidence": "Built software prototypes and evaluated customer problems, pricing, positioning, and go-to-market potential.",
-      "usefulForModules": [
-        "professional_introduction",
-        "career_alignment",
-        "handling_uncertainty"
       ]
     }
   ],
   "possibleConcerns": [
     {
-      "concern": "Current work may appear unfocused or solo.",
-      "whyItMayMatter": "Interviewers may wonder whether the candidate is ready to work inside a structured team.",
-      "suggestedFraming": "Frame independent building as intentional skill development and a bridge toward applying product, customer, and go-to-market thinking inside a company."
-    },
-    {
-      "concern": "Background spans marketing, sales, product, and building.",
-      "whyItMayMatter": "Interviewers may wonder whether the candidate has a clear direction.",
-      "suggestedFraming": "Emphasize the through-line: customer problems, positioning, product value, and execution."
+      "concern": "[Evidence-based concern]",
+      "whyItMayMatter": "[Interview relevance]",
+      "suggestedFraming": "[Truthful framing guidance]"
     }
   ],
   "likelyStorySeeds": [
     {
-      "storyTheme": "Owning a messy client problem",
-      "sourceExperience": "TouchPoint Marketing",
-      "whyUseful": "Can support STAR answers about ownership, client communication, problem-solving, and execution.",
+      "storyTheme": "[Candidate-provided story theme]",
+      "sourceExperience": "[Candidate-provided source]",
+      "whyUseful": "[Relevant competencies]",
       "likelyQuestionTypes": [
-        "Tell me about a time you solved a problem",
-        "Tell me about a time you handled a difficult client",
-        "Tell me about a time you took ownership"
-      ]
-    },
-    {
-      "storyTheme": "Learning product and go-to-market through prototyping",
-      "sourceExperience": "Independent product development",
-      "whyUseful": "Can support answers about adaptability, learning, initiative, and career direction.",
-      "likelyQuestionTypes": [
-        "Why now?",
-        "Tell me about yourself",
-        "Tell me about a time you learned something quickly"
+        "[Matching interview question type]"
       ]
     }
   ]
@@ -380,44 +330,44 @@ type TargetRoleProfile = {
 
 ```json
 {
-  "roleTitle": "Product Marketing Manager",
-  "companyName": "Example Company",
-  "roleCategory": "Product / Go-to-market",
+  "roleTitle": "Animal Care Operations Coordinator",
+  "companyName": "Moonrise Wildlife Sanctuary",
+  "roleCategory": "Wildlife care operations",
   "topResponsibilities": [
-    "Understand customer needs",
-    "Shape product positioning",
-    "Support launches",
-    "Work cross-functionally with sales and product",
-    "Translate product value into market-facing messaging"
+    "Coordinate animal intake",
+    "Maintain treatment and care records",
+    "Schedule volunteer coverage",
+    "Arrange wildlife transport",
+    "Track care supplies"
   ],
   "topSkills": [
-    "Product positioning",
-    "Go-to-market strategy",
-    "Customer research",
-    "Communication",
-    "Cross-functional execution"
+    "Animal-care coordination",
+    "Record keeping",
+    "Volunteer scheduling",
+    "Calm communication",
+    "Operational follow-through"
   ],
   "likelyInterviewPriorities": [
-    "Can the candidate connect customer needs to positioning?",
-    "Can the candidate work between sales, product, and marketing?",
-    "Can the candidate execute without needing perfect structure?",
-    "Can the candidate tell a clear story about their career direction?"
+    "Can the candidate prioritize urgent intake needs?",
+    "Can the candidate coordinate staff and volunteers?",
+    "Can the candidate keep accurate care records?",
+    "Can the candidate communicate clearly during time-sensitive transfers?"
   ],
   "roleFitThemes": [
-    "Customer insight",
-    "Product strategy",
-    "Launch execution",
-    "Commercial communication",
-    "Cross-functional work"
+    "Animal welfare",
+    "Care operations",
+    "Reliable documentation",
+    "Volunteer coordination",
+    "Team communication"
   ],
   "companyOrIndustryThemes": [
-    "Product adoption",
-    "Market education",
-    "Customer problem solving"
+    "Wildlife rehabilitation",
+    "Seasonal intake volume",
+    "Safe animal transport"
   ],
   "possibleRisksForCandidate": [
-    "May need to prove product marketing depth if most experience is broader marketing/client work.",
-    "May need to frame independent product building as relevant rather than scattered."
+    "May need to show experience handling competing animal-care priorities.",
+    "May need to explain how record accuracy is maintained during urgent intake periods."
   ]
 }
 ```

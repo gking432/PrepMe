@@ -7,18 +7,19 @@ import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { getRealtimeVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import {
+  REALTIME_DEFAULT_MAX_OUTPUT_TOKENS,
+  REALTIME_HR_MAX_OUTPUT_TOKENS,
+  REALTIME_THINKING_SILENCE_MS,
+  REALTIME_VAD_PREFIX_PADDING_MS,
+  REALTIME_VAD_THRESHOLD,
+} from '@/lib/realtime-interview-config'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
   if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   return _openai
 }
-
-const REALTIME_THINKING_SILENCE_MS = 7000
-const REALTIME_HR_MAX_OUTPUT_TOKENS = 520
-const REALTIME_DEFAULT_MAX_OUTPUT_TOKENS = 700
-const REALTIME_VAD_THRESHOLD = 0.5
-const REALTIME_VAD_PREFIX_PADDING_MS = 500
 
 export async function POST(request: NextRequest) {
   try {
@@ -109,7 +110,6 @@ export async function POST(request: NextRequest) {
         companyWebsite: interviewData?.company_website,
         resumeTextLength: interviewData?.resume_text?.length || 0,
         jobDescriptionLength: interviewData?.job_description_text?.length || 0,
-        resumeTextPreview: interviewData?.resume_text?.substring(0, 100) || 'N/A',
       })
     }
 
@@ -194,12 +194,12 @@ ${websiteContent}
       stageSpecificInstructions = `
 CRITICAL HR SCREEN INSTRUCTIONS:
 - This is a 5-10 minute phone screen ONLY. You are a gatekeeper, not an evaluator.
-- Pleasant, attentive, and efficient. You are screening, but you still sound like a real person.
+- You're on your 10th call of the day. Pleasant but efficient. Mildly skeptical by default — not hostile, just doing your job.
 - Your goals: 1) Verify the candidate roughly matches their resume, 2) Check motivation and interest, 3) Confirm logistics (salary, availability).
-- After the core HR topics are covered, naturally conclude the call.
-- Normal turns are 20-55 words. Opening and closing turns may be 35-70 words when needed.
+- After 4-6 exchanges, naturally conclude the call.
+- Normal turns are 6-18 words. Opening and closing turns are 24 words max. Candidate Q&A answers are 20 words max.
 - Use filler like "Mm-hm." / "Okay." / "Got it." — never "Wow!" or "That's amazing!"
-- Natural acknowledgment, one direct question, stop.
+- Brief acknowledgment, one direct question, stop.
 - Do NOT ask deep technical or domain-specific questions. Keep everything surface-level.
 - Core questions: background walk-through, what they know about the company, why this role, brief experience verification, why leaving, salary, availability.
 - Maximum ONE follow-up per topic, surface-level only.
@@ -226,7 +226,7 @@ OPENING: You always speak first. Begin the call immediately with a natural phone
 
 Interview Guidelines:
 - Ask questions naturally based on the candidate's responses. Do not use predefined question lists.
-${stage === 'hr_screen' ? '- Keep HR turns conversational but focused. Typical turns are 20-55 words, with one clear question at a time.' : '- Keep responses conversational and focused.'}
+${stage === 'hr_screen' ? '- Keep HR turns to 6-18 words unless opening, closing, or answering candidate Q&A.' : '- Keep responses under 60 words. Be concise and focused.'}
 - Ask ONE question at a time. Wait for the candidate's answer before proceeding.
 - Let candidates think. Do not fill silence, rush them, or ask the next question just because they paused for a few seconds.
 - If the candidate says "give me a second," "let me think," or similar, say only a brief "Sure" or "Take your time," then wait.
@@ -309,12 +309,11 @@ Company: Not provided`
         conversationContext: `
 REALTIME HR SCREEN RULES:
 - Keep this to roughly 8-10 total questions.
-- Sound like a real recruiter on a real call. Keep turns focused, but allow a human sentence or two when it makes the conversation feel natural.
-- Typical turns should be 20-55 words. Short acknowledgments are fine, but do not make every turn clipped.
-- Use this pattern: natural acknowledgment, one clear question, then stop.
-- Let the candidate pause to think. Do not treat 5-8 seconds of silence as a weak answer or a reason to move on.
-- If they ask for a moment, say "Sure, take your time," then wait for them to continue.
-- Do not over-explain or lecture, but do briefly connect a follow-up to what the candidate just said when it helps the call feel conversational.
+- Normal interviewer turns should be 6-18 words. Opening, Q&A answers, and closing should be 24 words max.
+- Use this pattern: brief acknowledgment, one direct question, stop.
+- Let the candidate pause to think. Do not treat a few seconds of silence as a weak answer or a reason to move on.
+- If they ask for a moment, say only "Sure" and wait for them to continue.
+- Do not summarize the candidate's answer, over-explain, or add multi-part setup before questions.
 - Stay surface-level even if the candidate says something impressive or unusual.
 - Ask at most ONE brief follow-up on any topic, then move on.
 - Do NOT do technical evaluation, problem-solving, or long behavioral deep-dives.
@@ -331,8 +330,9 @@ REALTIME HR SCREEN RULES:
 - After the core questions, invite the candidate to ask questions.
 - Allow up to three candidate questions and answer them briefly.
 - When answering candidate questions, stay in recruiter mode:
-  - answer with one or two short complete thoughts
-  - keep it under roughly 60 words
+  - answer with ONE short complete thought
+  - keep it under roughly 25-30 words
+  - prefer under 20 words
   - do not give multi-part explanations
   - do not add background unless it is absolutely necessary
   - give the shortest truthful summary instead of a long explanation

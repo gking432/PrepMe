@@ -122,7 +122,6 @@ export async function POST(request: NextRequest) {
         companyWebsite: interviewData?.company_website,
         resumeTextLength: interviewData?.resume_text?.length || 0,
         jobDescriptionLength: interviewData?.job_description_text?.length || 0,
-        resumeTextPreview: interviewData?.resume_text?.substring(0, 100) || 'N/A',
       })
     }
 

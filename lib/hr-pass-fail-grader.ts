@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { HR_SCREEN_PASS_FAIL_MODEL } from '@/lib/feedback-config'
+import { hasSufficientHrInterviewCoverage } from '@/lib/hr-interview-coverage'
 
 type Evidence = {
   question_id?: string
@@ -59,7 +60,7 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
       framework: 'Present, Past, Future',
       diagnosis: 'Your background needs to sound like a coherent professional story, not a resume read-through.',
       example:
-        'Right now, most of my work is focused on coordinating projects across teams. Earlier in my career, I built that foundation in customer-facing roles where follow-through mattered every day. Going forward, I want a role where that coordination work is central to the job.',
+        'Present: [your professional lane now]. Past: [one relevant experience that built it]. Future: [why this role is the logical next step].',
       prompt: 'Script your own Present, Past, Future answer for "Tell me about yourself."',
     },
   },
@@ -72,7 +73,7 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
       framework: 'STAR or Answer, Reason, Example',
       diagnosis: 'The interviewer needs proof they can picture. Put more weight into what you personally did.',
       example:
-        'During a launch week, scheduling changes were coming from three teams. I owned the tracker, reset owners and deadlines, and flagged blockers twice a day. We got through the launch without missing critical handoffs.',
+        'Situation: [the relevant challenge]. Task: [what you owned]. Action: [the specific steps you took]. Result: [what changed or what you learned].',
       prompt: 'Script one stronger proof-based answer using STAR or Answer, Reason, Example.',
     },
   },
@@ -85,7 +86,7 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
       framework: 'Observation, Fit, Timing',
       diagnosis: 'Your answer should explain what you noticed, why it fits your background, and why now is the right step.',
       example:
-        'What stood out is that this role sits close to coordination and follow-through work. That fits my background because I have kept moving pieces aligned across teams. The timing makes sense because I want that work to be more central in my next role.',
+        'Observation: [a specific part of the role]. Fit: [the relevant strength you bring]. Timing: [why this move makes sense now].',
       prompt: 'Script your own Observation, Fit, Timing answer for why this role makes sense.',
     },
   },
@@ -98,7 +99,7 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
       framework: 'Recovery process, then Answer, Reason, Example',
       diagnosis: 'When you do not have a perfect answer, pause, recover, and choose one grounded point instead of filling space.',
       example:
-        'I would start by clarifying the highest-risk part of the situation. That matters because uncertainty gets easier when the first decision is clear. In a past project, I used that approach to reset priorities before the team lost more time.',
+        'Answer: [your honest starting point]. Reason: [why that approach makes sense]. Example: [one truthful supporting moment, if available].',
       prompt: 'Script a calm recovery answer for a question that could make you ramble.',
     },
   },
@@ -111,7 +112,7 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
       framework: 'Delivery workshop using a saved answer',
       diagnosis: 'A strong answer should sound spoken, settled, and easy to follow out loud.',
       example:
-        'The main thing I would point to is ownership. In that project, I was responsible for keeping the handoff clear, so I focused on the tracker, the owners, and the blockers. That helped the team move without confusion.',
+        'Clean start: [your main point]. Simple transition: [the most relevant detail]. Settled ending: [the result or takeaway].',
       prompt: 'Pick one saved answer and rewrite it with a cleaner start, one simple transition, and a settled ending.',
     },
   },
@@ -124,31 +125,14 @@ export const HR_PASS_FAIL_AREAS: HrAreaDefinition[] = [
       framework: 'Research + question-building workshops',
       diagnosis: 'Preparation should show you understand the opportunity and have real questions about the work.',
       example:
-        'I saw that the role focuses on improving customer handoffs, which connects to work I have done before. I would be curious how the team defines success in the first few months.',
+        'Role observation: [a specific responsibility]. Question: [what success, ownership, or collaboration looks like in practice].',
       prompt: 'Script one prepared company/role answer and one thoughtful question you would ask at the end.',
     },
   },
 ]
 
-function words(value: string) {
-  return (value.match(/[A-Za-z0-9']+/g) || []).length
-}
-
-function candidateTextFromStructured(transcriptStructured: any) {
-  const messages = Array.isArray(transcriptStructured?.messages) ? transcriptStructured.messages : []
-  return messages
-    .filter((message: any) => message?.speaker === 'candidate' && typeof message?.text === 'string')
-    .map((message: any) => message.text)
-    .join('\n')
-}
-
 function hasSubstantiveCandidateResponse(materials: HrPassFailMaterials) {
-  const structuredCandidateText = candidateTextFromStructured(materials.transcriptStructured)
-  const transcriptCandidateLines = String(materials.transcript || '')
-    .split(/\r?\n/)
-    .filter((line) => /^(You|Candidate|User):/i.test(line))
-    .join('\n')
-  return words(`${structuredCandidateText}\n${transcriptCandidateLines}`) >= 12
+  return hasSufficientHrInterviewCoverage(materials.transcriptStructured, materials.transcript)
 }
 
 function parseJsonObject(text: string) {

@@ -634,7 +634,7 @@ export default function StarStoryBuilder({
                 type="text"
                 value={contextName}
                 onChange={(e) => setContextName(e.target.value.slice(0, 80))}
-                placeholder="Example: Sub-Zero, freelance website client, sales internship, college capstone"
+                placeholder="Name the setting without using a real employer name."
                 className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
               />
             </div>
@@ -738,7 +738,7 @@ export default function StarStoryBuilder({
                 type="text"
                 value={roleDetail}
                 onChange={(e) => setRoleDetail(e.target.value.slice(0, 180))}
-                placeholder="Example: I was responsible for keeping the client updated and getting the launch finished."
+                placeholder="Describe what you personally owned in this situation."
                 className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
               />
             </div>
@@ -871,7 +871,7 @@ export default function StarStoryBuilder({
                     type="text"
                     value={metricValue}
                     onChange={(e) => setMetricValue(e.target.value.slice(0, 80))}
-                    placeholder="Example: 15%, $20,000, 3 days, 12 accounts, 2 weeks early"
+                    placeholder="Enter a number only if it is truthful and supported."
                     className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                   />
                 </div>
@@ -884,7 +884,7 @@ export default function StarStoryBuilder({
                     type="text"
                     value={metricContext}
                     onChange={(e) => setMetricContext(e.target.value.slice(0, 160))}
-                    placeholder="Example: Conversion rate increased by 15% after the new landing page went live."
+                    placeholder="Describe the measurable change in one sentence."
                     className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                   />
                 </div>
@@ -912,7 +912,7 @@ export default function StarStoryBuilder({
                     type="text"
                     value={proofDetail}
                     onChange={(e) => setProofDetail(e.target.value.slice(0, 180))}
-                    placeholder="Example: The client approved the launch, stayed with us, and later asked us for another project."
+                    placeholder="Describe the observable outcome in one sentence."
                     className="mt-1.5 w-full rounded-xl border-2 border-amber-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
                   />
                 </div>
@@ -953,7 +953,7 @@ export default function StarStoryBuilder({
             <textarea
               value={additionalNotes}
               onChange={(e) => setAdditionalNotes(e.target.value.slice(0, 500))}
-              placeholder="Example: Mention that I was new to the role, or that the client was especially important."
+              placeholder="Add only context that is truthful and necessary to understand the story."
               rows={4}
               className="w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
             />

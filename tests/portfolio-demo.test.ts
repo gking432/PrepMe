@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { NextRequest } from 'next/server'
 
@@ -15,7 +16,16 @@ import {
 } from '../lib/portfolio-demo'
 import { MOCK_FEEDBACK, MOCK_TRANSCRIPT } from '../lib/mock-feedback'
 import { assertSafePublicUrl, enforceRateLimit, rejectOversizedRequest } from '../lib/demo-guard'
-import { FRAMEWORK_STEPS } from '../lib/professional-story-config'
+import { getHrInterviewCoverage } from '../lib/hr-interview-coverage'
+import { gradeHrScreenQuestionLevel } from '../lib/hr-question-level-grader'
+import { buildSystemPrompt as buildHrScreenPrompt } from '../lib/interview-prompts/hr_screen'
+import { FRAMEWORK_STEPS, PROFESSIONAL_IDENTITY_STYLE_OPTIONS } from '../lib/professional-story-config'
+import {
+  FALLBACK_THINKING_SILENCE_MS,
+  REALTIME_DEFAULT_MAX_OUTPUT_TOKENS,
+  REALTIME_HR_MAX_OUTPUT_TOKENS,
+  REALTIME_THINKING_SILENCE_MS,
+} from '../lib/realtime-interview-config'
 
 function installBrowserStorage() {
   const values = new Map<string, string>()
@@ -43,23 +53,113 @@ function installBrowserStorage() {
 }
 
 test('sample setup contains a complete fictional interview context', () => {
-  assert.equal(PORTFOLIO_SAMPLE_SETUP.companyName, 'Cedar & Signal Labs')
+  assert.equal(PORTFOLIO_SAMPLE_SETUP.companyName, 'Moonrise Wildlife Sanctuary')
   assert.ok(PORTFOLIO_SAMPLE_SETUP.resumeText.length > 200)
   assert.ok(PORTFOLIO_SAMPLE_SETUP.resumeText.includes('FICTIONAL SAMPLE CANDIDATE'))
   assert.ok(PORTFOLIO_SAMPLE_SETUP.jobDescriptionText.includes('FICTIONAL DEMO JOB POSTING'))
   assert.ok(PORTFOLIO_SAMPLE_SETUP.jobDescriptionText.includes('Responsibilities:'))
+  assert.doesNotMatch(
+    `${PORTFOLIO_SAMPLE_SETUP.resumeText}\n${PORTFOLIO_SAMPLE_SETUP.jobDescriptionText}`,
+    /customer research|customer insights|program management|software studio|product teams/i,
+  )
 })
 
 test('professional story workshop teaches present, past, future', () => {
   assert.deepEqual(FRAMEWORK_STEPS.map((step) => step.key), ['present', 'past', 'future'])
+  assert.doesNotMatch(
+    PROFESSIONAL_IDENTITY_STYLE_OPTIONS.map((option) => option.description).join('\n'),
+    /example:|marketing|sales|software engineer|healthcare|education/i,
+  )
+})
+
+test('sparse interview coverage is not inflated by duplicate transcript formats', () => {
+  const structuredTranscript = {
+    messages: [
+      { speaker: 'candidate', text: "Why aren't you responding quickly?" },
+      { speaker: 'candidate', text: "Yeah, I'm, I do a lot of research." },
+    ],
+  }
+  const plainTranscript = [
+    "You: Why aren't you responding quickly?",
+    "You: Yeah, I'm, I do a lot of research.",
+  ].join('\n')
+
+  assert.deepEqual(getHrInterviewCoverage(structuredTranscript, plainTranscript), {
+    candidateTurnCount: 2,
+    meaningfulTurnCount: 1,
+    meaningfulWordCount: 8,
+    sufficient: false,
+  })
+})
+
+test('completed fictional sample has enough live coverage for normal grading', () => {
+  const plainTranscript = MOCK_TRANSCRIPT.messages
+    .map((message) => `${message.speaker === 'candidate' ? 'You' : 'Interviewer'}: ${message.text}`)
+    .join('\n')
+
+  assert.equal(getHrInterviewCoverage(MOCK_TRANSCRIPT, plainTranscript).sufficient, true)
+})
+
+test('an interrupted interview returns all six repair areas without calling the grader model', async () => {
+  const transcriptStructured = {
+    messages: [
+      { speaker: 'candidate', text: "Why aren't you responding quickly?" },
+      { speaker: 'candidate', text: "Yeah, I'm, I do a lot of research." },
+    ],
+  }
+  const rubric = await gradeHrScreenQuestionLevel({
+    transcriptStructured,
+    transcript: [
+      "You: Why aren't you responding quickly?",
+      "You: Yeah, I'm, I do a lot of research.",
+    ].join('\n'),
+  })
+
+  assert.equal(rubric.hr_screen_six_areas.what_needs_improve.length, 6)
+  assert.equal(rubric.overall_assessment.overall_score, 0)
+})
+
+test('realtime response pacing matches the earlier responsive configuration', () => {
+  assert.equal(REALTIME_THINKING_SILENCE_MS, 3200)
+  assert.equal(FALLBACK_THINKING_SILENCE_MS, 4500)
+  assert.equal(REALTIME_HR_MAX_OUTPUT_TOKENS, 180)
+  assert.equal(REALTIME_DEFAULT_MAX_OUTPUT_TOKENS, 400)
+
+  const prompt = buildHrScreenPrompt({ dataSection: 'Demo context' })
+  assert.match(prompt, /Normal turns are 6-18 words/)
+  assert.doesNotMatch(prompt, /20-55 words|35-70 words/)
+})
+
+test('answer-building source files do not contain personal work-history examples', () => {
+  const sourceFiles = [
+    '../components/exercises/GuidedBuilderWorkshop.tsx',
+    '../components/exercises/ProfessionalStoryBuilder.tsx',
+    '../components/exercises/ProfessionalStoryWorkshop.tsx',
+    '../components/exercises/StarStoryBuilder.tsx',
+    '../components/exercises/HandlingUncertaintyWorkshop.tsx',
+    '../lib/handling-uncertainty-bank.ts',
+    '../lib/practice-bundles.ts',
+    '../lib/professional-story-config.ts',
+    '../lib/star-story-config.ts',
+    '../lib/claude-client.ts',
+    '../docs/ai-architecture-cached-profiles.md',
+  ]
+  const sources = sourceFiles
+    .map((path) => readFileSync(new URL(path, import.meta.url), 'utf8'))
+    .join('\n')
+
+  assert.doesNotMatch(
+    sources,
+    /TouchPoint|Sub-Zero|Senior Living|United Way|e\.g\. Target|Logistics Coordinator|Program Coordinator|dealer development|dealer-facing|training dealers|website redesign/i,
+  )
 })
 
 test('structured transcripts preserve interviewer questions and candidate answers', () => {
   const structured = buildStructuredTranscript([
     'Interviewer: Tell me about your background?',
-    'You: I lead product marketing for B2B software.',
+    'You: I coordinate animal intake and maintain wildlife care records.',
     'Interviewer: Why are you interested in this role?',
-    'You: It combines customer research, launches, and sales partnership.',
+    'You: It combines animal-care routines, volunteer scheduling, and safe transport planning.',
   ].join('\n'))
 
   assert.equal(structured.messages.length, 4)

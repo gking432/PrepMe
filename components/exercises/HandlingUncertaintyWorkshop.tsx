@@ -63,18 +63,18 @@ const ANSWER_DIRECTIONS: AnswerDirection[] = [
     examples: [
       {
         id: 'reset_plan',
-        label: 'Resetting a project plan when information was still incomplete',
-        line: 'For example, in one role I had to reset a project plan with incomplete information, and I learned that clarifying the key decision first was more useful than waiting for perfect certainty.',
+        label: 'Use a truthful moment when you had incomplete information',
+        line: 'For example, when [briefly describe the incomplete information], I learned that clarifying the key decision first was more useful than waiting for perfect certainty.',
       },
       {
         id: 'deadline_shift',
-        label: 'Making a call when a deadline shifted late and not everything was confirmed yet',
-        line: 'For example, when a deadline shifted late on a project and not every dependency was confirmed yet, I learned that making the clearest available call was better than stalling the whole team.',
+        label: 'Use a truthful moment when a deadline or condition changed',
+        line: 'For example, when [briefly describe what changed], I learned that making the clearest available call was better than waiting for every variable to settle.',
       },
       {
         id: 'owner_gap',
-        label: 'Moving forward when ownership was unclear and someone had to define the next step',
-        line: 'For example, in one situation ownership was unclear and the work was starting to stall, so I learned that identifying the real decision and next owner mattered more than waiting for every detail to settle first.',
+        label: 'Use a truthful moment when ownership or the next step was unclear',
+        line: 'For example, when [briefly describe the ownership gap], I learned that identifying the real decision and next owner mattered more than waiting for every detail to settle.',
       },
     ],
   },
@@ -103,18 +103,18 @@ const ANSWER_DIRECTIONS: AnswerDirection[] = [
     examples: [
       {
         id: 'late_risk',
-        label: 'A project where calling out a risk earlier would have helped',
-        line: 'For example, on one project I realized a handoff risk was growing, and I learned that flagging it earlier would have helped the team adjust sooner.',
+        label: 'Use a truthful moment when raising a risk sooner would have helped',
+        line: 'For example, when [briefly describe the risk], I learned that flagging it earlier would have given the people involved more time to adjust.',
       },
       {
         id: 'stakeholder',
-        label: 'A time when a stakeholder needed to hear a concern earlier',
-        line: 'For example, in one role I waited too long to raise a concern with a stakeholder, and that taught me that earlier, clearer communication usually serves the work better.',
+        label: 'Use a truthful moment when someone needed earlier context',
+        line: 'For example, when [briefly describe the concern], I learned that sharing clear context earlier would have supported a better response.',
       },
       {
         id: 'team_signal',
-        label: 'A situation where giving the team an earlier signal changed the outcome',
-        line: 'For example, once I raised a concern earlier than I normally would, and it helped the team fix the issue before it became a bigger problem.',
+        label: 'Use a truthful moment when an early signal improved the outcome',
+        line: 'For example, when [briefly describe the early signal], it gave the people involved time to address the issue before it became larger.',
       },
     ],
   },
@@ -143,18 +143,18 @@ const ANSWER_DIRECTIONS: AnswerDirection[] = [
     examples: [
       {
         id: 'handoff',
-        label: 'A project where clearer delegation would have helped execution',
-        line: 'For example, on one project I held onto too many follow-ups myself, and that taught me that earlier delegation would have made the work run more smoothly.',
+        label: 'Use a truthful moment when you held too much yourself',
+        line: 'For example, when [briefly describe what you held onto], I learned that sharing ownership earlier would have helped the work move more smoothly.',
       },
       {
         id: 'owners',
-        label: 'A time when assigning owners sooner improved the outcome',
-        line: 'For example, in one role I learned that assigning owners sooner led to faster execution than trying to personally carry every open thread.',
+        label: 'Use a truthful moment when assigning owners sooner helped',
+        line: 'For example, when [briefly describe the situation], assigning owners sooner worked better than trying to carry every open item myself.',
       },
       {
         id: 'capacity',
-        label: 'A moment when capacity became the signal to delegate differently',
-        line: 'For example, when the volume of work spiked on a project, I learned that delegating more clearly and earlier was more effective than trying to absorb the extra load myself.',
+        label: 'Use a truthful moment when capacity forced a change',
+        line: 'For example, when [briefly describe the capacity pressure], I learned that delegating clearly was more effective than trying to absorb the extra load myself.',
       },
     ],
   },
@@ -183,18 +183,18 @@ const ANSWER_DIRECTIONS: AnswerDirection[] = [
     examples: [
       {
         id: 'competing_requests',
-        label: 'A time when competing requests forced a real priority decision',
-        line: 'For example, in one role I had several competing requests come in at once, and I learned that getting clear on the highest-impact item first kept the rest of the work from spiraling.',
+        label: 'Use a truthful moment when competing needs forced a priority call',
+        line: 'For example, when [briefly describe the competing needs], I learned that identifying the highest-impact item first kept the rest from becoming harder to manage.',
       },
       {
-        id: 'launch_week',
-        label: 'A launch week where several priorities shifted at the same time',
-        line: 'For example, during one launch week priorities shifted quickly across teams, and I learned that the clearest first move was to identify what truly could not slip.',
+        id: 'conditions_shifted',
+        label: 'Use a truthful moment when several priorities shifted together',
+        line: 'For example, when [briefly describe the shifting priorities], I learned that the clearest first move was to identify what truly could not slip.',
       },
       {
         id: 'multiple_owners',
-        label: 'A situation where several open threads needed to be ranked quickly',
-        line: 'For example, in one project several open threads were moving at once, and I learned that making the priority ranking explicit early saved time later.',
+        label: 'Use a truthful moment when several open items needed ranking',
+        line: 'For example, when [briefly describe the open items], I learned that making the priority ranking explicit early saved time later.',
       },
     ],
   },

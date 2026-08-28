@@ -369,7 +369,7 @@ export const RECOVERY_STRATEGIES: RecoveryStrategy[] = [
       setup: '"Tell me about a time you managed a cross-functional team."',
       ramble: '"So, I\'ve worked with lots of different teams and I think cross-functional work is really important. Communication is key, and I always try to make sure everyone is aligned on goals and…"',
       recovery: '"I want to be honest — I haven\'t formally managed a cross-functional team."',
-      continuation: '"But the closest thing is when I coordinated a product launch across engineering, design, and marketing. I didn\'t have authority over any of them, but I ran the weekly syncs and owned the timeline. The launch shipped on time."',
+      continuation: '"But the closest thing is when I coordinated an animal transfer across care, transport, and volunteer teams at a fictional wildlife sanctuary. I did not manage those teams, but I ran the check-ins and owned the transfer plan. Every animal arrived safely and on schedule."',
     },
   },
   {

@@ -554,91 +554,91 @@ export const ACTIONS_TAKEN = [
 export const ACTION_DETAIL_PROMPTS: Record<string, { label: string; placeholder: string }> = {
   asked_questions: {
     label: "What did you ask about?",
-    placeholder: "Example: I asked what outcome they actually needed and what was causing the delay.",
+    placeholder: "Describe the questions you asked and what you needed to understand.",
   },
   listened_to_customer: {
     label: "What did you learn from listening?",
-    placeholder: "Example: I learned they were more worried about communication than the actual delay.",
+    placeholder: "Describe what you learned by listening.",
   },
   investigated_problem: {
     label: "What did you investigate?",
-    placeholder: "Example: I reviewed the project notes and found the missing approval step.",
+    placeholder: "Describe what you investigated and what you discovered.",
   },
   created_plan: {
     label: "What was your plan?",
-    placeholder: "Example: I broke the work into daily tasks and assigned owners.",
+    placeholder: "Describe the plan you created.",
   },
   prioritized_work: {
     label: "What did you prioritize?",
-    placeholder: "Example: I focused first on the pieces blocking the launch.",
+    placeholder: "Describe what you prioritized and why.",
   },
   communicated_updates: {
     label: "Who did you update, and how?",
-    placeholder: "Example: I sent the client a daily update with what was done and what was next.",
+    placeholder: "Describe who you updated, how, and how often.",
   },
   followed_up: {
     label: "Who did you follow up with?",
-    placeholder: "Example: I followed up with the client every morning until we had approvals.",
+    placeholder: "Describe who you followed up with and what you needed from them.",
   },
   coordinated_people: {
     label: "Who did you coordinate with?",
-    placeholder: "Example: I coordinated between the designer, client, and owner.",
+    placeholder: "Describe the people or groups you coordinated.",
   },
   built_or_created: {
     label: "What did you build or create?",
-    placeholder: "Example: I built a new landing page and cleaned up the site structure.",
+    placeholder: "Describe what you built or created.",
   },
   fixed_or_reworked: {
     label: "What did you fix or rework?",
-    placeholder: "Example: I revised the deliverable so it matched what the client expected.",
+    placeholder: "Describe what you fixed or reworked.",
   },
   presented_options: {
     label: "What options did you present?",
-    placeholder: "Example: I gave them two options: launch now with essentials or delay for nice-to-haves.",
+    placeholder: "Describe the options you presented.",
   },
   persuaded_or_reframed: {
     label: "How did you persuade or reframe it?",
-    placeholder: "Example: I reframed the decision around their actual business goal instead of the lowest cost.",
+    placeholder: "Describe how you reframed the decision.",
   },
   used_data_or_research: {
     label: "What data or research did you use?",
-    placeholder: "Example: I used past performance data to show which option was most likely to work.",
+    placeholder: "Describe the evidence you used and how it informed the decision.",
   },
   learned_new_skill: {
     label: "What did you learn?",
-    placeholder: "Example: I learned the product line quickly so I could explain it clearly to dealers.",
+    placeholder: "Describe what you learned and how you applied it.",
   },
   took_responsibility: {
     label: "What did you take responsibility for?",
-    placeholder: "Example: I owned the client communication and made sure nothing else slipped.",
+    placeholder: "Describe what you took responsibility for.",
   },
   escalated_issue: {
     label: "What did you escalate?",
-    placeholder: "Example: I brought the issue to my manager once I knew we needed a decision.",
+    placeholder: "Describe what you escalated and why.",
   },
   trained_or_taught: {
     label: "What did you teach or explain?",
-    placeholder: "Example: I trained the team on the new process so the issue would not repeat.",
+    placeholder: "Describe what you taught and who needed it.",
   },
   documented_process: {
     label: "What did you document?",
-    placeholder: "Example: I created a checklist so future projects followed the same approval process.",
+    placeholder: "Describe what you documented and why.",
   },
   changed_process: {
     label: "What process did you change?",
-    placeholder: "Example: I changed the handoff process so each step had an owner and deadline.",
+    placeholder: "Describe the process change you made.",
   },
   worked_extra_time: {
     label: "What extra effort did you put in?",
-    placeholder: "Example: I stayed late to finish the revised version before the next client meeting.",
+    placeholder: "Describe the extra effort you personally contributed.",
   },
   measured_results: {
     label: "What did you track or measure?",
-    placeholder: "Example: I tracked response times and approval status until the project was back on schedule.",
+    placeholder: "Describe what you measured and what the measure showed.",
   },
   other: {
     label: "What else did you do?",
-    placeholder: "Example: I did the specific thing that moved the situation forward.",
+    placeholder: "Describe the specific action that moved the situation forward.",
   },
 }
 
@@ -746,16 +746,16 @@ export const DEFAULT_COMPETENCIES_BY_STORY_TYPE: Record<StoryType, Competency[]>
 }
 
 export const SITUATION_DETAIL_PLACEHOLDERS: Record<StoryType, string> = {
-  customer_problem: "Example: The client was frustrated because the website launch kept getting delayed.",
-  messy_project: "Example: The project had no clear owner and the deadline was two weeks away.",
-  ownership_moment: "Example: No one was following up with the customer, so I stepped in.",
-  sales_results_win: "Example: A customer needed equipment, but no one had connected the full solution to their problem.",
-  fast_learning: "Example: I had to learn a new product line before training dealers on it.",
-  conflict_pushback: "Example: The client disagreed with our recommendation and wanted a cheaper option.",
-  mistake_recovery: "Example: The wrong version of a deliverable was sent to the client.",
-  process_improvement: "Example: The team was tracking everything manually across spreadsheets.",
-  leadership_influence: "Example: I had to get multiple people aligned around a launch plan.",
-  pressure_deadline: "Example: We had three days to finish something that normally took two weeks.",
+  customer_problem: "Describe the specific concern, expectation, or breakdown.",
+  messy_project: "Describe what made the work unclear, disorganized, or at risk.",
+  ownership_moment: "Describe the gap you noticed and why you stepped in.",
+  sales_results_win: "Describe the need, decision, and outcome without naming a real organization.",
+  fast_learning: "Describe what you needed to learn and the time constraint.",
+  conflict_pushback: "Describe the disagreement and what was at stake.",
+  mistake_recovery: "Describe the mistake, its impact, and what needed to be corrected.",
+  process_improvement: "Describe the inefficient process and who it affected.",
+  leadership_influence: "Describe who needed to align and why alignment was difficult.",
+  pressure_deadline: "Describe the deadline, normal timeline, and consequences.",
 }
 
 // ========================== PROGRESS STEPS ==========================

@@ -161,32 +161,32 @@ export const PROFESSIONAL_IDENTITY_STYLE_OPTIONS = [
   {
     id: 'broad_professional' as const,
     label: 'Broad professional identity',
-    description: "Example: I'm a marketing and sales professional with experience across brand positioning, client management, and strategy.",
+    description: 'Describe the broad professional lane that best connects your experience.',
   },
   {
     id: 'function_specific' as const,
     label: 'Function-specific identity',
-    description: "Example: I'm a software engineer focused on backend systems and reliable product infrastructure.",
+    description: 'Lead with the specific function or discipline most relevant to this role.',
   },
   {
     id: 'hybrid_generalist' as const,
     label: 'Hybrid / generalist identity',
-    description: 'Example: My background sits across sales, marketing, product, and customer-facing work.',
+    description: 'Connect two or more professional strengths without listing your work history.',
   },
   {
     id: 'industry_specific' as const,
     label: 'Industry-specific identity',
-    description: "Example: I'm a healthcare operations professional with experience in patient care coordination and service delivery.",
+    description: 'Lead with relevant industry knowledge when it is central to the opportunity.',
   },
   {
     id: 'transition_focused' as const,
     label: 'Transition-focused identity',
-    description: "Example: My background started in education, and I'm now moving toward training and employee development.",
+    description: 'Name the direction of your transition and the transferable thread behind it.',
   },
   {
     id: 'early_career' as const,
     label: 'Early-career identity',
-    description: "Example: I'm early in my career, with experience through internships, projects, and hands-on learning.",
+    description: 'Emphasize relevant learning and hands-on exposure without overstating experience.',
   },
   {
     id: 'custom' as const,

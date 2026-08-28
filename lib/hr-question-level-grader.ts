@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { HR_SCREEN_PASS_FAIL_MODEL } from '@/lib/feedback-config'
 import { HR_PASS_FAIL_AREAS } from '@/lib/hr-pass-fail-grader'
+import { hasSufficientHrInterviewCoverage } from '@/lib/hr-interview-coverage'
 
 type Evidence = {
   question_id?: string
@@ -105,21 +106,8 @@ function words(value: string) {
   return (value.match(/[A-Za-z0-9']+/g) || []).length
 }
 
-function candidateTextFromStructured(transcriptStructured: any) {
-  const messages = Array.isArray(transcriptStructured?.messages) ? transcriptStructured.messages : []
-  return messages
-    .filter((message: any) => message?.speaker === 'candidate' && typeof message?.text === 'string')
-    .map((message: any) => message.text)
-    .join('\n')
-}
-
 function hasSubstantiveCandidateResponse(materials: HrQuestionLevelMaterials) {
-  const structuredCandidateText = candidateTextFromStructured(materials.transcriptStructured)
-  const transcriptCandidateLines = String(materials.transcript || '')
-    .split(/\r?\n/)
-    .filter((line) => /^(You|Candidate|User):/i.test(line))
-    .join('\n')
-  return words(`${structuredCandidateText}\n${transcriptCandidateLines}`) >= 12
+  return hasSufficientHrInterviewCoverage(materials.transcriptStructured, materials.transcript)
 }
 
 function buildQuestionAnswerPairs(transcriptStructured: any) {

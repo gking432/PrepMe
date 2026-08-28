@@ -902,7 +902,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Start with your Present details',
           prompt: 'What company do you work at now?',
           helper: 'We are starting with the raw material for your Present sentence.',
-          placeholder: 'e.g. Target',
+          placeholder: 'Enter your current employer or a neutral label',
           answerKey: 'presentCompany' as const,
           next: 'present_title' as WorkshopPhase,
         }
@@ -912,7 +912,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Keep building your Present',
           prompt: 'What is your current job title?',
           helper: 'Use the title you would naturally say out loud.',
-          placeholder: 'e.g. Logistics Coordinator',
+          placeholder: 'Enter your current title',
           answerKey: 'presentTitle' as const,
           next: 'present_focus' as WorkshopPhase,
         }
@@ -922,7 +922,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Keep building your Present',
           prompt: 'List your main job duties, separated by commas',
           helper: 'Use short phrases like you would on a resume. We will turn them into spoken language.',
-          placeholder: 'e.g. manage orders, coordinate vendors, track inventory',
+          placeholder: 'List the responsibilities most relevant to this answer',
           answerKey: 'presentFocus' as const,
           next: 'present_years' as WorkshopPhase,
         }
@@ -932,7 +932,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Finish gathering your Present details',
           prompt: 'How long have you been there?',
           helper: 'This gives us one more acceptable way to phrase the Present section.',
-          placeholder: 'e.g. 2 years',
+          placeholder: 'Enter the approximate duration',
           answerKey: 'presentYears' as const,
           next: 'present_choose' as WorkshopPhase,
         }
@@ -942,7 +942,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Now build your Past',
           prompt: 'What former company had the biggest impact on shaping your career?',
           helper: 'Pick one former company or experience that really mattered.',
-          placeholder: 'e.g. United Way',
+          placeholder: 'Enter the former employer or experience',
           answerKey: 'pastCompany' as const,
           next: 'past_title' as WorkshopPhase,
         }
@@ -952,7 +952,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Keep building your Past',
           prompt: 'What was your title there?',
           helper: 'Just the title.',
-          placeholder: 'e.g. Program Coordinator',
+          placeholder: 'Enter the title you held',
           answerKey: 'pastTitle' as const,
           next: 'past_duties' as WorkshopPhase,
         }
@@ -962,7 +962,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Keep building your Past',
           prompt: 'List your main responsibilities there, separated by commas',
           helper: 'Use short phrases. We will handle the wording.',
-          placeholder: 'e.g. manage volunteers, track schedules, support event planning',
+          placeholder: 'List the responsibilities that shaped your career',
           answerKey: 'pastDuties' as const,
           next: 'past_skills' as WorkshopPhase,
         }
@@ -972,7 +972,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Keep building your Past',
           prompt: 'What skills did that role build? Separate with commas',
           helper: 'Think short labels, not full sentences.',
-          placeholder: 'e.g. coordination, stakeholder communication, planning',
+          placeholder: 'List the skills you developed',
           answerKey: 'pastSkills' as const,
           next: 'past_learning' as WorkshopPhase,
         }
@@ -982,7 +982,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Finish gathering your Past details',
           prompt: 'What did that experience make you better at? Separate with commas',
           helper: 'Use short phrases only. We’ll turn them into a stronger reflection.',
-          placeholder: 'e.g. working under pressure, coordinating busy teams, keeping projects moving',
+          placeholder: 'List what the experience taught you to do well',
           answerKey: 'pastLearning' as const,
           next: 'past_choose' as WorkshopPhase,
         }
@@ -992,7 +992,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Now build your Future',
           prompt: 'What area do you want to move deeper into next?',
           helper: 'Keep it simple. One word or a short phrase is enough.',
-          placeholder: 'e.g. operations, supply chain, project coordination',
+          placeholder: 'Enter the field or specialty you want to pursue',
           answerKey: 'futureArea' as const,
           next: 'future_role' as WorkshopPhase,
         }
@@ -1002,7 +1002,7 @@ export default function ProfessionalStoryWorkshop({
           title: 'Finish gathering your Future details',
           prompt: 'What kind of role are you aiming for?',
           helper: 'Use the role title you’d naturally say out loud.',
-          placeholder: 'e.g. project coordinator',
+          placeholder: 'Enter the kind of role you want next',
           answerKey: 'futureRole' as const,
           next: 'future_wants' as WorkshopPhase,
         }

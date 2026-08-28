@@ -575,7 +575,7 @@ function DashboardPageContent() {
       companyName: PORTFOLIO_SAMPLE_SETUP.companyName,
       positionTitle: PORTFOLIO_SAMPLE_SETUP.positionTitle,
     })
-    setExtractedUserInfo({ email: null, name: 'Mira Solis', phone: null })
+    setExtractedUserInfo({ email: null, name: 'Elena Park', phone: null })
     setSelectedStage('hr_screen')
     setOnboardStep('stage')
   }

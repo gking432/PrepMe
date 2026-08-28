@@ -17,6 +17,14 @@ import {
   saveDemoSession,
   updateDemoSession,
 } from '@/lib/portfolio-demo'
+import {
+  FALLBACK_THINKING_SILENCE_MS,
+  REALTIME_DEFAULT_MAX_OUTPUT_TOKENS,
+  REALTIME_HR_MAX_OUTPUT_TOKENS,
+  REALTIME_THINKING_SILENCE_MS,
+  REALTIME_VAD_PREFIX_PADDING_MS,
+  REALTIME_VAD_THRESHOLD,
+} from '@/lib/realtime-interview-config'
 
 type Stage = 'hr_screen' | 'hiring_manager' | 'culture_fit' | 'final'
 type InterviewInputMode = 'voice' | 'text'
@@ -27,13 +35,6 @@ const STAGE_NAMES: Record<Stage, string> = {
   culture_fit: 'Culture Fit Interview',
   final: 'Final Round Interview',
 }
-
-const REALTIME_THINKING_SILENCE_MS = 7000
-const FALLBACK_THINKING_SILENCE_MS = 6500
-const REALTIME_HR_MAX_OUTPUT_TOKENS = 520
-const REALTIME_DEFAULT_MAX_OUTPUT_TOKENS = 700
-const REALTIME_VAD_THRESHOLD = 0.5
-const REALTIME_VAD_PREFIX_PADDING_MS = 500
 
 function InterviewPageContent() {
   const router = useRouter()

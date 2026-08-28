@@ -3,37 +3,37 @@ export const PORTFOLIO_DEMO_MODE = process.env.NEXT_PUBLIC_PORTFOLIO_DEMO_MODE !
 export const PORTFOLIO_SAMPLE_SETUP: Required<
   Pick<DemoInterviewSetup, 'resumeText' | 'jobDescriptionText' | 'companyName' | 'positionTitle'>
 > = {
-  companyName: 'Cedar & Signal Labs',
-  positionTitle: 'Customer Research Program Manager',
-  resumeText: `Mira Solis — FICTIONAL SAMPLE CANDIDATE
-Customer Insights Lead, Lantern Field Cooperative — FICTIONAL ORGANIZATION
+  companyName: 'Moonrise Wildlife Sanctuary',
+  positionTitle: 'Animal Care Operations Coordinator',
+  resumeText: `Elena Park — FICTIONAL SAMPLE CANDIDATE
+Wildlife Intake Coordinator, Bramble Creek Rescue — FICTIONAL ORGANIZATION
 
-Five years of customer research and program management experience across interview studies, service design, and cross-functional planning.
+Six years of animal-care operations experience supporting wildlife intake, rehabilitation records, volunteer scheduling, and safe transfers.
 
-• Built a customer interview program that helped three product teams prioritize quarterly improvements.
-• Synthesized more than 80 interviews into clear opportunity briefs for product and support leaders.
-• Redesigned research intake and participant scheduling, reducing study setup time by 30%.
-• Facilitated workshops that turned customer evidence into owners, decisions, and measurable next steps.
+• Coordinated daily intake for injured birds and small mammals across a rotating care team.
+• Rebuilt medication and feeding logs so caretakers could spot missed checks before shift changes.
+• Organized volunteer coverage during seasonal intake surges and emergency transport days.
+• Introduced a supply-count routine that reduced last-minute shortages in treatment rooms.
 
 Earlier experience:
-Research Operations Specialist, Pebble & Pine Studio — FICTIONAL ORGANIZATION`,
+Animal Care Assistant, Larkspur Field Hospital — FICTIONAL ORGANIZATION`,
   jobDescriptionText: `FICTIONAL DEMO JOB POSTING — not affiliated with a real employer
 
-Company: Cedar & Signal Labs
-Position: Customer Research Program Manager
+Company: Moonrise Wildlife Sanctuary
+Position: Animal Care Operations Coordinator
 
-Cedar & Signal Labs is a fictional software studio hiring a Customer Research Program Manager to build a repeatable customer-learning practice for its equally fictional collaboration platform.
+Moonrise Wildlife Sanctuary is a fictional rehabilitation center hiring an Animal Care Operations Coordinator to keep animal intake, treatment records, volunteer coverage, and transport schedules running safely.
 
 Responsibilities:
-• Plan interview studies with product, design, and customer teams.
-• Turn qualitative evidence into concise recommendations and decision-ready briefs.
-• Improve research operations, participant recruiting, and insight sharing.
-• Facilitate cross-functional workshops and track resulting actions.
+• Coordinate animal intake, care schedules, and safe transfers between facilities.
+• Maintain accurate treatment, feeding, and medication records.
+• Schedule volunteers and communicate coverage changes to the care team.
+• Track critical supplies and prepare operations for seasonal intake surges.
 
 Qualifications:
-• Four or more years of customer research or program management experience.
-• Strong facilitation, synthesis, and stakeholder communication skills.
-• Experience building repeatable workflows from ambiguous problems.`,
+• Three or more years in animal care, wildlife rehabilitation, or shelter operations.
+• Strong scheduling, recordkeeping, and calm communication skills.
+• Experience improving safety-critical routines in a hands-on environment.`,
 }
 
 export const DEMO_SESSION_KEY = 'prepme_demo_session'
@@ -147,7 +147,7 @@ export function seedPortfolioSampleResult(
     company_name: PORTFOLIO_SAMPLE_SETUP.companyName,
     job_title: PORTFOLIO_SAMPLE_SETUP.positionTitle,
     job_description_text: PORTFOLIO_SAMPLE_SETUP.jobDescriptionText,
-    candidate_name: 'Mira Solis',
+    candidate_name: 'Elena Park',
     demo_mode: true,
     setup: PORTFOLIO_SAMPLE_SETUP,
   }

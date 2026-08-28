@@ -351,7 +351,7 @@ export default function ProfessionalStoryBuilder({
           {currentSituation === 'other' && (
             <div>
               <label className="block text-xs font-bold text-slate-600">How should we describe your current situation?</label>
-              <input type="text" value={currentSituationDetail} onChange={(e) => setCurrentSituationDetail(e.target.value.slice(0, 180))} placeholder="Example: I'm wrapping up a contract and looking for a full-time role." className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200" />
+              <input type="text" value={currentSituationDetail} onChange={(e) => setCurrentSituationDetail(e.target.value.slice(0, 180))} placeholder="Describe your current situation in one sentence." className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200" />
             </div>
           )}
         </div>,
@@ -364,7 +364,7 @@ export default function ProfessionalStoryBuilder({
           {identityStyle === 'custom' && (
             <div>
               <label className="block text-xs font-bold text-slate-600">Write your opening identity</label>
-              <textarea value={customIdentity} onChange={(e) => setCustomIdentity(e.target.value.slice(0, 220))} placeholder="Example: I'm a marketing and sales professional with experience across brand positioning, client management, and growth strategy." rows={3} className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200" />
+              <textarea value={customIdentity} onChange={(e) => setCustomIdentity(e.target.value.slice(0, 220))} placeholder="Write one truthful sentence describing your professional lane." rows={3} className="mt-1.5 w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200" />
               <p className="mt-1 text-right text-[11px] text-slate-400">{customIdentity.length}/220</p>
             </div>
           )}

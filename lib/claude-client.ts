@@ -755,9 +755,9 @@ These should be MORE specific than the Hiring Manager round's Tier 2 criteria. G
 
 Examples by role type:
 - Software Engineering Lead → system design at scale, incident response methodology, technical debt management, code review philosophy, architecture decision records
-- VP of Marketing → brand positioning strategy, channel attribution methodology, team scaling playbook, budget allocation framework, executive stakeholder management
+- Wildlife Operations Director → animal intake planning, care-record standards, volunteer coverage strategy, transport safety, emergency response coordination
 - Product Manager → prioritization framework with real examples, customer discovery methodology, cross-functional alignment strategy, metrics-driven decision making, competitive differentiation approach
-- Sales Director → enterprise sales methodology, pipeline management discipline, rep coaching approach, forecast accuracy track record, executive relationship building
+- Community Programs Director → program design, volunteer engagement, attendance planning, partnership development, outcome measurement
 - Nursing Director → clinical outcome improvement methodology, staff retention strategy, regulatory compliance leadership, patient safety culture building, interdepartmental care coordination
 - Finance Controller → audit readiness methodology, reporting accuracy standards, process improvement track record, risk assessment framework, team development approach
 

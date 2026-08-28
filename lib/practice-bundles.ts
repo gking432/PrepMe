@@ -210,7 +210,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           },
           {
             type: 'multiple_choice',
-            question: 'What is the biggest weakness in this answer? "In one role, a client request changed late in the process. My job was to help the team respond. I communicated with everyone involved and worked hard to keep things moving. In the end, the client was happy."',
+            question: 'What is the biggest weakness in this fictional answer? "During a wildlife intake, the arrival time changed late. My job was to help the sanctuary respond. I communicated with everyone involved and worked hard to keep things moving. In the end, the animal arrived safely."',
             options: ['The Situation is too short', 'The Task is too specific', 'The Action is too vague', 'The Result is too long'],
             correctIndex: 2,
             explanation: 'Communicated and worked hard do not tell the interviewer what the candidate actually did.',
@@ -354,7 +354,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             type: 'label_sort',
             instruction: 'Label each segment. One segment is stronger because it is specific.',
             segments: [
-              { text: 'The sales team was losing follow-up notes in spreadsheets.', correctLabel: 'Situation' },
+              { text: 'A wildlife rescue team was losing intake notes across paper forms.', correctLabel: 'Situation' },
               { text: 'I needed to make handoffs consistent before quarter close.', correctLabel: 'Task' },
               { text: 'I built a CRM template with required fields and reminders.', correctLabel: 'Action' },
               { text: 'Missed follow-ups fell by 30% that month.', correctLabel: 'Result' },
@@ -403,11 +403,11 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'There was some disagreement between teams, and I spent a lot of time trying to get everyone aligned. Eventually we got on the same page and moved forward, so it ended up working out.',
             goodAnswer:
-              'Product and support disagreed on the rollout timeline for a billing change, which risked confusing current customers. My goal was to get agreement on a launch sequence without formal authority over either team. I collected the top support risks, paired them with product dependencies, and proposed a phased launch with customer messaging checkpoints. Both teams adopted the plan, the change shipped on schedule, and support tickets stayed flat during rollout.',
+              'Animal-care and transport teams disagreed on the timing of a habitat move, which risked disrupting treatment routines. My goal was to get agreement on a safe transfer sequence without formal authority over either team. I collected the care constraints, paired them with transport requirements, and proposed a phased move with welfare checkpoints. Both teams adopted the plan, and every animal moved safely on schedule.',
             breakdown: {
               EdgeCase: 'This only works if the influence move is specific, not generic.',
-              Situation: 'Product and support disagreed on rollout timing.',
-              Action: 'Collected risks, mapped dependencies, proposed phased launch.',
+              Situation: 'Animal-care and transport teams disagreed on habitat-move timing.',
+              Action: 'Collected constraints, mapped requirements, proposed a phased move.',
               Result: 'Shipped on schedule and support tickets stayed flat.',
             },
           },
@@ -418,8 +418,8 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             question: 'Which answer subtly fails STAR even though it sounds polished?',
             options: [
               'Our team missed deadlines, so I reset the workflow, assigned owners, and delivery improved from 70% to 93% on time.',
-              'A client escalation hit our team, I owned the response, coordinated fixes, and the client renewed for another year.',
-              'The launch was complex and high-visibility. I worked closely with everyone and kept communication strong. In the end, leadership was pleased.',
+              'An urgent animal transfer reached our sanctuary, I owned the intake plan, coordinated care and transport, and the animal arrived safely.',
+              'The habitat move was complex and high-visibility. I worked closely with everyone and kept communication strong. In the end, leadership was pleased.',
               'We had duplicate work across teams, so I centralized intake, set SLAs, and cut turnaround time by 35%.',
             ],
             correctIndex: 2,
@@ -451,7 +451,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               'Everyone was excited.',
               'We reduced error rates by 18% in one quarter.',
               'It felt like a win.',
-              'The client expanded the contract by $120k.',
+              'The sanctuary completed all 24 transfers without a missed care record.',
             ],
             correctIndices: [0, 2, 4],
             explanation: 'Strong Results are concrete and outcome-based, not just emotional impressions.',
@@ -462,7 +462,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             options: [
               'It was a great success for the team.',
               'I was proud of how it went.',
-              'The rollout finished one week early and support tickets dropped 15% after launch.',
+              'The intake-process change finished one week early and missing care records dropped 15%.',
               'People noticed the improvement right away.',
             ],
             correctIndex: 2,
@@ -522,11 +522,11 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you had to manage pressure across multiple priorities.',
             badAnswer:
-              'Things got very busy during a launch, and I had to help keep everything on track. I stayed organized, communicated with the team, and made sure we got through it successfully.',
+              'Things got very busy during seasonal wildlife intake, and I had to help keep everything on track. I stayed organized, communicated with the care team, and made sure we got through it successfully.',
             mediumAnswer:
-              'During a launch week, several scheduling changes came in across different teams. My job was to help keep requests organized and make sure nothing important slipped. I worked with the teams, tracked updates, and we got through the week without major issues.',
+              'During a seasonal intake week, several arrival changes came in across care and transport teams. My job was to help keep requests organized and make sure nothing important slipped. I tracked updates, and we got through the week without major issues.',
             goodAnswer:
-              'During a launch week, scheduling changes were coming in from three teams and handoffs were starting to slip because requests were being tracked in different places. I was responsible for keeping the work organized and making sure the most urgent changes moved first. I pulled all open requests into one tracker, reset owners and deadlines, and flagged blockers in short check-ins twice a day so issues surfaced before they delayed downstream teams. We got through the launch week without missing any critical handoffs, and the shared tracker became the template for the next rollout.',
+              'During a seasonal intake week, arrival changes were coming in from care, transport, and volunteer teams, and handoffs were starting to slip because requests were tracked in different places. I was responsible for keeping intake organized and moving urgent cases first. I pulled every open arrival into one tracker, reset owners and times, and flagged blockers in short check-ins twice a day. We finished the week without missing a critical care handoff, and the tracker became the template for the next intake surge.',
             breakdown: {
               Situation: 'Give enough context to make the problem real, but do not stay broad or drift into a long setup.',
               Task: 'Make your responsibility clear so the interviewer knows what you owned inside the situation.',
@@ -536,7 +536,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             annotatedStrongAnswer: [
               {
                 label: 'Situation',
-                text: 'During a launch week, scheduling changes were coming in from three teams and handoffs were starting to slip because requests were being tracked in different places.',
+                text: 'During a seasonal intake week, arrival changes were coming in from care, transport, and volunteer teams, and handoffs were starting to slip because requests were tracked in different places.',
                 detail: 'This gives enough context to make the pressure real. It is specific without becoming a long backstory.',
               },
               {
@@ -551,7 +551,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               },
               {
                 label: 'Result',
-                text: 'We got through the launch week without missing any critical handoffs, and the shared tracker became the template for the next rollout.',
+                text: 'We finished the week without missing a critical care handoff, and the shared tracker became the template for the next intake surge.',
                 detail: 'This makes the value visible. It shows both the immediate outcome and why the action mattered.',
               },
             ],
@@ -612,7 +612,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           {
             title: 'Drill 4 - Spot the weak section',
             type: 'multiple_choice',
-            context: 'Answer:\nSituation: During a client rollout, several teams had open dependencies and timelines were slipping.\nTask: I needed to keep the work coordinated and make sure the rollout stayed on track.\nAction: I worked closely with the teams, stayed organized, and communicated proactively throughout the process.\nResult: We completed the rollout successfully.',
+            context: 'Fictional answer:\nSituation: During a multi-animal transfer, care and transport teams had open dependencies and timing was slipping.\nTask: I needed to keep the move coordinated and protect each care handoff.\nAction: I worked closely with the teams, stayed organized, and communicated proactively.\nResult: We completed the transfer safely.',
             question: 'This answer uses STAR on the surface, but one section is doing the most damage. Which section is the real problem?',
             options: [
               'Situation',
@@ -655,7 +655,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             options: [
               'It was a really valuable experience for me.',
               'We completed the work successfully in the end.',
-              'The rollout launched on schedule, and the tracker process was reused for the next two implementations.',
+              'The animal transfer finished on schedule, and the tracker was reused for the next two intake events.',
               'Everyone appreciated the support I gave during the project.',
             ],
             correctIndex: 2,
@@ -667,7 +667,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             question: 'Which line is still summarizing instead of proving?',
             options: [
               'I reset the handoff list, reassigned open owners, and flagged unresolved dependencies before the deadline meeting.',
-              'The issue involved marketing, operations, and implementation, all of which were waiting on different inputs.',
+              'The issue involved animal-care, transport, and volunteer teams, all of which were waiting on different inputs.',
               'I am someone who stays organized and works well across teams when things get busy.',
               'The final handoff went out on time and the error rate dropped after the process change.',
             ],
@@ -759,7 +759,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             type: 'multiple_choice',
             question: 'Which interaction has better flow?',
             options: [
-              'Interviewer: "Tell me a bit about your background." Candidate: "Sure—right now I work in operations, mostly around coordination and follow-through across teams..."',
+              'Interviewer: "Tell me a bit about your background." Candidate: "Sure—right now I work in animal-care operations, mostly around intake records and safe handoffs..."',
               'Interviewer: "Tell me a bit about your background." Candidate: "Yeah and actually before I answer that I just wanted to say—" Interviewer: "Go ahead." Candidate: "Right, sorry—so basically..."',
             ],
             correctIndex: 0,
@@ -843,10 +843,10 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'Your company seems like a great place to grow, and I really like what you are building. The culture and mission both stood out to me, so it feels like a place where I could see myself doing well.',
             goodAnswer:
-              'What stands out to me is your push to shorten implementation time for mid-market customers. In my current role, I redesigned onboarding steps and cut average time-to-launch from 21 days to 12. That is why this role makes sense to me: the problem you are solving is one I have already improved in practice.',
+              'What stands out to me is your focus on shortening animal intake time without sacrificing record accuracy. In this fictional example, I redesigned intake steps and cut the average handoff from 21 minutes to 12. That is why the role makes sense: the sanctuary is solving a problem I have already improved in practice.',
             breakdown: {
-              TheirPriority: 'Shortening implementation time for mid-market customers.',
-              YourEvidence: 'Cut average time-to-launch from 21 days to 12.',
+              TheirPriority: 'Shortening animal intake time without sacrificing accuracy.',
+              YourEvidence: 'Cut the average care handoff from 21 minutes to 12.',
               TheConnection: 'Your past work matches the exact problem they care about.',
             },
           },
@@ -928,7 +928,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             type: 'multiple_choice',
             question: 'Which answer makes the best connection?',
             options: [
-              'I noticed you launched a new product, and that seems exciting.',
+              'I noticed you opened a new rehabilitation habitat, and that seems exciting.',
               'I saw you are expanding your partner channel, and I previously built partner onboarding guides that cut ramp time by 30%, so that priority fits my background well.',
               'Your company is growing quickly, which is interesting.',
               'I admire your leadership team and mission.',
@@ -940,7 +940,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             type: 'label_sort',
             instruction: 'Label each segment of the answer.',
             segments: [
-              { text: 'Your team is prioritizing implementation speed for enterprise customers.', correctLabel: 'Their priority' },
+              { text: 'Your sanctuary is prioritizing faster intake while preserving care-record accuracy.', correctLabel: 'Their priority' },
               { text: 'I led a rollout that reduced enterprise go-live delays by standardizing approvals.', correctLabel: 'Your evidence' },
               { text: 'That is why this problem space feels like a direct fit.', correctLabel: 'The connection' },
               { text: 'You also seem to value operational rigor.', correctLabel: 'Their priority' },
@@ -960,8 +960,8 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             items: [
               'I reduced onboarding time from 14 days to 8.',
               'Your mission is inspiring.',
-              'I managed a cross-functional launch across finance and ops.',
-              'Your website looks polished.',
+              'I coordinated a habitat move across animal-care and transport teams.',
+              'Your sanctuary photos look polished.',
             ],
             correctIndices: [0, 2],
             explanation: 'Evidence comes from your own relevant work, not company compliments.',
@@ -982,13 +982,13 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
         teach: {
           title: 'Do not confuse trivia with preparation',
           explanation:
-            'Edge case: candidates sometimes cite random facts that do not matter to the role. Strong research focuses on operating priorities, customer problems, or team goals that your experience can actually address.',
+            'Edge case: candidates sometimes cite random facts that do not matter to the role. Strong research focuses on operating priorities, service needs, or team goals that your experience can actually address.',
           example: {
             question: 'Why are you interested in this company?',
             badAnswer:
               'I know you were founded a few years ago, raised funding recently, and have been growing quickly. Those are all really interesting signs to me that the company is heading in a strong direction.',
             goodAnswer:
-              'I noticed your recent hiring push in customer education, which suggests adoption and retention are core priorities right now. In my current role, I built a webinar-to-onboarding handoff that increased activation for new accounts. That is the bridge for me: the customer problem you are investing in is one I have already helped solve.',
+              'I noticed your recent hiring push in volunteer education, which suggests consistent care routines are a core priority. In this fictional example, I built a training-to-shift handoff that improved first-week readiness for new volunteers. That is the bridge for me: the operating need you are investing in is one I have already helped solve.',
             breakdown: {
               EdgeCase: 'Random company facts do not show real preparation.',
               BetterResearch: 'Focus on a business priority that actually maps to the job.',
@@ -1002,7 +1002,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             question: 'Which detail is the strongest research signal for an interview answer?',
             options: [
               'The company mascot',
-              'A recent note that the team is reducing implementation time',
+              'A recent note that the sanctuary is reducing wildlife intake time',
               'The color palette on the homepage',
               'The city where the office opened',
             ],
@@ -1016,7 +1016,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
               { text: 'You are trying to improve activation for self-serve users.', correctLabel: 'Their priority' },
               { text: 'I previously simplified first-run setup and increased activation by 11 points.', correctLabel: 'Your evidence' },
               { text: 'That is why this role feels unusually aligned with my background.', correctLabel: 'The connection' },
-              { text: 'You have recently expanded your customer education team.', correctLabel: 'Their priority' },
+              { text: 'You have recently expanded your volunteer education team.', correctLabel: 'Their priority' },
             ],
           },
           {
@@ -1033,7 +1033,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             items: [
               'Their homepage uses a clean design',
               'They are trying to reduce churn in a key segment',
-              'Their founder gave a talk about customer retention',
+              'Their director gave a talk about wildlife release readiness',
               'Their office has a nice location',
             ],
             correctIndices: [0, 3],
@@ -1045,7 +1045,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             options: [
               'I saw you were founded eight years ago and recently changed offices.',
               'I know your company is growing, and I like growth.',
-              'You are investing in onboarding quality for new enterprise customers, and I have already improved onboarding speed and consistency in that exact environment.',
+              'You are investing in volunteer onboarding quality, and in this fictional example I improved training speed and consistency in that exact environment.',
               'Your brand seems modern and exciting to me.',
             ],
             correctIndex: 2,
@@ -1103,7 +1103,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             mediumAnswer:
               'I know the company is in this space and seems to be growing, which stood out to me as a good opportunity.',
             goodAnswer:
-              'From what I saw, the company works with mid-market operations teams and seems focused on helping them reduce friction in day-to-day workflows. What stood out to me is how often execution and follow-through came up in the role and company materials, because that seems closely tied to the kind of work I am most interested in.',
+              'From what I saw, the fictional sanctuary rehabilitates native wildlife and is focused on making intake safer and more consistent. What stood out to me is how often care-record accuracy and dependable handoffs appeared in the role materials, because those are the responsibilities I want to deepen.',
             breakdown: {
               Basics: 'Know what the company does, who it serves, and one thing that stood out.',
               NoGenericPraise: 'Saying the company seems great is not the same as showing preparation.',
@@ -1112,7 +1112,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             annotatedStrongAnswer: [
               {
                 label: 'Know',
-                text: 'From what I saw, the company works with mid-market operations teams and seems focused on helping them reduce friction in day-to-day workflows.',
+                text: 'From what I saw, the fictional sanctuary rehabilitates native wildlife and is focused on making intake safer and more consistent.',
                 detail: 'This works because it includes something real about the company, not just a flattering label.',
               },
               {
@@ -1130,7 +1130,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             options: [
               'I know you are a great company and have a strong reputation. That is one of the reasons I was excited about the role.',
               'I know the company is in this industry and seems to be growing. That stood out to me because I am interested in strong opportunities.',
-              'From what I saw, the company works with mid-market operations teams and seems focused on helping them reduce friction in day-to-day workflows. What stood out to me is how often execution and follow-through came up in the role and the company materials, because that seems closely tied to the kind of work I am most interested in.',
+              'From what I saw, the fictional sanctuary rehabilitates native wildlife and is focused on making intake safer and more consistent. What stood out to me is how often care-record accuracy and dependable handoffs appeared in the role materials, because those are the responsibilities I want to deepen.',
             ],
             correctIndex: 2,
             explanation: 'A is flattering, B is somewhat prepared but still generic, and C is informed and connected.',
@@ -1154,7 +1154,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             question: 'Which revision best improves this answer? "I know you are a strong company in the industry."',
             options: [
               'I know you are well respected and seem like a good place to work.',
-              'From what I saw, the company works with operations teams and has a strong focus on reducing workflow friction.',
+              'From what I saw, the fictional sanctuary focuses on safe wildlife intake and dependable care records.',
               'I know the company has a positive reputation online.',
               'I know this is an exciting opportunity.',
             ],
@@ -1785,9 +1785,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
           example: {
             question: 'Tell me about a time you disagreed with your manager.',
             badAnswer:
-              'I am usually very collaborative and try to keep everyone aligned. In one situation I was involved in a launch across several teams, and we eventually worked through the differences.',
+              'I am usually very collaborative and try to keep everyone aligned. In one fictional situation I was involved in a habitat move across several teams, and we eventually worked through the differences.',
             goodAnswer:
-              'In one role, my manager wanted to keep a launch date even though our support documentation was still incomplete. I pulled recent ticket trends, showed where customers were already getting stuck, and recommended delaying the launch by one week so the team could finish the materials. We made the change, launched the following week, and saw fewer avoidable escalations.',
+              'In this fictional example, my manager wanted to keep a habitat opening date even though animal-care documentation was incomplete. I reviewed recent intake errors, showed where volunteers were getting stuck, and recommended delaying the opening by one week so the team could finish the materials. We made the change, opened the following week, and saw fewer avoidable care escalations.',
             breakdown: {
               Trap: 'A polished story still misses if it proves teamwork instead of disagreement handled well.',
               HiddenQuestion: 'Can you push back professionally and still move the work forward?',
@@ -1830,9 +1830,9 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             type: 'tap_select',
             instruction: 'Tap the responses that directly answer "Tell me about a time you handled failure."',
             items: [
-              'I missed a client handoff, owned the miss, and changed the checklist.',
+              'I missed an animal-transfer handoff, owned the miss, and changed the checklist.',
               'I care a lot about quality in everything I do.',
-              'One launch underperformed, so I analyzed adoption data and revised the rollout plan.',
+              'One volunteer training session underperformed, so I reviewed completion data and revised the training plan.',
               'My biggest strength is problem-solving.',
             ],
             correctIndices: [0, 2],
@@ -1860,7 +1860,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I worked closely with many teams during a large project, and communication was really important.',
             goodAnswer:
-              'During a vendor outage, we did not yet know the root cause, but I still had to decide whether to keep customer-facing changes moving. I paused new releases for 24 hours, set a communication cadence with support and engineering, and used error-rate thresholds to decide when it was safe to resume. Once the metrics stabilized, we reopened the pipeline with less risk to customers.',
+              'In this fictional example, a clinic refrigeration unit failed and we did not yet know the root cause, but I still had to decide whether incoming medical supplies could be accepted safely. I paused deliveries for 24 hours, set a communication cadence with veterinary and facilities teams, and used temperature thresholds to decide when it was safe to resume. Once readings stabilized, we reopened deliveries with less risk to animal care.',
             breakdown: {
               EdgeCase: 'A related story still misses if it never shows an actual decision under uncertainty.',
               NarrowEvaluation: 'Can you make a sound call before you have the full picture?',
@@ -1875,7 +1875,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             options: [
               'I enjoy collaborating with cross-functional teams.',
               'During a payment outage, I paused releases, communicated the risk, and resumed only after key indicators stabilized.',
-              'I once led a successful product launch.',
+              'I once led a successful wildlife habitat move.',
               'My strength is staying organized under pressure.',
             ],
             correctIndex: 1,
@@ -1972,13 +1972,13 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I led a migration project. It went well, and I learned a lot.',
             goodAnswer:
-              'I led a billing system migration for a team that was struggling with duplicate invoices. The project mattered because finance was spending hours correcting errors each week. I mapped failure points, set a phased cutover plan, and partnered with engineering on reconciliation checks. After launch, duplicate invoices dropped sharply and monthly close became faster. The experience taught me to front-load risk reviews before any system change touches finance workflows.',
+              'In this fictional example, I led a medical-supply inventory migration for a sanctuary that was struggling with duplicate records. The work mattered because the care team was spending hours correcting counts each week. I mapped failure points, set a phased cutover plan, and partnered with veterinary staff on reconciliation checks. After the change, duplicate records dropped sharply and weekly inventory became faster. The experience taught me to front-load risk reviews before a system change touches animal care.',
             breakdown: {
-              Claim: 'I led a billing system migration.',
-              Context: 'Duplicate invoices were creating operational pain for finance.',
-              Action: 'Mapped failure points, planned phased cutover, partnered on checks.',
-              Outcome: 'Errors dropped and monthly close improved.',
-              Reflection: 'Front-load risk reviews when finance workflows are involved.',
+              Claim: 'I led a medical-supply inventory migration.',
+              Context: 'Duplicate records were creating extra work for animal-care staff.',
+              Action: 'Mapped failure points, planned a phased cutover, and partnered on checks.',
+              Outcome: 'Record errors dropped and weekly inventory became faster.',
+              Reflection: 'Front-load risk reviews when a system change touches animal care.',
             },
           },
         },
@@ -2042,7 +2042,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I improved the handoff process and it worked better afterward.',
             goodAnswer:
-              'I improved our handoff process between sales and implementation because key customer details were being lost after close. I added required fields to the CRM handoff, built a kickoff summary template, and reviewed the first ten handoffs with both teams. Implementation started projects with fewer surprises, and I learned that process fixes stick faster when both teams help design the checklist.',
+              'In this fictional example, I improved the handoff between rescue transport and animal care because key intake details were being lost on arrival. I added required fields to the transfer form, built a one-page intake summary, and reviewed the first ten handoffs with both teams. Care staff received animals with fewer surprises, and I learned that process fixes stick faster when both teams help design the checklist.',
             breakdown: {
               MissingContext: 'Name the pain so the process change actually matters.',
               Action: 'Specific intervention is what gives the answer substance.',
@@ -2106,7 +2106,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             badAnswer:
               'I saw a problem and took initiative to solve it. It went well and everyone appreciated it.',
             goodAnswer:
-              'I noticed new support agents were answering the same billing question inconsistently, which was frustrating customers and managers alike. I drafted a one-page decision guide, tested it with two senior agents, and rolled it into onboarding. Billing escalations dropped the following month, and it reinforced for me that small documentation fixes can create outsized operational stability.',
+              'In this fictional example, I noticed new volunteers were recording the same feeding exception inconsistently, which frustrated animal-care staff. I drafted a one-page decision guide, tested it with two senior caregivers, and added it to onboarding. Record corrections dropped the following month, reinforcing that small documentation fixes can create outsized care consistency.',
             breakdown: {
               Stakes: 'The context shows why this issue was worth fixing.',
               Action: 'The initiative is concrete instead of just claimed.',
@@ -2121,7 +2121,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             question: 'Which answer is short but still deep?',
             options: [
               'I took initiative and it worked out well.',
-              'I noticed repeated billing errors, created a one-page guide for agents, reduced escalations, and learned that small workflow tools can stabilize operations quickly.',
+              'I noticed repeated feeding-record errors, created a one-page guide for volunteers, reduced corrections, and learned that small workflow tools can stabilize animal care quickly.',
               'I like being proactive in general.',
               'My team values initiative, and I agree with that.',
             ],
@@ -2132,7 +2132,7 @@ export const PRACTICE_BUNDLES: PracticeBundle[] = [
             type: 'label_sort',
             instruction: 'Label each segment.',
             segments: [
-              { text: 'I redesigned the customer FAQ for our top cancellation reasons.', correctLabel: 'Claim' },
+              { text: 'I redesigned the volunteer guide for our most common intake questions.', correctLabel: 'Claim' },
               { text: 'Support was answering the same questions inconsistently after policy changes.', correctLabel: 'Context' },
               { text: 'I grouped the issues into five scenarios and rewrote the guidance.', correctLabel: 'Action' },
               { text: 'Repeat contacts on those cases fell by 17%.', correctLabel: 'Outcome' },
@@ -2351,9 +2351,9 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
           explanation: 'In this lesson, you’ll learn how to turn a scattered background into a clear, focused answer you can actually use. A strong answer explains what you do now, shows the foundation that shaped you, and makes it clear where you are headed next. You do not need to strip out every real detail from your background. A [company], [role], [program], or [industry] can strengthen the answer when it helps explain your foundation. The problem is not specificity. The problem is detail without a job.',
           example: {
             question: 'Can you tell me about yourself?',
-            badAnswer: 'I started my career in customer support, then moved into operations, and before that I also spent some time in account work and a few other roles where I learned a lot. Over time I picked up experience across different environments, and now I am looking for a new challenge where I can keep growing.',
-            mediumAnswer: 'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward. Before that, I built my foundation in support and operations roles where I had to stay organized, adjust quickly, and keep work moving across shifting priorities. Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
-            goodAnswer: 'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward. Before that, I built my foundation in support and operations work, including early experience at [company] in a [program/role] that exposed me to how [industry] teams operate at scale. Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
+            badAnswer: 'I have held several roles around animal care and have learned a lot in each one. I am now looking for a new challenge where I can keep growing.',
+            mediumAnswer: 'Right now, I support daily wildlife intake and care records. Earlier animal-care roles taught me to stay calm and accurate when priorities change. Next, I want to take broader ownership of sanctuary operations.',
+            goodAnswer: 'Right now, I coordinate wildlife intake, treatment records, and volunteer coverage at the fictional Moonrise Wildlife Sanctuary. Before that, hands-on animal transport work taught me how much safe care depends on calm communication and accurate handoffs. I am now looking to take broader ownership of animal-care operations.',
             breakdown: {
               Present: 'Start with what you do now and define your professional lane clearly.',
               Past: 'Show the foundation that shaped you. Use specific details when they explain meaning, not when they just add chronology.',
@@ -2362,17 +2362,17 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             annotatedStrongAnswer: [
               {
                 label: 'Present',
-                text: 'Right now, most of my work is focused on coordinating projects across teams and making sure priorities stay aligned as work moves forward.',
+                text: 'Right now, I coordinate wildlife intake, treatment records, and volunteer coverage at the fictional Moonrise Wildlife Sanctuary.',
                 detail: 'This clearly defines the candidate’s lane right now instead of just naming a title.',
               },
               {
                 label: 'Past',
-                text: 'Before that, I built my foundation in support and operations work, including early experience at [company] in a [program/role] that exposed me to how [industry] teams operate at scale.',
-                detail: 'This uses a specific grounding detail well. The detail is not there to list history. It is there to explain what shaped the candidate\'s foundation.',
+                text: 'Before that, hands-on animal transport work taught me how much safe care depends on calm communication and accurate handoffs.',
+                detail: 'This uses a specific fictional grounding detail to explain what shaped the candidate’s foundation instead of listing employers.',
               },
               {
                 label: 'Future',
-                text: 'Going forward, I want to keep building in that kind of coordination work in a role where I can take on more ownership.',
+                text: 'I am now looking to take broader ownership of animal-care operations.',
                 detail: 'This gives a specific direction instead of vague growth language.',
               },
             ],
@@ -2424,8 +2424,8 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             question: 'Which answer is the strongest response to: “Tell me about yourself?”',
             options: [
               'Outside of work, I’m someone who values strong relationships, balance, and being involved in my community. I tend to bring a steady, positive energy to teams, and that has shaped how I approach work in every environment I’ve been part of.',
-              'I began my career as a Sales Coordinator at [company] after graduating in 2014. I was there for four years before moving into an Account Manager role at [company], and after that I joined [company], where I took on broader client work and more responsibility over time. Now, I’m looking to move into a role where I can build on that experience in a bigger way.',
-              'Right now, most of my work is focused on coordinating projects across teams and keeping priorities aligned as work moves forward. Before that, I built my foundation in support and operations work, including early experience at [company] in a [program/role] that exposed me to how [industry] teams operate at scale.',
+              'I started as a weekend habitat assistant at the fictional Pine Hollow Bird Rescue, then handled animal transport at the fictional Bramble Creek Rescue, and later joined Moonrise Wildlife Sanctuary. Now I want a role with more responsibility.',
+              'Right now, I coordinate wildlife intake and care records at the fictional Moonrise Wildlife Sanctuary. Earlier animal transport work taught me that safe care depends on calm communication and accurate handoffs. I am now looking to take broader ownership of animal-care operations.',
             ],
             correctIndex: 2,
             explanation: 'The strongest answer is the one that gives the interviewer a clear professional story: what you do now, what shaped that direction, and where you want to go next.',
@@ -2445,7 +2445,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
           {
             title: 'Drill 5 — Spot the broken section',
             type: 'multiple_choice',
-            context: 'Answer:\nRight now, most of my work is focused on coordinating projects across teams and keeping priorities aligned. Before that, I worked at [company A], then [company B], then [company C] across a few different roles. Going forward, I want to keep building in this kind of work with more ownership.',
+            context: 'Answer:\nRight now, I coordinate wildlife intake and care records. Before that, I worked at the fictional Pine Hollow Bird Rescue, then Bramble Creek Rescue, then Moonrise Wildlife Sanctuary. Going forward, I want broader ownership of animal-care operations.',
             question: 'This answer uses Present -> Past -> Future on the surface, but one section is still weak. Which section is the real problem?',
             options: [
               'Present',
@@ -2473,9 +2473,9 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             type: 'tap_select',
             instruction: 'Select all the Past sections that follow the lesson.',
             items: [
-              'Before that, I worked at [company A], then [company B], then [company C], and picked up a lot of experience along the way.',
-              'Before that, I built my foundation in support and operations roles where I had to stay organized, adapt quickly, and keep multiple moving parts aligned when priorities shifted.',
-              'Before that, I built my foundation in support and operations roles, including early experience at [company] in a [program/role] that exposed me to how [industry] teams operate at scale.',
+              'Before that, I worked at the fictional Pine Hollow Bird Rescue, then Bramble Creek Rescue, then Moonrise Wildlife Sanctuary, and learned a lot along the way.',
+              'Before that, animal transport work taught me to stay calm, communicate clearly, and protect accurate handoffs when conditions changed.',
+              'Before that, my fictional role at Bramble Creek Rescue taught me how much safe animal care depends on precise records and dependable handoffs.',
               'Before that, I spent several years across different roles and gradually took on more responsibility as my career developed.',
             ],
             correctIndices: [1, 2],
@@ -2497,16 +2497,16 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             question: 'Why are you interested in this role?',
             badAnswer: 'I am really excited about this opportunity. The company seems great, and I think this role would be a strong next step for me.',
             mediumAnswer: 'What stood out to me is that this looks like a strong opportunity. I think my background is relevant, and the timing feels right for my next move.',
-            goodAnswer: 'What stood out to me is that this role sits close to the kind of coordination and follow-through work I have been doing already. That fits well with my background, because a lot of my recent work has involved keeping moving pieces organized across teams. The timing makes sense because I am looking for a role where that kind of work is more central to the job.',
+            goodAnswer: 'What stood out to me is that this role owns both animal intake and care-record accuracy. That fits my fictional Moonrise Wildlife Sanctuary background, where I coordinate intake details and volunteer coverage. The timing makes sense because I am ready to take broader ownership of animal-care operations.',
             breakdown: {
               Observation: 'What specifically stood out to you about the role or company?',
               Fit: 'Why does that connect to your background?',
               Timing: 'Why does this move make sense now?',
             },
             annotatedStrongAnswer: [
-              { label: 'Observation', text: 'What stood out to me is that this role sits close to the kind of coordination and follow-through work I have been doing already.', detail: 'A strong Observation points to something real about the role instead of generic praise.' },
-              { label: 'Fit', text: 'That fits well with my background, because a lot of my recent work has involved keeping moving pieces organized across teams.', detail: 'Fit explains the connection between the opportunity and your actual background.' },
-              { label: 'Timing', text: 'The timing makes sense because I am looking for a role where that kind of work is more central to the job.', detail: 'Timing explains why this move makes sense now, not just why you want change.' },
+              { label: 'Observation', text: 'What stood out to me is that this role owns both animal intake and care-record accuracy.', detail: 'A strong Observation points to something real about the role instead of generic praise.' },
+              { label: 'Fit', text: 'That fits my fictional Moonrise Wildlife Sanctuary background, where I coordinate intake details and volunteer coverage.', detail: 'Fit explains the connection between the opportunity and the fictional candidate’s background.' },
+              { label: 'Timing', text: 'The timing makes sense because I am ready to take broader ownership of animal-care operations.', detail: 'Timing explains why this move makes sense now, not just why the candidate wants change.' },
             ],
           },
         },
@@ -2517,7 +2517,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
             options: [
               'I am really excited about this opportunity. The company seems great, and I think this role would be a strong next step for me.',
               'What stood out to me is that this looks like a strong opportunity. I think my background is relevant, and the timing feels right for my next move.',
-              'What stood out to me is that this role sits close to the kind of coordination and follow-through work I have been doing already. That fits well with my background, because a lot of my recent work has involved keeping moving pieces organized across teams. The timing makes sense because I am looking for a role where that kind of work is more central to the job.',
+              'What stood out to me is that this role owns both animal intake and care-record accuracy. That fits my fictional Moonrise Wildlife Sanctuary background, where I coordinate intake details and volunteer coverage. The timing makes sense because I am ready to take broader ownership of animal-care operations.',
             ],
             correctIndex: 2,
             explanation: 'A is flattering and generic, B has the shape but still feels broad, and C is specific, connected, and well-timed.',
@@ -2751,7 +2751,7 @@ function buildAnswerStructureLesson(template: AnswerStructureTemplate): SubLesso
         },
         exercises: [
           { type: 'multiple_choice', question: 'Which answer is the strongest response to: "Tell me about a time you had to solve a problem under pressure."', options: ['There was a time when things were moving quickly and a lot was going on. I had to step up and help, and it was a good learning experience for me.', 'In one role, a project was falling behind close to a deadline. My responsibility was to help get things back on track. I worked with the team to improve communication and stay organized, and in the end we were able to finish successfully.', 'In one role, a key deliverable was at risk a few days before deadline because ownership across teams was unclear. I was responsible for pulling the work back into a clear plan and making sure nothing critical got missed. I mapped the remaining tasks, reassigned open items to the right owners, and set short check-ins so issues surfaced early instead of at the deadline. We submitted on time, and the process we used became the model for the next project.'], correctIndex: 2, explanation: 'A is weak, B is structured but weak, and C is strong because the Action is specific and the Result shows consequence.' },
-          { type: 'multiple_choice', question: 'What is the biggest weakness in this answer? "In one role, a client request changed late in the process. My job was to help the team respond. I communicated with everyone involved and worked hard to keep things moving. In the end, the client was happy."', options: ['The Situation is too short', 'The Task is too specific', 'The Action is too vague', 'The Result is too long'], correctIndex: 2, explanation: 'Communicated and worked hard do not tell the interviewer what the candidate actually did.' },
+          { type: 'multiple_choice', question: 'What is the biggest weakness in this fictional answer? "During a wildlife intake, the arrival time changed late. My job was to help the sanctuary respond. I communicated with everyone involved and worked hard to keep things moving. In the end, the animal arrived safely."', options: ['The Situation is too short', 'The Task is too specific', 'The Action is too vague', 'The Result is too long'], correctIndex: 2, explanation: 'Communicated and worked hard do not tell the interviewer what the candidate actually did.' },
           { type: 'multiple_choice', question: 'What is the biggest weakness in this answer? "At one point, our team was handling several overlapping requests during a busy period, and one project became more complicated when priorities shifted and more people got involved than expected. I was responsible for helping the team manage the situation. I created a clearer handoff process and flagged blockers earlier. The work moved forward more smoothly after that."', options: ['The Situation is too long', 'The Task is too vague', 'The Action is missing', 'The Result is unrealistic'], correctIndex: 0, explanation: 'The setup is not terrible, but it takes too long to get to the point. Situation and Task should not eat the clock.' },
           { type: 'multiple_choice', question: 'Which revision best improves the Action section?', options: ['I stayed involved and made sure we all stayed in touch throughout the process.', 'I tried to be proactive and support the group however I could.', 'I created a simple tracker for open issues, assigned clear owners, and set short daily check-ins so decisions did not stall.', 'I focused on teamwork and kept a positive attitude while we worked through it.'], correctIndex: 2, explanation: 'Strong Action sounds owned. It shows decisions and steps another person could not have described generically.' },
           { type: 'multiple_choice', question: 'Which revision best improves the Result section?', options: ['In the end, everyone felt good about the outcome.', 'In the end, the work was completed on time, and the process reduced confusion on similar projects afterward.', 'In the end, it was a valuable experience for all of us.', 'In the end, we learned a lot from the situation.'], correctIndex: 1, explanation: 'A good Result shows consequence, not just positive vibes.' },

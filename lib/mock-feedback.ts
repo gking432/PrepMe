@@ -49,7 +49,7 @@ export const MOCK_FEEDBACK = {
             question_id: 'q7',
             timestamp: '12:30',
             excerpt:
-              'Asked how the new customer-insight repository would change the way product teams make decisions.',
+              'Asked how the sanctuary plans volunteer coverage and animal transfers during seasonal intake surges.',
           },
         ],
       },
@@ -63,7 +63,7 @@ export const MOCK_FEEDBACK = {
             question_id: 'q2',
             timestamp: '2:15',
             excerpt:
-              'Connected previous experience in project management to the leadership aspects of this new role.',
+              'Connected wildlife intake and care-record experience to the operations responsibilities of this role.',
           },
         ],
       },
@@ -77,7 +77,7 @@ export const MOCK_FEEDBACK = {
         rootCause: 'professional_story',
         rewrite_method: 'Present, Past, Future',
         rewritten_answer:
-          'Right now, most of my work is focused on keeping projects organized when priorities shift and several people need to stay aligned. Earlier in my career, I built that foundation by working through high-pressure situations where teams needed clearer ownership and calmer communication. One experience that shaped me was a challenging project with a tight deadline, where I helped reset priorities and keep the work moving. Going forward, I want to keep building in roles where coordination, follow-through, and steady execution are central to the work.',
+          'Right now, my work centers on keeping wildlife intake and daily care operations safe and organized. I built that foundation in hands-on animal-care roles where accurate records, calm decisions, and reliable shift handoffs mattered every day. I am now looking for a sanctuary role where I can take broader ownership of intake coordination, volunteer coverage, and care routines.',
         rewrite_explanation:
           'This keeps the same details but turns them into Present, Past, Future instead of a long challenge story.',
         evidence: [
@@ -99,7 +99,7 @@ export const MOCK_FEEDBACK = {
         rewrite_method: 'STAR with concrete metrics',
         original_answer: 'I\'m generally good at managing multiple priorities. I usually just make a list and work through things.',
         rewritten_answer:
-          'Last quarter I had three projects with overlapping deadlines: a client migration, a compliance audit, and an internal tool launch. I created a shared tracker, identified which deliverables had hard external deadlines versus internal flexibility, and negotiated a one-week extension on the tool launch. All three shipped on time, and the client migration finished two days early.',
+          'During a spring intake surge, an injured heron arrived while two animal transfers and a medication round were already underway. I reassigned volunteer coverage, confirmed the transfer paperwork, and created a visible priority board for the care team. Every animal received its scheduled care, and both transfers left on time with complete records.',
         rewrite_explanation:
           'This replaces vague habits with a specific situation, clear actions, and measurable results the interviewer can verify.',
         evidence: [
@@ -119,9 +119,9 @@ export const MOCK_FEEDBACK = {
         score: 4.5,
         rootCause: 'off_topic',
         rewrite_method: 'Acknowledge, Bridge, Prove',
-        original_answer: 'I haven\'t worked with enterprise clients directly, but I\'ve done some personal projects that involved large systems.',
+        original_answer: 'I have not handled large raptor transfers directly, but I have helped with several smaller wildlife transports.',
         rewritten_answer:
-          'I haven\'t managed enterprise accounts directly, but the complexity is familiar. At my last company I coordinated a cross-team integration that involved five stakeholders, a shared SLA, and weekly executive reviews. The dynamics — alignment, escalation paths, long sales cycles — mirror what enterprise work demands. I\'d ramp quickly on the account-specific context.',
+          'I have not led a large raptor transfer yet, so I would not overstate that experience. I have coordinated smaller wildlife transports using species-specific checklists, complete medical records, and confirmed receiving staff. I would bring that same discipline while learning Moonrise\'s raptor protocols from the licensed care team.',
         rewrite_explanation:
           'Instead of deflecting to personal projects, this names the gap honestly and immediately bridges to transferable proof the interviewer can trust.',
         evidence: [
@@ -129,8 +129,8 @@ export const MOCK_FEEDBACK = {
             question_id: 'q5',
             timestamp: '8:45',
             excerpt:
-              'When asked about experience with enterprise clients, pivoted to talking about personal projects instead of addressing the gap honestly.',
-            question: 'What experience do you have working with enterprise-level clients?',
+              'When asked about large raptor transfers, spoke generally about transport work without clearly naming the experience gap.',
+            question: 'What experience do you have coordinating large raptor transfers?',
           },
         ],
       },
@@ -143,7 +143,7 @@ export const MOCK_FEEDBACK = {
         rewrite_method: 'Remove hedges, lead with ownership',
         original_answer: 'I think I kind of helped improve the process, I guess. We sort of streamlined things and it was basically better after that.',
         rewritten_answer:
-          'I redesigned the intake workflow for our support team. The old process had three handoffs before a ticket reached an engineer. I cut it to one by building a triage form that auto-routed based on category. Ticket resolution time dropped 40% in the first month.',
+          'I redesigned our animal-intake checklist so medical condition, feeding status, and enclosure assignment were captured in one handoff. The care team stopped chasing missing notes at shift change, and incomplete intake records dropped during the first month.',
         rewrite_explanation:
           'Every hedge word is replaced with a direct claim backed by a specific action and a measurable outcome.',
         evidence: [
@@ -165,7 +165,7 @@ export const MOCK_FEEDBACK = {
         rewrite_method: 'Observation, Fit, Timing',
         original_answer: 'It seems like a great company with a lot of opportunities to grow.',
         rewritten_answer:
-          'I noticed Cedar & Signal Labs is building a shared customer-insight repository for product teams. That caught my attention because I have built research workflows that turn interviews into decisions people can actually find and reuse. Joining while that practice is still taking shape is exactly where I can contribute quickly.',
+          'I noticed Moonrise is expanding its seasonal intake and transport program. That caught my attention because safe intake records, volunteer coverage, and clear care handoffs have been central to my work. Joining before the next intake season would let me contribute immediately while learning the sanctuary\'s species-specific protocols.',
         rewrite_explanation:
           'This names something specific about the company, connects it to direct experience, and explains why the timing matters — instead of generic praise.',
         evidence: [
@@ -187,7 +187,7 @@ export const MOCK_FEEDBACK = {
         rewrite_method: 'STAR expansion',
         original_answer: 'I led a project once. It went well.',
         rewritten_answer:
-          'I led the migration of our billing system from a legacy vendor to Stripe. The scope was about 12,000 active subscriptions, and the constraint was zero billing interruptions during the cutover. I built the migration script, coordinated QA with finance, and ran a shadow period where both systems processed in parallel for two weeks. We completed the switch with no customer-facing errors, and the new system saved the company $8K per month in processing fees.',
+          'I led an overhaul of our medication-record process before the summer intake surge. I combined three paper logs into one shift-based record, tested it with two caretakers, and trained volunteers on the new handoff. Missed initials and duplicate entries dropped, and the care lead could review every active medication in one place.',
         rewrite_explanation:
           'Two vague sentences become a full STAR answer with a real situation, clear ownership, specific actions, and a quantified result.',
         evidence: [
@@ -237,9 +237,9 @@ export const MOCK_FEEDBACK = {
         score: 6,
         max: 10,
         alignment: {
-          met: ['Project management', 'Team collaboration', 'Agile methodology'],
-          missing: ['Enterprise client experience', 'Budget management over $1M'],
-          transferable: ['Startup leadership experience', 'Cross-functional coordination'],
+          met: ['Wildlife intake', 'Care-team communication', 'Volunteer scheduling'],
+          missing: ['Large raptor transfer leadership', 'State permit reporting'],
+          transferable: ['Animal-care recordkeeping', 'Emergency intake coordination'],
         },
       },
       interest_enthusiasm: {
@@ -287,19 +287,19 @@ export const MOCK_TRANSCRIPT = {
     },
     {
       speaker: 'candidate',
-      text: 'Of course! I\'ve been working in customer research and program management for about five years now. I started at a small studio where I wore a lot of hats — interviewing customers, coordinating studies, and helping product teams act on what we learned. What drew me to this role is the opportunity to build a repeatable research practice for a growing collaboration product.',
+      text: 'Of course! I have worked in wildlife intake and animal-care operations for about six years. I started in a small field hospital, where I prepared enclosures, maintained care logs, and supported safe transfers. What drew me to this role is the opportunity to coordinate those routines across a larger sanctuary and volunteer team.',
       timestamp: '0:15',
       question_id: 'q1',
     },
     {
       speaker: 'interviewer',
-      text: 'That\'s great context. What made you decide to transition from a startup environment to a larger organization?',
+      text: 'That is helpful context. Why are you interested in moving from a small rescue center to a larger sanctuary?',
       timestamp: '1:45',
       question_id: 'q2',
     },
     {
       speaker: 'candidate',
-      text: 'I loved the startup experience — the speed, the autonomy, the ability to see your impact immediately. But I realized that to grow as a leader, I need to learn how to operate within more complex systems. At a startup, you can just walk over to someone\'s desk and make a decision. At scale, you need to build consensus, navigate cross-functional dependencies, and think more strategically about resource allocation. That\'s the muscle I want to build next in my career.',
+      text: 'I value the hands-on experience I have gained at a small rescue, especially during urgent intakes. I am ready to learn a wider range of species protocols and take more ownership of volunteer scheduling, transport planning, and care records. A larger sanctuary would let me build those skills while staying close to daily animal care.',
       timestamp: '2:15',
       question_id: 'q2',
     },
@@ -329,13 +329,13 @@ export const MOCK_TRANSCRIPT = {
     },
     {
       speaker: 'interviewer',
-      text: 'What experience do you have working with enterprise-level clients?',
+      text: 'What experience do you have coordinating large raptor transfers?',
       timestamp: '9:15',
       question_id: 'q5',
     },
     {
       speaker: 'candidate',
-      text: 'So I haven\'t directly managed enterprise accounts, but I\'ve done a lot of interesting things on the side that are relevant. I built a personal project that got some traction — a task management tool that a few hundred people use. And in my current role, I\'ve worked with some of our larger customers on feature requests, though they\'re more mid-market than true enterprise. I think the principles are similar though — understanding complex needs, managing expectations, building relationships.',
+      text: 'I have not led a large raptor transfer directly. I have supported smaller bird and mammal transports by preparing carriers, confirming treatment notes, and coordinating arrival times with the receiving facility. I know the safety requirements become more specialized with large raptors, so I would want to learn Moonrise\'s exact protocol from the licensed team before taking ownership.',
       timestamp: '9:30',
       question_id: 'q5',
     },
@@ -347,17 +347,17 @@ export const MOCK_TRANSCRIPT = {
     },
     {
       speaker: 'candidate',
-      text: 'I\'d love to know more about the customer-insight repository mentioned in the role brief. How would this role help product teams contribute to and use it? And what would a strong first six months look like?',
+      text: 'I would love to know how Moonrise plans staffing and animal transfers during the spring intake surge. What would this coordinator own directly, and what would strong performance look like during the first six months?',
       timestamp: '12:30',
       question_id: 'q7',
     },
   ],
   questions_asked: [
     { id: 'q1', question: 'Tell me about yourself and why you\'re interested in this role.' },
-    { id: 'q2', question: 'What made you decide to transition from a startup to a larger organization?' },
+    { id: 'q2', question: 'Why are you interested in moving from a small rescue center to a larger sanctuary?' },
     { id: 'q3', question: 'Tell me about a time you faced a significant challenge at work.' },
     { id: 'q4', question: 'How do you prioritize when you have multiple competing deadlines?' },
-    { id: 'q5', question: 'What experience do you have working with enterprise-level clients?' },
+    { id: 'q5', question: 'What experience do you have coordinating large raptor transfers?' },
     { id: 'q7', question: 'What questions do you have for me about the team or the role?' },
   ],
 }

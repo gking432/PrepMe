@@ -7,6 +7,7 @@ import OpenAI from 'openai'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { gradeHrScreenWithRetry, gradeHiringManagerWithRetry, gradeCultureFitWithRetry, gradeFinalRoundWithRetry, GradingMaterials } from '@/lib/claude-client'
 import { gradeHrScreenPassFail } from '@/lib/hr-pass-fail-grader'
+import { hasSufficientHrInterviewCoverage } from '@/lib/hr-interview-coverage'
 import { gradeHrScreenQuestionLevel } from '@/lib/hr-question-level-grader'
 import { validateHrScreenRubric, validateHiringManagerRubric, validateCultureFitRubric, validateFinalRoundRubric } from '@/lib/rubric-validator'
 import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
@@ -285,67 +286,8 @@ Rules:
   return rubric
 }
 
-function isSubstantiveCandidateUtterance(text?: string | null) {
-  const trimmed = (text || '').trim()
-  if (!trimmed) return false
-
-  const normalized = trimmed
-    .toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  if (!normalized) return false
-
-  const trivialUtterances = new Set([
-    'hello',
-    'hello there',
-    'hi',
-    'hey',
-    'hey there',
-    'yeah',
-    'yep',
-    'yes',
-    'ok',
-    'okay',
-    'sure',
-    'thanks',
-    'thank you',
-    'bye',
-    'goodbye',
-    'you too',
-  ])
-
-  if (trivialUtterances.has(normalized)) return false
-
-  const words = normalized.split(' ').filter(Boolean)
-  return words.length >= 4
-}
-
 function isBlankInterviewTranscript(structuredTranscript: any, transcript: string) {
-  const structuredMessages = Array.isArray(structuredTranscript?.messages)
-    ? structuredTranscript.messages
-    : []
-
-  const structuredCandidateMessages = structuredMessages
-    .filter((message: any) => message?.speaker === 'candidate')
-    .map((message: any) => message?.text)
-
-  if (structuredCandidateMessages.length > 0) {
-    return !structuredCandidateMessages.some((text: string) => isSubstantiveCandidateUtterance(text))
-  }
-
-  const plainCandidateLines = (transcript || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => /^You:\s*/i.test(line))
-    .map((line) => line.replace(/^You:\s*/i, ''))
-
-  if (plainCandidateLines.length > 0) {
-    return !plainCandidateLines.some((text) => isSubstantiveCandidateUtterance(text))
-  }
-
-  return true
+  return !hasSufficientHrInterviewCoverage(structuredTranscript, transcript)
 }
 
 function countWords(text: any) {
@@ -1095,6 +1037,10 @@ Use the question IDs and timestamps from this structured transcript when providi
           let rubric = HR_SCREEN_GRADING_MODE === 'v2_question_level'
             ? await gradeHrScreenQuestionLevel(gradingMaterials)
             : await gradeHrScreenPassFail(gradingMaterials)
+
+          if (isBlankInterviewTranscript(structuredTranscript, Array.isArray(transcript) ? transcript.join('\n') : transcript)) {
+            applyBlankInterviewGuardrailToHrRubric(rubric)
+          }
 
           rubric = await enrichHrWeakSignalsWithHaikuRewrites(rubric, structuredTranscript)
 

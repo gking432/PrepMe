@@ -112,9 +112,11 @@ export default function HandlingUncertaintyLesson({
   const showProgress = phase !== 'intro' && phase !== 'result'
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="workshop-frame">
       {showProgress && <ProgressBar current={progress} total={TOTAL_SEGMENTS} onBack={showBack ? goBack : undefined} />}
-      <div className="mx-auto w-full max-w-2xl px-4 py-6">{renderPhase()}</div>
+      <div className="workshop-body">
+        <div className="mx-auto flex h-full w-full max-w-2xl flex-col justify-center">{renderPhase()}</div>
+      </div>
     </div>
   )
 
@@ -882,7 +884,7 @@ export default function HandlingUncertaintyLesson({
 
 function ProgressBar({ current, total, onBack }: { current: number; total: number; onBack?: () => void }) {
   return (
-    <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-3">
+    <div className="workshop-header bg-white">
       <div className="mx-auto flex w-full max-w-2xl items-center gap-3">
         {onBack && (
           <button

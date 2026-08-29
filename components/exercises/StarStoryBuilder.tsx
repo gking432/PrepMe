@@ -124,6 +124,8 @@ export default function StarStoryBuilder({
   // Output
   const [output, setOutput] = useState<StarStoryOutput | null>(null)
   const [generateError, setGenerateError] = useState(false)
+  const [outputPanel, setOutputPanel] = useState<'answer' | 'breakdown' | 'follow_up'>('answer')
+  const [answerLength, setAnswerLength] = useState<'sixty' | 'thirty'>('sixty')
 
   // Auto-select default competencies when story type changes
   useEffect(() => {
@@ -294,7 +296,7 @@ export default function StarStoryBuilder({
     autoAdvance = false
   ) {
     return (
-      <div className="space-y-2">
+      <div className="workshop-choice-grid">
         {options.map((opt) => {
           const isSelected = selected === opt.id
           return (
@@ -307,7 +309,7 @@ export default function StarStoryBuilder({
                   setTimeout(nextStep, 200)
                 }
               }}
-              className={`group w-full rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${
+              className={`workshop-choice-card group ${
                 isSelected
                   ? 'border-violet-400 bg-violet-50 shadow-sm'
                   : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'
@@ -382,16 +384,16 @@ export default function StarStoryBuilder({
     footer?: ReactNode
   ) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="workshop-screen">
         {renderProgressBar()}
-        <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-5 py-4">
+        <div className="workshop-header bg-gradient-to-br from-violet-50 via-white to-sky-50">
           <h2 className="text-xl font-extrabold leading-tight text-slate-900">{title}</h2>
           <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <div className="workshop-body">
           {children}
         </div>
-        <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+        <div className="workshop-footer">
           {footer || (
             <div className="flex items-center gap-2">
               {step !== 'story_type' && (
@@ -419,11 +421,11 @@ export default function StarStoryBuilder({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
+    <div className="workshop-frame">
       {/* INTRO */}
       {step === 'intro' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-violet-50 via-white to-sky-50">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
                 Why this matters
@@ -437,7 +439,7 @@ export default function StarStoryBuilder({
             </h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             <div className="space-y-4">
               <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
                 <div className="flex items-start gap-3">
@@ -487,7 +489,7 @@ export default function StarStoryBuilder({
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => setStep('method')}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
@@ -501,8 +503,8 @@ export default function StarStoryBuilder({
 
       {/* METHOD — flip cards */}
       {step === 'method' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-sky-50 via-white to-violet-50">
             <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
               The Method
             </span>
@@ -514,8 +516,8 @@ export default function StarStoryBuilder({
             </p>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <div className="space-y-3">
+          <div className="workshop-body">
+            <div className="space-y-2">
               {FRAMEWORK_STEPS.map((fs, i) => {
                 const colors = COLOR_MAP[fs.color]
                 const flipped = flippedCards.has(i)
@@ -527,7 +529,7 @@ export default function StarStoryBuilder({
                   <div
                     key={fs.key}
                     className={`flip-card relative ${flipped ? 'flipped' : ''}`}
-                    style={{ height: '92px' }}
+                    style={{ height: '84px' }}
                   >
                     <div className="flip-card-inner">
                       <button
@@ -579,12 +581,12 @@ export default function StarStoryBuilder({
               })}
             </div>
 
-            <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+            <p className="mt-2 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
               {flippedCards.size}/{FRAMEWORK_STEPS.length} flipped
             </p>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => setStep('story_type')}
               disabled={!allMethodFlipped}
@@ -992,8 +994,8 @@ export default function StarStoryBuilder({
 
       {/* OUTPUT */}
       {step === 'output' && output && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-emerald-50 via-white to-violet-50">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
               Your STAR answer
             </span>
@@ -1002,76 +1004,67 @@ export default function StarStoryBuilder({
             </h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <div className="space-y-5">
-              {/* STAR Breakdown */}
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">STAR breakdown</p>
-                {(['situation', 'task', 'action', 'result'] as const).map((part) => {
-                  const fs = FRAMEWORK_STEPS.find((f) => f.key === part)
-                  const colors = fs ? COLOR_MAP[fs.color] : COLOR_MAP.violet
-                  return (
-                    <div key={part} className={`rounded-xl border-2 ${colors.border} ${colors.soft} px-3 py-2.5`}>
-                      <div className="flex items-start gap-2">
-                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.bg} text-xs text-white`}>
-                          {fs?.emoji || '📝'}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>{part}</p>
-                          <p className="text-sm leading-6 text-slate-800">{output.starBreakdown[part]}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+          <div className="workshop-body">
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="workshop-tabs" role="tablist" aria-label="STAR answer tools">
+                {([
+                  ['answer', 'Answer'],
+                  ['breakdown', 'Breakdown'],
+                  ['follow_up', 'Follow-up'],
+                ] as const).map(([panel, label]) => (
+                  <button key={panel} type="button" role="tab" aria-selected={outputPanel === panel} onClick={() => setOutputPanel(panel)} className={`workshop-tab ${outputPanel === panel ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
 
-              {/* 60-second answer */}
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">60-second answer</p>
-                <div className="mt-2 rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-4">
-                  <p className="text-sm leading-7 text-slate-900">{output.sixtySecondAnswer}</p>
-                </div>
-              </div>
-
-              {/* 30-second answer */}
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">30-second answer</p>
-                <div className="mt-2 rounded-2xl border-2 border-sky-300 bg-sky-50 px-4 py-4">
-                  <p className="text-sm leading-7 text-slate-900">{output.thirtySecondAnswer}</p>
-                </div>
-              </div>
-
-              {/* Follow-up questions */}
-              {output.followUpQuestions?.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
-                    They might ask next
-                  </p>
-                  <div className="mt-2 space-y-1.5">
-                    {output.followUpQuestions.map((q, i) => (
-                      <div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
-                        <p className="text-xs leading-5 text-slate-700">{q}</p>
-                      </div>
-                    ))}
+              {outputPanel === 'answer' && (
+                <div className="flex min-h-0 flex-1 flex-col pt-3">
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setAnswerLength('sixty')} className={`rounded-full px-3 py-1 text-xs font-bold ${answerLength === 'sixty' ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600'}`}>60 seconds</button>
+                    <button type="button" onClick={() => setAnswerLength('thirty')} className={`rounded-full px-3 py-1 text-xs font-bold ${answerLength === 'thirty' ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600'}`}>30 seconds</button>
                   </div>
+                  <div className="my-3 flex min-h-0 flex-1 items-center rounded-2xl border-2 border-violet-300 bg-violet-50 px-5 py-4">
+                    <p className="text-sm leading-7 text-slate-900">{answerLength === 'sixty' ? output.sixtySecondAnswer : output.thirtySecondAnswer}</p>
+                  </div>
+                  {output.storySummary && <p className="shrink-0 text-xs leading-5 text-slate-500">{output.storySummary}</p>}
                 </div>
               )}
 
-              {/* Story summary */}
-              {output.storySummary && (
-                <details className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2">
-                  <summary className="cursor-pointer text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">
-                    Story summary
-                  </summary>
-                  <p className="mt-2 text-xs leading-5 text-slate-700">{output.storySummary}</p>
-                </details>
+              {outputPanel === 'breakdown' && (
+                <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 pt-3">
+                  {(['situation', 'task', 'action', 'result'] as const).map((part) => {
+                    const fs = FRAMEWORK_STEPS.find((item) => item.key === part)
+                    const colors = fs ? COLOR_MAP[fs.color] : COLOR_MAP.violet
+                    return (
+                      <div key={part} className={`flex items-center rounded-xl border-2 ${colors.border} ${colors.soft} px-3 py-3`}>
+                        <div className="flex items-start gap-2">
+                          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${colors.bg} text-xs text-white`}>{fs?.emoji || '📝'}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>{part}</p>
+                            <p className="mt-1 text-xs leading-5 text-slate-800">{output.starBreakdown[part]}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {outputPanel === 'follow_up' && (
+                <div className="grid min-h-0 flex-1 content-center gap-2 pt-3">
+                  {output.followUpQuestions?.length ? output.followUpQuestions.map((question, index) => (
+                    <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+                      <p className="text-sm leading-6 text-slate-700">{question}</p>
+                    </div>
+                  )) : <p className="text-center text-sm font-bold text-slate-500">No follow-up questions were generated.</p>}
+                </div>
               )}
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={onComplete}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"

@@ -83,8 +83,34 @@ test('professional story workshop uses fixed, single-page desktop screens instea
   assert.match(source, /\['answer', 'Answer'\]/)
   assert.match(source, /\['structure', 'Breakdown'\]/)
   assert.match(source, /\['refine', 'Refine'\]/)
-  assert.match(source, /grid grid-cols-3 gap-2/)
+  assert.match(source, /workshop-choice-grid/)
   assert.doesNotMatch(source, /paginateAnswer|More choices|answerPages/)
+})
+
+test('all six demo workshops share one fixed, no-scroll lesson shell', () => {
+  const activeWorkshopFiles = [
+    '../components/exercises/ProfessionalStoryBuilder.tsx',
+    '../components/exercises/StarStoryBuilder.tsx',
+    '../components/exercises/CareerAlignmentBuilder.tsx',
+    '../components/exercises/HandlingUncertaintyLesson.tsx',
+    // This shared renderer powers both Preparation / Curiosity and Pace / Delivery.
+    '../components/exercises/GuidedBuilderWorkshop.tsx',
+  ]
+
+  for (const path of activeWorkshopFiles) {
+    const source = readFileSync(new URL(path, import.meta.url), 'utf8')
+    assert.match(source, /workshop-frame/, `${path} must use the standard workshop frame`)
+    assert.doesNotMatch(source, /overflow-y-auto|overflow-auto|overflow-x-auto/, `${path} must not add a scroll container`)
+  }
+
+  const styles = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8')
+  for (const className of ['workshop-frame', 'workshop-screen', 'workshop-header', 'workshop-body', 'workshop-footer']) {
+    assert.match(styles, new RegExp(`\\.${className}`), `${className} must remain part of the shared shell`)
+  }
+
+  const pathSource = readFileSync(new URL('../components/PracticePath.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(pathSource, /overflow-y-auto|overflow-auto|overflow-x-auto/)
+  assert.match(pathSource, /grid min-h-0 flex-1 grid-cols-2 gap-3/)
 })
 
 test('sparse interview coverage is not inflated by duplicate transcript formats', () => {

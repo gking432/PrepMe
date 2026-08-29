@@ -212,12 +212,12 @@ export default function ProfessionalStoryBuilder({
     selected: string | null, onSelect: (id: string) => void,
   ) {
     return (
-      <div className="grid grid-cols-3 gap-2">
+      <div className="workshop-choice-grid">
         {options.map((opt) => {
           const isSelected = selected === opt.id
           return (
             <button key={opt.id} type="button" onClick={() => onSelect(opt.id)}
-              className={`group min-h-16 w-full rounded-xl border-2 px-3 py-2 text-left transition active:scale-[0.98] ${isSelected ? 'border-violet-400 bg-violet-50 shadow-sm' : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'}`}>
+              className={`workshop-choice-card group ${isSelected ? 'border-violet-400 bg-violet-50 shadow-sm' : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'}`}>
               <div className="flex items-start gap-2">
                 <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${isSelected ? 'border-violet-500 bg-violet-500' : 'border-slate-300'}`}>
                   {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -236,14 +236,14 @@ export default function ProfessionalStoryBuilder({
 
   function renderStepShell(title: string, subtitle: string, children: ReactNode, footer?: ReactNode) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="workshop-screen">
         {renderProgressBar()}
-        <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-5 py-4">
+        <div className="workshop-header bg-gradient-to-br from-violet-50 via-white to-sky-50">
           <h2 className="text-xl font-extrabold leading-tight text-slate-900">{title}</h2>
           <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">{children}</div>
-        <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+        <div className="workshop-body">{children}</div>
+        <div className="workshop-footer">
           {footer || (
             <div className="flex items-center gap-2">
               {step !== 'situation' && (
@@ -266,17 +266,17 @@ export default function ProfessionalStoryBuilder({
   const visibleStructurePart = structureParts.includes(activeStructurePart) ? activeStructurePart : structureParts[0]
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
+    <div className="workshop-frame">
       {step === 'intro' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-violet-50 via-white to-sky-50">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">Why this matters</span>
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-600">Present · Past · Future</span>
             </div>
             <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">&ldquo;Tell me about yourself&rdquo; is your first impression.</h2>
           </div>
-          <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">
+          <div className="workshop-body">
             <div className="space-y-4">
               <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
                 <div className="flex items-start gap-3">
@@ -303,20 +303,20 @@ export default function ProfessionalStoryBuilder({
               )}
             </div>
           </div>
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button onClick={() => setStep('method')} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold">See the method <ArrowRight className="h-4 w-4" /></button>
           </div>
         </div>
       )}
 
       {step === 'method' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-sky-50 via-white to-violet-50">
             <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">The Method</span>
             <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">Present · Past · Future</h2>
             <p className="mt-1 text-xs font-bold text-slate-500">Flip each card in order to unlock the next.</p>
           </div>
-          <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">
+          <div className="workshop-body">
             <div className="space-y-3">
               {FRAMEWORK_STEPS.map((fs, i) => {
                 const colors = COLOR_MAP[fs.color]; const flipped = flippedCards.has(i); const previousFlipped = i === 0 || flippedCards.has(i - 1)
@@ -353,7 +353,7 @@ export default function ProfessionalStoryBuilder({
             </div>
             <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">{flippedCards.size}/{FRAMEWORK_STEPS.length} flipped</p>
           </div>
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button onClick={() => setStep('situation')} disabled={!allMethodFlipped} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold disabled:opacity-50">
               {allMethodFlipped ? "Let's build yours" : 'Flip every card to continue'} <ArrowRight className="h-4 w-4" />
             </button>
@@ -433,14 +433,14 @@ export default function ProfessionalStoryBuilder({
       )}
 
       {step === 'output' && output && (
-        <div className="flex h-full flex-col">
-          <div className="shrink-0 border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-5 py-3">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-emerald-50 via-white to-violet-50">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your answer</span>
             <h2 className="mt-2 text-lg font-extrabold leading-tight text-slate-900 sm:text-xl">Here&apos;s what that sounds like.</h2>
           </div>
-          <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 sm:px-5 sm:py-4">
+          <div className="workshop-body">
             <div className="flex h-full min-h-0 flex-col">
-              <div className="grid shrink-0 grid-cols-3 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Answer tools">
+              <div className="workshop-tabs" role="tablist" aria-label="Answer tools">
                 {([
                   ['answer', 'Answer'],
                   ['structure', 'Breakdown'],
@@ -452,7 +452,7 @@ export default function ProfessionalStoryBuilder({
                     role="tab"
                     aria-selected={activeOutputPanel === panel}
                     onClick={() => setActiveOutputPanel(panel)}
-                    className={`rounded-lg px-2 py-2 text-xs font-extrabold transition ${activeOutputPanel === panel ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`workshop-tab ${activeOutputPanel === panel ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                   >
                     {label}
                   </button>
@@ -551,7 +551,7 @@ export default function ProfessionalStoryBuilder({
               )}
             </div>
           </div>
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button onClick={onComplete} className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold">Finish workshop <CheckCircle2 className="h-4 w-4" /></button>
           </div>
         </div>

@@ -89,6 +89,44 @@ summary {
   border-radius: 1.25rem;
 }
 
+@layer components {
+  .workshop-frame {
+    @apply flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white;
+  }
+
+  .workshop-screen {
+    @apply flex h-full min-h-0 flex-col overflow-hidden;
+  }
+
+  .workshop-header {
+    @apply shrink-0 border-b border-slate-200 px-5 py-3;
+  }
+
+  .workshop-body {
+    @apply min-h-0 flex-1 overflow-hidden px-5 py-4;
+  }
+
+  .workshop-footer {
+    @apply shrink-0 border-t border-slate-200 px-5 py-3;
+  }
+
+  .workshop-choice-grid {
+    @apply grid grid-cols-3 gap-2;
+  }
+
+  .workshop-choice-card {
+    @apply min-h-16 w-full rounded-xl border-2 px-3 py-2 text-left transition active:scale-[0.98];
+  }
+
+  .workshop-tabs {
+    @apply grid shrink-0 grid-cols-3 rounded-xl bg-slate-100 p-1;
+  }
+
+  .workshop-tab {
+    @apply rounded-lg px-2 py-2 text-xs font-extrabold transition;
+  }
+}
+
 .interview-card {
   background: rgba(12, 22, 38, 0.72);
   border: 1px solid rgba(148, 163, 184, 0.16);

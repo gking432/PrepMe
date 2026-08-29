@@ -545,11 +545,11 @@ export default function GuidedBuilderWorkshop({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
+    <div className="workshop-frame">
       {/* INTRO */}
       {phase === 'intro' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-violet-50 via-white to-sky-50">
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
                 Why this matters
@@ -561,7 +561,7 @@ export default function GuidedBuilderWorkshop({
             <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">{config.whyTitle}</h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             <div className="space-y-4">
               <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
                 <div className="flex items-start gap-3">
@@ -603,7 +603,7 @@ export default function GuidedBuilderWorkshop({
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => setPhase('method')}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"
@@ -617,8 +617,8 @@ export default function GuidedBuilderWorkshop({
 
       {/* METHOD - flip cards with progressive unlock */}
       {phase === 'method' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-sky-50 via-white to-violet-50">
             <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
               The Method
             </span>
@@ -628,7 +628,7 @@ export default function GuidedBuilderWorkshop({
             </p>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             <div className="space-y-3">
               {config.steps.map((step, i) => {
                 const colors = COLOR_MAP[step.color]
@@ -641,7 +641,7 @@ export default function GuidedBuilderWorkshop({
                   <div
                     key={step.key}
                     className={`flip-card relative ${flipped ? 'flipped' : ''}`}
-                    style={{ height: step.example ? '130px' : '92px' }}
+                    style={{ height: step.example ? '110px' : '84px' }}
                   >
                     <div className="flip-card-inner">
                       {/* FRONT - face down */}
@@ -703,7 +703,7 @@ export default function GuidedBuilderWorkshop({
             </p>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => setPhase('tags')}
               disabled={!allMethodFlipped}
@@ -718,8 +718,8 @@ export default function GuidedBuilderWorkshop({
 
       {/* TAGS - voice/approach picker */}
       {phase === 'tags' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-amber-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-amber-50 via-white to-violet-50">
             <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700">
               Your voice
             </span>
@@ -729,7 +729,7 @@ export default function GuidedBuilderWorkshop({
             </p>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             <div className="flex flex-wrap gap-2">
               {config.tags.map((tag) => {
                 const selected = selectedTags.includes(tag)
@@ -770,7 +770,7 @@ export default function GuidedBuilderWorkshop({
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => {
                 if (hasGather) {
@@ -792,8 +792,8 @@ export default function GuidedBuilderWorkshop({
 
       {/* GATHER - qualifying story questions for behavioral workshops */}
       {phase === 'gather' && config.gatherQuestions && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-sky-50 via-white to-violet-50">
             <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-sky-700">
               Your story
             </span>
@@ -806,8 +806,8 @@ export default function GuidedBuilderWorkshop({
             </p>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <div className="space-y-5">
+          <div className="workshop-body">
+            <div className="grid h-full grid-cols-2 content-center gap-x-4 gap-y-3">
               {config.gatherQuestions.map((q, i) => (
                 <div key={q.key}>
                   <label className="block text-sm font-bold text-slate-800">
@@ -822,7 +822,7 @@ export default function GuidedBuilderWorkshop({
                       value={gatherAnswers[q.key] || ''}
                       onChange={(e) => setGatherAnswers((prev) => ({ ...prev, [q.key]: e.target.value }))}
                       placeholder={q.placeholder}
-                      rows={3}
+                      rows={2}
                       className="mt-2 ml-7 w-[calc(100%-1.75rem)] rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
                     />
                   ) : (
@@ -839,7 +839,7 @@ export default function GuidedBuilderWorkshop({
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => {
                 setPhase('build')
@@ -857,12 +857,12 @@ export default function GuidedBuilderWorkshop({
 
       {/* BUILD */}
       {phase === 'build' && activeStep && (
-        <div className="flex h-full flex-col">
+        <div className="workshop-screen">
           {(() => {
             const colors = COLOR_MAP[activeStep.color]
             return (
               <>
-                <div className={`border-b border-slate-200 ${colors.soft} px-5 py-4`}>
+                <div className={`workshop-header ${colors.soft}`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className={`flex h-7 w-7 items-center justify-center rounded-full ${colors.bg} text-sm text-white`}>
@@ -894,7 +894,7 @@ export default function GuidedBuilderWorkshop({
                   <p className="mt-2 text-xs leading-5 text-slate-700">{activeStep.description}</p>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+                <div className="workshop-body">
                   {!stepApproachPicked[activeStep.key] && STEP_APPROACHES[activeStep.key] ? (
                     <div className="space-y-3">
                       <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">
@@ -991,7 +991,7 @@ export default function GuidedBuilderWorkshop({
 
                 {Object.keys(choices).length > 0 && (
                   <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-5 py-2">
-                    <div className="flex items-center gap-1.5 overflow-x-auto">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
                         Built so far:
                       </span>
@@ -1018,8 +1018,8 @@ export default function GuidedBuilderWorkshop({
 
       {/* ASSEMBLE */}
       {phase === 'assemble' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-emerald-50 via-white to-violet-50">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
               Your answer
             </span>
@@ -1028,7 +1028,7 @@ export default function GuidedBuilderWorkshop({
             </h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             <div className="space-y-2">
               {config.steps.map((step) => {
                 const value = choices[step.key]
@@ -1058,7 +1058,7 @@ export default function GuidedBuilderWorkshop({
 
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={() => {
                 setPhase('recall')
@@ -1076,8 +1076,8 @@ export default function GuidedBuilderWorkshop({
 
       {/* RECALL - voice test */}
       {phase === 'recall' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-emerald-50 via-white to-emerald-50">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
               Voice check
             </span>
@@ -1090,7 +1090,7 @@ export default function GuidedBuilderWorkshop({
             </h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             {/* READING */}
             {recallStage === 'reading' && (
               <>
@@ -1207,7 +1207,7 @@ export default function GuidedBuilderWorkshop({
             )}
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             {recallStage === 'reading' && (
               <button
                 onClick={() => setRecallStage('memorizing')}
@@ -1267,8 +1267,8 @@ export default function GuidedBuilderWorkshop({
 
       {/* DONE */}
       {phase === 'done' && (
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-5 py-4">
+        <div className="workshop-screen">
+          <div className="workshop-header bg-gradient-to-br from-emerald-50 via-white to-emerald-50">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
               Saved
             </span>
@@ -1277,7 +1277,7 @@ export default function GuidedBuilderWorkshop({
             </h2>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="workshop-body">
             <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-4 py-4">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your answer</p>
               <p className="mt-2 text-sm leading-7 text-slate-900">{finalAnswer}</p>
@@ -1297,7 +1297,7 @@ export default function GuidedBuilderWorkshop({
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 px-5 py-3">
+          <div className="workshop-footer">
             <button
               onClick={onComplete}
               className="btn-coach-primary flex w-full items-center justify-center gap-2 py-3 text-sm font-bold"

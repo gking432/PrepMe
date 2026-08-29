@@ -300,7 +300,7 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
 
   if (activeNode?.workshopType) {
     return (
-      <div className="min-h-dvh bg-gradient-to-b from-slate-50 to-white">
+      <div className="h-dvh overflow-hidden bg-gradient-to-b from-slate-50 to-white">
         <header className="border-b border-slate-200 bg-white">
           <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
             <button
@@ -356,8 +356,8 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
       </div>
 
       {/* Path */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-12 pt-6 sm:px-6">
-        <div className="mx-auto max-w-xl">
+      <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 sm:px-6">
+        <div className="mx-auto flex h-full max-w-3xl flex-col">
           {loading ? (
             <div className="space-y-3">
               {[0, 1, 2].map((i) => (
@@ -370,27 +370,18 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
               <p className="mt-1 text-xs text-slate-500">Run another interview to unlock new workshops.</p>
             </div>
           ) : (
-            <ol className="relative space-y-3">
+            <ol className="grid min-h-0 flex-1 grid-cols-2 gap-3">
               {nodesWithDrafts.map((node, i) => {
                 const completed = !!node.draft || completedKeySet.has(node.key)
                 const avg = scoreLabel(node.draft?.meta?.scores)
-                const isLast = i === nodesWithDrafts.length - 1
 
                 return (
-                  <li key={node.key} className="relative">
-                    {/* Connector line to next node */}
-                    {!isLast && (
-                      <div
-                        className={`absolute left-7 top-[5.5rem] h-6 w-1 ${
-                          completed ? 'bg-emerald-300' : 'bg-slate-200'
-                        }`}
-                      />
-                    )}
+                  <li key={node.key} className="min-h-0">
                     <button
                       type="button"
                       onClick={() => node.workshopType && openNode(i)}
                       disabled={!node.workshopType}
-                      className={`group flex w-full items-center gap-3 rounded-2xl border-2 bg-white p-3 text-left transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 ${
+                      className={`group flex h-full w-full items-center gap-3 rounded-2xl border-2 bg-white p-3 text-left transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 ${
                         completed
                           ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400 hover:shadow-md'
                           : 'border-slate-200 hover:border-violet-300 hover:shadow-md'
@@ -457,7 +448,7 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
 
           {/* Footer message */}
           {totalCount > 0 && (
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-center">
+            <div className="mt-4 shrink-0 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2 text-center">
               <div className="flex items-center justify-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-violet-600" />
                 <p className="text-xs font-bold text-slate-700">Take your time</p>

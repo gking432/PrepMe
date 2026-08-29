@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  ChevronRight,
   Copy,
   Lightbulb,
   Lock,
@@ -49,6 +48,21 @@ type Step =
   | 'generating'
   | 'output'
 
+type OutputPanel = 'answer' | 'structure' | 'refine'
+type StructurePart = 'present' | 'past' | 'future'
+
+function paginateAnswer(answer: string, characterLimit = 520): string[] {
+  const sentences = answer.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((sentence) => sentence.trim()).filter(Boolean) || []
+  if (!sentences.length) return [answer]
+
+  return sentences.reduce<string[]>((pages, sentence) => {
+    const lastPage = pages.at(-1)
+    if (!lastPage || `${lastPage} ${sentence}`.length > characterLimit) pages.push(sentence)
+    else pages[pages.length - 1] = `${lastPage} ${sentence}`
+    return pages
+  }, [])
+}
+
 const STEP_TO_PROGRESS: Record<string, number> = {
   situation: 0,
   identity_style: 1,
@@ -85,6 +99,10 @@ export default function ProfessionalStoryBuilder({
   const [generateError, setGenerateError] = useState(false)
   const [copied, setCopied] = useState(false)
   const [activeOutputTab, setActiveOutputTab] = useState<'primary' | 'casual' | 'short'>('primary')
+  const [activeOutputPanel, setActiveOutputPanel] = useState<OutputPanel>('answer')
+  const [activeAnswerPage, setActiveAnswerPage] = useState(0)
+  const [activeStructurePart, setActiveStructurePart] = useState<StructurePart>('present')
+  const [choicePages, setChoicePages] = useState<Partial<Record<Step, number>>>({})
   const [rewriteConfirm, setRewriteConfirm] = useState<RewriteInstruction | null>(null)
   const [rewriting, setRewriting] = useState(false)
 
@@ -157,7 +175,14 @@ export default function ProfessionalStoryBuilder({
   async function handleRewrite(instruction: RewriteInstruction) {
     setRewriteConfirm(null)
     if (!output) return
-    if (instruction === 'regenerate') { setGenerateError(false); setOutput(null); setStep('generating'); return }
+    if (instruction === 'regenerate') {
+      setGenerateError(false)
+      setOutput(null)
+      setActiveOutputPanel('answer')
+      setActiveAnswerPage(0)
+      setStep('generating')
+      return
+    }
     setRewriting(true)
     try {
       const res = await fetch('/api/interview/professional-story', {
@@ -172,7 +197,12 @@ export default function ProfessionalStoryBuilder({
       })
       if (!res.ok) throw new Error('failed')
       const data = await res.json()
-      if (data.primaryAnswer) { setOutput({ ...output, primaryAnswer: data.primaryAnswer }); setActiveOutputTab('primary') }
+      if (data.primaryAnswer) {
+        setOutput({ ...output, primaryAnswer: data.primaryAnswer })
+        setActiveOutputTab('primary')
+        setActiveOutputPanel('answer')
+        setActiveAnswerPage(0)
+      }
     } catch { /* silently fail */ } finally { setRewriting(false) }
   }
 
@@ -197,25 +227,39 @@ export default function ProfessionalStoryBuilder({
     options: readonly { readonly id: string; readonly label: string; readonly description?: string }[],
     selected: string | null, onSelect: (id: string) => void,
   ) {
+    const pageSize = options.length > 6 ? 6 : options.length
+    const pageCount = Math.ceil(options.length / pageSize)
+    const activePage = Math.min(choicePages[step] || 0, pageCount - 1)
+    const visibleOptions = options.slice(activePage * pageSize, (activePage + 1) * pageSize)
+
     return (
-      <div className="space-y-2">
-        {options.map((opt) => {
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+        {visibleOptions.map((opt) => {
           const isSelected = selected === opt.id
           return (
             <button key={opt.id} type="button" onClick={() => onSelect(opt.id)}
-              className={`group w-full rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.98] ${isSelected ? 'border-violet-400 bg-violet-50 shadow-sm' : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'}`}>
-              <div className="flex items-center gap-3">
+              className={`group min-h-16 w-full rounded-xl border-2 px-3 py-2 text-left transition active:scale-[0.98] ${isSelected ? 'border-violet-400 bg-violet-50 shadow-sm' : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'}`}>
+              <div className="flex items-start gap-2">
                 <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${isSelected ? 'border-violet-500 bg-violet-500' : 'border-slate-300'}`}>
                   {isSelected && <Check className="h-3 w-3 text-white" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-bold ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>{opt.label}</p>
-                  {opt.description && <p className="mt-0.5 text-xs leading-5 text-slate-500">{opt.description}</p>}
+                  <p className={`text-xs font-bold leading-4 ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>{opt.label}</p>
+                  {opt.description && <p className="mt-0.5 text-[10px] leading-4 text-slate-500">{opt.description}</p>}
                 </div>
               </div>
             </button>
           )
         })}
+        </div>
+        {pageCount > 1 && (
+          <div className="flex items-center justify-center gap-3">
+            <button type="button" aria-label="Previous choices" onClick={() => setChoicePages((pages) => ({ ...pages, [step]: Math.max(0, activePage - 1) }))} disabled={activePage === 0} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" /></button>
+            <span className="text-[11px] font-black text-slate-500">{activePage + 1}/{pageCount}</span>
+            <button type="button" aria-label="More choices" onClick={() => setChoicePages((pages) => ({ ...pages, [step]: Math.min(pageCount - 1, activePage + 1) }))} disabled={activePage >= pageCount - 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" /></button>
+          </div>
+        )}
       </div>
     )
   }
@@ -228,7 +272,7 @@ export default function ProfessionalStoryBuilder({
           <h2 className="text-xl font-extrabold leading-tight text-slate-900">{title}</h2>
           <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">{children}</div>
         <div className="shrink-0 border-t border-slate-200 px-5 py-3">
           {footer || (
             <div className="flex items-center gap-2">
@@ -248,6 +292,10 @@ export default function ProfessionalStoryBuilder({
   }
 
   const activeAnswer = activeOutputTab === 'casual' ? output?.casualAnswer : activeOutputTab === 'short' ? output?.shortAnswer : output?.primaryAnswer
+  const answerPages = paginateAnswer(activeAnswer || '')
+  const visibleAnswerPage = answerPages[Math.min(activeAnswerPage, answerPages.length - 1)] || ''
+  const structureParts = (['present', 'past', 'future'] as const).filter((part) => output?.structureUsed?.[part])
+  const visibleStructurePart = structureParts.includes(activeStructurePart) ? activeStructurePart : structureParts[0]
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white">
@@ -260,7 +308,7 @@ export default function ProfessionalStoryBuilder({
             </div>
             <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">&ldquo;Tell me about yourself&rdquo; is your first impression.</h2>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">
             <div className="space-y-4">
               <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
                 <div className="flex items-start gap-3">
@@ -300,7 +348,7 @@ export default function ProfessionalStoryBuilder({
             <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">Present · Past · Future</h2>
             <p className="mt-1 text-xs font-bold text-slate-500">Flip each card in order to unlock the next.</p>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="min-h-0 flex-1 overflow-hidden px-5 py-4">
             <div className="space-y-3">
               {FRAMEWORK_STEPS.map((fs, i) => {
                 const colors = COLOR_MAP[fs.color]; const flipped = flippedCards.has(i); const previousFlipped = i === 0 || flippedCards.has(i - 1)
@@ -418,113 +466,126 @@ export default function ProfessionalStoryBuilder({
 
       {step === 'output' && output && (
         <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-5 py-4">
+          <div className="shrink-0 border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-5 py-3">
             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Your answer</span>
-            <h2 className="mt-2 text-xl font-extrabold leading-tight text-slate-900">Here&apos;s what that sounds like.</h2>
+            <h2 className="mt-2 text-lg font-extrabold leading-tight text-slate-900 sm:text-xl">Here&apos;s what that sounds like.</h2>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  {(['primary', 'casual', 'short'] as const).map((tab) => (
-                    <button key={tab} onClick={() => setActiveOutputTab(tab)} className={`rounded-full px-3 py-1 text-xs font-bold transition ${activeOutputTab === tab ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                      {tab === 'primary' ? 'Full' : tab === 'casual' ? 'Casual' : 'Short'}
-                    </button>
-                  ))}
-                </div>
-                <div className="rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-4"><p className="text-sm leading-7 text-slate-900">{activeAnswer}</p></div>
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <button onClick={() => copyToClipboard(activeAnswer || '')} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
-                    {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Copied' : 'Copy'}
+          <div className="min-h-0 flex-1 overflow-hidden px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="grid shrink-0 grid-cols-3 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Answer tools">
+                {([
+                  ['answer', 'Answer'],
+                  ['structure', 'Breakdown'],
+                  ['refine', 'Refine'],
+                ] as const).map(([panel, label]) => (
+                  <button
+                    key={panel}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeOutputPanel === panel}
+                    onClick={() => setActiveOutputPanel(panel)}
+                    className={`rounded-lg px-2 py-2 text-xs font-extrabold transition ${activeOutputPanel === panel ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    {label}
                   </button>
-                  <button onClick={() => setRewriteConfirm('regenerate')} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
-                    <RefreshCw className="h-3.5 w-3.5" /> Regenerate
-                  </button>
-                </div>
+                ))}
               </div>
 
-              {output.structureUsed && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">How this answer is structured</p>
-                  <div className="space-y-2">
-                    {(['present', 'past', 'future'] as const).map((part) => {
-                      const fs = FRAMEWORK_STEPS.find((f) => f.key === part); const colors = fs ? COLOR_MAP[fs.color] : COLOR_MAP.violet
-                      const labels: Record<string, string> = { present: 'Present', past: 'Past', future: 'Future' }
-                      return (
-                        <div key={part} className={`rounded-xl border-2 ${colors.border} ${colors.soft} px-3 py-2.5`}>
-                          <div className="flex items-start gap-2">
-                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${colors.bg} text-xs text-white`}>{fs?.emoji || '📝'}</span>
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${colors.text}`}>{labels[part]}</p>
-                              <p className="text-sm leading-6 text-slate-800">{output.structureUsed[part]}</p>
-                            </div>
+              {activeOutputPanel === 'answer' && (
+                <div className="flex min-h-0 flex-1 flex-col pt-3">
+                  <div className="flex shrink-0 items-center gap-2">
+                    {(['primary', 'casual', 'short'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => { setActiveOutputTab(tab); setActiveAnswerPage(0) }}
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition ${activeOutputTab === tab ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        {tab === 'primary' ? 'Full' : tab === 'casual' ? 'Casual' : 'Short'}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="my-3 flex min-h-0 flex-1 items-center rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-3 sm:px-5 sm:py-4">
+                    <p className="text-[13px] leading-6 text-slate-900 sm:text-sm sm:leading-7">{visibleAnswerPage}</p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between gap-2">
+                    <button onClick={() => copyToClipboard(activeAnswer || '')} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                      {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Copied' : 'Copy answer'}
+                    </button>
+                    {answerPages.length > 1 && (
+                      <div className="flex items-center gap-2">
+                        <button type="button" aria-label="Previous answer page" onClick={() => setActiveAnswerPage((page) => Math.max(0, page - 1))} disabled={activeAnswerPage === 0} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" /></button>
+                        <span className="min-w-10 text-center text-[11px] font-black text-slate-500">{activeAnswerPage + 1}/{answerPages.length}</span>
+                        <button type="button" aria-label="Next answer page" onClick={() => setActiveAnswerPage((page) => Math.min(answerPages.length - 1, page + 1))} disabled={activeAnswerPage >= answerPages.length - 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeOutputPanel === 'structure' && (
+                <div className="flex min-h-0 flex-1 flex-col pt-3">
+                  {visibleStructurePart ? (() => {
+                    const framework = FRAMEWORK_STEPS.find((item) => item.key === visibleStructurePart)
+                    const colors = framework ? COLOR_MAP[framework.color] : COLOR_MAP.violet
+                    const labels: Record<StructurePart, string> = { present: 'Present', past: 'Past', future: 'Future' }
+                    return (
+                      <>
+                        <div className="grid shrink-0 grid-cols-3 gap-2">
+                          {structureParts.map((part) => (
+                            <button key={part} type="button" onClick={() => setActiveStructurePart(part)} className={`rounded-xl border-2 px-2 py-2 text-xs font-extrabold transition ${activeStructurePart === part ? `${colors.border} ${colors.soft} ${colors.text}` : 'border-slate-200 bg-white text-slate-500'}`}>
+                              {labels[part]}
+                            </button>
+                          ))}
+                        </div>
+                        <div className={`my-3 flex min-h-0 flex-1 items-center rounded-2xl border-2 ${colors.border} ${colors.soft} px-5 py-4`}>
+                          <div className="mx-auto max-w-xl text-center">
+                            <span className={`mx-auto flex h-10 w-10 items-center justify-center rounded-xl ${colors.bg} text-lg text-white`}>{framework?.emoji || '📝'}</span>
+                            <p className={`mt-3 text-[10px] font-black uppercase tracking-[0.16em] ${colors.text}`}>{labels[visibleStructurePart]}</p>
+                            <p className="mt-2 text-sm leading-7 text-slate-800">{output.structureUsed?.[visibleStructurePart]}</p>
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
+                        <p className="shrink-0 text-center text-[11px] font-bold text-slate-400">One part at a time. Tap a tab to see the next piece.</p>
+                      </>
+                    )
+                  })() : (
+                    <div className="flex flex-1 items-center justify-center text-center text-sm font-bold text-slate-500">No breakdown was generated for this answer.</div>
+                  )}
                 </div>
               )}
 
-              {output.openingLineOptions?.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">Opening line options</p>
-                  <div className="space-y-1.5">{output.openingLineOptions.map((line, i) => (<div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"><ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" /><p className="text-xs leading-5 text-slate-700">{line}</p></div>))}</div>
-                </div>
-              )}
-
-              {output.closingLineOptions?.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">Closing line options</p>
-                  <div className="space-y-1.5">{output.closingLineOptions.map((line, i) => (<div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"><ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-400" /><p className="text-xs leading-5 text-slate-700">{line}</p></div>))}</div>
-                </div>
-              )}
-
-              {output.whyThisWorks?.length > 0 && (
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600 mb-1">Why this works</p>
-                  <ul className="space-y-1">{output.whyThisWorks.map((w, i) => (<li key={i} className="text-xs leading-5 text-emerald-800">• {w}</li>))}</ul>
-                </div>
-              )}
-
-              {output.possibleWeakSpots?.length > 0 && (
-                <div className="rounded-2xl border border-amber-100 bg-amber-50/60 px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-600 mb-1">Be careful with this</p>
-                  <ul className="space-y-1">{output.possibleWeakSpots.map((w, i) => (<li key={i} className="text-xs leading-5 text-amber-800">• {w}</li>))}</ul>
-                </div>
-              )}
-
-              {output.likelyFollowUpQuestions?.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">They might ask next</p>
-                  <div className="space-y-1.5">{output.likelyFollowUpQuestions.map((q, i) => (<div key={i} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"><ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" /><p className="text-xs leading-5 text-slate-700">{q}</p></div>))}</div>
-                </div>
-              )}
-
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 mb-2">Want a different version?</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {REWRITE_OPTIONS.filter((r) => r.id !== 'regenerate').map((opt) => (
-                    <button key={opt.id} onClick={() => setRewriteConfirm(opt.id)} disabled={rewriting} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">{opt.label}</button>
-                  ))}
-                </div>
-              </div>
-
-              {rewriteConfirm && (
-                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-4">
-                  <p className="text-sm font-bold text-amber-900">Generate a new version?</p>
-                  <p className="mt-1 text-xs text-amber-700">{rewriteConfirm === 'regenerate' ? 'This will create a completely new answer with the same settings.' : `This will rewrite your answer to: ${rewriteConfirm.replace(/_/g, ' ')}.`}</p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <button onClick={() => setRewriteConfirm(null)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-                    <button onClick={() => handleRewrite(rewriteConfirm)} className="rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-600">Generate new answer</button>
-                  </div>
-                </div>
-              )}
-
-              {rewriting && (
-                <div className="flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-500" />
-                  <p className="text-xs font-bold text-violet-700">Rewriting your answer…</p>
+              {activeOutputPanel === 'refine' && (
+                <div className="flex min-h-0 flex-1 flex-col justify-center pt-3">
+                  {rewriting ? (
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="h-9 w-9 animate-spin rounded-full border-4 border-violet-200 border-t-violet-500" />
+                      <p className="mt-3 text-sm font-bold text-violet-700">Rewriting your answer…</p>
+                    </div>
+                  ) : rewriteConfirm ? (
+                    <div className="mx-auto w-full max-w-lg rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-4 text-center">
+                      <p className="text-sm font-extrabold text-amber-900">Generate a new version?</p>
+                      <p className="mt-1 text-xs leading-5 text-amber-700">{rewriteConfirm === 'regenerate' ? 'This creates a fresh answer with the same settings.' : `Rewrite it to ${rewriteConfirm.replace(/_/g, ' ')}.`}</p>
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <button onClick={() => setRewriteConfirm(null)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+                        <button onClick={() => handleRewrite(rewriteConfirm)} className="rounded-xl bg-violet-500 px-3 py-2.5 text-xs font-bold text-white hover:bg-violet-600">Generate</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mx-auto w-full max-w-lg">
+                      <p className="text-center text-sm font-extrabold text-slate-900">What should change?</p>
+                      <p className="mt-1 text-center text-xs text-slate-500">Pick one adjustment. You can always come back.</p>
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        {REWRITE_OPTIONS.filter((item) => item.id !== 'regenerate').slice(0, 6).map((option) => (
+                          <button key={option.id} onClick={() => setRewriteConfirm(option.id)} className="rounded-xl border-2 border-slate-200 bg-white px-3 py-3 text-xs font-bold text-slate-700 transition hover:border-violet-300 hover:bg-violet-50">{option.label}</button>
+                        ))}
+                      </div>
+                      <button onClick={() => setRewriteConfirm('regenerate')} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100">
+                        <RefreshCw className="h-3.5 w-3.5" /> Start over with a new answer
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

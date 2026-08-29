@@ -40,7 +40,7 @@ export const MOCK_FEEDBACK = {
         ],
       },
       {
-        criterion: 'Questions Asked About Role/Company',
+        criterion: 'Preparation / Curiosity',
         feedback:
           'You asked insightful questions about team dynamics and growth opportunities that showed genuine research.',
         score: 7.5,
@@ -131,72 +131,6 @@ export const MOCK_FEEDBACK = {
             excerpt:
               'When asked about large raptor transfers, spoke generally about transport work without clearly naming the experience gap.',
             question: 'What experience do you have coordinating large raptor transfers?',
-          },
-        ],
-      },
-      {
-        criterion: 'Communication Style',
-        feedback:
-          'Your answers were filled with hedge words like "I think," "kind of," and "I guess," which undermine your credibility.',
-        score: 3,
-        rootCause: 'weak_communication',
-        rewrite_method: 'Remove hedges, lead with ownership',
-        original_answer: 'I think I kind of helped improve the process, I guess. We sort of streamlined things and it was basically better after that.',
-        rewritten_answer:
-          'I redesigned our animal-intake checklist so medical condition, feeding status, and enclosure assignment were captured in one handoff. The care team stopped chasing missing notes at shift change, and incomplete intake records dropped during the first month.',
-        rewrite_explanation:
-          'Every hedge word is replaced with a direct claim backed by a specific action and a measurable outcome.',
-        evidence: [
-          {
-            question_id: 'q6',
-            timestamp: '9:30',
-            excerpt:
-              'Said "I think I kind of helped improve the process, I guess" — eight hedge words in one sentence.',
-            question: 'Tell me about a process improvement you led.',
-          },
-        ],
-      },
-      {
-        criterion: 'Role Competencies',
-        feedback:
-          'Your answer about why you want to work here was entirely generic — no evidence of company research.',
-        score: 3,
-        rootCause: 'missing_knowledge',
-        rewrite_method: 'Observation, Fit, Timing',
-        original_answer: 'It seems like a great company with a lot of opportunities to grow.',
-        rewritten_answer:
-          'I noticed Moonrise is expanding its seasonal intake and transport program. That caught my attention because safe intake records, volunteer coverage, and clear care handoffs have been central to my work. Joining before the next intake season would let me contribute immediately while learning the sanctuary\'s species-specific protocols.',
-        rewrite_explanation:
-          'This names something specific about the company, connects it to direct experience, and explains why the timing matters — instead of generic praise.',
-        evidence: [
-          {
-            question_id: 'q7',
-            timestamp: '11:00',
-            excerpt:
-              'Said "It seems like a great company with a lot of opportunities to grow" — no specific company detail mentioned.',
-            question: 'Why do you want to work at this company specifically?',
-          },
-        ],
-      },
-      {
-        criterion: 'Feedback/Growth Mindset',
-        feedback:
-          'Your answers were too brief — one or two sentences where three to five were needed. Interviewers need more substance.',
-        score: 3.5,
-        rootCause: 'too_short',
-        rewrite_method: 'STAR expansion',
-        original_answer: 'I led a project once. It went well.',
-        rewritten_answer:
-          'I led an overhaul of our medication-record process before the summer intake surge. I combined three paper logs into one shift-based record, tested it with two caretakers, and trained volunteers on the new handoff. Missed initials and duplicate entries dropped, and the care lead could review every active medication in one place.',
-        rewrite_explanation:
-          'Two vague sentences become a full STAR answer with a real situation, clear ownership, specific actions, and a quantified result.',
-        evidence: [
-          {
-            question_id: 'q8',
-            timestamp: '13:15',
-            excerpt:
-              'Responded to "Tell me about a time you led a project" with two sentences and no outcome or reflection.',
-            question: 'Tell me about a time you led a project from start to finish.',
           },
         ],
       },

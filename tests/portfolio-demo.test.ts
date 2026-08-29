@@ -100,6 +100,23 @@ test('completed fictional sample has enough live coverage for normal grading', (
   assert.equal(getHrInterviewCoverage(MOCK_TRANSCRIPT, plainTranscript).sufficient, true)
 })
 
+test('demo feedback splits exactly six canonical HR areas between strengths and repairs', () => {
+  const wentWell = MOCK_FEEDBACK.hr_screen_six_areas.what_went_well
+  const needsWork = MOCK_FEEDBACK.hr_screen_six_areas.what_needs_improve
+  const criteria = [...wentWell, ...needsWork].map((area) => area.criterion)
+
+  assert.equal(criteria.length, 6)
+  assert.equal(new Set(criteria).size, 6)
+  assert.deepEqual(new Set(criteria), new Set([
+    'Professional Story',
+    'Specific Examples and Evidence',
+    'Preparation / Curiosity',
+    'Handling Uncertain/Difficult Questions',
+    'Alignment of Career Goals with Position',
+    'Pace and Conversation Flow',
+  ]))
+})
+
 test('an interrupted interview returns all six repair areas without calling the grader model', async () => {
   const transcriptStructured = {
     messages: [

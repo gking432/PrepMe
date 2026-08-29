@@ -107,6 +107,8 @@ test('demo feedback splits exactly six canonical HR areas between strengths and 
 
   assert.equal(criteria.length, 6)
   assert.equal(new Set(criteria).size, 6)
+  assert.equal(wentWell.length, 0)
+  assert.equal(needsWork.length, 6)
   assert.deepEqual(new Set(criteria), new Set([
     'Professional Story',
     'Specific Examples and Evidence',

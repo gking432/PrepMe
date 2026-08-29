@@ -72,7 +72,7 @@ test('professional story workshop teaches present, past, future', () => {
   )
 })
 
-test('professional story workshop uses fixed, paged screens instead of scrolling', () => {
+test('professional story workshop uses fixed, single-page desktop screens instead of scrolling', () => {
   const source = readFileSync(
     new URL('../components/exercises/ProfessionalStoryBuilder.tsx', import.meta.url),
     'utf8',
@@ -83,8 +83,8 @@ test('professional story workshop uses fixed, paged screens instead of scrolling
   assert.match(source, /\['answer', 'Answer'\]/)
   assert.match(source, /\['structure', 'Breakdown'\]/)
   assert.match(source, /\['refine', 'Refine'\]/)
-  assert.match(source, /paginateAnswer/)
-  assert.match(source, /More choices/)
+  assert.match(source, /grid grid-cols-3 gap-2/)
+  assert.doesNotMatch(source, /paginateAnswer|More choices|answerPages/)
 })
 
 test('sparse interview coverage is not inflated by duplicate transcript formats', () => {

@@ -51,18 +51,6 @@ type Step =
 type OutputPanel = 'answer' | 'structure' | 'refine'
 type StructurePart = 'present' | 'past' | 'future'
 
-function paginateAnswer(answer: string, characterLimit = 520): string[] {
-  const sentences = answer.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((sentence) => sentence.trim()).filter(Boolean) || []
-  if (!sentences.length) return [answer]
-
-  return sentences.reduce<string[]>((pages, sentence) => {
-    const lastPage = pages.at(-1)
-    if (!lastPage || `${lastPage} ${sentence}`.length > characterLimit) pages.push(sentence)
-    else pages[pages.length - 1] = `${lastPage} ${sentence}`
-    return pages
-  }, [])
-}
-
 const STEP_TO_PROGRESS: Record<string, number> = {
   situation: 0,
   identity_style: 1,
@@ -100,9 +88,7 @@ export default function ProfessionalStoryBuilder({
   const [copied, setCopied] = useState(false)
   const [activeOutputTab, setActiveOutputTab] = useState<'primary' | 'casual' | 'short'>('primary')
   const [activeOutputPanel, setActiveOutputPanel] = useState<OutputPanel>('answer')
-  const [activeAnswerPage, setActiveAnswerPage] = useState(0)
   const [activeStructurePart, setActiveStructurePart] = useState<StructurePart>('present')
-  const [choicePages, setChoicePages] = useState<Partial<Record<Step, number>>>({})
   const [rewriteConfirm, setRewriteConfirm] = useState<RewriteInstruction | null>(null)
   const [rewriting, setRewriting] = useState(false)
 
@@ -179,7 +165,6 @@ export default function ProfessionalStoryBuilder({
       setGenerateError(false)
       setOutput(null)
       setActiveOutputPanel('answer')
-      setActiveAnswerPage(0)
       setStep('generating')
       return
     }
@@ -201,7 +186,6 @@ export default function ProfessionalStoryBuilder({
         setOutput({ ...output, primaryAnswer: data.primaryAnswer })
         setActiveOutputTab('primary')
         setActiveOutputPanel('answer')
-        setActiveAnswerPage(0)
       }
     } catch { /* silently fail */ } finally { setRewriting(false) }
   }
@@ -227,15 +211,9 @@ export default function ProfessionalStoryBuilder({
     options: readonly { readonly id: string; readonly label: string; readonly description?: string }[],
     selected: string | null, onSelect: (id: string) => void,
   ) {
-    const pageSize = options.length > 6 ? 6 : options.length
-    const pageCount = Math.ceil(options.length / pageSize)
-    const activePage = Math.min(choicePages[step] || 0, pageCount - 1)
-    const visibleOptions = options.slice(activePage * pageSize, (activePage + 1) * pageSize)
-
     return (
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-        {visibleOptions.map((opt) => {
+      <div className="grid grid-cols-3 gap-2">
+        {options.map((opt) => {
           const isSelected = selected === opt.id
           return (
             <button key={opt.id} type="button" onClick={() => onSelect(opt.id)}
@@ -252,14 +230,6 @@ export default function ProfessionalStoryBuilder({
             </button>
           )
         })}
-        </div>
-        {pageCount > 1 && (
-          <div className="flex items-center justify-center gap-3">
-            <button type="button" aria-label="Previous choices" onClick={() => setChoicePages((pages) => ({ ...pages, [step]: Math.max(0, activePage - 1) }))} disabled={activePage === 0} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" /></button>
-            <span className="text-[11px] font-black text-slate-500">{activePage + 1}/{pageCount}</span>
-            <button type="button" aria-label="More choices" onClick={() => setChoicePages((pages) => ({ ...pages, [step]: Math.min(pageCount - 1, activePage + 1) }))} disabled={activePage >= pageCount - 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" /></button>
-          </div>
-        )}
       </div>
     )
   }
@@ -292,8 +262,6 @@ export default function ProfessionalStoryBuilder({
   }
 
   const activeAnswer = activeOutputTab === 'casual' ? output?.casualAnswer : activeOutputTab === 'short' ? output?.shortAnswer : output?.primaryAnswer
-  const answerPages = paginateAnswer(activeAnswer || '')
-  const visibleAnswerPage = answerPages[Math.min(activeAnswerPage, answerPages.length - 1)] || ''
   const structureParts = (['present', 'past', 'future'] as const).filter((part) => output?.structureUsed?.[part])
   const visibleStructurePart = structureParts.includes(activeStructurePart) ? activeStructurePart : structureParts[0]
 
@@ -498,7 +466,7 @@ export default function ProfessionalStoryBuilder({
                       <button
                         key={tab}
                         type="button"
-                        onClick={() => { setActiveOutputTab(tab); setActiveAnswerPage(0) }}
+                        onClick={() => setActiveOutputTab(tab)}
                         className={`rounded-full px-3 py-1 text-xs font-bold transition ${activeOutputTab === tab ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                       >
                         {tab === 'primary' ? 'Full' : tab === 'casual' ? 'Casual' : 'Short'}
@@ -507,20 +475,13 @@ export default function ProfessionalStoryBuilder({
                   </div>
 
                   <div className="my-3 flex min-h-0 flex-1 items-center rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-3 sm:px-5 sm:py-4">
-                    <p className="text-[13px] leading-6 text-slate-900 sm:text-sm sm:leading-7">{visibleAnswerPage}</p>
+                    <p className="text-[13px] leading-6 text-slate-900 sm:text-sm sm:leading-7">{activeAnswer}</p>
                   </div>
 
-                  <div className="flex shrink-0 items-center justify-between gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <button onClick={() => copyToClipboard(activeAnswer || '')} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">
                       {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Copied' : 'Copy answer'}
                     </button>
-                    {answerPages.length > 1 && (
-                      <div className="flex items-center gap-2">
-                        <button type="button" aria-label="Previous answer page" onClick={() => setActiveAnswerPage((page) => Math.max(0, page - 1))} disabled={activeAnswerPage === 0} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowLeft className="h-3.5 w-3.5" /></button>
-                        <span className="min-w-10 text-center text-[11px] font-black text-slate-500">{activeAnswerPage + 1}/{answerPages.length}</span>
-                        <button type="button" aria-label="Next answer page" onClick={() => setActiveAnswerPage((page) => Math.min(answerPages.length - 1, page + 1))} disabled={activeAnswerPage >= answerPages.length - 1} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-30"><ArrowRight className="h-3.5 w-3.5" /></button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

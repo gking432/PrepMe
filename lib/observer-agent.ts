@@ -3,6 +3,7 @@
 
 import { supabaseAdmin } from './supabase'
 import OpenAI from 'openai'
+import { AI_MODELS } from './ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -129,7 +130,7 @@ Also check for red flags: ${observerPrompt.redFlagKeywords.join(', ')}`
 
     // Call GPT-4o-mini for observation
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.lightweightReasoning,
       messages: [
         {
           role: 'system',
@@ -285,4 +286,3 @@ export async function compileNotes(sessionId: string): Promise<ObserverNotes | n
     return null
   }
 }
-

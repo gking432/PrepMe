@@ -4,6 +4,8 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { guidedWorkshopOutputSchema, parseModelOutput } from '@/lib/ai-contracts'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -236,17 +238,6 @@ async function fetchUserContext(sessionId?: string, userId?: string) {
   }
 }
 
-function safeParseJson(raw: string): any {
-  if (!raw) return null
-  const match = raw.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || raw.match(/(\{[\s\S]*\})/)
-  const body = match ? match[1] : raw
-  try {
-    return JSON.parse(body)
-  } catch {
-    return null
-  }
-}
-
 export async function POST(request: NextRequest) {
   const rateLimited = enforceRateLimit(request, 'guided-workshop', { limit: 30, windowMs: 60 * 60 * 1000 })
   if (rateLimited) return rateLimited
@@ -342,7 +333,7 @@ Hard rules:${behavioralRule}
 
   try {
     const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.coachingGeneration,
       max_tokens: 900,
       temperature: 0.4,
       system,
@@ -354,11 +345,9 @@ Hard rules:${behavioralRule}
       return NextResponse.json({ suggestions: [], hint: '' })
     }
 
-    const parsed = safeParseJson(content.text) || {}
-    const suggestions = Array.isArray(parsed.suggestions)
-      ? parsed.suggestions.map((s: unknown) => String(s || '').trim()).filter(Boolean).slice(0, 3)
-      : []
-    const hint = typeof parsed.hint === 'string' ? parsed.hint.trim() : ''
+    const parsed = parseModelOutput(content.text, guidedWorkshopOutputSchema)
+    const suggestions = parsed.suggestions.map((suggestion) => suggestion.trim()).filter(Boolean).slice(0, 3)
+    const hint = parsed.hint.trim()
 
     return NextResponse.json({ suggestions, hint })
   } catch (error: any) {

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Sparkles } from 'lucide-react'
+import AiImplementationDrawer from '@/components/AiImplementationDrawer'
+import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
 
 export default function Header() {
   return (
@@ -15,12 +16,12 @@ export default function Header() {
               <p className="text-sm font-extrabold text-slate-900">PrepMe</p>
             </div>
           </Link>
-          <div className="hidden md:flex items-center gap-2">
-            <div className="eyebrow">
-              <Sparkles className="h-3.5 w-3.5" />
-              Portfolio demo
+          {PORTFOLIO_DEMO_MODE ? (
+            <div className="hidden items-center gap-2 md:flex">
+              <span className="eyebrow">Portfolio demo</span>
+              <AiImplementationDrawer />
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </header>

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import OpenAI from 'openai'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (action === 'get_question_audio' && question) {
       try {
         const mp3 = await getOpenAI().audio.speech.create({
-          model: 'tts-1',
+          model: AI_MODELS.speech,
           voice: 'alloy',
           input: question,
         })
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (audioFile) {
       const transcription = await getOpenAI().audio.transcriptions.create({
         file: audioFile,
-        model: 'whisper-1',
+        model: AI_MODELS.legacyTranscription,
       })
       userResponse = transcription.text
     }
@@ -260,7 +261,7 @@ Scoring guide:
 
     // Generate feedback with scoring
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.lightweightReasoning,
       messages: [
         {
           role: 'system',
@@ -302,7 +303,7 @@ Scoring guide:
     let feedbackAudio = null
     try {
       const mp3 = await getOpenAI().audio.speech.create({
-        model: 'tts-1',
+        model: AI_MODELS.speech,
         voice: 'alloy',
         input: feedback,
       })

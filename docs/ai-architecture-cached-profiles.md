@@ -1,5 +1,7 @@
 # Interview App AI Architecture: Cached Profile Extraction + Flagged Module Generation
 
+> **Status: design exploration, not the current portfolio-demo architecture.** The running demo passes scoped resume and job context into flagged coaching modules. See `docs/portfolio-case-study.md` for the implemented system. This document is retained as a production cost/latency proposal, not as a claim about shipped behavior.
+
 ## Purpose
 
 This document defines the recommended AI architecture for keeping generation costs low while still producing high-quality, personalized interview coaching.

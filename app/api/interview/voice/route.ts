@@ -16,6 +16,7 @@ import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { recordTurn } from '@/lib/observer-agent'
 import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
+import { AI_MODELS } from '@/lib/ai-models'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import OpenAI from 'openai'
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Convert audio to text using OpenAI Whisper
     const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
-      model: 'whisper-1',
+      model: AI_MODELS.legacyTranscription,
     })
 
     const userMessage = transcription.text
@@ -733,7 +734,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     const currentPhaseForPrompt = nextConversationPhase || conversationPhase || 'screening'
 
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o', // Upgraded from gpt-4o-mini for better conversation flow
+      model: AI_MODELS.voiceConversation,
       messages,
       temperature: 0.75, // Natural variation for conversational flow
       max_tokens: stage === 'hr_screen' ? 180 : 200,
@@ -754,7 +755,7 @@ ${askedQuestionsCount === 0 ? 'Start with a strategic question: how they think a
     let audioBase64 = null
     try {
       const mp3 = await getOpenAI().audio.speech.create({
-        model: 'tts-1',
+        model: AI_MODELS.speech,
         voice: getFallbackTtsVoiceForStage(stage),
         input: assistantMessage,
       })

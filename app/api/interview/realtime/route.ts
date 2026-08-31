@@ -7,6 +7,7 @@ import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { getRealtimeVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { AI_MODELS } from '@/lib/ai-models'
 import {
   REALTIME_DEFAULT_MAX_OUTPUT_TOKENS,
   REALTIME_HR_MAX_OUTPUT_TOKENS,
@@ -408,7 +409,7 @@ INTERVIEW LENGTH:
       })
     }
 
-    const realtimeModel = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-mini'
+    const realtimeModel = AI_MODELS.realtimeInterview
     const realtimeVoice = getRealtimeVoiceForStage(stage)
     const realtimeSessionConfig = {
       session: {
@@ -419,7 +420,7 @@ INTERVIEW LENGTH:
           input: {
             format: { type: 'audio/pcm', rate: 24000 },
             noise_reduction: { type: 'near_field' },
-            transcription: { model: 'gpt-4o-mini-transcribe' },
+            transcription: { model: AI_MODELS.realtimeTranscription },
             turn_detection: {
               type: 'server_vad',
               threshold: REALTIME_VAD_THRESHOLD,

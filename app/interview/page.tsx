@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
 import { Mic, MicOff, X, MessageSquare, Eye, EyeOff, Phone, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
+import { AI_MODELS } from '@/lib/ai-models'
 import {
   PORTFOLIO_DEMO_MODE,
   buildStructuredTranscript,
@@ -745,7 +746,7 @@ function InterviewPageContent() {
         console.log('WebRTC data channel open - configuring session')
         const audioInput = inputMode === 'voice'
           ? {
-              transcription: { model: 'gpt-4o-mini-transcribe' },
+              transcription: { model: AI_MODELS.realtimeTranscription },
               turn_detection: {
                 type: 'server_vad',
                 threshold: REALTIME_VAD_THRESHOLD,

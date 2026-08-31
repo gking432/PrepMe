@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.lightweightReasoning,
       temperature: 0.2,
       max_tokens: 500,
       messages: [

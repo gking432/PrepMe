@@ -14,6 +14,8 @@ import { shouldDeductInterviewCredit } from '@/lib/interview-stage-access'
 import { HR_DETAILED_REPORT_ENABLED, HR_SCREEN_GRADING_MODE } from '@/lib/feedback-config'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { parseModelOutput, rewriteBatchSchema } from '@/lib/ai-contracts'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -169,11 +171,6 @@ function getCandidateAnswerForQuestion(questionId: string | undefined, evidence:
   return excerpt
 }
 
-function parseJsonObject(text: string) {
-  const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/(\{[\s\S]*\})/)
-  return JSON.parse(jsonMatch ? jsonMatch[1] : text)
-}
-
 async function enrichHrWeakSignalsWithHaikuRewrites(rubric: any, structuredTranscript: any) {
   const weakSignals = Array.isArray(rubric?.hr_screen_six_areas?.what_needs_improve)
     ? rubric.hr_screen_six_areas.what_needs_improve
@@ -218,7 +215,7 @@ async function enrichHrWeakSignalsWithHaikuRewrites(rubric: any, structuredTrans
 
   try {
     const message = await getAnthropicHaiku().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.coachingGeneration,
       max_tokens: 2800,
       temperature: 0.2,
       system: `You rewrite interview answers cheaply and safely.
@@ -264,8 +261,8 @@ Rules:
     const content = message.content[0]
     if (content.type !== 'text') return rubric
 
-    const parsed = parseJsonObject(content.text)
-    const rewrites = Array.isArray(parsed?.rewrites) ? parsed.rewrites : []
+    const parsed = parseModelOutput(content.text, rewriteBatchSchema)
+    const rewrites = parsed.rewrites
 
     rewrites.forEach((rewrite: any) => {
       const source = cappedRewriteItems.find((item) => item.id === rewrite?.id)
@@ -356,7 +353,7 @@ function buildHrCostEstimate({
     duration_seconds: durationSeconds,
     interviewer_word_count: interviewerWordCount,
     candidate_word_count: candidateWordCount,
-    realtime_model: process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-mini',
+    realtime_model: AI_MODELS.realtimeInterview,
     grader_model: graderCostEstimate?.grader_model,
     rewrite_count: 0,
     estimated_realtime_cents: Number(estimatedRealtimeCents.toFixed(4)),
@@ -1474,7 +1471,7 @@ Use the question IDs and timestamps from this structured transcript when providi
 
     // Generate feedback using ChatGPT
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.lightweightReasoning,
       messages: [
         {
           role: 'system',

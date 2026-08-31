@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
 import { loadStoredInterviewAudioBase64 } from '@/lib/interview-audio'
+import { AI_MODELS } from '@/lib/ai-models'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
-      model: 'gpt-4o-mini-transcribe',
+      model: AI_MODELS.realtimeTranscription,
     })
 
     const userMessage = transcription.text?.trim() || ''

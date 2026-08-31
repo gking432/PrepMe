@@ -1,6 +1,8 @@
 // Claude (Anthropic) client for post-interview grading
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { HR_DETAILED_REPORT_ENABLED } from '@/lib/feedback-config'
+import { extractModelJson, hrScreenGraderOutputSchema } from '@/lib/ai-contracts'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -110,7 +112,7 @@ async function callClaudeGrader(
 
   try {
     const message = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: AI_MODELS.rubricGrading,
       max_tokens: 8000,
       system: systemPrompt,
       messages: [
@@ -129,10 +131,7 @@ async function callClaudeGrader(
 
     // Parse JSON response
     try {
-      const text = content.text
-      const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/(\{[\s\S]*\})/)
-      const jsonText = jsonMatch ? jsonMatch[1] : text
-      return JSON.parse(jsonText)
+      return extractModelJson(content.text) as RubricResponse
     } catch (parseError) {
       console.error('Failed to parse Claude response as JSON:', parseError)
       console.error('Raw response:', content.text)
@@ -152,7 +151,8 @@ export async function gradeHrScreen(
 ): Promise<RubricResponse> {
   const systemPrompt = buildGradingPrompt(materials)
   const userMessage = buildUserMessage(materials)
-  return callClaudeGrader(systemPrompt, userMessage)
+  const result = await callClaudeGrader(systemPrompt, userMessage)
+  return hrScreenGraderOutputSchema.parse(result) as unknown as RubricResponse
 }
 
 /**
@@ -936,7 +936,7 @@ Weaknesses: ${(s.weaknesses || []).join(', ') || 'none noted'}
 Please generate the combined synthesis report.`
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: AI_MODELS.combinedReport,
     max_tokens: 1500,
     messages: [{ role: 'user', content: userMessage }],
     system: systemPrompt,

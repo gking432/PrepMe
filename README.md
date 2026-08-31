@@ -6,8 +6,9 @@ A portfolio demo of an AI-powered interview coach. A visitor can preload a ficti
 
 The checked-in configuration defaults to public demo mode. It is deliberately optimized for a convincing one-time visit: no account is required, uploaded files are not saved by PrepMe, and completed demo state stays in the visitor's browser.
 
-- Choose **Try the instant sample** for the fastest walkthrough. Its candidate, résumé, role, employers, and job posting are explicitly fictional and do not represent the portfolio owner's work history.
-- Choose **View a completed sample** to inspect the result without making an AI call.
+- Choose **View the 90-second guided demo** for the fastest walkthrough. Its candidate, résumé, role, employers, and job posting are explicitly fictional and do not represent the portfolio owner's work history.
+- Choose **Run a live AI interview** to exercise the realtime voice or typed conversation using the same fictional context.
+- Open **How the AI works** inside the app to inspect the pipeline, model boundaries, reliability controls, and checked-in evaluation results.
 - Read the [implementation case study](docs/portfolio-case-study.md) for the AI workflow, architecture, reliability choices, and extension points.
 
 ## Features
@@ -32,7 +33,7 @@ The checked-in configuration defaults to public demo mode. It is deliberately op
 - **Backend**: Next.js API Routes
 - **Database & Auth**: Supabase (PostgreSQL + Auth)
 - **Storage**: Supabase Storage
-- **AI**: OpenAI Realtime, transcription, structured evaluation, and coaching workflows
+- **AI**: OpenAI Realtime and transcription; Anthropic rubric grading and coaching generation
 - **Deployment**: Vercel (recommended)
 
 ## Prerequisites
@@ -111,6 +112,8 @@ npm test
 npm run lint
 npm run build
 ```
+
+The test suite includes eight portfolio golden scenarios. They validate fictional-data isolation, transcript coverage decisions, all-six-area coaching routing, and the structured model contracts shown in the in-app technical panel.
 
 ### 6. First-Time Product Setup
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Anthropic } from '@anthropic-ai/sdk/client'
+import { parseModelOutput, rewriteBatchSchema } from '@/lib/ai-contracts'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.coachingGeneration,
       max_tokens: 2800,
       temperature: 0.2,
       system: `You rewrite interview answers cheaply and safely.\n\nRules:\n- Preserve only details the candidate already provided.\n- Do not invent metrics, company facts, seniority, accomplishments, tools, clients, or outcomes.\n- Do not reverse the meaning of a weak answer.\n- For company/research rewrites, use bracketed placeholders for missing research details.\n- If a needed detail is missing, use a short bracketed placeholder like [specific result].\n- Keep each rewrite interview-natural, concise, and spoken aloud.\n- Target 80-120 words per rewritten answer.\n- Return valid JSON only.`,
@@ -125,9 +127,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unexpected response type' }, { status: 500 })
     }
 
-    const jsonMatch = content.text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || content.text.match(/(\{[\s\S]*\})/)
-    const parsed = JSON.parse(jsonMatch ? jsonMatch[1] : content.text)
-    const rewrites = Array.isArray(parsed?.rewrites) ? parsed.rewrites : []
+    const parsed = parseModelOutput(content.text, rewriteBatchSchema)
+    const rewrites = parsed.rewrites
 
     let enrichedCount = 0
     for (const rewrite of rewrites) {

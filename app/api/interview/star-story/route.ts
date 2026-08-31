@@ -2,22 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { parseModelOutput, starStoryOutputSchema } from '@/lib/ai-contracts'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
   if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
   return _anthropic
-}
-
-function safeParseJson(raw: string): any {
-  if (!raw) return null
-  const match = raw.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || raw.match(/(\{[\s\S]*\})/)
-  const body = match ? match[1] : raw
-  try {
-    return JSON.parse(body)
-  } catch {
-    return null
-  }
 }
 
 const SYSTEM_PROMPT = `You are helping a job candidate turn structured notes into a STAR interview answer.
@@ -156,7 +147,7 @@ Generate the STAR answer as JSON.`
 
   try {
     const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.coachingGeneration,
       max_tokens: 1500,
       temperature: 0.4,
       system: SYSTEM_PROMPT,
@@ -168,11 +159,7 @@ Generate the STAR answer as JSON.`
       return NextResponse.json({ error: 'generate_failed' }, { status: 200 })
     }
 
-    const parsed = safeParseJson(content.text)
-    if (!parsed) {
-      console.error('star-story: failed to parse JSON from model response')
-      return NextResponse.json({ error: 'generate_failed' }, { status: 200 })
-    }
+    const parsed = parseModelOutput(content.text, starStoryOutputSchema)
 
     return NextResponse.json(parsed)
   } catch (error: any) {

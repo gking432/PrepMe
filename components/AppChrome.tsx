@@ -1,6 +1,8 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
-import { Briefcase, Target, Sparkles } from 'lucide-react'
+import { Briefcase, Target } from 'lucide-react'
+import AiImplementationDrawer from '@/components/AiImplementationDrawer'
+import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
 
 type Tab = 'preps' | 'practice' | 'account'
 
@@ -28,10 +30,12 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', he
             <img src="/logo.svg" alt="PrepMe" className="hidden h-7 w-auto sm:block" />
           </Link>
 
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
-            <Sparkles className="h-4 w-4" />
-            <span>Demo mode</span>
-          </div>
+          {PORTFOLIO_DEMO_MODE ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 sm:inline-flex">Portfolio demo</span>
+              <AiImplementationDrawer />
+            </div>
+          ) : null}
         </div>
       </header>
 

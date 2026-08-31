@@ -2437,12 +2437,14 @@ function InterviewDashboardContent() {
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
       onReportAction: handleDetailedReportAction,
-      reportButtonLabel: reportLocked ? 'Unlock Report $1' : 'View Report',
-      reportLocked,
+      reportButtonLabel: PORTFOLIO_DEMO_MODE ? 'View Analysis' : reportLocked ? 'Unlock Report $1' : 'View Report',
+      reportLocked: PORTFOLIO_DEMO_MODE ? false : reportLocked,
       reportLoading: detailedReportLoading,
-      reportHelpText: 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.',
-      reportHelpSecondaryText: 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.',
-      demoMode: true,
+      reportHelpText: PORTFOLIO_DEMO_MODE
+        ? 'Inspect the detailed rubric and evidence behind the coaching recommendations.'
+        : 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.',
+      reportHelpSecondaryText: PORTFOLIO_DEMO_MODE ? undefined : 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.',
+      demoMode: PORTFOLIO_DEMO_MODE,
     }
     return (
       <>
@@ -2520,13 +2522,15 @@ function InterviewDashboardContent() {
       artifactContent: deckArtifact,
       onPrintArtifact: () => window.print(),
       onReportAction: handleDetailedReportAction,
-      reportButtonLabel: reportLocked ? 'Unlock Report $1' : 'View Report',
-      reportLocked,
+      reportButtonLabel: PORTFOLIO_DEMO_MODE ? 'View Analysis' : reportLocked ? 'Unlock Report $1' : 'View Report',
+      reportLocked: PORTFOLIO_DEMO_MODE ? false : reportLocked,
       reportLoading: detailedReportLoading,
-      reportHelpText: reportLocked ? 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.' : undefined,
-      reportHelpSecondaryText: reportLocked ? 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.' : undefined,
+      reportHelpText: PORTFOLIO_DEMO_MODE
+        ? 'Inspect the detailed rubric and evidence behind the coaching recommendations.'
+        : reportLocked ? 'This is an 8-12 page report grading your performance, similar to what an interviewer would fill out after the interview.' : undefined,
+      reportHelpSecondaryText: PORTFOLIO_DEMO_MODE ? undefined : reportLocked ? 'In the Hiring Manager and Final rounds, this report is included free because it is more important there.' : undefined,
       stageKey: currentStageKey,
-      demoMode: true,
+      demoMode: PORTFOLIO_DEMO_MODE,
     }
     return (
       <>

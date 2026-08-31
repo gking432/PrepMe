@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { supabaseAdmin } from '@/lib/supabase'
 import { enforceRateLimit } from '@/lib/demo-guard'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     // 1) Transcribe with Whisper (~$0.006/min, typically $0.001-0.002 per answer)
     const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
-      model: 'whisper-1',
+      model: AI_MODELS.legacyTranscription,
     })
     const transcript = (transcription.text || '').trim()
 
@@ -106,7 +107,7 @@ Return ONLY valid JSON.`
 
     try {
       const message = await getAnthropic().messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: AI_MODELS.coachingGeneration,
         max_tokens: 700,
         temperature: 0.2,
         system,

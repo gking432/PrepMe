@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 import { supabaseAdmin } from '@/lib/supabase'
 import { appendMessage, appendQuestion, calculateDuration, getStructuredTranscript } from '@/lib/interview-session'
 import { getCurrentPrompt, handleHrTurn } from '@/lib/hr-screen-script'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const transcription = await getOpenAI().audio.transcriptions.create({
       file: audioFile,
-      model: 'whisper-1',
+      model: AI_MODELS.legacyTranscription,
     })
 
     const userMessage = transcription.text?.trim() || ''

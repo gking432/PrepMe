@@ -8,6 +8,7 @@ import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 import { fetchRelatedHrScreenFeedback } from '@/lib/hr-screen-context'
 import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -311,7 +312,7 @@ export async function POST(request: NextRequest) {
     let audioBase64 = null
     try {
       const mp3 = await getOpenAI().audio.speech.create({
-        model: 'tts-1',
+        model: AI_MODELS.speech,
         voice: getFallbackTtsVoiceForStage(stage),
         input: initialMessage,
       })

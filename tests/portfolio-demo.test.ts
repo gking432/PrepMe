@@ -21,6 +21,12 @@ import { gradeHrScreenQuestionLevel } from '../lib/hr-question-level-grader'
 import { buildSystemPrompt as buildHrScreenPrompt } from '../lib/interview-prompts/hr_screen'
 import { FRAMEWORK_STEPS, PROFESSIONAL_IDENTITY_STYLE_OPTIONS } from '../lib/professional-story-config'
 import {
+  parseModelOutput,
+  portfolioFeedbackSchema,
+  professionalStoryOutputSchema,
+} from '../lib/ai-contracts'
+import { PORTFOLIO_EVALUATION_SUMMARY, PORTFOLIO_GOLDEN_EVALUATIONS } from '../lib/portfolio-evaluations'
+import {
   FALLBACK_THINKING_SILENCE_MS,
   REALTIME_DEFAULT_MAX_OUTPUT_TOKENS,
   REALTIME_HR_MAX_OUTPUT_TOKENS,
@@ -111,6 +117,21 @@ test('all six demo workshops share one fixed, no-scroll lesson shell', () => {
   const pathSource = readFileSync(new URL('../components/PracticePath.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(pathSource, /overflow-y-auto|overflow-auto|overflow-x-auto/)
   assert.match(pathSource, /grid min-h-0 flex-1 grid-cols-2 gap-3/)
+})
+
+test('portfolio reviewer surfaces stay concise and outside app-header layout constraints', () => {
+  const drawerSource = readFileSync(
+    new URL('../components/AiImplementationDrawer.tsx', import.meta.url),
+    'utf8',
+  )
+  const feedbackSource = readFileSync(
+    new URL('../components/HrFeedbackDeck.tsx', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(drawerSource, /createPortal/)
+  assert.doesNotMatch(drawerSource, /overflow-y-auto|overflow-auto/)
+  assert.match(feedbackSource, /const showReportButton = !demoMode/)
 })
 
 test('sparse interview coverage is not inflated by duplicate transcript formats', () => {
@@ -281,4 +302,62 @@ test('public request guard throttles repeated callers', () => {
 test('website import refuses local and private-network destinations', async () => {
   await assert.rejects(assertSafePublicUrl('http://localhost:3000/private'))
   await assert.rejects(assertSafePublicUrl('http://127.0.0.1/private'))
+})
+
+test('portfolio golden evaluation suite passes every published scenario', () => {
+  const sparseTranscript = {
+    messages: [
+      { speaker: 'candidate', text: 'Can you hear me?' },
+      { speaker: 'candidate', text: 'I research the company.' },
+    ],
+  }
+  const completeTranscript = MOCK_TRANSCRIPT.messages
+    .map((message) => `${message.speaker === 'candidate' ? 'You' : 'Interviewer'}: ${message.text}`)
+    .join('\n')
+  const canonicalAreas = [
+    ...MOCK_FEEDBACK.hr_screen_six_areas.what_went_well,
+    ...MOCK_FEEDBACK.hr_screen_six_areas.what_needs_improve,
+  ]
+  const coachingFixture = {
+    answerType: 'professional_introduction',
+    structureUsed: {
+      present: 'I coordinate animal-care operations.',
+      past: 'I learned the work through hands-on care roles.',
+      future: 'I want broader responsibility for safe intake routines.',
+    },
+    primaryAnswer: 'I coordinate animal-care operations and want to lead safer intake routines.',
+    casualAnswer: 'I keep animal-care operations organized and safe.',
+    shortAnswer: 'I coordinate safe animal-care operations.',
+    openingLineOptions: ['I coordinate animal-care operations.'],
+    closingLineOptions: ['I am ready to own broader intake routines.'],
+    whyThisWorks: ['It connects present experience to a clear next step.'],
+    possibleWeakSpots: [],
+    likelyFollowUpQuestions: ['What intake process did you improve?'],
+  } as const
+
+  const outcomes: Record<(typeof PORTFOLIO_GOLDEN_EVALUATIONS)[number]['id'], boolean> = {
+    fictional_context: /FICTIONAL SAMPLE CANDIDATE/.test(PORTFOLIO_SAMPLE_SETUP.resumeText)
+      && /FICTIONAL DEMO JOB POSTING/.test(PORTFOLIO_SAMPLE_SETUP.jobDescriptionText),
+    sparse_coverage: !getHrInterviewCoverage(sparseTranscript, '').sufficient,
+    complete_coverage: getHrInterviewCoverage(MOCK_TRANSCRIPT, completeTranscript).sufficient,
+    six_area_mapping: canonicalAreas.length === 6
+      && new Set(canonicalAreas.map((area) => area.practice_focus_id)).size === 6,
+    feedback_contract: portfolioFeedbackSchema.safeParse(MOCK_FEEDBACK).success,
+    malformed_contract: !portfolioFeedbackSchema.safeParse({ overall_score: 4 }).success,
+    coaching_contract: professionalStoryOutputSchema.safeParse(coachingFixture).success,
+    fenced_json_recovery: (() => {
+      try {
+        return parseModelOutput(`\`\`\`json\n${JSON.stringify(coachingFixture)}\n\`\`\``, professionalStoryOutputSchema).answerType
+          === 'professional_introduction'
+      } catch {
+        return false
+      }
+    })(),
+  }
+
+  assert.equal(PORTFOLIO_EVALUATION_SUMMARY.total, PORTFOLIO_GOLDEN_EVALUATIONS.length)
+  assert.equal(PORTFOLIO_EVALUATION_SUMMARY.passed, PORTFOLIO_GOLDEN_EVALUATIONS.length)
+  for (const evaluation of PORTFOLIO_GOLDEN_EVALUATIONS) {
+    assert.equal(outcomes[evaluation.id], true, `${evaluation.label} must pass`)
+  }
 })

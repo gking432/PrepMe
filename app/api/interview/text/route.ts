@@ -4,6 +4,7 @@ import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { getFallbackTtsVoiceForStage } from '@/lib/interview-voices'
 import OpenAI from 'openai'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _openai: OpenAI | null = null
 function getOpenAI() {
@@ -252,7 +253,7 @@ ${contextSection}`,
 
     // Generate response using ChatGPT (using gpt-4o-mini for cost efficiency)
     const completion = await getOpenAI().chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.lightweightReasoning,
       messages,
       temperature: 0.7,
       max_tokens: isHrScreen ? 180 : 200,
@@ -264,7 +265,7 @@ ${contextSection}`,
     let audioBase64 = null
     try {
       const mp3 = await getOpenAI().audio.speech.create({
-        model: 'tts-1',
+        model: AI_MODELS.speech,
         voice: getFallbackTtsVoiceForStage(stage),
         input: assistantMessage,
       })

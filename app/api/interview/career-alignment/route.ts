@@ -5,18 +5,13 @@ import { cookies } from 'next/headers'
 import { Anthropic } from '@anthropic-ai/sdk/client'
 import { DEFAULT_TONE, DEFAULT_LENGTH } from '@/lib/career-alignment-config'
 import { enforceRateLimit, rejectOversizedRequest } from '@/lib/demo-guard'
+import { answerRewriteSchema, careerAlignmentOutputSchema, parseModelOutput } from '@/lib/ai-contracts'
+import { AI_MODELS } from '@/lib/ai-models'
 
 let _anthropic: Anthropic | null = null
 function getAnthropic() {
   if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
   return _anthropic
-}
-
-function safeParseJson(raw: string): any {
-  if (!raw) return null
-  const match = raw.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || raw.match(/(\{[\s\S]*\})/)
-  const body = match ? match[1] : raw
-  try { return JSON.parse(body) } catch { return null }
 }
 
 async function fetchUserContext(sessionId?: string, userId?: string) {
@@ -240,7 +235,7 @@ Use this exact shape:
 
   try {
     const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.coachingGeneration,
       max_tokens: 2500,
       temperature: 0.5,
       system: systemPrompt,
@@ -248,11 +243,7 @@ Use this exact shape:
     })
     const content = message.content[0]
     if (content.type !== 'text') return NextResponse.json({ error: 'generate_failed' }, { status: 200 })
-    const parsed = safeParseJson(content.text)
-    if (!parsed) {
-      console.error('career-alignment: failed to parse JSON from model response')
-      return NextResponse.json({ error: 'generate_failed' }, { status: 200 })
-    }
+    const parsed = parseModelOutput(content.text, careerAlignmentOutputSchema)
     return NextResponse.json(parsed)
   } catch (error: any) {
     console.error('career-alignment generation failed:', error?.message || error)
@@ -333,7 +324,7 @@ Return valid JSON only:
 
   try {
     const message = await getAnthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.coachingGeneration,
       max_tokens: 1200,
       temperature: 0.4,
       system: systemPrompt,
@@ -341,8 +332,7 @@ Return valid JSON only:
     })
     const content = message.content[0]
     if (content.type !== 'text') return NextResponse.json({ error: 'rewrite_failed' }, { status: 200 })
-    const parsed = safeParseJson(content.text)
-    if (!parsed?.primaryAnswer) return NextResponse.json({ error: 'rewrite_failed' }, { status: 200 })
+    const parsed = parseModelOutput(content.text, answerRewriteSchema)
     return NextResponse.json(parsed)
   } catch (error: any) {
     console.error('career-alignment rewrite failed:', error?.message || error)

@@ -25,6 +25,7 @@ import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
+import { PORTFOLIO_SAMPLE_SESSION_ID } from '@/lib/portfolio-demo'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
 
@@ -930,12 +931,26 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
     )
   }
 
+  const example = repairs[0]
+  const evidence = getPrimaryEvidence(example)
+
   return (
-    <div className="h-full min-h-0 overflow-y-auto pr-1">
-      <div className="rounded-2xl border border-accent-200 bg-accent-50/60 p-3 mb-3">
-        <p className="text-xs font-bold leading-5 text-accent-900">
-          We will workshop these one at a time — no reading, no clicking through tips. You will rebuild each answer hands-on.
-        </p>
+    <div className="h-full min-h-0 overflow-hidden pr-1">
+      <div className="mb-3 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50/60 p-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Interview evidence</p>
+          <p className="mt-0.5 truncate text-[11px] font-bold text-slate-700">“{evidence?.excerpt || example.original_answer || 'Flagged candidate answer'}”</p>
+        </div>
+        <ArrowRight className="h-3.5 w-3.5 text-violet-400" />
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Rubric decision</p>
+          <p className="mt-0.5 truncate text-[11px] font-bold text-slate-700">{example.feedback || example.criterion}</p>
+        </div>
+        <ArrowRight className="h-3.5 w-3.5 text-violet-400" />
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Coaching route</p>
+          <p className="mt-0.5 truncate text-[11px] font-bold text-violet-800">{example.rewrite_method || example.practice_focus || example.criterion}</p>
+        </div>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         {repairs.map((repair, index) => {
@@ -1104,9 +1119,10 @@ export default function HrFeedbackDeck({
   const [showCoachFile, setShowCoachFile] = useState(false)
   const [completedWorkshops, setCompletedWorkshops] = useState<Set<number>>(new Set())
   const nextStageKey = demoMode ? null : NEXT_STAGE[stageKey]
+  const isGuidedSample = demoMode && currentSessionData?.id === PORTFOLIO_SAMPLE_SESSION_ID
   const stageName = STAGE_NAME[stageKey]
   const nextStageName = nextStageKey ? STAGE_NAME[nextStageKey] : null
-  const showReportButton = !demoMode || !!artifactContent
+  const showReportButton = !demoMode
   const resolvedPracticeHref = practiceHref === undefined && currentSessionData?.id
     ? `/interview/practice/${currentSessionData.id}`
     : practiceHref
@@ -1152,17 +1168,15 @@ export default function HrFeedbackDeck({
   }, [currentSessionData, feedback, stageKey])
 
   const deckSteps = useMemo<DeckStep[]>(() => {
-    const base: DeckStep[] = [
-      { key: 'outcome', label: 'Outcome', type: 'outcome' },
-      { key: 'strengths', label: 'Strong', type: 'strengths' },
-      { key: 'weaknesses', label: 'Weak', type: 'weaknesses' },
-    ]
+    const base: DeckStep[] = [{ key: 'outcome', label: 'Outcome', type: 'outcome' }]
+    if (strengths.length > 0) base.push({ key: 'strengths', label: 'Strong', type: 'strengths' })
+    base.push({ key: 'weaknesses', label: 'Weak', type: 'weaknesses' })
     if (nextStageKey) {
       base.push({ key: 'preview', label: 'Next Round', type: 'preview' })
       base.push({ key: 'upgrade', label: 'Unlock', type: 'upgrade' })
     }
     return base
-  }, [repairs, nextStageKey])
+  }, [strengths.length, nextStageKey])
 
   useEffect(() => {
     if (step >= deckSteps.length) {
@@ -1208,6 +1222,11 @@ export default function HrFeedbackDeck({
           preppiMessage="This is the whole point: quick enough to understand, specific enough to trust."
         >
           <div className="flex h-full min-h-0 flex-col justify-between gap-3 overflow-hidden lg:gap-5">
+            {isGuidedSample ? (
+              <div className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-bold leading-5 text-violet-800">
+                Intentionally weak fictional sample — all six areas are flagged so you can inspect every coaching workflow.
+              </div>
+            ) : null}
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
               <ScoreOrb score={score} />
               <div className="min-w-0">
@@ -1229,9 +1248,11 @@ export default function HrFeedbackDeck({
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-1 h-5 w-5 shrink-0 text-accent-700" />
                 <div>
-                  <p className="text-sm font-bold text-slate-950">What this free report gives you</p>
+                  <p className="text-sm font-bold text-slate-950">{demoMode ? 'How this result was produced' : 'What this report gives you'}</p>
                   <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
-                    The signals to repeat, every flagged issue to repair, and the hiring manager questions likely to come next.
+                    {demoMode
+                      ? 'Structured transcript → six-area rubric → evidence-linked feedback → targeted coaching workshops.'
+                      : 'The signals to repeat, every flagged issue to repair, and the hiring manager questions likely to come next.'}
                   </p>
                 </div>
               </div>

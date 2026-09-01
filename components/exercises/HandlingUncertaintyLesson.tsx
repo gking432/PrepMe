@@ -125,19 +125,19 @@ export default function HandlingUncertaintyLesson({
       // ─── Intro ─────────────────────────────────────────────────────────────
       case 'intro':
         return (
-          <div className="space-y-5">
+          <div className="space-y-3 sm:space-y-5">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-600">
                 Handling Uncertainty
               </p>
-              <h2 className="mt-1 text-lg font-black text-slate-900">
+              <h2 className="mt-1 text-base font-black text-slate-900 sm:text-lg">
                 What to do when your brain blanks in an interview
               </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-xs leading-5 text-slate-600 sm:mt-3 sm:text-sm sm:leading-6">
                 Most people don't ramble because they have nothing to say. They ramble because they
                 start talking before they know what kind of answer the question needs.
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-1.5 text-xs leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
                 This lesson teaches two things: how to buy yourself time <em>before</em> you start answering,
                 and how to recover <em>after</em> you've already started rambling. Both are learnable skills,
                 and interviewers respect both when they're done well.
@@ -147,22 +147,22 @@ export default function HandlingUncertaintyLesson({
             {(originalQuestion || originalAnswer) && (
               <Callout color="slate" label="The question that tripped you up">
                 {originalQuestion && (
-                  <p className="text-sm font-semibold leading-6 text-slate-800">{originalQuestion}</p>
+                  <p className="text-xs font-semibold leading-5 text-slate-800 sm:text-sm sm:leading-6">{originalQuestion}</p>
                 )}
                 {originalAnswer && (
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{originalAnswer}</p>
+                  <p className="mt-1.5 text-xs leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">{originalAnswer}</p>
                 )}
               </Callout>
             )}
 
             <Callout color="violet" label="What you'll learn">
-              <div className="space-y-2">
-                <p className="text-sm font-bold text-slate-800">Part 1 — Before you answer</p>
-                <p className="text-sm leading-6 text-slate-600">
+              <div className="space-y-1.5 sm:space-y-2">
+                <p className="text-xs font-bold text-slate-800 sm:text-sm">Part 1 — Before you answer</p>
+                <p className="text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
                   Pause, reframe the question, pick cue words, choose a lane, start clean.
                 </p>
-                <p className="mt-1 text-sm font-bold text-slate-800">Part 2 — After you've already started rambling</p>
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="mt-1 text-xs font-bold text-slate-800 sm:text-sm">Part 2 — After you've already started rambling</p>
+                <p className="text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
                   Three recovery strategies: the direct reset, the honest gap, and the clarifying reset.
                 </p>
               </div>
@@ -954,7 +954,7 @@ function PrimaryButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-40"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-md transition hover:bg-violet-700 active:scale-[0.98] disabled:opacity-40 sm:rounded-2xl sm:py-3.5"
     >
       {icon}
       {children}
@@ -971,9 +971,9 @@ function Callout({ color, label, children }: { color: 'violet' | 'amber' | 'slat
   }
   const s = styles[color]
   return (
-    <div className={`rounded-2xl border-2 ${s.border} ${s.bg} p-4`}>
+    <div className={`rounded-xl border-2 ${s.border} ${s.bg} p-3 sm:rounded-2xl sm:p-4`}>
       <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${s.label}`}>{label}</p>
-      <div className="mt-2">{children}</div>
+      <div className="mt-1.5 sm:mt-2">{children}</div>
     </div>
   )
 }

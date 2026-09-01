@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
+import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import { Mic, MicOff, X, MessageSquare, Eye, EyeOff, Phone, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 import { AI_MODELS } from '@/lib/ai-models'
@@ -2249,6 +2250,11 @@ function InterviewPageContent() {
         </div>
 
         <div className="flex items-center gap-2">
+          {PORTFOLIO_DEMO_MODE ? (
+            <AiImplementationDrawer
+              activityMessage={isLoading ? 'Interviewer is connecting' : isPlayingAudio ? 'Interviewer is responding' : undefined}
+            />
+          ) : null}
           {isListening && (
             <button
               onClick={() => {
@@ -2261,7 +2267,7 @@ function InterviewPageContent() {
               className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-400 transition-colors hover:border-white/20 hover:text-white"
             >
               {showQuestion ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span>{showQuestion ? 'Hide' : 'View'} Question</span>
+              <span className="hidden sm:inline">{showQuestion ? 'Hide' : 'View'} Question</span>
             </button>
           )}
         </div>
@@ -2334,13 +2340,6 @@ function InterviewPageContent() {
                 {isLoading && interviewInputMode === 'text' ? 'Connecting...' : 'Use typed replies'}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => router.push('/interview/feedback?preview=mock')}
-              className="mt-4 text-xs font-semibold text-slate-400 underline decoration-white/20 underline-offset-4 transition hover:text-white"
-            >
-              Short on time? View sample feedback + workshops
-            </button>
           </div>
         )}
 

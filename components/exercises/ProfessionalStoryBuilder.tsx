@@ -277,27 +277,27 @@ export default function ProfessionalStoryBuilder({
             <h2 className="mt-3 text-xl font-extrabold leading-tight text-slate-900">&ldquo;Tell me about yourself&rdquo; is your first impression.</h2>
           </div>
           <div className="workshop-body">
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
+            <div className="workshop-intro-stack">
+              <div className="workshop-intro-card border border-violet-100 bg-violet-50/60">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white"><Lightbulb className="h-4 w-4" /></div>
-                  <p className="text-sm leading-7 text-slate-800">Most people walk through their resume. A stronger answer gives the interviewer a clear through-line: where you are professionally now, the selected past that explains it, and why this role is the logical next step.</p>
+                  <div className="workshop-intro-icon bg-violet-500 text-white"><Lightbulb className="h-4 w-4" /></div>
+                  <p className="workshop-intro-copy text-sm leading-7 text-slate-800">Most people walk through their resume. A stronger answer gives the interviewer a clear through-line: where you are professionally now, the selected past that explains it, and why this role is the logical next step.</p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <div className="workshop-intro-card border border-slate-200 bg-slate-50">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white"><Target className="h-4 w-4" /></div>
+                  <div className="workshop-intro-icon bg-slate-700 text-white"><Target className="h-4 w-4" /></div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">When to use it</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-800">Use this for &ldquo;tell me about yourself&rdquo;, &ldquo;walk me through your background&rdquo;, or &ldquo;so, what brings you here?&rdquo;</p>
+                    <p className="workshop-intro-copy mt-1 text-sm leading-6 text-slate-800">Use this for &ldquo;tell me about yourself&rdquo;, &ldquo;walk me through your background&rdquo;, or &ldquo;so, what brings you here?&rdquo;</p>
                   </div>
                 </div>
               </div>
               {originalAnswer && (
-                <div className="rounded-2xl border border-rose-100 bg-rose-50/50 px-4 py-4">
+                <div className="workshop-intro-card border border-rose-100 bg-rose-50/50">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">What you said in the interview</p>
                   {originalQuestion && <p className="mt-1 text-[11px] font-bold leading-5 text-rose-800">Q: {originalQuestion}</p>}
-                  <p className="mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;</p>
+                  <p className="workshop-intro-copy mt-2 text-sm italic leading-6 text-rose-900">&ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;</p>
                   <p className="mt-3 text-xs font-bold text-rose-700">We&apos;ll build a better version using the supplied resume.</p>
                 </div>
               )}

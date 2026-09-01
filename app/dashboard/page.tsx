@@ -577,7 +577,6 @@ function DashboardPageContent() {
     })
     setExtractedUserInfo({ email: null, name: 'Elena Park', phone: null })
     setSelectedStage('hr_screen')
-    setOnboardStep('stage')
   }
 
   // ─── Job posting panel (reused in both job step and stage step) ──────────────
@@ -1119,28 +1118,28 @@ function DashboardPageContent() {
 
             <JobPostingPanel />
             {PORTFOLIO_DEMO_MODE && (
-              <div className="space-y-3 border-t border-slate-200 pt-5">
-                <p className="text-center text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">Or explore the demo</p>
-                <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2 border-t border-slate-200 pt-4">
+                <p className="text-center text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Demo shortcuts</p>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <button
                     type="button"
                     onClick={loadSampleInterview}
-                    className="flex w-full items-center justify-between rounded-2xl border-2 border-accent-300 bg-accent-50 px-4 py-3 text-left shadow-sm transition hover:border-accent-400 hover:bg-accent-100"
+                    className="flex min-w-0 w-full items-center justify-between gap-2 rounded-2xl border border-accent-200 bg-accent-50 px-3 py-2.5 text-left transition hover:border-accent-300 hover:bg-accent-100 sm:px-4 sm:py-3"
                   >
-                    <span>
-                      <span className="block text-sm font-black text-accent-900">Start the live AI interview</span>
-                      <span className="mt-0.5 block text-xs leading-5 text-accent-700/80">Preload the fictional résumé and role, then choose voice or typed replies.</span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-black text-accent-900 sm:text-sm">Fill demo data</span>
+                      <span className="mt-0.5 block text-[10px] leading-4 text-accent-700/80 sm:text-xs sm:leading-5">Add a fictional résumé and role.</span>
                     </span>
                     <Sparkles className="h-5 w-5 shrink-0 text-accent-600" />
                   </button>
                   <button
                     type="button"
                     onClick={() => router.push('/interview/feedback?preview=mock')}
-                    className="flex w-full items-center justify-between rounded-2xl border border-violet-200 bg-white px-4 py-3 text-left transition hover:border-violet-300 hover:bg-violet-50"
+                    className="flex min-w-0 w-full items-center justify-between gap-2 rounded-2xl border border-violet-200 bg-white px-3 py-2.5 text-left transition hover:border-violet-300 hover:bg-violet-50 sm:px-4 sm:py-3"
                   >
-                    <span>
-                      <span className="block text-sm font-bold text-violet-800">View the 90-second walkthrough</span>
-                      <span className="mt-0.5 block text-xs leading-5 text-violet-700/75">Skip the interview and inspect fictional feedback and all six workshops.</span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-black text-violet-800 sm:text-sm">View demo feedback</span>
+                      <span className="mt-0.5 block text-[10px] leading-4 text-violet-700/75 sm:text-xs sm:leading-5">Skip ahead to the fictional result.</span>
                     </span>
                     <ArrowRight className="h-5 w-5 shrink-0 text-violet-600" />
                   </button>

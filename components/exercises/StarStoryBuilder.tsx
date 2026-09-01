@@ -440,27 +440,27 @@ export default function StarStoryBuilder({
           </div>
 
           <div className="workshop-body">
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-4">
+            <div className="workshop-intro-stack">
+              <div className="workshop-intro-card border border-violet-100 bg-violet-50/60">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white">
+                  <div className="workshop-intro-icon bg-violet-500 text-white">
                     <Lightbulb className="h-4 w-4" />
                   </div>
-                  <p className="text-sm leading-7 text-slate-800">
+                  <p className="workshop-intro-copy text-sm leading-7 text-slate-800">
                     A vague example sounds like talk. A specific one sounds like evidence.
                     STAR forces you to show the work: the scene, the stakes, the moves, the outcome.
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <div className="workshop-intro-card border border-slate-200 bg-slate-50">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-white">
+                  <div className="workshop-intro-icon bg-slate-700 text-white">
                     <Target className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">When to use it</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-800">
+                    <p className="workshop-intro-copy mt-1 text-sm leading-6 text-slate-800">
                       Use it any time you hear &ldquo;tell me about a time&rdquo;, &ldquo;give me an example&rdquo;,
                       or &ldquo;walk me through how you handled...&rdquo;
                     </p>
@@ -469,7 +469,7 @@ export default function StarStoryBuilder({
               </div>
 
               {originalAnswer && (
-                <div className="rounded-2xl border border-rose-100 bg-rose-50/50 px-4 py-4">
+                <div className="workshop-intro-card border border-rose-100 bg-rose-50/50">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-600">
                     What you said in the interview
                   </p>
@@ -478,7 +478,7 @@ export default function StarStoryBuilder({
                       Q: {originalQuestion}
                     </p>
                   )}
-                  <p className="mt-2 text-sm italic leading-6 text-rose-900">
+                  <p className="workshop-intro-copy mt-2 text-sm italic leading-6 text-rose-900">
                     &ldquo;{originalAnswer.length > 220 ? originalAnswer.slice(0, 220).trim() + '…' : originalAnswer}&rdquo;
                   </p>
                   <p className="mt-3 text-xs font-bold text-rose-700">

@@ -25,20 +25,20 @@ PrepMe is a public portfolio demo showing how generative and realtime AI can be 
 - Cost controls through payload limits and public-demo rate limits
 - Browser-local persistence for a low-friction portfolio experience
 
-The in-app **How the AI works** panel exposes this pipeline without forcing a hiring manager to read the repository first. Its evaluation result is backed by the checked-in test suite rather than a hand-written marketing number.
+The in-app AI implementation panel exposes this pipeline without forcing a hiring manager to read the repository first. It is a compact icon with activity notifications on a phone and a labeled control on larger screens. Its evaluation result is backed by the checked-in test suite rather than a hand-written marketing number.
 
 ## Reviewer paths
 
-The primary demo runs the actual realtime interview workflow with a preloaded fictional résumé and job description. Reviewers can answer by voice or text, end the session, and inspect the resulting evidence-linked coaching.
+The primary demo is simply the product flow: add interview details, press **Continue**, answer by voice or text, end the session, and inspect the resulting evidence-linked coaching. **Fill demo data** is an optional setup shortcut that supplies a fictional résumé and job description without changing the path.
 
-The optional 90-second walkthrough seeds one deliberately weak, fully fictional completed interview. It puts all six HR signals into **Needs work** so a reviewer can inspect the complete evidence-to-coaching loop without conducting an interview:
+The optional **View demo feedback** shortcut seeds one deliberately weak, fully fictional completed interview. It puts all six HR signals into **Needs work** so a reviewer can inspect the complete evidence-to-coaching loop without conducting an interview:
 
 1. Read the outcome and the explicit fictional-sample label.
 2. Open the six-area analysis and select any weak signal.
 3. Compare the source interview excerpt, rubric decision, and coaching route.
 4. Launch the mapped workshop and see the framework-specific answer builder.
 
-Both paths expose the **How the AI works** panel, so the technical implementation remains visible even when a reviewer chooses the completed walkthrough.
+Both paths expose the AI implementation panel, so the technical implementation remains visible without competing with the product’s primary action.
 
 ## Model and contract boundaries
 

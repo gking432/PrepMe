@@ -2455,7 +2455,7 @@ function InterviewDashboardContent() {
 
         {/* Desktop: app chrome + process sidebar + slide player */}
         <div className="hidden md:block">
-          <AppChrome active="preps" maxWidth="max-w-5xl">
+          <AppChrome active="preps" maxWidth="max-w-5xl" aiActivityMessage="Feedback is ready">
             <div className="grid h-[calc(100dvh-9rem)] grid-cols-[260px_minmax(0,1fr)] gap-5">
               <ProcessSidebar
                 currentStageKey="hr_screen"
@@ -2541,7 +2541,7 @@ function InterviewDashboardContent() {
 
         {/* Desktop: app chrome + process sidebar + slide player */}
         <div className="hidden md:block">
-          <AppChrome active="preps" maxWidth="max-w-5xl">
+          <AppChrome active="preps" maxWidth="max-w-5xl" aiActivityMessage="Feedback is ready">
             <div className="grid h-[calc(100dvh-9rem)] grid-cols-[260px_minmax(0,1fr)] gap-5">
               <ProcessSidebar
                 currentStageKey={currentStageKey}

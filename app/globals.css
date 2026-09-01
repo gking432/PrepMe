@@ -125,6 +125,48 @@ summary {
   .workshop-tab {
     @apply rounded-lg px-2 py-2 text-xs font-extrabold transition;
   }
+
+  .workshop-intro-stack {
+    @apply space-y-4;
+  }
+
+  .workshop-intro-card {
+    @apply rounded-2xl px-4 py-4;
+  }
+
+  .workshop-intro-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full;
+  }
+
+  @media (max-width: 639px) {
+    .workshop-header {
+      @apply px-3 py-2.5;
+    }
+
+    .workshop-body {
+      @apply px-3 py-2.5;
+    }
+
+    .workshop-footer {
+      @apply px-3 py-2.5;
+    }
+
+    .workshop-intro-stack {
+      @apply space-y-2;
+    }
+
+    .workshop-intro-card {
+      @apply rounded-xl px-3 py-2.5;
+    }
+
+    .workshop-intro-icon {
+      @apply h-7 w-7;
+    }
+
+    .workshop-intro-copy {
+      @apply text-xs leading-[1.15rem];
+    }
+  }
 }
 
 .interview-card {

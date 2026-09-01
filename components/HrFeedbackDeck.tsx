@@ -25,6 +25,7 @@ import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
+import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import { PORTFOLIO_SAMPLE_SESSION_ID } from '@/lib/portfolio-demo'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
@@ -936,7 +937,10 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
 
   return (
     <div className="h-full min-h-0 overflow-hidden pr-1">
-      <div className="mb-3 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50/60 p-3">
+      <div className="mb-2 flex items-center justify-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50/60 px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-violet-700 sm:hidden">
+        <span>Evidence</span><ArrowRight className="h-3 w-3" /><span>Rubric</span><ArrowRight className="h-3 w-3" /><span>Coaching</span>
+      </div>
+      <div className="mb-3 hidden grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50/60 p-3 sm:grid">
         <div className="min-w-0">
           <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Interview evidence</p>
           <p className="mt-0.5 truncate text-[11px] font-bold text-slate-700">“{evidence?.excerpt || example.original_answer || 'Flagged candidate answer'}”</p>
@@ -952,23 +956,23 @@ function WeaknessesOverview({ repairs }: { repairs: SignalCard[] }) {
           <p className="mt-0.5 truncate text-[11px] font-bold text-violet-800">{example.rewrite_method || example.practice_focus || example.criterion}</p>
         </div>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2">
         {repairs.map((repair, index) => {
           const score = parseScore(repair.score)
           const workshopType = getWorkshopTypeForRepair(repair)
           return (
-            <div key={`${repair.criterion}-${index}`} className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+            <div key={`${repair.criterion}-${index}`} className="min-h-0 rounded-xl border border-rose-100 bg-white p-2 shadow-sm sm:p-3">
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-700">{index + 1}</span>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-rose-600">Workshop {index + 1}</p>
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-[9px] font-bold text-rose-700 sm:h-5 sm:w-5 sm:text-[10px]">{index + 1}</span>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-rose-600 sm:text-[10px] sm:tracking-[0.16em]">Workshop {index + 1}</p>
                 </div>
-                {score > 0 && <span className="shrink-0 text-[10px] font-bold text-rose-700">{score.toFixed(score % 1 ? 1 : 0)}/10</span>}
+                {score > 0 && <span className="shrink-0 text-[9px] font-bold text-rose-700 sm:text-[10px]">{score.toFixed(score % 1 ? 1 : 0)}/10</span>}
               </div>
-              <h3 className="mt-1.5 text-sm font-bold leading-tight text-slate-950">{repair.criterion}</h3>
+              <h3 className="mt-1 line-clamp-2 text-[11px] font-bold leading-[1.15rem] text-slate-950 sm:mt-1.5 sm:text-sm sm:leading-tight">{repair.criterion}</h3>
               {workshopType && (
-                <div className="mt-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-accent-700">
-                  <Sparkles className="h-3 w-3" />
+                <div className="mt-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.08em] text-accent-700 sm:mt-2 sm:text-[10px] sm:tracking-[0.14em]">
+                  <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   {workshopType.replace('_', ' ')}
                 </div>
               )}
@@ -1476,6 +1480,7 @@ export default function HrFeedbackDeck({
           })}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {demoMode ? <div className="md:hidden"><AiImplementationDrawer activityMessage="Feedback is ready" /></div> : null}
           {showReportButton && reportHelpText && (
             <div className="group relative">
               <button

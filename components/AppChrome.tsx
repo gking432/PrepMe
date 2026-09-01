@@ -17,9 +17,10 @@ interface AppChromeProps {
   maxWidth?: string
   headerMaxWidth?: string
   hideMobileTabs?: boolean
+  aiActivityMessage?: string
 }
 
-export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', headerMaxWidth, hideMobileTabs }: AppChromeProps) {
+export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', headerMaxWidth, hideMobileTabs, aiActivityMessage }: AppChromeProps) {
   return (
     <div className="min-h-[100dvh] bg-[#fafaf9]">
       {/* Top bar */}
@@ -33,7 +34,7 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', he
           {PORTFOLIO_DEMO_MODE ? (
             <div className="flex items-center gap-2">
               <span className="hidden rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 sm:inline-flex">Portfolio demo</span>
-              <AiImplementationDrawer />
+              <AiImplementationDrawer activityMessage={aiActivityMessage} />
             </div>
           ) : null}
         </div>

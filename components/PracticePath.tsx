@@ -9,6 +9,7 @@ import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
+import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import {
   PORTFOLIO_DEMO_MODE,
   getDemoPracticeProgress,
@@ -311,9 +312,10 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
               <ArrowLeft className="h-4 w-4" />
               <span>Practice path</span>
             </button>
-            <p className="text-xs font-bold text-slate-500">
-              Workshop {activeNode.index + 1} of {totalCount}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-slate-500">Workshop {activeNode.index + 1} of {totalCount}</p>
+              <div className="sm:hidden"><AiImplementationDrawer /></div>
+            </div>
           </div>
         </header>
         <main className="mx-auto h-[calc(100dvh-3.5rem)] max-w-3xl p-2 sm:p-4">
@@ -339,9 +341,12 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">Practice Path</p>
           <p className="text-sm font-bold text-slate-900">{stageName}</p>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-bold text-slate-500">{completedCount}/{totalCount}</p>
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600">Complete</p>
+        <div className="flex items-center gap-2">
+          <AiImplementationDrawer activityMessage="Coaching plan is ready" />
+          <div className="hidden text-right sm:block">
+            <p className="text-xs font-bold text-slate-500">{completedCount}/{totalCount}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600">Complete</p>
+          </div>
         </div>
       </div>
 
@@ -381,7 +386,7 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
                       type="button"
                       onClick={() => node.workshopType && openNode(i)}
                       disabled={!node.workshopType}
-                      className={`group flex h-full w-full items-center gap-3 rounded-2xl border-2 bg-white p-3 text-left transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 ${
+                      className={`group flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 bg-white p-2 text-center transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-row sm:gap-3 sm:p-3 sm:text-left ${
                         completed
                           ? 'border-emerald-300 bg-emerald-50/40 hover:border-emerald-400 hover:shadow-md'
                           : 'border-slate-200 hover:border-violet-300 hover:shadow-md'
@@ -389,12 +394,12 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
                     >
                       {/* Node badge */}
                       <div
-                        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-xl text-white shadow-md ${
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base text-white shadow-md sm:h-14 sm:w-14 sm:rounded-2xl sm:text-xl ${
                           completed ? 'bg-emerald-500' : node.workshopType ? 'bg-violet-500' : 'bg-slate-300'
                         }`}
                       >
                         {completed ? (
-                          <CheckCircle2 className="h-7 w-7" />
+                          <CheckCircle2 className="h-5 w-5 sm:h-7 sm:w-7" />
                         ) : !node.workshopType ? (
                           <Lock className="h-5 w-5" />
                         ) : (
@@ -404,8 +409,8 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
 
                       {/* Content */}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">
+                        <div className="flex items-center justify-center gap-1 sm:justify-start sm:gap-2">
+                          <p className="line-clamp-1 text-[8px] font-black uppercase tracking-[0.1em] text-violet-700 sm:text-[10px] sm:tracking-[0.16em]">
                             {node.workshopType ? node.workshopType.replace(/_/g, ' ') : 'no workshop'}
                           </p>
                           {completed && avg !== null && (
@@ -414,18 +419,18 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 truncate text-sm font-extrabold text-slate-900">
+                        <p className="mt-0.5 text-xs font-extrabold leading-4 text-slate-900 sm:truncate sm:text-sm">
                           {node.signal.criterion || 'Workshop'}
                         </p>
                         {node.question && (
-                          <p className="mt-1 truncate text-xs leading-5 text-slate-500">
+                          <p className="mt-1 hidden truncate text-xs leading-5 text-slate-500 sm:block">
                             Q: {node.question}
                           </p>
                         )}
                       </div>
 
                       {/* Right action */}
-                      <div className="shrink-0">
+                      <div className="hidden shrink-0 sm:block">
                         {completed ? (
                           <div className="flex items-center gap-1 text-xs font-bold text-emerald-700">
                             <RotateCcw className="h-3.5 w-3.5" />

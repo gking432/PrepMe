@@ -126,26 +126,26 @@ export default function CareerAlignmentBuilder({
           </div>
 
           <div className="workshop-body">
-            <div className="grid h-full min-h-0 grid-cols-[1.05fr_0.95fr] gap-3">
-              <div className="flex min-h-0 flex-col rounded-2xl border-2 border-slate-200 bg-slate-50 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Starting point</p>
+            <div className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-2 sm:grid-cols-[1.05fr_0.95fr] sm:grid-rows-none sm:gap-3">
+              <div className="grid min-h-0 grid-cols-2 gap-3 rounded-2xl border-2 border-slate-200 bg-slate-50 p-3 sm:flex sm:flex-col sm:p-4">
+                <p className="col-span-2 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Starting point</p>
                 {originalQuestion && (
-                  <div className="mt-3">
+                  <div className="sm:mt-3">
                     <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Question</p>
                     <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">{originalQuestion}</p>
                   </div>
                 )}
-                <div className="mt-3 min-h-0 flex-1 overflow-hidden">
+                <div className="min-h-0 flex-1 overflow-hidden sm:mt-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Your interview answer</p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">{originalAnswer || 'No answer was captured. We can still build one from your demo context.'}</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border-2 border-violet-200 bg-violet-50/60 p-4">
+              <div className="min-h-0 rounded-2xl border-2 border-violet-200 bg-violet-50/60 p-3 sm:p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-600">Observation → Fit → Timing</p>
-                <div className="mt-3 grid gap-2">
+                <div className="mt-2 grid h-[calc(100%-1.5rem)] min-h-0 grid-rows-3 gap-2 sm:mt-3 sm:h-auto">
                   {FRAMEWORK_STEPS.map((step) => (
-                    <div key={step.key} className="flex items-start gap-2.5 rounded-xl bg-white/80 px-3 py-2.5">
+                    <div key={step.key} className="flex min-h-0 items-center gap-2.5 rounded-xl bg-white/80 px-3 py-2 sm:items-start sm:py-2.5">
                       <span className="text-base">{step.emoji}</span>
                       <div>
                         <p className="text-xs font-extrabold text-slate-800">{step.label}</p>

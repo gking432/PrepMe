@@ -6,8 +6,8 @@ A portfolio demo of an AI-powered interview coach. A visitor can preload a ficti
 
 The checked-in configuration defaults to public demo mode. It is deliberately optimized for a convincing one-time visit: no account is required, uploaded files are not saved by PrepMe, and completed demo state stays in the visitor's browser.
 
-- Choose **View the 90-second guided demo** for the fastest walkthrough. Its candidate, résumé, role, employers, and job posting are explicitly fictional and do not represent the portfolio owner's work history.
-- Choose **Run a live AI interview** to exercise the realtime voice or typed conversation using the same fictional context.
+- Choose **Start the live AI interview** for the primary demo. It preloads an explicitly fictional candidate, résumé, role, employers, and job posting, then runs the actual realtime voice or typed interview path.
+- Choose **View the 90-second walkthrough** to skip the interview and inspect the completed fictional feedback and all six workshops.
 - Open **How the AI works** inside the app to inspect the pipeline, model boundaries, reliability controls, and checked-in evaluation results.
 - Read the [implementation case study](docs/portfolio-case-study.md) for the AI workflow, architecture, reliability choices, and extension points.
 

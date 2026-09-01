@@ -1124,25 +1124,25 @@ function DashboardPageContent() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => router.push('/interview/feedback?preview=mock')}
-                    className="flex w-full items-center justify-between rounded-2xl border-2 border-violet-300 bg-violet-50 px-4 py-3 text-left shadow-sm transition hover:border-violet-400 hover:bg-violet-100"
+                    onClick={loadSampleInterview}
+                    className="flex w-full items-center justify-between rounded-2xl border-2 border-accent-300 bg-accent-50 px-4 py-3 text-left shadow-sm transition hover:border-accent-400 hover:bg-accent-100"
                   >
                     <span>
-                      <span className="block text-sm font-black text-violet-900">View the 90-second guided demo</span>
-                      <span className="mt-0.5 block text-xs leading-5 text-violet-700/80">See an intentionally weak fictional interview become evidence-linked coaching.</span>
+                      <span className="block text-sm font-black text-accent-900">Start the live AI interview</span>
+                      <span className="mt-0.5 block text-xs leading-5 text-accent-700/80">Preload the fictional résumé and role, then choose voice or typed replies.</span>
                     </span>
-                    <ArrowRight className="h-5 w-5 shrink-0 text-violet-600" />
+                    <Sparkles className="h-5 w-5 shrink-0 text-accent-600" />
                   </button>
                   <button
                     type="button"
-                    onClick={loadSampleInterview}
-                    className="flex w-full items-center justify-between rounded-2xl border border-accent-200 bg-white px-4 py-3 text-left transition hover:border-accent-300 hover:bg-accent-50"
+                    onClick={() => router.push('/interview/feedback?preview=mock')}
+                    className="flex w-full items-center justify-between rounded-2xl border border-violet-200 bg-white px-4 py-3 text-left transition hover:border-violet-300 hover:bg-violet-50"
                   >
                     <span>
-                      <span className="block text-sm font-bold text-accent-800">Run a live AI interview</span>
-                      <span className="mt-0.5 block text-xs leading-5 text-accent-700/75">Preload the fictional résumé and role, then choose voice or typed replies.</span>
+                      <span className="block text-sm font-bold text-violet-800">View the 90-second walkthrough</span>
+                      <span className="mt-0.5 block text-xs leading-5 text-violet-700/75">Skip the interview and inspect fictional feedback and all six workshops.</span>
                     </span>
-                    <Sparkles className="h-5 w-5 shrink-0 text-accent-600" />
+                    <ArrowRight className="h-5 w-5 shrink-0 text-violet-600" />
                   </button>
                 </div>
               </div>

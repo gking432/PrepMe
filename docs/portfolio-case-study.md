@@ -4,7 +4,7 @@ PrepMe is a public portfolio demo showing how generative and realtime AI can be 
 
 ## The user journey
 
-1. A visitor opens the 90-second guided demo or supplies a resume and job posting for a live interview.
+1. A visitor starts the live demo with fictional sample context or supplies a resume and job posting.
 2. PrepMe normalizes that context into an interview profile.
 3. OpenAI Realtime conducts an HR phone screen through WebRTC.
 4. The visitor can answer by voice or text, and the conversation is converted into a structured transcript.
@@ -27,16 +27,18 @@ PrepMe is a public portfolio demo showing how generative and realtime AI can be 
 
 The in-app **How the AI works** panel exposes this pipeline without forcing a hiring manager to read the repository first. Its evaluation result is backed by the checked-in test suite rather than a hand-written marketing number.
 
-## The 90-second reviewer path
+## Reviewer paths
 
-The primary demo path seeds one deliberately weak, fully fictional interview. It puts all six HR signals into **Needs work** so a reviewer can inspect the complete evidence-to-coaching loop:
+The primary demo runs the actual realtime interview workflow with a preloaded fictional résumé and job description. Reviewers can answer by voice or text, end the session, and inspect the resulting evidence-linked coaching.
+
+The optional 90-second walkthrough seeds one deliberately weak, fully fictional completed interview. It puts all six HR signals into **Needs work** so a reviewer can inspect the complete evidence-to-coaching loop without conducting an interview:
 
 1. Read the outcome and the explicit fictional-sample label.
 2. Open the six-area analysis and select any weak signal.
 3. Compare the source interview excerpt, rubric decision, and coaching route.
 4. Launch the mapped workshop and see the framework-specific answer builder.
 
-The live voice/text interview remains available as a secondary path. That path demonstrates realtime orchestration but is not required to evaluate the portfolio project.
+Both paths expose the **How the AI works** panel, so the technical implementation remains visible even when a reviewer chooses the completed walkthrough.
 
 ## Model and contract boundaries
 

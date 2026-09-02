@@ -216,16 +216,11 @@ export default function ProfessionalStoryBuilder({
         {options.map((opt) => {
           const isSelected = selected === opt.id
           return (
-            <button key={opt.id} type="button" onClick={() => onSelect(opt.id)}
+            <button key={opt.id} type="button" aria-pressed={isSelected} onClick={() => onSelect(opt.id)}
               className={`workshop-choice-card group ${isSelected ? 'border-violet-400 bg-violet-50 shadow-sm' : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'}`}>
-              <div className="flex items-start gap-2">
-                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${isSelected ? 'border-violet-500 bg-violet-500' : 'border-slate-300'}`}>
-                  {isSelected && <Check className="h-3 w-3 text-white" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-xs font-bold leading-4 ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>{opt.label}</p>
-                  {opt.description && <p className="mt-0.5 text-[10px] leading-4 text-slate-500">{opt.description}</p>}
-                </div>
+              <div className="min-w-0">
+                <p className={`text-xs font-bold leading-4 ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>{opt.label}</p>
+                {opt.description && <p className="mt-0.5 text-[10px] leading-4 text-slate-500">{opt.description}</p>}
               </div>
             </button>
           )

@@ -303,6 +303,7 @@ export default function StarStoryBuilder({
             <button
               key={opt.id}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => {
                 onSelect(opt.id)
                 if (autoAdvance) {
@@ -315,20 +316,11 @@ export default function StarStoryBuilder({
                   : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                    isSelected ? 'border-violet-500 bg-violet-500' : 'border-slate-300'
-                  }`}
-                >
-                  {isSelected && <Check className="h-3 w-3 text-white" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-bold ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>{opt.label}</p>
-                  {opt.description && (
-                    <p className="mt-0.5 text-xs leading-5 text-slate-500">{opt.description}</p>
-                  )}
-                </div>
+              <div className="min-w-0 text-center sm:text-left">
+                <p className={`text-sm font-bold ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>{opt.label}</p>
+                {opt.description && (
+                  <p className="sr-only sm:not-sr-only sm:mt-0.5 sm:text-xs sm:leading-5 sm:text-slate-500">{opt.description}</p>
+                )}
               </div>
             </button>
           )
@@ -819,6 +811,7 @@ export default function StarStoryBuilder({
                   <button
                     key={opt.id}
                     type="button"
+                    aria-pressed={isSelected}
                     onClick={() => setHasMetric(opt.id)}
                     className={`w-full rounded-2xl border-2 px-4 py-3 text-left transition ${
                       isSelected
@@ -826,18 +819,9 @@ export default function StarStoryBuilder({
                         : 'border-slate-200 bg-white hover:border-violet-300'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                          isSelected ? 'border-violet-500 bg-violet-500' : 'border-slate-300'
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <p className={`text-sm font-bold ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>
-                        {opt.label}
-                      </p>
-                    </div>
+                    <p className={`text-sm font-bold ${isSelected ? 'text-violet-900' : 'text-slate-800'}`}>
+                      {opt.label}
+                    </p>
                   </button>
                 )
               })}

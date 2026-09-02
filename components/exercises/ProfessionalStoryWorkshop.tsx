@@ -815,16 +815,14 @@ function ChoiceCard({
   return (
     <button
       onClick={onSelect}
+      aria-pressed={selected}
       className={`w-full rounded-2xl border-2 px-4 py-4 text-left transition ${
         selected
           ? 'border-violet-400 bg-violet-50 shadow-[0_10px_20px_rgba(139,92,246,0.12)]'
           : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50'
       }`}
     >
-      <div className="flex items-start gap-3">
-        <span className={`mt-1 flex h-5 w-5 shrink-0 rounded-full border-2 ${selected ? 'border-violet-500 bg-violet-500' : 'border-slate-300 bg-white'}`} />
-        <p className="text-sm leading-7 text-slate-800">{option}</p>
-      </div>
+      <p className="text-sm leading-7 text-slate-800">{option}</p>
     </button>
   )
 }

@@ -250,24 +250,16 @@ function SelectionCard({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={`w-full rounded-3xl border px-4 py-4 text-left transition ${
         selected
           ? 'border-emerald-400 bg-emerald-50 shadow-[0_8px_20px_rgba(16,185,129,0.12)]'
           : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
       }`}
     >
-      <div className="flex items-start gap-3">
-        <div
-          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-            selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white'
-          }`}
-        >
-          {selected ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
-        </div>
-        <div className="min-w-0">
-          <p className="font-semibold text-slate-900">{title}</p>
-          <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
-        </div>
+      <div className="min-w-0">
+        <p className="font-semibold text-slate-900">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
       </div>
     </button>
   )

@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Braces,
   CheckCircle2,
-  ExternalLink,
   Gauge,
   GitBranch,
   Mic2,
@@ -266,26 +265,6 @@ export default function AiImplementationDrawer({ activityMessage }: AiImplementa
               </div>
             </div>
 
-            <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-slate-200 px-4 py-3 sm:gap-3 sm:px-6 sm:py-4">
-              <a
-                href="https://github.com/gking432/PrepMe"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 sm:px-4 sm:text-sm"
-              >
-                <ExternalLink className="h-4 w-4" />
-                View source
-              </a>
-              <a
-                href="https://github.com/gking432/PrepMe/blob/codex/portfolio-hr-demo/docs/portfolio-case-study.md"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-violet-700 sm:px-4 sm:text-sm"
-              >
-                <Braces className="h-4 w-4" />
-                Read case study
-              </a>
-            </div>
           </aside>
         </div>,
         document.body,

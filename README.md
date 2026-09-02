@@ -9,7 +9,6 @@ The checked-in configuration defaults to public demo mode. It is deliberately op
 - Enter interview details and press **Continue** for the primary path: the actual realtime voice or typed recruiter screen.
 - Use **Fill demo data** to populate an explicitly fictional candidate, résumé, role, employers, and job posting while staying in the normal setup flow.
 - Use **View demo feedback** to skip the interview and inspect completed fictional feedback and all six workshops.
-- Open the AI icon on a phone—or **How the AI works** on a larger screen—to inspect the pipeline, model boundaries, reliability controls, and checked-in evaluation results.
 - Read the [implementation case study](docs/portfolio-case-study.md) for the AI workflow, architecture, reliability choices, and extension points.
 
 ## Features
@@ -114,7 +113,7 @@ npm run lint
 npm run build
 ```
 
-The test suite includes eight portfolio golden scenarios. They validate fictional-data isolation, transcript coverage decisions, all-six-area coaching routing, and the structured model contracts shown in the in-app technical panel.
+The test suite includes eight portfolio golden scenarios. They validate fictional-data isolation, transcript coverage decisions, all-six-area coaching routing, and the structured model contracts described in the implementation case study.
 
 ### 6. First-Time Product Setup
 

@@ -6,7 +6,6 @@ import { Suspense, useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import AudioVisualizer from '@/components/AudioVisualizer'
-import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import { Mic, MicOff, X, MessageSquare, Eye, EyeOff, Phone, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { shouldEnforceInterviewStageAccess } from '@/lib/interview-stage-access'
 import { AI_MODELS } from '@/lib/ai-models'
@@ -2250,11 +2249,6 @@ function InterviewPageContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          {PORTFOLIO_DEMO_MODE ? (
-            <AiImplementationDrawer
-              activityMessage={isLoading ? 'Interviewer is connecting' : isPlayingAudio ? 'Interviewer is responding' : undefined}
-            />
-          ) : null}
           {isListening && (
             <button
               onClick={() => {

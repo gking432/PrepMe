@@ -25,7 +25,6 @@ import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
-import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import { PORTFOLIO_SAMPLE_SESSION_ID } from '@/lib/portfolio-demo'
 
 type WorkshopType = 'professional_story' | 'star_proof' | 'career_alignment' | 'handling_uncertainty' | 'pace_delivery' | 'preparation_curiosity' | 'role_depth' | 'problem_solving'
@@ -1480,7 +1479,6 @@ export default function HrFeedbackDeck({
           })}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {demoMode ? <div className="md:hidden"><AiImplementationDrawer activityMessage="Feedback is ready" /></div> : null}
           {showReportButton && reportHelpText && (
             <div className="group relative">
               <button

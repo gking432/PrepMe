@@ -119,18 +119,12 @@ test('all six demo workshops share one fixed, no-scroll lesson shell', () => {
   assert.match(pathSource, /grid min-h-0 flex-1 grid-cols-2 gap-3/)
 })
 
-test('portfolio reviewer surfaces stay concise and outside app-header layout constraints', () => {
-  const drawerSource = readFileSync(
-    new URL('../components/AiImplementationDrawer.tsx', import.meta.url),
-    'utf8',
-  )
+test('portfolio feedback stays concise in demo mode', () => {
   const feedbackSource = readFileSync(
     new URL('../components/HrFeedbackDeck.tsx', import.meta.url),
     'utf8',
   )
 
-  assert.match(drawerSource, /createPortal/)
-  assert.doesNotMatch(drawerSource, /overflow-y-auto|overflow-auto/)
   assert.match(feedbackSource, /const showReportButton = !demoMode/)
 })
 

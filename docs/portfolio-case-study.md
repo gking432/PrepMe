@@ -25,7 +25,7 @@ PrepMe is a public portfolio demo showing how generative and realtime AI can be 
 - Cost controls through payload limits and public-demo rate limits
 - Browser-local persistence for a low-friction portfolio experience
 
-The in-app AI implementation panel exposes this pipeline without forcing a hiring manager to read the repository first. It is a compact icon with activity notifications on a phone and a labeled control on larger screens. Its evaluation result is backed by the checked-in test suite rather than a hand-written marketing number.
+This case study documents the pipeline, with its evaluation claims backed by the checked-in test suite rather than a hand-written marketing number.
 
 ## Reviewer paths
 
@@ -38,7 +38,7 @@ The optional **View demo feedback** shortcut seeds one deliberately weak, fully 
 3. Compare the source interview excerpt, rubric decision, and coaching route.
 4. Launch the mapped workshop and see the framework-specific answer builder.
 
-Both paths expose the AI implementation panel, so the technical implementation remains visible without competing with the product’s primary action.
+Both paths demonstrate the same implementation while keeping the product interface focused on the interview and coaching experience.
 
 ## Model and contract boundaries
 
@@ -48,7 +48,7 @@ Both paths expose the AI implementation panel, so the technical implementation r
 
 ## Checked-in evaluations
 
-`tests/portfolio-demo.test.ts` runs eight published golden scenarios covering fictional-data isolation, sparse and complete interview coverage, the six-area repair mapping, valid and malformed feedback contracts, coaching output validation, and fenced-JSON recovery. The same scenario list appears in the technical panel so the visible claim and executable test stay aligned.
+`tests/portfolio-demo.test.ts` runs eight published golden scenarios covering fictional-data isolation, sparse and complete interview coverage, the six-area repair mapping, valid and malformed feedback contracts, coaching output validation, and fenced-JSON recovery.
 
 ## Reliability and safety decisions
 

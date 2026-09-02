@@ -9,7 +9,6 @@ import StarStoryBuilder from '@/components/exercises/StarStoryBuilder'
 import ProfessionalStoryBuilder from '@/components/exercises/ProfessionalStoryBuilder'
 import CareerAlignmentBuilder from '@/components/exercises/CareerAlignmentBuilder'
 import HandlingUncertaintyLesson from '@/components/exercises/HandlingUncertaintyLesson'
-import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import {
   PORTFOLIO_DEMO_MODE,
   getDemoPracticeProgress,
@@ -312,10 +311,7 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
               <ArrowLeft className="h-4 w-4" />
               <span>Practice path</span>
             </button>
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-bold text-slate-500">Workshop {activeNode.index + 1} of {totalCount}</p>
-              <div className="sm:hidden"><AiImplementationDrawer /></div>
-            </div>
+            <p className="text-xs font-bold text-slate-500">Workshop {activeNode.index + 1} of {totalCount}</p>
           </div>
         </header>
         <main className="mx-auto h-[calc(100dvh-3.5rem)] max-w-3xl p-2 sm:p-4">
@@ -341,12 +337,9 @@ export default function PracticePath({ sessionId, weakSignals, transcript, stage
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">Practice Path</p>
           <p className="text-sm font-bold text-slate-900">{stageName}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <AiImplementationDrawer activityMessage="Coaching plan is ready" />
-          <div className="hidden text-right sm:block">
-            <p className="text-xs font-bold text-slate-500">{completedCount}/{totalCount}</p>
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600">Complete</p>
-          </div>
+        <div className="text-right">
+          <p className="text-xs font-bold text-slate-500">{completedCount}/{totalCount}</p>
+          <p className="hidden text-[10px] font-black uppercase tracking-[0.14em] text-emerald-600 sm:block">Complete</p>
         </div>
       </div>
 

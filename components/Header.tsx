@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
 
 export default function Header() {
@@ -17,10 +16,7 @@ export default function Header() {
             </div>
           </Link>
           {PORTFOLIO_DEMO_MODE ? (
-            <div className="hidden items-center gap-2 md:flex">
-              <span className="eyebrow">Portfolio demo</span>
-              <AiImplementationDrawer />
-            </div>
+            <span className="eyebrow hidden md:inline-flex">Portfolio demo</span>
           ) : null}
         </div>
       </div>

@@ -1,7 +1,6 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
 import { Briefcase, Target } from 'lucide-react'
-import AiImplementationDrawer from '@/components/AiImplementationDrawer'
 import { PORTFOLIO_DEMO_MODE } from '@/lib/portfolio-demo'
 
 type Tab = 'preps' | 'practice' | 'account'
@@ -17,10 +16,9 @@ interface AppChromeProps {
   maxWidth?: string
   headerMaxWidth?: string
   hideMobileTabs?: boolean
-  aiActivityMessage?: string
 }
 
-export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', headerMaxWidth, hideMobileTabs, aiActivityMessage }: AppChromeProps) {
+export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', headerMaxWidth, hideMobileTabs }: AppChromeProps) {
   return (
     <div className="min-h-[100dvh] bg-[#fafaf9]">
       {/* Top bar */}
@@ -32,10 +30,7 @@ export default function AppChrome({ active, children, maxWidth = 'max-w-5xl', he
           </Link>
 
           {PORTFOLIO_DEMO_MODE ? (
-            <div className="flex items-center gap-2">
-              <span className="hidden rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 sm:inline-flex">Portfolio demo</span>
-              <AiImplementationDrawer activityMessage={aiActivityMessage} />
-            </div>
+            <span className="hidden rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 sm:inline-flex">Portfolio demo</span>
           ) : null}
         </div>
       </header>
